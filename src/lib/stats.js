@@ -1,0 +1,137 @@
+/**
+ * Effective stats: what a weapon / piece is worth after everything that can modify it.
+ *
+ *   mined base ─▶ balancing overlays (already applied by the miner; `base` keeps the original)
+ *              ─▶ difficulty variants (`variants`, applied when their condition is active)
+ *              ─▶ runtime modifiers (`mods`: ModifyWeaponDamage / Crit / UseTimeMultiplier)
+ *              ─▶ reforge prefix
+ *              ─▶ calibration factor (from the in-game values the user entered)
+ *
+ * Every step is reported in `chain` so the item card can show the arithmetic.
+ */
+
+/** @typedef {{ conds: Set<string>, uncertain: boolean, prefix?: object|null, calibration?: { factor: (cls) => number } }} StatCtx */
+
+export function activeVariants(item, conds) {
+  if (!item.variants) return [];
+  return item.variants.filter((v) => !v.cond || v.cond.every((c) => conds.has(c)));
+}
+
+/** Modifiers that apply under the current conditions. */
+export function activeMods(item, ctx) {
+  if (!item.mods) return [];
+  return item.mods.filter((m) => {
+    if (m.conditional && !ctx.uncertain) return false;
+    if (m.cond && !m.cond.every((c) => ctx.conds.has(c))) return false;
+    return true;
+  });
+}
+
+/**
+ * @param {object} item
+ * @param {StatCtx} ctx
+ * @returns {{ damage: number, crit: number, useTime: number, useAnimation: number, mana: number, knockback: number, chain: Array<{ label: string, damage?: number, crit?: number, useTime?: number }> }}
+ */
+export function effectiveStats(item, ctx) {
+  const chain = [];
+  const b = item.base ?? {};
+  let damage = b.damage ?? item.damage ?? 0;
+  let crit = b.crit ?? item.crit ?? 4;
+  let useTime = b.useTime ?? item.useTime ?? item.useAnimation ?? 0;
+  let useAnimation = b.useAnimation ?? item.useAnimation ?? item.useTime ?? 0;
+  let mana = item.mana ?? 0;
+  let knockback = item.knockback ?? 0;
+  const push = (label) => chain.push({ label, damage: r(damage), crit: r(crit), useTime: r(useTime) });
+
+  push(item.base ? 'mined from the item\'s own mod' : 'mined');
+  // replay the balancing overlays the miner applied, so each row shows the value at that step
+  for (const c of item.changes ?? []) {
+    if (c.field === 'damage') damage = c.to;
+    else if (c.field === 'crit') crit = c.to;
+    else if (c.field === 'useTime') useTime = c.to;
+    else if (c.field === 'useAnimation') useAnimation = c.to;
+    push(`${c.mod} ${c.hook}${c.field ? `: ${c.field} ${c.from} → ${c.to}` : ' (effects)'}`);
+  }
+  // whatever the replay did not cover (fields not tracked above), end on the miner's final values
+  damage = item.damage ?? damage;
+  crit = item.crit ?? crit;
+  useTime = item.useTime ?? useTime;
+  useAnimation = item.useAnimation ?? useAnimation;
+
+  for (const v of activeVariants(item, ctx.conds)) {
+    if (v.field === 'damage') damage = v.to;
+    else if (v.field === 'crit') crit = v.to;
+    else if (v.field === 'useTime') useTime = v.to;
+    else if (v.field === 'useAnimation') useAnimation = v.to;
+    else continue;
+    push(`${v.mod} (${v.cond.join('+')}): ${v.field} → ${v.to}`);
+  }
+
+  let mul = 1;
+  let add = 0;
+  let flat = 0;
+  let critAdd = 0;
+  let useMul = 1;
+  for (const m of activeMods(item, ctx)) {
+    if (m.kind === 'damage') { if (m.mul) mul *= m.mul; if (m.add) add += m.add; if (m.flat) flat += m.flat; }
+    else if (m.kind === 'crit') critAdd += m.add ?? 0;
+    else if (m.kind === 'useTime') useMul *= m.mul ?? 1;
+    const parts = [m.mul && m.mul !== 1 ? `×${r(m.mul)}` : '', m.add ? `${m.add > 0 ? '+' : ''}${Math.round(m.add * 100)}%` : '', m.flat ? `${m.flat > 0 ? '+' : ''}${m.flat} flat` : ''].filter(Boolean).join(' ');
+    chain.push({ label: `${m.mod} ${m.hook} ${parts}${m.conditional ? ' (uncertain)' : ''}`, mod: m });
+  }
+  if (mul !== 1 || add !== 0 || flat !== 0 || critAdd || useMul !== 1) {
+    damage = damage * mul * (1 + add) + flat;
+    crit += critAdd;
+    useTime *= useMul;
+    useAnimation *= useMul;
+    push('after runtime modifiers');
+  }
+
+  if (ctx.prefix) {
+    const p = ctx.prefix;
+    damage *= 1 + (p.dmg ?? 0);
+    crit += p.crit ?? 0;
+    useTime *= 1 + (p.useTime ?? 0);
+    useAnimation *= 1 + (p.useTime ?? 0);
+    mana *= 1 + (p.mana ?? 0);
+    knockback *= 1 + (p.kb ?? 0);
+    push(`${p.name} reforge`);
+  }
+
+  const factor = ctx.calibration?.factor?.(item.cls ?? item.class) ?? 1;
+  if (factor !== 1) {
+    damage *= factor;
+    push(`calibrated ×${r(factor)}`);
+  }
+
+  return { damage: Math.round(damage), crit: r(crit), useTime: r(useTime), useAnimation: r(useAnimation), mana: r(mana), knockback: r(knockback), chain };
+}
+
+const r = (v) => Math.round(v * 100) / 100;
+
+/** Which prefixes can a weapon of this class roll? */
+export function prefixesFor(item, prefixes, aliases = {}) {
+  if (item.slot === 'accessory') return prefixes.filter((p) => p.category === 'accessory');
+  if (item.slot !== 'weapon') return [];
+  const cls = item.cls ?? item.class;
+  const classAliases = new Set([cls, ...Object.entries(aliases).filter(([, to]) => to === cls).map(([from]) => from)]);
+  return prefixes.filter((p) => {
+    if (p.category === 'accessory' || p.category === 'custom') return false;
+    if (p.rollsFor?.length) return p.rollsFor.some((c) => classAliases.has(c));
+    if (p.category === 'weapon') return true;
+    // vanilla categories: summon/rogue/thrower/bard/healer weapons only roll universal prefixes
+    return p.category === cls;
+  });
+}
+
+/** The prefix that maximises DPS for a weapon (or class score for an accessory). */
+export function bestPrefix(item, prefixes, ctx, { dpsOf, scoreOf }) {
+  const options = prefixesFor(item, prefixes, ctx.aliases);
+  let best = null;
+  let bestVal = -Infinity;
+  for (const p of options) {
+    const v = item.slot === 'weapon' ? dpsOf(item, p) : scoreOf(item, p);
+    if (v > bestVal) { bestVal = v; best = p; }
+  }
+  return best;
+}

@@ -1,0 +1,352 @@
+{
+  "$comment": "Progression is BossChecklist's shared scale (King Slime 1 … Moon Lord 17). Mod bosses are mined from their LogBoss calls; this file supplies vanilla bosses, world anchors that code cannot express (ores spawning after a boss), crafting-station gates, and the rarity fallback.",
+  "vanillaBosses": [
+    {
+      "key": "KingSlime",
+      "label": "King Slime",
+      "progression": 1,
+      "npcs": [
+        50
+      ]
+    },
+    {
+      "key": "EyeOfCthulhu",
+      "label": "Eye of Cthulhu",
+      "progression": 2,
+      "npcs": [
+        4
+      ]
+    },
+    {
+      "key": "EaterOfWorlds",
+      "label": "Eater of Worlds / Brain of Cthulhu",
+      "progression": 3,
+      "npcs": [
+        13,
+        14,
+        15,
+        266
+      ]
+    },
+    {
+      "key": "QueenBee",
+      "label": "Queen Bee",
+      "progression": 4,
+      "npcs": [
+        222
+      ]
+    },
+    {
+      "key": "Skeletron",
+      "label": "Skeletron",
+      "progression": 5,
+      "npcs": [
+        35
+      ]
+    },
+    {
+      "key": "Deerclops",
+      "label": "Deerclops",
+      "progression": 6,
+      "npcs": [
+        668
+      ]
+    },
+    {
+      "key": "WallOfFlesh",
+      "label": "Wall of Flesh",
+      "progression": 7,
+      "npcs": [
+        113
+      ]
+    },
+    {
+      "key": "QueenSlime",
+      "label": "Queen Slime",
+      "progression": 8,
+      "npcs": [
+        657
+      ]
+    },
+    {
+      "key": "TheTwins",
+      "label": "The Twins",
+      "progression": 9,
+      "npcs": [
+        125,
+        126
+      ]
+    },
+    {
+      "key": "TheDestroyer",
+      "label": "The Destroyer",
+      "progression": 10,
+      "npcs": [
+        134
+      ]
+    },
+    {
+      "key": "SkeletronPrime",
+      "label": "Skeletron Prime",
+      "progression": 11,
+      "npcs": [
+        127
+      ]
+    },
+    {
+      "key": "Plantera",
+      "label": "Plantera",
+      "progression": 12,
+      "npcs": [
+        262
+      ]
+    },
+    {
+      "key": "PumpkinMoon",
+      "label": "Pumpkin Moon",
+      "progression": 12.5,
+      "npcs": [
+        325,
+        327
+      ],
+      "kind": "event"
+    },
+    {
+      "key": "FrostMoon",
+      "label": "Frost Moon",
+      "progression": 12.6,
+      "npcs": [
+        344,
+        345,
+        346
+      ],
+      "kind": "event"
+    },
+    {
+      "key": "Golem",
+      "label": "Golem",
+      "progression": 13,
+      "npcs": [
+        245
+      ]
+    },
+    {
+      "key": "MartianMadness",
+      "label": "Martian Madness",
+      "progression": 13.5,
+      "npcs": [
+        392,
+        395
+      ],
+      "kind": "event"
+    },
+    {
+      "key": "DukeFishron",
+      "label": "Duke Fishron",
+      "progression": 14,
+      "npcs": [
+        370
+      ]
+    },
+    {
+      "key": "Betsy",
+      "label": "Betsy (Old One's Army)",
+      "progression": 14.5,
+      "npcs": [
+        551
+      ],
+      "kind": "event"
+    },
+    {
+      "key": "EmpressOfLight",
+      "label": "Empress of Light",
+      "progression": 15,
+      "npcs": [
+        636
+      ]
+    },
+    {
+      "key": "LunaticCultist",
+      "label": "Lunatic Cultist",
+      "progression": 16,
+      "npcs": [
+        439
+      ]
+    },
+    {
+      "key": "LunarEvents",
+      "label": "Lunar Events (Pillars)",
+      "progression": 16.5,
+      "npcs": [
+        422,
+        493,
+        507,
+        517
+      ],
+      "kind": "event"
+    },
+    {
+      "key": "MoonLord",
+      "label": "Moon Lord",
+      "progression": 17,
+      "npcs": [
+        398
+      ]
+    }
+  ],
+  "anchors": {
+    "$comment": "item → boss key it becomes obtainable after. Vanilla items by ItemID name, mod items by Mod:Class.",
+    "v:Hellstone": "EaterOfWorlds",
+    "v:Meteorite": "EaterOfWorlds",
+    "v:Bone": "Skeletron",
+    "v:CobaltOre": "WallOfFlesh",
+    "v:PalladiumOre": "WallOfFlesh",
+    "v:MythrilOre": "WallOfFlesh",
+    "v:OrichalcumOre": "WallOfFlesh",
+    "v:AdamantiteOre": "WallOfFlesh",
+    "v:TitaniumOre": "WallOfFlesh",
+    "v:SoulofLight": "WallOfFlesh",
+    "v:SoulofNight": "WallOfFlesh",
+    "v:SoulofFlight": "WallOfFlesh",
+    "v:PixieDust": "WallOfFlesh",
+    "v:UnicornHorn": "WallOfFlesh",
+    "v:CrystalShard": "WallOfFlesh",
+    "v:CursedFlame": "WallOfFlesh",
+    "v:Ichor": "WallOfFlesh",
+    "v:LifeFruit": "SkeletronPrime",
+    "v:ChlorophyteOre": "SkeletronPrime",
+    "v:Ectoplasm": "Plantera",
+    "v:BeetleHusk": "Golem",
+    "v:LihzahrdPowerCell": "Plantera",
+    "v:LunarTabletFragment": "Plantera",
+    "v:FragmentSolar": "LunarEvents",
+    "v:FragmentVortex": "LunarEvents",
+    "v:FragmentNebula": "LunarEvents",
+    "v:FragmentStardust": "LunarEvents",
+    "v:LunarBar": "MoonLord",
+    "v:LunarOre": "MoonLord",
+    "v:TurtleShell": "SkeletronPrime",
+    "v:BlackBelt": "SkeletronPrime",
+    "v:Tabi": "SkeletronPrime",
+    "v:SpectreBar": "Plantera",
+    "v:ShroomiteBar": "Plantera",
+    "v:Nanites": "Plantera",
+    "v:Cog": "Golem",
+    "v:MartianConduitPlating": "MartianMadness",
+    "v:DefenderMedal": "EaterOfWorlds",
+    "v:Marrow": "Plantera",
+    "v:BoneFeather": "Plantera",
+    "v:PaladinsShield": "Plantera",
+    "v:MagnetSphere": "Plantera",
+    "v:Kraken": "Plantera",
+    "v:VampireKnives": "Plantera",
+    "v:ScourgeoftheCorruptor": "Plantera",
+    "v:RainbowGun": "Plantera",
+    "v:PiranhaGun": "Plantera",
+    "v:StaffoftheFrostHydra": "Plantera",
+    "v:SniperRifle": "Plantera",
+    "v:TacticalShotgun": "Plantera",
+    "v:Keybrand": "Plantera",
+    "v:MagnetSphere2": "Plantera",
+    "v:WispinaBottle": "Plantera",
+    "v:SpectreStaff": "Plantera",
+    "v:InfernoFork": "Plantera",
+    "v:ShadowbeamStaff": "Plantera",
+    "v:MaceWhip": "Plantera",
+    "v:RodofDiscord": "WallOfFlesh",
+    "v:MagicQuiver": "WallOfFlesh",
+    "v:AmarokYoyo": "WallOfFlesh",
+    "v:Uzi": "WallOfFlesh",
+    "v:MarrowBow": "Plantera",
+    "v:Frostbrand": "WallOfFlesh",
+    "v:DeathSickle": "WallOfFlesh",
+    "v:CoinGun": "WallOfFlesh",
+    "v:LucyTheAxe": "Deerclops",
+    "v:ChlorophyteBar": "SkeletronPrime",
+    "v:HallowedBar": "SkeletronPrime",
+    "v:BrokenHeroSword": "Plantera",
+    "v:SoulofFright": "SkeletronPrime",
+    "v:SoulofMight": "TheDestroyer",
+    "v:SoulofSight": "TheTwins",
+    "v:TatteredCloth": "EaterOfWorlds",
+    "v:ShadowScale": "EaterOfWorlds",
+    "v:TissueSample": "EaterOfWorlds",
+    "v:BeeWax": "QueenBee"
+  },
+  "stations": {
+    "$comment": "Vanilla crafting stations (TileID names) that gate recipes.",
+    "MythrilAnvil": "WallOfFlesh",
+    "AdamantiteForge": "WallOfFlesh",
+    "CrystalBall": "WallOfFlesh",
+    "Autohammer": "Plantera",
+    "LihzahrdFurnace": "Plantera",
+    "LunarCraftingStation": "LunaticCultist",
+    "Hellforge": "EaterOfWorlds"
+  },
+  "rarity": {
+    "$comment": "Fallback when an item has no drop, craft or anchor evidence. Vanilla rarity index → boss key; 'start' = pre-boss.",
+    "vanilla": {
+      "-13": "start",
+      "-12": "start",
+      "-11": "start",
+      "-1": "start",
+      "0": "start",
+      "1": "start",
+      "2": "EyeOfCthulhu",
+      "3": "EaterOfWorlds",
+      "4": "WallOfFlesh",
+      "5": "SkeletronPrime",
+      "6": "Plantera",
+      "7": "Golem",
+      "8": "DukeFishron",
+      "9": "LunaticCultist",
+      "10": "MoonLord",
+      "11": "MoonLord"
+    },
+    "classes": {
+      "Turquoise": "Providence",
+      "PureGreen": "Polterghast",
+      "DarkBlue": "DevourerofGods",
+      "Violet": "Yharon",
+      "HotPink": "Calamitas",
+      "CalamityRed": "Calamitas",
+      "CosmicPurple": "DevourerofGods",
+      "BurnishedAuric": "Yharon",
+      "DarkOrange": "ExoMechs",
+      "ExoticRainbow": "Calamitas",
+      "DonatorRarity": "MoonLord",
+      "TerrariumRarity": "MoonLord",
+      "BloodOrangeRarity": "MoonLord"
+    }
+  },
+  "overrides": {
+    "$comment": "Item id → boss key, applied last. Add corrections here. Shop items have no drop/recipe evidence: Goblin Tinkerer arrives after the Goblin Army, i.e. after the first boss.",
+    "CalamityMod:Murasama": "DevourerofGods",
+    "v:RocketBoots": "EyeOfCthulhu",
+    "v:Geode": "start",
+    "CalamityMod:AerialiteOre": "start",
+    "CalamityMod:MysteriousCircuitry": "start",
+    "CalamityMod:DubiousPlating": "start",
+    "SOTS:FragmentOfEarth": "start",
+    "SOTS:FragmentOfNature": "start",
+    "SOTS:FragmentOfPermafrost": "start",
+    "SOTS:FragmentOfTide": "start",
+    "SOTS:RoyalRubyShard": "QueenBee",
+    "ThoriumMod:MagmaLocket": "EyeOfCthulhu",
+    "ThoriumMod:SpiritDroplet": "start",
+    "SOTS:DissolvingEarth": "start",
+    "SOTS:DissolvingNature": "start",
+    "SOTS:DissolvingDeluge": "start",
+    "SOTS:DissolvingAurora": "start",
+    "v:AquaScepter": "Skeletron",
+    "v:Gel": "start",
+    "v:PinkGel": "start",
+    "SOTS:VibrantOre": "start"
+  },
+  "classAliases": {
+    "$comment": "When these mods are present, classes on the left count as the class on the right.",
+    "CalamityMod": {
+      "thrower": "rogue"
+    }
+  }
+}

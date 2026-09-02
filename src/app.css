@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
+@theme {
+  --color-paper: #f6f7f4;
+  --color-panel: #ffffff;
+  --color-panel2: #f0f3ee;
+  --color-line: #d9ded8;
+  --color-line-strong: #b9c2b8;
+  --color-ink: #161a17;
+  --color-ink2: #3a423c;
+  --color-dim: #6b736d;
+  --color-green: #1e7a3c;
+  --color-green-bright: #2f9e44;
+  --color-green-deep: #14522a;
+  --color-green-soft: #e6f2e9;
+  --color-green-mid: #bfe0c8;
+  --color-warn: #b7791f;
+  --color-warn-soft: #fbf1dc;
+  --color-bad: #b23b3b;
+  --color-bad-soft: #f8e3e3;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius-lab: 2px;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+  }
+  body {
+    @apply m-0 bg-paper text-ink font-sans text-[13.5px] leading-normal;
+    font-feature-settings: 'tnum' 1, 'cv11' 1;
+  }
+  h1, h2, h3 {
+    @apply m-0 font-semibold;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-1 outline-green-bright;
+  }
+  button, select, input {
+    font: inherit;
+  }
+  input[type='range'] {
+    accent-color: var(--color-green);
+  }
+}
+
+@layer components {
+  .lab-panel {
+    @apply border border-line bg-panel;
+    border-radius: var(--radius-lab);
+  }
+  .lab-label {
+    @apply block text-[10.5px] font-semibold uppercase tracking-[0.12em] text-dim;
+  }
+  .lab-input {
+    @apply w-full border border-line bg-panel px-2 py-1.5 text-[13px] text-ink;
+    border-radius: var(--radius-lab);
+  }
+  .lab-input:focus {
+    @apply border-green outline-none;
+  }
+  .lab-chip {
+    @apply inline-flex cursor-pointer items-center gap-1 border border-line bg-panel px-2.5 py-1 text-[12.5px] font-medium text-ink2 transition-colors;
+    border-radius: var(--radius-lab);
+  }
+  .lab-chip:hover {
+    @apply border-line-strong bg-panel2;
+  }
+  .lab-chip[aria-pressed='true'], .lab-chip.is-on {
+    @apply border-green bg-green text-white;
+  }
+  .lab-btn {
+    @apply inline-flex cursor-pointer items-center gap-1.5 border border-line bg-panel px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors;
+    border-radius: var(--radius-lab);
+  }
+  .lab-btn:hover {
+    @apply border-green bg-green-soft;
+  }
+  .lab-btn.primary {
+    @apply border-green bg-green text-white;
+  }
+  .lab-btn.primary:hover {
+    @apply bg-green-deep;
+  }
+  .lab-tag {
+    @apply inline-block border border-line bg-panel2 px-1.5 py-[1px] text-[10.5px] font-semibold uppercase tracking-[0.08em] text-dim;
+    border-radius: var(--radius-lab);
+  }
+  .lab-tag.green {
+    @apply border-green-mid bg-green-soft text-green-deep;
+  }
+  .lab-tag.warn {
+    @apply border-warn/40 bg-warn-soft text-warn;
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .lab-table {
+    @apply w-full border-collapse text-[13px];
+  }
+  .lab-table th {
+    @apply border-b border-line-strong bg-panel2 px-2 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-dim;
+  }
+  .lab-table td {
+    @apply border-b border-line px-2 py-1.5 align-top;
+  }
+  .lab-table tr:hover td {
+    @apply bg-green-soft/50;
+  }
+  .lab-table th.sortable {
+    @apply cursor-pointer select-none;
+  }
+  .lab-table th.sortable:hover {
+    @apply text-green;
+  }
+  .bar {
+    @apply relative h-[6px] w-full bg-panel2;
+  }
+  .bar > i {
+    @apply absolute inset-y-0 left-0 block bg-green;
+  }
+}

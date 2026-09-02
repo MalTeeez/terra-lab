@@ -1,0 +1,275 @@
+{{Mod sub-page}}
+<tabber>
+|-|Melee=
+{{ infocard
+| name = Melee
+| color = Melee
+| iconalt = [[File:Warrior Emblem.png|link=|45px]]
+| text =
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = Melee |
+  {{infocard/box | style = width: 325px |{{item|Ball O' Fugu}}<br>{{item|Champion's Swift Blade}}<br>{{item|#Earth Grinder@Secrets Of The Shadows}}<br>{{item|#Digital Daito@Secrets Of The Shadows}}<br>{{item|Fractured Ark}}<br>{{item|Gelitic Blade}}<br>{{item|#Hardlight Glaive@Secrets Of The Shadows}} '''v'''<br>{{item|Night's Edge}}<br>{{item|#Section Chief's Scythe@Secrets Of The Shadows}} '''v'''<br>{{item|Star Trail}}<br>{{item|The God's Gambit}} '''Ω'''<br>{{item|#Guardian Greatsword@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = Melee |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Melee |{{item|Molten armor}}<br>[[File:Statigel armor Helm.png]][[Statigel armor]]<br>{{item|#Twilight Assassin armor@Secrets Of The Shadows}}  '''v'''}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = Melee |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Melee |{{item|Bloody Worm Tooth}}<br>{{item|Counter Scarf}}<br>{{item|Feral Claws}}<br>{{Item|#Hydrokinetic Antennae@Secrets Of The Shadows}} '''*'''<br>{{Item|Leather Sheath}}<br>{{item|Magma Stone}}<br>{{item|#Spirit Glove@Secrets Of The Shadows}}<br>{{item|White String}} '''≤ Ω'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = Melee |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Melee |{{item|Flask of Poison}}<br>[[File:Ale.png]] [[Ale|Tipsy]] '''†'''<br>[[File:Sharpening Station.png]] [[Sharpening Station|Sharpened]]}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*'''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Ranged= 
+{{ infocard
+| name = Ranged
+| color = Ranged
+| iconalt = [[File:Ranger Emblem.png|link=|45px]]
+| text =
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = Ranged |
+  {{infocard/box | style = width: 325x |{{item|#Arclight Orbs@Secrets Of The Shadows}}<br>{{item|#Cataclysm Disc@Secrets Of The Shadows}} '''v'''<br>{{item|Champion's Trifecta-Shot}}<br>{{item|Eternal Night}}<br>{{item|#Fortress Crasher@Secrets Of The Shadows}}<br>{{item|Goobow}}<br>{{item|Gunk Shot}}<br>{{item|Hit Scanner}}<br>{{item|Lunarian Bow}}<br>{{item|#Lycanroc}}<br>{{item|Overloaded Blaster}}<br>{{item|#Skyward Blades@Secrets Of The Shadows}} '''v'''<br>{{item|#Starshot Crossbow@Secrets Of The Shadows}}<br>{{item|#Starcore Assault Rifle@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = Ranged |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Ranged |{{item|Necro armor}}<br>[[File:Statigel armor Headgear.png]][[Statigel armor]]}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = Ranged |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Ranged |{{item|#Bag of Ammunition Gathering@Secrets Of The Shadows}}<br>{{item|Dart Pouch}}<br>{{item|#Infinity Pouch@Secrets Of The Shadows}}<br>{{item|Thumb Ring}}}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = Ranged |
+  {{infocard/box | style = width: 325px | title = Ammo | color = Ranged |{{Item|Hellfire Arrow}} '''Ω'''<br>{{item|Jester's Arrow}} '''C'''<br>{{item|Musket Ball}} / {{item|Tungsten Bullet}}<br>{{item|Unholy Arrow}}<br>{{item|#Wormhole Arrow@Secrets Of The Shadows}}<br>{{item|#Wormhole Bullet@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Ranged |{{item|Ammo Reservation Potion}}<br>{{item|Archery Potion}}}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}<br>{{item|#Vigor Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Magic=
+{{ infocard
+| name = Magic
+| color = Magic
+| iconalt = [[File:Sorcerer Emblem.png|link=|45px]]
+| text = 
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = Magic |
+  {{infocard/box | style = width: 325px |{{item|Abyssal Tome}}<br>{{item|#Arc Staff Mk2@Secrets Of The Shadows}} '''v'''<br>{{item|Champion's Bomber Staff}}<br>{{item|#Code Corrupter@Secrets Of The Shadows}}<br>{{item|#Crescent Staff@Secrets Of The Shadows}} '''v'''<br>{{item|#Dreaming Lamp@Secrets Of The Shadows}} '''+, v'''<br>{{item|Energy Projector}}<br>{{item|#Magma Concentrator@Secrets Of The Shadows}} '''v'''<br>{{item|Night's Ray}}<br>{{item|Particle Whip}}<br>{{item|#Photon Geyser@Secrets Of The Shadows}} '''*'''<br>{{item|#Putrid Eye@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = Magic |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Magic |{{item|#Cursed armor@Secrets Of The Shadows}} '''v'''<br>[[File:Statigel armor Cap.png]][[Statigel armor]]}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = Magic |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Magic |{{item|#Glow Jelly@Secrets Of The Shadows}} '''*'''<br>{{item|Mana Flower}} '''≤'''<br>{{item|Mana Polarizer}}<br>{{item|Mana Regeneration Band}} '''≤'''<br>{{item|#Starbelt@Secrets Of The Shadows}}<br>{{item|Wizard Shoes}}<br>{{item|#Voiden Bracelet@Secrets Of The Shadows}} '''v'''}}
+   {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = Magic |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Magic |{{item|Magic Power Potion}}<br>{{item|Mana Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*'''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}<br>{{item|#Vigor Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Summon=
+{{ infocard
+| name = Summon
+| color = Summoner
+| iconalt = [[File:Summoner Emblem.png|link=|45px]]
+| text = 
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = Summoner |
+  {{infocard/box | style = width: 325px | title = Minions | color = Summoner |{{item|Arsenal Staff}}<br>{{item|#Book of Virtues@Secrets Of The Shadows}} '''ν'''<br>{{item|#Cursed Blade@Secrets Of The Shadows}} '''v'''<br>{{item|#Earthen Spirit Staff@Secrets Of The Shadows}} '''v'''<br>{{item|Eye of Night}}<br>{{item|#Otherworldly Spirit Staff@Secrets Of The Shadows}} '''v'''<br>{{item|#Repurposed Star Caller@Thorium Crossmod}}}}
+  {{infocard/box | style = width: 325px | title = Sentries & Banners | color = Summoner|{{item|Boulder Probe Staff}}<br>{{item|Distress Caller}}<br>{{item|#Goopwood Scepter@Secrets Of The Shadows}}<br>{{item|Strange Skull}}}}
+  {{infocard/box | style = width: 325px | title = Held Weapons | color = Summoner|{{item|#Congealed Duo-Whip@Catalyst}}<br>{{item|#Prism Break@Catalyst}}<br>{{item|Slime Puppet Staff}}<br>{{item|Spinal Tap}}}}
+  {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = Summoner |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Summoner |{{item|Obsidian armor}}<br>{{item|Spirit Trapper's armor}}<br>[[File:Statigel armor Hood.png]][[Statigel armor]]<br>{{item|#Twilight Assassin armor@Secrets Of The Shadows}}  '''v'''}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = Summoner |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Summoner |{{Item|#Hydrokinetic Antennae@Secrets Of The Shadows}} '''*'''<br>{{item|Jelly-Charged Battery}}<br>{{item|Necromancer's Heart}}<br>{{item|#Platform Generator@Secrets Of The Shadows}}<br>{{item|#Sandwich@Secrets Of The Shadows}} '''*'''<br>{{item|Soul Stone}}<br>{{item|Spirit Glyph}}<br>{{item|Squire's Shield}} '''≤'''}}
+   {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = Summon |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = Summon |{{item|Artillery Potion}}<br>{{item|Bewitching Table}}<br>{{item|Flask of Poison}}<br>{{item|Summoning Potion}}<br>{{item|War Table}}}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Rogue=
+{{ infocard
+| name = Rogue
+| color = #50994b
+| iconalt = [[File:Rogue Emblem.png|link=|45px]]
+| text = 
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = #50994b |
+  {{infocard/box | style = width: 325px | title = Spam | color = #50994b |{{item|Bronze Throwing Axe}}<br>{{item|Champion's God Hand}}<br>{{item|Enchanted Axe}}<br>{{item|#Forbidden Maelstrom@Thorium Crossmod}} '''v'''<br>{{item|Gauss Flinger}}<br>{{item|Gel Dart}}<br>{{item|Granite Throwing Axe}}<br>{{item|#Goopwood Split@Thorium Crossmod}} '''v'''<br>{{item|Light's Anguish}} / {{item|Embowelment}}<br>{{item|Shinobi Blade}}<br>{{item|P-LSR Aerial Tracker}}}}
+  {{infocard/box | style = width: 325px | title = Stealth | color = #50994b|{{item|Lionfish}}<br>{{item|Metal Monstrosity}}<br>{{item|#Pocket Energy Storm@Thorium Crossmod|image=Pocket Energy Storm (Thorium Bosses Rework).gif}}<br>{{item|Shinobi Blade}}<br>{{item|P-LSR Aerial Tracker}}<br>{{item|Wack Wrench}}}}
+  {{infocard/box | style = width: 325px | title = Techniques | color = #50994b|{{item|Technique: Meteor Stomp}}<br>{{item|Technique: Smoke Bomb}}<br>{{item|Technique: Soul Pulse}}<br>{{item|Technique: Sprint}}}}
+  {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = #50994b |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #50994b |{{item|Bronze armor}}<br>[[File:Statigel armor Mask.png]][[Statigel armor]]}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = #50994b |
+  {{infocard/box | style = width: 325px | title = Spam | color = #50994b |{{item|Canteen}}<br>{{item|Coin of Deceit}}<br>{{item|Magneto Grip}}<br>{{item|Olympic Torch}}<br>{{item|Spartan Sandals}}<br>[[File:Guide to Expert Throwing.png]][[Guide to Expert Throwing| Rogue 101]]}}
+  {{infocard/box | style = width: 325px | title = Stealth | color = #50994b |{{item|Coin of Deceit}}<br>{{item|Magneto Grip}}<br>{{item|Mirage Mirror}}<br>{{item|Rotten Dogtooth}}<br>{{item|Spartan Sandals}}<br>[[File:Guide to Expert Throwing.png]][[Guide to Expert Throwing| Rogue 101]]}}
+   {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = #50994b |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #50994b |{{item|Assassin Potion}}<br>{{item|Flask of Poison}}<br>{{item|Hydration Potion}}<br>{{item|Shadow Potion}}}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*'''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Healer=
+{{ infocard
+| name = Healer
+| color = #d1ad63
+| iconalt = [[File:Cleric Emblem.png|link=|45px]]
+| text = 
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Items]] | color = #d1ad63 |
+  {{infocard/box | style = width: 325px | title = Weapons | color = #d1ad63 |{{item|#Cursed Ankh Staff@Thorium Crossmod}} '''v'''<br>{{item|Dark Contagion}}<br>{{item|#Defibrillanator}}<br>{{item|#Duality@Thorium Crossmod}}<br>{{item|Falling Twilight}} / {{item|Blood Harvest}}<br>{{item|Jelly Slicer}}<br>{{item|Light's Lament}}<br>{{item|Marble Scythe}}<br>{{item|#Red Crescent@Thorium Crossmod}}<br>{{item|#Serpentine Fork}}<br>{{item|Spirit Blast Wand}}<br>{{item|Templar's Judgement}}}}
+  {{infocard/box | style = width: 325px | title = Support Tools | color = #d1ad63|{{item|Dark Gift}}<br>{{item|#Gelatin Therapy@Thorium Crossmod}}<br>{{item|Life’s Gift}}<br>{{item|#Lost Oasis@Thorium Crossmod}}<br>{{item|Renew}} '''*'''<br>{{item|Star Rod}}}}
+    {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = #d1ad63 |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #d1ad63 |{{item|Templar's armor}}<br>[[File:Statigel armor Fox Mask (Thorium Crossmod).png]][[Statigel armor]]}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = #d1ad63  |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #d1ad63 |{{item|Crystal Honey}}<br>{{item|#Harvester's Scythe@Secrets Of The Shadows}} (SOTS Bard, Thrower, & Healer changes this item. See [here])<br>{{item|Inner Flame}}<br>{{item|Life Gem}}<br>{{item|Nurse's Purse}}}}
+   {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = #d1ad63  |
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*'''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}<br>{{item|#Vigor Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+|-|Bard=
+{{ infocard
+| name = Bard
+| color = #bf324c
+| iconalt = [[File:Bard Emblem.png|link=|45px]]
+| text = 
+
+{{flexstart|style=gap:var(--layout-gap)}}
+
+  {{infocard/box | style = width: 350px | title = [[Weapons]] | color = #bf324c |
+  {{infocard/box | style = width: 325px |{{item|Bone Trumpet}} '''Ω Ω<sup>3</sup>'''<br>{{item|Bronze Tuning Fork}} '''Ω<sup>1</sup>'''<br>{{item|Calaveras}} '''Ω<sup>2</sup> Ω<sup>5</sup>'''<br>{{item|#Deep Sea Drawl}} '''Ω Ω<sup>3</sup>'''<br>{{item|Granite Boom Box}}<br>{{item|Microphone}}<br>{{item|Nocturne}} '''Ω<sup>2</sup>'''<br>{{item|#Return to Sludge@Thorium Crossmod}} '''Ω Ω<sup>3</sup>'''<br>{{item|Roboboe}}<br>{{item|Song of Ice & Fire}} '''Ω<sup>3</sup> Ω<sup>4</sup>'''}}
+    {{infocard/box | style = width: 325px | title = Support Items | color = Gray |{{item|Aestheticus}} '''+'''<br>{{Item|Brittle Star Staff}} (Defensive)}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Armor]] | color = #bf324c |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #bf324c |{{item|Noble's armor}}<br>[[File:Statigel armor Earrings (Thorium Crossmod).png]][[Statigel armor]]}}
+  {{infocard/box | style = width: 325px | title = All-class | color = Gray |{{item|Darksteel armor}}<br>{{item|Depth Diver's armor}}}}
+  }}
+  
+  {{infocard/box | style = width: 350px | title = [[Accessories]] | color = #bf324c |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #bf324c |{{item|Band Kit}}<br>{{item|Brass Cap}} '''Ω'''<br>{{item|Concert Tickets}}<br>{{item|#Concussive Instrument@Thorium Crossmod}} '''Ω<sup>1</sup>'''<br>{{item|Devil's Subwoofer}}<br>{{item|Fan Letter}}<br>{{item|Guitar Pick}} '''Ω<sup>2</sup>'''<br>{{item|#Loudener@Thorium Crossmod}} '''Ω<sup>3</sup>'''<br>{{item|Mouthpiece}} '''Ω<sup>4</sup>'''<br>{{item|#Pick Shaped Pebble@Thorium Crossmod}} '''Ω<sup>5</sup>'''<br>{{item|Plunger Mute}} '''Ω<sup>6</sup>'''<br>{{item|Mix Tape}}<br>{{item|Music Notes}}<br>{{item|Shock Absorber}}<br>{{item|#Subsonic Tuner@Thorium Crossmod}} '''ν'''<br>{{item|Track Player}}<br>{{item|Vibration Tuner}} '''Ω<sup>1</sup>'''}}
+   {{infocard/box | style = width: 325px | title = All-around | color = Gray |{{item|#Elemental Amulet@Secrets Of The Shadows}}<br><i>{{item|Heart of Darkness}}</i> '''*'''<br>{{item|#Olympian Aegis@Secrets Of The Shadows}}<br><i>{{item|Stress Pills}}</i> '''*'''<br>{{item|The Ring}}<br>{{item|#Worldly Polarizer@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{item|#Blink Pack@Secrets Of The Shadows}}<br>{{item|Bundle of Horseshoe Balloons}} '''≤'''<br>{{item|Champion's Wings}} / {{item|Skyline Wings}} <i>(With boots)</i><br>{{item|Frog Leg}} '''≤'''<br>{{item|Harpy Ring}}<br>{{item|Magiluminescence}}<br>{{item|Shield of Cthulhu}}<br>{{item|Terraspark Boots}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Sea Spirit Amulet}}<br>{{item|#Calculator@Secrets Of The Shadows}}<br>{{item|Craw Carapace}}<br>{{item|#Goopwood Parasite@Secrets Of The Shadows}} '''v'''<br>{{item|Hexing Talisman}}<br>{{item|#Otherworldly Amplifier@Secrets Of The Shadows}}<br>{{item|#Prismarine Necklace@Secrets Of The Shadows}}<br>{{item|#Vibrancy Module@Secrets Of The Shadows}} '''v'''}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Brain of Confusion}}<br>{{item|#Chiseled Barrier@Secrets Of The Shadows}}<br>{{Item|#Clover Charm@Secrets Of The Shadows}}<br>{{item|Obsidian Shield}}<br>{{item|Radiant Ooze}}<br>{{Item|#Royal Jelly@Secrets Of The Shadows}}<br>{{item|Survivalist's Boots}}<br>{{item|Worm Scarf}}}}
+  }}
+
+  {{infocard/box | style = width: 350px | title = [[Buffs]] / [[Potions]] / [[Ammo]] | color = #bf324c |
+  {{infocard/box | style = width: 325px | title = Class-specific | color = #bf324c |{{item|Creativity Potion}}<br>{{item|Earworm Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Recovery | color = Gray |[[File:Cherry Pie.png]][[Cook's Food]]: You can only use them while [[Out of Combat]].<br>{{Item|#Goblet of Entrails@Secrets Of The Shadows}} / {{item|Hadal Stew}} '''*''' / {{item|Healing Potion}} / {{item|Honeyfin}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = All-around | color = Gray |[[File:Seafood Dinner.png]][[Seafood Dinner|Plenty Satisfied]] '''≤'''<br>{{item|#Roughskin Potion@Secrets Of The Shadows}}<br>{{item|#Soul Access Potion@Secrets Of The Shadows}} '''v'''<br>{{item|#Vibe Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Defensive | color = Gray |{{item|Endurance Potion}}<br>{{item|Heartreach Potion}} '''*'''<br>{{item|Ironskin Potion}}<br>{{item|Lifeforce Potion}}<br>{{item|Regeneration Potion}}}}
+  {{infocard/box | style = width: 325px | title = Offensive | color = Gray |{{item|Bouncing Flame Potion}}<br>{{item|Conflagration Potion}}<br>{{item|Frenzy Potion}}<br>{{item|Inferno Potion}}<br>{{item|Rage Potion}} '''*'''<br>{{item|Titan Potion}}<br>{{item|Thorns Potion}}<br>{{item|Wrath Potion}} '''*'''}}
+  {{infocard/box | style = width: 325px | title = Mobility | color = Gray |{{Item|Bounding Potion}}<br>{{item|Swiftness Potion}}<br>{{item|#Vigor Potion@Secrets Of The Shadows}}}}
+  {{infocard/box | style = width: 325px | title = Permanent | color = Gray |{{item|#Otherworld Conduit@Secrets Of The Shadows}}}}
+  }}
+{{flexend}}
+}}
+</tabber>
