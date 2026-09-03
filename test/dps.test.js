@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { accuracy, bestAmmo, realDps, stealthMultiplier } from '../src/lib/dps.js';
+import { accuracy, bestAmmo, bossShape, realDps, stealthMultiplier } from '../src/lib/dps.js';
 import { indexDataset } from '../src/lib/dataset.js';
 
 const raw = {
   mods: [{ id: 'v', name: 'Terraria', equipment: 1 }, { id: 'M', name: 'Mod', equipment: 1 }],
-  stages: [{ index: 0, key: 'start', label: 'Pre-boss', progression: 0, mod: 'v', kind: 'start' }, { index: 1, key: 'b', label: 'Boss', progression: 1, mod: 'v', kind: 'boss' }],
+  stages: [{ index: 0, key: 'start', label: 'Pre-boss', progression: 0, mod: 'v', kind: 'start' }, { index: 1, key: 'b', label: 'Boss', progression: 1, mod: 'v', kind: 'boss', npcs: ['v:4'] }, { index: 2, key: 'w', label: 'Worm', progression: 2, mod: 'v', kind: 'boss', npcs: ['v:13', 'v:14', 'v:15'] }, { index: 3, key: 'm', label: 'Twins', progression: 3, mod: 'v', kind: 'boss', npcs: ['v:125', 'v:126'] }],
   classAliases: { thrower: 'rogue' },
   prefixes: [],
   ammoKinds: { 97: 'Bullet' },
@@ -37,11 +37,29 @@ const raw = {
 const ds = indexDataset(structuredClone(raw));
 const ctx = (extra = {}) => ({ conds: new Set(), uncertain: false, prefix: null, calibration: null, ds, stage: 0, ...extra });
 
+describe('bossShape', () => {
+  test("reads the next stage's boss: single target, worm, multi-part", () => {
+    expect(bossShape(ds, 0)).toEqual({ parts: 1, worm: false });
+    expect(bossShape(ds, 1)).toEqual({ parts: 3, worm: true });
+    expect(bossShape(ds, 2)).toEqual({ parts: 2, worm: false });
+    expect(bossShape(ds, 3)).toEqual({ parts: 1, worm: false });
+    expect(bossShape(null, undefined)).toEqual({ parts: 1, worm: false });
+  });
+  test('pierce is worth nothing against a single boss and a lot against a worm', () => {
+    const knife = ds.byId.get('M:rogue');
+    const single = realDps(knife, ctx({ stage: 0 })).stealth;
+    const worm = realDps(knife, ctx({ stage: 1 })).stealth;
+    const twins = realDps(knife, ctx({ stage: 2 })).stealth;
+    expect(worm / single).toBeCloseTo(1.5 / 1.05, 2);
+    expect(twins / single).toBeCloseTo(1.2 / 1.05, 2);
+  });
+});
+
 describe('realDps', () => {
   test('true melee: damage × rate × crit × contact range', () => {
     const r = realDps(ds.byId.get('v:sword'), ctx());
     expect(r.kind).toBe('dps');
-    expect(r.value).toBeCloseTo(20 * 3 * 1.04 * 0.8);
+    expect(r.value).toBeCloseTo(20 * 3 * 1.04 * 0.7);
     expect(r.parts.map((p) => p.label)).toContain('contact range');
   });
   test('ammo weapons add the best ammo at the stage and use its projectile', () => {
@@ -84,8 +102,8 @@ describe('realDps', () => {
     expect(r.spam).toBeCloseTo(30 * 3 * 1.04);
     const mult = stealthMultiplier(20, 1, 1.5);
     expect(mult).toBeGreaterThan(3);
-    // stealth: six spears (infinite pierce, gravity, 1 debuff) once per 5 s; past 4 hits per use only half land
-    expect(r.stealth).toBeCloseTo((30 * mult * 1.04 * 5 * (1.35 * 1.03 * 0.85) * 1.15) / 5);
+    // stealth: six spears (infinite pierce vs a single boss, gravity, 1 debuff) once per 5 s; past 4 hits per use only half land
+    expect(r.stealth).toBeCloseTo((30 * mult * 1.04 * 5 * (1.05 * 1.03 * 0.85) * 1.15) / 5);
     expect(r.value).toBe(r.stealth);
     const low = realDps(ds.byId.get('M:rogue'), ctx({ stealthMax: 0.1 }));
     expect(low.mode).toBe('spam');

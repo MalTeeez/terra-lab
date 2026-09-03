@@ -13,6 +13,7 @@
  * items / effects / recipes / drops / bosses / balancing overlays / prefixes, infers
  * gamestages and writes the dataset the site uses.
  */
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { loadAssembly } from './clr/metadata.js';
@@ -27,11 +28,22 @@ import { extractModDrops } from './extract/loot.js';
 import { extractBossLog, extractNpcs } from './extract/npcs.js';
 import { extractModPrefixes, VANILLA_PREFIXES } from './extract/prefixes.js';
 import { extractRecipes } from './extract/recipes.js';
+import { applyRecipeEdit, extractRecipeEdits } from './extract/recipeedits.js';
+import { extractRecipeGroups, vanillaRecipeGroups } from './extract/groups.js';
+import { extractTiles } from './extract/tiles.js';
+import { extractShops, extractTravelShop, extractVanillaShops } from './extract/shops.js';
+import { extractFlagEffects } from './extract/flageffects.js';
+import { extractOnHitSpawns } from './extract/onhit.js';
+import { extractSpawnPools, extractVanillaSpawns } from './extract/spawns.js';
+import { extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
+import { extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
 import { extractVanilla } from './extract/vanilla.js';
 import { loadOrder } from './loadorder.js';
 import { defaultPaths, readEnabled, resolveMods } from './resolve.js';
 import { inferStages } from './stage/infer.js';
+import { SEED_GROUPS } from './extract/flags.js';
 import { readTmodFile } from './tmod.js';
+import { wikiFile } from '../src/lib/wiki.js'; // the wiki table is shared so the icon hash cannot drift from the link
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -74,6 +86,7 @@ if (!existsSync(tmlPath)) {
 const t0 = Date.now();
 const tml = loadAssembly(readFileSync(tmlPath));
 console.log(`tModLoader.dll: ${tml.types.length} types`);
+const config = JSON.parse(readFileSync(new URL('./stage/progression.json', import.meta.url), 'utf8'));
 const configs = loadModConfigs(paths.saves);
 const ammoIds = evalStatics(tml, tml.typeByName.get('Terraria.ID.AmmoID'), tml);
 const enabledMods = new Set(enabledList.length ? enabledList : modsIn.map((m) => m.name));
@@ -97,12 +110,23 @@ const ordered = loadOrder(loaded);
 // ---- extract ------------------------------------------------------------------------------
 const allItems = [];
 const allRecipes = [];
+const allRecipeEdits = []; // PostAddRecipes passes that edit recipes other mods registered
 const allDrops = [];
 const allNpcs = [];
 const allBossLogs = [];
 const allOverrides = []; // in load order
 const allPrefixes = [...VANILLA_PREFIXES];
 const allProjectiles = [];
+const allGroups = [];
+const allTiles = [];
+const allShops = [];
+const allPools = [];      // GlobalNPC.EditSpawnPool entries
+const allFish = [];       // fishing catches
+const allWorldgen = [];   // chest contents placed at world generation
+const worldgenTiles = new Set();
+const groupFields = new Map(); // static field → recipe group name (RecipeGroupID.Wood, a mod's AnyGoldBar)
+const vanillaGroups = flag('--no-vanilla') ? [] : vanillaRecipeGroups(tml, groupFields);
+const flagEffects = new Map(); // modId → Map(flag → effects)
 const modInfo = [];
 const localizations = new Map();
 
@@ -118,16 +142,35 @@ for (const m of ordered) {
     allProjectiles.push(...projectiles);
     const npcs = extractNpcs(asm, { tml, loc, modId });
     const bossLogs = extractBossLog(asm, { tml, modId }).map((b) => ({ ...b, mod: modId }));
-    const recipes = extractRecipes(asm, { tml, modId });
+    const groups = extractRecipeGroups(asm, { tml, fields: groupFields });
+    const recipes = extractRecipes(asm, { tml, modId, groupFields });
+    const tiles = extractTiles(asm, { tml, modId });
+    const shops = extractShops(asm, { tml, modId });
+    flagEffects.set(modId, extractFlagEffects(asm, { tml }));
+    // projectiles a flag spawns on hit (Scuttler's Jewel's spike): stored on the flag's effects
+    for (const [flag, spawns] of extractOnHitSpawns(asm, { tml })) {
+      const fx = flagEffects.get(modId).get(flag) ?? {};
+      fx.onHit = spawns;
+      flagEffects.get(modId).set(flag, fx);
+    }
     const drops = extractModDrops(asm, { tml, modId });
+    allPools.push(...extractSpawnPools(asm, { tml, modId }));
+    allFish.push(...extractModFishing(asm, { tml, modId }));
+    const wg = extractModWorldgen(asm, { modId });
+    allWorldgen.push(...wg.items.map((w) => ({ ...w, estimated: w.locked || undefined })));
+    for (const t of wg.tiles) worldgenTiles.add(t);
     const overrides = extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg });
     const itemMods = extractModItemModifiers(asm, { tml, modId, enabledMods, cfg });
     const prefixes = extractModPrefixes(asm, { tml, loc, modId });
+    allRecipeEdits.push(...extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }));
     allItems.push(...items);
     allNpcs.push(...npcs);
     allBossLogs.push(...bossLogs);
     allRecipes.push(...recipes);
     allDrops.push(...drops);
+    allGroups.push(...groups);
+    allTiles.push(...tiles);
+    allShops.push(...shops);
     allOverrides.push(...overrides, ...itemMods);
     allPrefixes.push(...prefixes);
     const eq = items.filter((i) => ['weapon', 'head', 'body', 'legs', 'accessory'].includes(i.slot)).length;
@@ -148,6 +191,15 @@ if (!flag('--no-vanilla')) {
   allRecipes.push(...vanilla.recipes);
   allDrops.push(...vanilla.drops);
   allProjectiles.push(...vanilla.projectiles);
+  allGroups.push(...vanillaGroups);
+  allShops.push(...extractVanillaShops(tml), ...extractTravelShop(tml));
+  allFish.push(...extractVanillaFishing(tml));
+  allPools.push(...extractVanillaFishingEnemies(tml));
+  // chests placed by vanilla world generation; locked ones (dungeon, temple, biome chests) gate on the config
+  for (const c of extractVanillaChests(tml)) {
+    const after = config.worldgenGates?.[`${c.via}@${c.style}`] ?? config.worldgenGates?.[c.via];
+    allWorldgen.push(compact({ item: c.item, via: `${c.via}${c.style !== undefined ? ` (style ${c.style})` : ''}`, cond: c.cond, after }));
+  }
   const npcNames = new Map();
   for (const [name, id] of vanilla.ids.npc) if (typeof id === 'number' && id > 0 && !npcNames.has(id)) npcNames.set(id, name);
   for (const [id, internal] of npcNames) allNpcs.push({ id: `v:${id}`, mod: 'v', className: internal, name: vanilla.loc.get(`NPCName.${internal}`) ?? internal, boss: false });
@@ -156,6 +208,22 @@ if (!flag('--no-vanilla')) {
 }
 
 printTable(['mod', 'version', 'items', 'equip', 'npcs', 'bosses', 'recipes', 'drops', 'overlays', 'prefixes', 'time'], rows);
+
+// ---- recipe edits ------------------------------------------------------------------------
+// A balancing mod edits recipes another mod (or vanilla) registered, in load order.
+{
+  const byResult = new Map();
+  for (const r of allRecipes) { if (!r.result) continue; let l = byResult.get(r.result); if (!l) byResult.set(r.result, (l = [])); l.push(r); }
+  let applied = 0;
+  for (const e of allRecipeEdits) {
+    const list = byResult.get(e.result);
+    if (!list) continue;
+    for (const r of list) { applyRecipeEdit(r, e); applied++; }
+  }
+  const disabled = allRecipes.filter((r) => r.disabled).length;
+  for (let i = allRecipes.length - 1; i >= 0; i--) if (allRecipes[i].disabled) allRecipes.splice(i, 1);
+  console.log(`recipe edits: ${allRecipeEdits.length} records, ${applied} applications, ${disabled} recipes disabled`);
+}
 
 // CloneDefaults: inherit what the item did not set itself (stats, class, rarity)
 {
@@ -194,6 +262,52 @@ for (const p of allProjectiles) {
     if (!head.setBonus && it.setBonus) head.setBonus = it.setBonus;
     it.set = [];
   }
+}
+
+// ModPlayer flag effects: what the mod's player code does when an item's flag is set
+// (Calamity's Mollusk set slows the player in CalamityPlayer, not in the item) → fold into the item
+{
+  let applied = 0;
+  const fold = (fx, it) => {
+    const table = flagEffects.get(it.mod);
+    if (!table) return fx;
+    let out = fx;
+    for (const flag of fx?.flags ?? []) {
+      const extra = table.get(flag);
+      if (!extra) continue;
+      out = mergeEffects(out, extra);
+      (out.via ??= []).push(flag);
+      applied++;
+    }
+    // an aura projectile named after the item (SandCloak → SandCloakVeil): what it does to players
+    // inside it is the item's effect, conditional on being inside
+    for (const [key, extra] of table) {
+      if (!key.startsWith(`aura:${it.className}`) || key.length === 5 + it.className.length) continue;
+      out = mergeEffects(out, extra);
+      (out.via ??= []).push(key.slice(5));
+      applied++;
+    }
+    return out;
+  };
+  for (const it of allItems) {
+    if (it.mod === 'v' || !it.className) continue;
+    it.effects = fold(it.effects, it) ?? undefined;
+    if (it.setEffects) it.setEffects = fold(it.setEffects, it);
+    if (it.effects?.cond) { it.effectsCond = it.effects.cond; delete it.effects.cond; }
+    if (it.setEffects?.cond) delete it.setEffects.cond;
+    // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
+    for (const s of it.effects?.onHit ?? []) {
+      const p = projById.get(s.type);
+      s.name = s.type.split(':').pop().replace(/([a-z])([A-Z])/g, '$1 $2');
+      if (!p) continue;
+      if (p.pen !== undefined) s.pen = p.pen;
+      if (p.local !== undefined) s.local = p.local;
+      if (p.life !== undefined) s.life = p.life;
+      const kids = (p.children ?? []).reduce((n, c) => n + (c.count ?? 1), 0);
+      if (kids) s.kids = kids;
+    }
+  }
+  console.log(`flag effects: ${[...flagEffects.values()].reduce((n, m) => n + m.size, 0)} player flags with effects, ${applied} folded into items`);
 }
 
 // ---- balancing overlays (load order) ------------------------------------------------------
@@ -279,32 +393,72 @@ for (const ref of (process.env.TL_DEBUG_ITEM ?? '').split(',').filter(Boolean)) 
   const id = it?.id ?? ref;
   console.log('item', id, it ? `${it.slot} rarity ${it.rarity} ${it.rarityClass ?? ''}` : 'NOT FOUND');
   console.log('item', JSON.stringify({ base: it?.base, changes: it?.changes, variants: it?.variants, maybe: it?.maybe, mods: it?.mods }, null, 1));
-  console.log('drops for', id, allDrops.filter((d) => d.item === id).map((d) => `${d.source} (${allNpcs.find((n) => n.id === d.source.slice(4))?.name ?? '?'})`));
+  console.log('drops for', id, allDrops.filter((d) => d.item === id).map((d) => `${d.source} (${allNpcs.find((n) => n.id === d.source.slice(4))?.name ?? '?'})${d.cond ? ' if ' + d.cond.join('&') : ''}`));
   console.log('recipes for', id, JSON.stringify(allRecipes.filter((r) => r.result === id)));
+  if (it?.createTile) console.log('tile', it.createTile, JSON.stringify(allTiles.find((t) => t.id === it.createTile)));
+  console.log('shops for', id, allShops.filter((s) => s.item === id).map((s) => `${s.npc} (${allNpcs.find((n) => n.id === s.npc)?.name ?? '?'} town gates ${allNpcs.find((n) => n.id === s.npc)?.townGates ?? '-'})${s.cond ? ' if ' + s.cond.join('&') : ''}`));
+  if (it) console.log('effects', JSON.stringify(it.effects), 'set', JSON.stringify(it.setEffects));
+  for (const n of allNpcs) if (allDrops.some((d) => d.item === id && d.source === `npc:${n.id}`)) console.log('npc', n.id, 'gates', n.gates, 'natural', n.natural, 'pools', JSON.stringify(allPools.filter((p) => p.npc === n.id).map((p) => p.gates)), 'town', n.townGates);
+  console.log('fishing for', id, JSON.stringify(allFish.filter((f) => f.item === id)));
+  console.log('worldgen for', id, JSON.stringify(allWorldgen.filter((w) => w.item === id)));
 }
 
 // ---- stages ------------------------------------------------------------------------------
-const config = JSON.parse(readFileSync(new URL('./stage/progression.json', import.meta.url), 'utf8'));
-// guide-derived overrides (tools/guide-check.mjs --write-overrides) sit below the manual ones
 {
-  const guidePath = new URL('./stage/guide-overrides.json', import.meta.url);
-  if (existsSync(guidePath)) {
-    const guide = JSON.parse(readFileSync(guidePath, 'utf8'));
-    delete guide.$comment;
-    config.overrides = { ...guide, ...config.overrides };
-  }
+  const manualPath = new URL('./stage/sources.json', import.meta.url);
+  if (existsSync(manualPath)) { config.manual = JSON.parse(readFileSync(manualPath, 'utf8')); delete config.manual.$comment; }
 }
-const stageResult = inferStages({
+// vanilla Zone* players fields / properties: a biome the config does not gate is reachable from the start
+const vanillaZones = new Set();
+{
+  const pt = tml.typeByName.get('Terraria.Player');
+  for (const f of pt?.fields ?? []) if (/^Zone[A-Z]/.test(f.name)) vanillaZones.add(f.name);
+  for (const m of pt?.methods ?? []) if (/^get_Zone[A-Z]/.test(m.name)) vanillaZones.add(m.name.slice(4));
+}
+const stageArgs = {
   items: allItems,
   recipes: allRecipes,
   drops: allDrops,
   bossLogs: allBossLogs,
   npcs: allNpcs,
+  groups: allGroups,
+  tiles: allTiles,
+  shops: allShops,
+  spawns: vanilla ? extractVanillaSpawns(tml) : new Map(),
+  pools: allPools,
+  fish: allFish,
+  worldgen: allWorldgen,
+  worldgenTiles,
+  vanillaZones,
+  npcIds: vanilla?.ids.npc ?? new Map(),
   config,
   itemIds: vanilla?.ids.item ?? new Map(),
   tileIds: vanilla?.ids.tile ?? new Map(),
   mods: ordered.map((m) => m.name),
-});
+};
+const stageResult = inferStages(stageArgs);
+
+// Special world seeds: one more inference run per seed the gates mentioned, kept as the deltas the
+// site applies when that seed is switched on (off by default — a normal world is the normal answer).
+const seedStages = [];
+for (const key of stageResult.seedsSeen) {
+  const g = SEED_GROUPS.find((s) => s.key === key);
+  const alt = inferStages({ ...stageArgs, seeds: new Set([key]) });
+  const changed = {};
+  for (const [id, s] of alt.byItem) {
+    const base = stageResult.byItem.get(id);
+    if (base && base.progression <= s.progression) continue;
+    changed[id] = { stage: s.stage, prog: s.progression, src: s.source };
+  }
+  if (Object.keys(changed).length) seedStages.push({ key, label: g?.label ?? key, items: changed });
+}
+console.log(`world seeds: ${seedStages.map((s) => `${s.label} ${Object.keys(s.items).length} items`).join(', ') || 'none'}`);
+
+for (const ref of (process.env.TL_DEBUG_ITEM ?? '').split(',').filter(Boolean)) {
+  const it = ref.startsWith('name:') ? allItems.find((i) => i.name === ref.slice(5)) : allItems.find((i) => i.id === ref);
+  if (it) console.log('stage', it.id, JSON.stringify(stageResult.byItem.get(it.id)));
+}
+if (stageResult.unresolvedFlags.length) console.log(`unresolved gates (evidence left unused; progression.json downedFlags / zones): ${stageResult.unresolvedFlags.slice(0, 25).map((u) => `${u.flag}×${u.count}`).join(', ')}`);
 
 // ---- assemble dataset ----------------------------------------------------------------------
 const EQUIP_SLOTS = new Set(['weapon', 'head', 'body', 'legs', 'accessory']);
@@ -313,7 +467,22 @@ const npcNameOf = new Map(allNpcs.map((n) => [n.id, n.name]));
 const recipesByResult = new Map();
 for (const r of allRecipes) { if (!r.result) continue; let l = recipesByResult.get(r.result); if (!l) recipesByResult.set(r.result, (l = [])); l.push(r); }
 const dropSources = new Map();
-for (const d of allDrops) { let l = dropSources.get(d.item); if (!l) dropSources.set(d.item, (l = [])); l.push(d.source); }
+for (const d of allDrops) { let l = dropSources.get(d.item); if (!l) dropSources.set(d.item, (l = [])); l.push(d); }
+const shopSources = new Map();
+for (const s of allShops) { let l = shopSources.get(s.item); if (!l) shopSources.set(s.item, (l = [])); l.push(compact({ kind: 'shop', from: npcNameOf.get(s.npc) ?? s.npc, cond: s.cond?.length ? s.cond.map((c) => c.replace(/^(any:)?(downed|Downed)/, '')).join(', ') : undefined })); }
+/** A drop record as a labelled source for the dataset. */
+function labelSource(d) {
+  const [kind, ...rest] = d.source.split(':');
+  const ref = rest.join(':');
+  if (kind === 'npc') return compact({ kind: 'drop', from: npcNameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined });
+  if (kind === 'bag') return compact({ kind: 'bag', from: nameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined });
+  return null;
+}
+const condText = (cond) => (cond?.length ? cond.map((c) => c.replace(/^(any:)?(downed|Downed)/, '')).join(', ') : undefined);
+const fishSources = new Map();
+for (const f of allFish) { let l = fishSources.get(f.item); if (!l) fishSources.set(f.item, (l = [])); l.push(compact({ kind: 'fish', from: 'fishing', cond: condText(f.cond) })); }
+const worldgenSources = new Map();
+for (const w of allWorldgen) { let l = worldgenSources.get(w.item); if (!l) worldgenSources.set(w.item, (l = [])); l.push(compact({ kind: 'worldgen', from: w.via, cond: condText(w.cond) ?? (w.after ? `after ${w.after}` : undefined) })); }
 
 const rarityName = (it) => it.rarityClass ? it.rarityClass.replace(/Rarity$/, '').replace(/([a-z])([A-Z])/g, '$1 $2') : VANILLA_RARITY_NAMES[String(it.rarity)] ?? (it.rarity !== undefined ? `Rarity ${it.rarity}` : '');
 
@@ -323,22 +492,19 @@ for (const it of allItems) {
   if (it.slot !== 'weapon' && it.slot !== 'accessory' && !(it.defense > 0) && !it.setEffects && !it.effects) continue; // vanity armor
   if (it.slot === 'accessory' && it.createTile) continue; // music boxes
   const st = stageResult.byItem.get(it.id);
-  const parsed = parseTooltipStats(it.tooltip);
+  const tooltip = cleanText(formatText(resolveRefs(it.tooltip, it.mod), it.tooltipArgs));
+  const parsed = parseTooltipStats(tooltip); // the formatted text: `{0}` filled in is a real magnitude, not a guess
   const cls = it.slot === 'weapon' ? (classOf(it.damageClass) ?? 'other') : null;
-  const sources = [];
-  for (const s of dropSources.get(it.id) ?? []) {
-    const [kind, ...rest] = s.split(':');
-    const ref = rest.join(':');
-    if (kind === 'npc') sources.push({ kind: 'drop', from: npcNameOf.get(ref) ?? ref });
-    else if (kind === 'bag') sources.push({ kind: 'bag', from: nameOf.get(ref) ?? ref });
-  }
+  const sources = [...(dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []), ...(fishSources.get(it.id) ?? []), ...(worldgenSources.get(it.id) ?? [])];
   for (const r of (recipesByResult.get(it.id) ?? []).slice(0, 3)) {
     sources.push({ kind: 'craft', from: r.ingredients.map((g) => `${g.n > 1 ? g.n + '× ' : ''}${nameOf.get(g.item) ?? g.item ?? '?'}`).concat(r.groups.map((g) => `any ${g.replace(/^any/, '')}`)).join(', ') });
   }
+  const name = resolveRefs(it.name, it.mod);
   items.push(compact({
     id: it.id,
     mod: it.mod,
-    name: it.name,
+    name,
+    icon: iconHash(it.mod, name),
     className: it.mod === 'v' ? undefined : it.className,
     slot: it.slot,
     class: cls,
@@ -359,19 +525,23 @@ for (const it of allItems) {
     useStyle: it.useStyle,
     fire: it.slot === 'weapon' ? fireRecord(it.fire) : undefined,
     defense: it.defense,
+    pick: it.pick,
     rarity: it.rarity,
     rarityName: rarityName(it),
     value: it.value,
-    tooltip: cleanText(resolveRefs(it.tooltip, it.mod)),
-    setBonus: cleanText(resolveRefs(it.setBonus, it.mod)),
+    tooltip,
+    setBonus: cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs)),
     set: it.set?.length ? it.set : undefined,
     effects: it.effects ?? undefined,
     setEffects: it.setEffects ?? undefined,
     stats: Object.keys(parsed.stats).length ? parsed.stats : undefined,
     placeholders: parsed.placeholders || undefined,
+    condStats: condKeys(parsed, it),
     textClasses: parsed.classes.length ? parsed.classes : undefined,
     flags: parsed.flags.length ? parsed.flags : undefined,
     wings: it.wings || undefined,
+    boots: it.boots || undefined,
+    wingStats: it.wingStats,
     expert: it.expert || undefined,
     consumable: it.consumable || undefined,
     stage: st ? st.stage : null,
@@ -402,6 +572,7 @@ const projectiles = {};
     for (const c of it.fire?.calls ?? []) if (c.type && c.type !== 'shoot') want.push(c.type);
     if (it.fire?.typeOverride) want.push(it.fire.typeOverride);
     if (it.fire?.stealthMods?.type) want.push(it.fire.stealthMods.type);
+    for (const s of it.effects?.onHit ?? []) if (s.type) want.push(s.type);
   }
   for (const a of ammo) if (a.shoot) want.push(a.shoot);
   const seen = new Set();
@@ -417,6 +588,52 @@ const projectiles = {};
   }
 }
 
+// crafting trees: every item reachable from equipment through recipes, groups, stations and ore gates
+const materials = {};
+const recipesOut = {};
+const stationsOut = {};
+const groupsOut = {};
+{
+  const equipIds = new Set(items.map((i) => i.id));
+  const want = [...equipIds];
+  const seen = new Set();
+  const pickaxeByName = new Map(allItems.filter((i) => i.pick > 0).map((i) => [i.name, i.id]));
+  const materialRecord = (it) => {
+    const st = stageResult.byItem.get(it.id);
+    return compact({ name: it.name, icon: iconHash(it.mod, it.name), mod: it.mod, slot: EQUIP_SLOTS.has(it.slot) ? it.slot : undefined, rarity: it.rarity, pick: it.pick, stage: st ? st.stage : null, prog: st ? st.progression : null, src: st?.source ?? { kind: 'unknown' }, drops: [...(dropSources.get(it.id) ?? []).slice(0, 4).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []).slice(0, 3), ...(fishSources.get(it.id) ?? []).slice(0, 2), ...(worldgenSources.get(it.id) ?? []).slice(0, 2)] });
+  };
+  const byIdAll = new Map(allItems.map((i) => [i.id, i]));
+  while (want.length) {
+    const id = want.pop();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const it = byIdAll.get(id);
+    if (!it) continue;
+    if (!equipIds.has(id)) materials[id] = materialRecord(it);
+    const st = stageResult.byItem.get(id);
+    if (st?.source?.pickaxe && pickaxeByName.has(st.source.pickaxe)) want.push(pickaxeByName.get(st.source.pickaxe));
+    const list = recipesByResult.get(id) ?? [];
+    if (list.length) {
+      recipesOut[id] = list.map((r) => [r.ingredients.map((g) => [g.item, g.n]), r.groups, r.tiles]);
+      for (const r of list) {
+        for (const g of r.ingredients) if (g.item) want.push(g.item);
+        for (const g of r.groups) { const members = stageResult.groups[g]; if (members) { groupsOut[g] = members; want.push(...members); } }
+        for (const t of r.tiles) {
+          const s = stageResult.stations.get(t);
+          if (s && !stationsOut[t]) stationsOut[t] = compact({ name: s.name, stage: s.stage, boss: s.boss });
+          for (const pid of allItems.filter((i) => i.createTile === t).slice(0, 2)) want.push(pid.id);
+        }
+      }
+    }
+  }
+}
+
+// seed overrides only make sense for records the site actually has
+{
+  const known = new Set([...items.map((i) => i.id), ...Object.keys(materials)]);
+  for (const s of seedStages) for (const id of Object.keys(s.items)) if (!known.has(id)) delete s.items[id];
+}
+
 const dataset = {
   generatedAt: new Date().toISOString(),
   tml: tml.runtimeVersion,
@@ -430,6 +647,14 @@ const dataset = {
   items,
   ammo,
   projectiles,
+  materials,
+  recipes: recipesOut,
+  groups: groupsOut,
+  stations: stationsOut,
+  /** flags that gate evidence but did not resolve (progression.json downedFlags / zones) */
+  unresolved: stageResult.unresolvedFlags,
+  /** special world seeds, as the stage overrides to apply when one is switched on (off by default) */
+  seeds: seedStages,
 };
 
 mkdirSync(dirname(outPath), { recursive: true });
@@ -439,9 +664,22 @@ for (const it of items) bySrc[it.stageSource.kind] = (bySrc[it.stageSource.kind]
 const changed = items.filter((i) => i.changes).length;
 console.log(`\n${items.length} equipment items (${changed} rebalanced by other mods), ${dataset.stages.length} stages, ${allPrefixes.length} prefixes → ${outPath} (${(statSize(outPath) / 1024 / 1024).toFixed(1)} MB) in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 console.log(`stage evidence: ${Object.entries(bySrc).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+console.log(`shops: ${allShops.length} entries from ${new Set(allShops.map((s) => s.npc)).size} sellers`);
+console.log(`crafting: ${Object.keys(recipesOut).length} recipe results, ${Object.keys(materials).length} materials, ${Object.keys(groupsOut).length} groups, ${Object.keys(stationsOut).length} stations; ${allTiles.length} gating tiles, ${allItems.filter((i) => i.pick > 0).length} pickaxes`);
 console.log(`projectiles: ${allProjectiles.length} mined, ${Object.keys(projectiles).length} referenced; ${ammo.length} ammo items; ${items.filter((i) => i.fire).length} weapons with shoot analysis`);
 
 // ---- helpers --------------------------------------------------------------------------------
+/**
+ * MediaWiki's static file layout: /images/<h0>/<h0h1>/<File_name>.png, h = md5 of the file name.
+ * Precomputed here so the site links the image directly — `Special:Redirect/file/` is a special
+ * page and wiki.gg answers a page full of those with 429s.
+ */
+function iconHash(mod, name) {
+  const file = wikiFile({ mod, name });
+  if (!file) return undefined;
+  const h = createHash('md5').update(`${file.replace(/ /g, '_')}.png`, 'utf8').digest('hex');
+  return `${h[0]}/${h.slice(0, 2)}`;
+}
 function isNumber(v) { return typeof v === 'number' && Number.isFinite(v); }
 /** Compact form of a weapon's Shoot analysis for the dataset. */
 function fireRecord(f) {
@@ -467,11 +705,20 @@ function compact(obj) {
 function statSize(p) {
   return readFileSync(p).length;
 }
+/** Stats the tooltip only mentions conditionally, plus what an aura projectile applies: the solver halves them. */
+function condKeys(parsed, it) {
+  const k = [...new Set([...(parsed.conditional ?? []), ...(it.effectsCond ?? [])])];
+  return k.length ? k : undefined;
+}
 function mergeEffects(a, b) {
   if (!a) return structuredClone(b);
   const out = structuredClone(a);
   for (const [k, v] of Object.entries(b)) {
     if (k === 'flags') out.flags = [...new Set([...(out.flags ?? []), ...v])];
+    else if (k === 'cond') out.cond = [...new Set([...(out.cond ?? []), ...v])];
+    else if (k === 'onHit') out.onHit = [...(out.onHit ?? []), ...v];
+    else if (k === 'via') out.via = [...new Set([...(out.via ?? []), ...v])];
+    else if (k === 'velocityDrag') out.velocityDrag = Math.round((out.velocityDrag ?? 1) * v * 10000) / 10000;
     else if (typeof v === 'object') { out[k] ??= {}; for (const [c, n] of Object.entries(v)) out[k][c] = Math.round(((out[k][c] ?? 0) + n) * 10000) / 10000; }
     else out[k] = Math.round(((out[k] ?? 0) + v) * 10000) / 10000;
   }
@@ -481,15 +728,21 @@ function mergeEffects(a, b) {
 function resolveRefs(text, modId) {
   if (!text || !text.includes('{$')) return text ?? '';
   const loc = localizations.get(modId);
-  return text.replace(/\{\$([^}@]+)(?:@\d+)?\}/g, (m, key) => {
+  return text.replace(/\{\$([^}@]+)(?:@(\d+))?\}/g, (m, key, at) => {
     const candidates = [key, `Mods.${modId}.${key}`];
     for (const c of candidates) {
       const v = loc?.get(c) ?? vanilla?.loc.get(c) ?? vanilla?.loc.get(c.replace(/^Mods\.[^.]+\./, ''));
-      if (v) return v;
+      // `{$CommonItemTooltip.PercentIncreasedCritChance@1}`: the referenced text's {0} is this text's {1}
+      if (v) return at ? v.replace(/\{0(:[^}]*)?\}/g, `{${at}$1}`) : v;
     }
     const tail = key.split('.').pop();
     return tail.replace(/([a-z])([A-Z])/g, '$1 $2');
   });
+}
+/** `{0}% increased damage` with the format arguments the item's code passes (unknown ones stay). */
+function formatText(text, args) {
+  if (!text || !args?.length || !text.includes('{')) return text ?? '';
+  return text.replace(/\{(\d+)(?::[^}]*)?\}/g, (m, i) => (args[+i] !== null && args[+i] !== undefined ? String(args[+i]) : m));
 }
 function printTable(head, body) {
   const widths = head.map((h, i) => Math.max(h.length, ...body.map((r) => String(r[i] ?? '').length)));

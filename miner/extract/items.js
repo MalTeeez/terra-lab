@@ -2,11 +2,12 @@
  * ModItem discovery and `SetDefaults` evaluation.
  */
 import { deCamel } from './localization.js';
-import { ITEM, Machine, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
+import { ITEM, Machine, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, refId } from './util.js';
 import { extractItemEffects } from './effects.js';
 import { analyzeShoot } from './shoot.js';
 import { projRef } from './projectiles.js';
+import { extractWingStats } from './wings.js';
 
 export const EQUIP = ['Head', 'Body', 'Legs', 'HandsOn', 'HandsOff', 'Back', 'Front', 'Shoes', 'Waist', 'Wings', 'Shield', 'Neck', 'Face', 'Balloon', 'Beard'];
 
@@ -44,6 +45,11 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
       const decl = callee.declaringType?.fullName ?? '';
       if (decl === 'Terraria.Item' && ctx.recv === ITEM) {
         rec.calls.add(callee.name);
+        if (callee.name === 'DefaultToPlaceableTile' || callee.name === 'DefaultToPlaceableWall') {
+          // inlining the helper loses the tile argument; the rest of what it sets is furniture stuff
+          if (callee.name === 'DefaultToPlaceableTile' && args[0] !== undefined) rec.fields.createTile = args[0];
+          return UNKNOWN;
+        }
         if (callee.name === 'CloneDefaults' || callee.name === 'SetDefaults') {
           const a = args[0];
           if (isNum(a)) rec.cloneOf = a;
@@ -64,6 +70,53 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
 }
 
 const num = (v) => (isNum(v) ? v : undefined);
+
+/** A format argument as text: 0.05 → "0.05", `ToPercent(0.05, "N1")` → "5.0"; unknown values keep their placeholder. */
+const fmtArg = (v) => (typeof v === 'string' ? v : isNum(v) ? String(Number.isInteger(v) ? v : Math.round(v * 100) / 100) : null);
+
+/**
+ * Format arguments of a mod item's texts: a `Tooltip` getter override doing
+ * `base.Tooltip.WithFormatArgs(DamageBoost * 100, ...)`, and `player.setBonus =
+ * this.GetLocalization("SetBonus").Format(SetBonusDR.ToPercent("N1"))` in UpdateArmorSet.
+ * @returns {{ tooltipArgs?: any[], setBonusArgs?: any[] }}
+ */
+function formatArgsOf(asm, td, { tml }) {
+  const out = {};
+  const hooks = (onSetBonus) => ({
+    onCall(callee, args, ctx) {
+      const hooked = tmlStaticHook(callee, args, ctx);
+      if (hooked !== undefined) return hooked;
+      const name = callee.name;
+      const decl = callee.declaringType?.fullName ?? '';
+      if ((name === 'get_Tooltip' || name === 'get_DisplayName') && /ModItem$|ModType$/.test(decl)) return { k: 'loc', key: name.slice(4), args: null };
+      if (name === 'GetLocalization' && typeof args[1] === 'string') return { k: 'loc', key: args[1], args: null };
+      if (name === 'GetLocalization' && typeof args[0] === 'string') return { k: 'loc', key: args[0], args: null };
+      if ((name === 'WithFormatArgs' || name === 'Format') && (ctx.recv?.k === 'loc' || args[0]?.k === 'loc')) {
+        const loc = ctx.recv?.k === 'loc' ? ctx.recv : args[0];
+        const rest = ctx.recv?.k === 'loc' ? args : args.slice(1);
+        const list = rest.length === 1 && rest[0]?.k === 'arr' ? rest[0].items : rest;
+        return { ...loc, args: list.map(fmtArg) };
+      }
+      if (name === 'ToPercent' && isNum(args[0])) { const d = /N(\d)/.exec(typeof args[1] === 'string' ? args[1] : 'N0'); return (args[0] * 100).toFixed(d ? +d[1] : 0); }
+      if (ctx.recv?.k === 'loc') return ctx.recv;
+      return undefined;
+    },
+    onStore(recv, name, value) { if (recv === PLAYER && name === 'setBonus' && value?.k === 'loc' && value.args) onSetBonus(value.args); },
+    onStaticLoad: tmlStaticLoadHook,
+  });
+  const tt = findInherited(asm, td, 'get_Tooltip');
+  if (tt) {
+    try {
+      const v = new Machine(asm, { tml, concreteType: td, budget: 5000, maxDepth: 3, ...hooks(() => {}) }).run(tt, THIS, []);
+      if (v?.k === 'loc' && v.args?.length) out.tooltipArgs = v.args;
+    } catch { /* keep going */ }
+  }
+  const uas = findInherited(asm, td, 'UpdateArmorSet');
+  if (uas) {
+    try { new Machine(asm, { tml, concreteType: td, budget: 8000, maxDepth: 3, ...hooks((args) => { out.setBonusArgs = args; }) }).run(uas, THIS, [PLAYER]); } catch { /* keep going */ }
+  }
+  return out;
+}
 
 /** Decide what kind of equipment a record describes. */
 export function slotOf(rec, equip) {
@@ -137,6 +190,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       autoReuse: f.autoReuse === 1 || undefined,
       noMelee: f.noMelee === 1 || undefined,
       useStyle: num(f.useStyle),
+      pick: num(f.pick) > 0 ? f.pick : undefined,
+      makeNPC: f.makeNPC?.k === 'type' ? refId(asm, f.makeNPC) : num(f.makeNPC) > 0 ? `v:${f.makeNPC}` : undefined,
       rarity: num(f.rare),
       rarityClass: f.rare?.k === 'type' ? simpleName(f.rare.name) : undefined,
       value: num(f.value),
@@ -155,10 +210,12 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       const ias = findInherited(asm, td, 'IsArmorSet');
       if (ias) item.set = contentRefs(asm, ias).map((full) => refId(asm, full));
     }
-    if (f.wingSlot > 0 || equip.includes('Wings')) item.wings = true;
+    if (equip.includes('Shoes') || f.shoeSlot > 0) item.boots = true;
+    if (f.wingSlot > 0 || equip.includes('Wings')) { item.wings = true; item.wingStats = extractWingStats(asm, td, { tml }) ?? undefined; }
     if (slot === 'weapon') {
       try { item.fire = analyzeShoot(asm, td, { tml, projRef: (v) => projRef(asm, v) }) ?? undefined; } catch { /* keep the item */ }
     }
+    if (isArmor || slot === 'accessory' || slot === 'weapon') Object.assign(item, formatArgsOf(asm, td, { tml }));
     if (effects && (isArmor || slot === 'accessory')) {
       const fx = extractItemEffects(asm, td, { tml });
       if (fx.equip) item.effects = fx.equip;

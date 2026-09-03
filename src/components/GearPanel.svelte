@@ -1,6 +1,8 @@
 <script>
+  import { slide } from 'svelte/transition';
   import { prefixesFor } from '../lib/stats.js';
   import { setOwned, toggleIn, ui } from '../lib/state.svelte.js';
+  import Info from './Info.svelte';
 
   let { ds, onselect } = $props();
   let query = $state('');
@@ -13,12 +15,17 @@
   const prefixName = (id) => (id ? ds.prefixById.get(id)?.name ?? id : 'no prefix');
 </script>
 
-<section class="lab-panel mx-4 mb-4 p-4">
-  <header class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-    <h2 class="text-[13px] uppercase tracking-[0.1em] text-ink2">My gear</h2>
-    <p class="m-0 text-[12px] text-dim">Mark what you own and how it is reforged. "Gear from: only what I own" solves from this list; pins force an item into the loadout, exclusions keep it out.</p>
+<section class="lab-panel mx-5 mb-4 overflow-hidden" transition:slide={{ duration: 180 }}>
+  <header class="lab-head">
+    <h2>My gear</h2>
+    <Info label="What this list does" w={360}>
+      <p>Mark what you actually own and how it is reforged.</p>
+      <p>Set <em>Options → Gear pool → only what I own</em> to solve the loadout from just this list.</p>
+      <p><em>Pin</em> forces an item into every loadout; <em>exclude</em> keeps it out for good.</p>
+    </Info>
+    <span class="lab-meta"><span class="num font-semibold text-ink">{owned.length}</span> owned{#if ui.pinned.length} · <span class="num">{ui.pinned.length}</span> pinned{/if}{#if ui.excluded.length} · <span class="num">{ui.excluded.length}</span> excluded{/if}</span>
   </header>
-  <div class="grid gap-4 md:grid-cols-[1fr_1.4fr]">
+  <div class="grid gap-4 p-4 md:grid-cols-[1fr_1.4fr]">
     <div>
       <span class="lab-label mb-1">Add an item</span>
       <input class="lab-input" placeholder="Type a name…" bind:value={query} />
@@ -34,9 +41,9 @@
       {/if}
     </div>
     <div>
-      <span class="lab-label mb-1">Owned ({owned.length})</span>
+      <span class="lab-label mb-1">Owned</span>
       {#if !owned.length}
-        <p class="m-0 text-[12.5px] text-dim">Nothing yet. Add items here or tick "I own this" on any item card.</p>
+        <p class="m-0 text-[12.5px] text-dim">Nothing yet. Add items here, or tick “I own this” on any item card.</p>
       {:else}
         <table class="lab-table">
           <thead><tr><th>Item</th><th>Reforge</th><th>Solver</th><th></th></tr></thead>
@@ -47,7 +54,7 @@
                 <td><button class="cursor-pointer text-left font-medium hover:text-green" onclick={() => onselect(it.id)}>{it.name}</button><div class="text-[11px] text-dim">{it.modName} · {it.slot}</div></td>
                 <td>
                   {#if options.length}
-                    <select class="lab-input w-auto py-0.5" value={ui.owned[it.id]?.prefix ?? ''} onchange={(e) => setOwned(it.id, true, e.currentTarget.value || null)}>
+                    <select class="lab-input w-auto max-w-[160px] py-0.5" value={ui.owned[it.id]?.prefix ?? ''} onchange={(e) => setOwned(it.id, true, e.currentTarget.value || null)}>
                       <option value="">no prefix</option>
                       {#each options as p}<option value={p.id}>{p.name}{p.mod !== 'v' ? ` (${p.mod})` : ''}</option>{/each}
                     </select>

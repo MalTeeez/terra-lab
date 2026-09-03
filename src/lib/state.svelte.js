@@ -8,12 +8,14 @@ const defaults = {
   mode: 'loadout', // 'loadout' | 'timeline' | 'items'
   excludedMods: [],
   slots: 6,
+  accRows: 3,         // rows of accessories visible before the list scrolls
   requireSet: false,
   unknownStage: false,
   // modifiers
   conds: [],          // active difficulty / mode flags (from dataset.conditions)
+  seeds: [],          // special world seeds that are on (from dataset.seeds) — a normal world by default
   uncertain: false,   // apply runtime modifiers whose guard could not be resolved
-  reforge: 'best',    // 'best' | 'none' — assumption for gear without an explicit prefix
+  reforge: 'best',    // 'best' | 'none' | prefix id — assumption for gear without an explicit prefix
   // gear
   source: 'all',      // 'all' | 'owned'
   owned: {},          // id → { prefix: prefixId | null }
@@ -23,6 +25,8 @@ const defaults = {
   samples: [],        // { id, damage, crit, prefix, bonusDamage, bonusCrit }
   calibrate: true,
   panel: null,        // null | 'gear' | 'calibrate'
+  // item browser: the filter column (null ranges follow the view)
+  browse: { slots: [], classes: [], mods: [], stage: null, score: null, features: [], sources: [], sort: 'value' },
   // item table
   query: '',
   slotFilter: 'all',

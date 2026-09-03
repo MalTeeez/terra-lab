@@ -1,0 +1,3 @@
+{
+  "$comment": "Manual sources: item id → { after: <boss key or 'start'>, via: <where it comes from> } (or just the boss key). Applied like overrides; the item card shows 'via'. Fill this from data/unknown-sources.md (node tools/unknown-sources.mjs). Vanilla items by ItemID name (v:Muramasa) or id (v:155), mod items by Mod:Class."
+}

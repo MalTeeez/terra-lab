@@ -40,6 +40,7 @@ export function playerHooks(emit) {
       if (recv === PLAYER) {
         if (name === 'armor') return { k: 'slots' };
         if (name === 'statDefense') return { k: 'stat', kind: 'defense', cls: 'all' };
+        if (name === 'velocity') return { k: 'stat', kind: 'velocity', cls: 'all' }; // velocity.X *= k → drag
         if (name === 'head') return { k: 'key', slot: 0 };
         if (name === 'body') return { k: 'key', slot: 1 };
         if (name === 'legs') return { k: 'key', slot: 2 };
@@ -52,11 +53,14 @@ export function playerHooks(emit) {
       if (recv?.k === 'obj' && recv.name === 'armorSlot' && name === 'type') return { k: 'key', slot: recv.slot };
       if (recv?.k === 'obj' && recv.name === 'itemArg' && name === 'type') return { k: 'key', slot: 0 };
       if (recv?.k === 'obj' && (recv.name === 'itemArg' || recv.name === 'armorSlot')) return recv.props[name] ?? UNKNOWN;
+      if (recv?.k === 'stat' && recv.kind === 'velocity' && name === 'X') return { k: 'stat', kind: 'velocityX', cls: 'all' };
+      if (recv?.k === 'stat' && recv.kind === 'velocityX' && name === '@ind') return 1; // current value: a multiplier survives as itself
       if (recv?.k === 'stat') return 0;
       return undefined;
     },
     onStore(recv, name, value, ctx) {
       if (recv?.k === 'stat') {
+        if (recv.kind === 'velocityX') { if (name === '@ind' && isNum(value) && value > 0 && value < 1) emit({ stat: 'velocityDrag', value }, ctx); return; }
         if (name === '@ind' && isNum(value) && value !== 0) emit({ stat: recv.kind, cls: recv.cls, value }, ctx);
         else if ((name === 'Base' || name === 'Flat') && isNum(value) && value !== 0) emit({ stat: `${recv.kind}Flat`, cls: recv.cls, value }, ctx);
         else if (name === 'Additive' && isNum(value) && value !== 0) emit({ stat: recv.kind, cls: recv.cls, value: value - 1 }, ctx);
@@ -85,6 +89,12 @@ export function playerHooks(emit) {
       if (hooked !== undefined) return hooked;
       const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
       const name = callee.name;
+      // players reached from Main in projectile / buff code: Main.LocalPlayer, foreach over Main.ActivePlayers
+      if (/Terraria\.Main$/.test(decl) && (name === 'get_LocalPlayer')) return PLAYER;
+      if (/Terraria\.Main$/.test(decl) && name === 'get_ActivePlayers') return PLAYERS;
+      if (ctx.recv === PLAYERS && name === 'GetEnumerator') return PLAYERS;
+      if (ctx.recv === PLAYERS && name === 'get_Current') return PLAYER;
+      if (ctx.recv === PLAYERS) return UNKNOWN;
       if (ctx.recv === PLAYER && name in STAT_GETTERS) {
         const kind = STAT_GETTERS[name];
         if (!kind) return UNKNOWN;
@@ -106,9 +116,12 @@ export function playerHooks(emit) {
       // Modded stat accessors: player.GetModPlayer<X>().something(...) → unknown
       return undefined;
     },
-    onStaticLoad: tmlStaticLoadHook,
+    onStaticLoad: (f) => (f.name === 'player' && /Terraria\.Main$/.test(f.declaringType?.fullName ?? '') ? PLAYERS : tmlStaticLoadHook(f)),
   };
 }
+
+/** `Main.player` / `Main.ActivePlayers`: any element is the player. */
+const PLAYERS = { k: 'arr', tag: 'players', items: [] };
 
 /** Fold a delta list into a compact effects object. */
 export function normalizeEffects(deltas) {
@@ -121,6 +134,7 @@ export function normalizeEffects(deltas) {
     if (d.stat.startsWith('modflag:')) { if (!seenFlags.has(d.stat)) { seenFlags.add(d.stat); out.flags.push(d.stat.slice(8)); } continue; }
     if (d.stat.startsWith('mod:')) { mod[d.stat.slice(4)] = (mod[d.stat.slice(4)] ?? 0) + d.value; continue; }
     if (d.stat.startsWith('player:')) { mod[d.stat.slice(7)] = (mod[d.stat.slice(7)] ?? 0) + d.value; continue; }
+    if (d.stat === 'velocityDrag') { out.velocityDrag = round((out.velocityDrag ?? 1) * d.value); continue; }
     if (d.cls !== undefined) {
       out[d.stat] ??= {};
       out[d.stat][d.cls] = round((out[d.stat][d.cls] ?? 0) + d.value);

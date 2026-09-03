@@ -73,7 +73,28 @@ const TERMINATORS = new Set(['ret', 'br', 'br.s', 'throw', 'rethrow', 'leave', '
 
 /** Static fields / getters whose value depends on the world's difficulty or mode. */
 export const FLAG_NAMES = /^(expertMode|masterMode|revenge|death|malice|bossRushActive|EternityMode|MasochistMode|InfernumActive|InfernumMode|IsInfernum|CanUseCustomAIs)$/i;
-const flagKey = (n) => n.replace(/^(get_)?/, '').replace(/Mode$|Active$/, '').toLowerCase();
+/** Difficulty flags keep their short lowercase form (expertMode -> expert); progression flags keep their name. */
+const flagKey = (n) => { const b = n.replace(/^get_/, ''); return FLAG_NAMES.test(b) ? b.replace(/Mode$|Active$/, '').toLowerCase() : b; };
+/** `x` <-> `!x` (region tags: a block that runs when the flag is false). */
+export const negTag = (t) => (t.startsWith('!') ? t.slice(1) : `!${t}`);
+/** Tags that hold plainly (no `!x` / `any:x`). */
+export const plainTags = (tags) => (tags ?? []).filter((t) => !/^!|^any:/.test(t));
+
+const ELEM_SIZE = { 'System.Byte': 1, 'System.SByte': 1, 'System.Boolean': 1, 'System.Int16': 2, 'System.UInt16': 2, 'System.Char': 2, 'System.Int32': 4, 'System.UInt32': 4, 'System.Single': 4, 'System.Int64': 8, 'System.UInt64': 8, 'System.Double': 8 };
+/** Array literal blob (`<PrivateImplementationDetails>` field) into an `arr` value. */
+function fillArray(owner, arr, token) {
+  const size = ELEM_SIZE[arr.elem] ?? 4;
+  if (!size || !arr.items.length || !owner.fieldData) return;
+  let buf;
+  try { buf = owner.fieldData(token, arr.items.length * size); } catch { return; }
+  if (!buf || buf.length < arr.items.length * size) return;
+  const e = arr.elem;
+  const rd = (o) => size === 1 ? (e === 'System.SByte' ? buf.readInt8(o) : buf.readUInt8(o))
+    : size === 2 ? (e === 'System.Int16' ? buf.readInt16LE(o) : buf.readUInt16LE(o))
+    : size === 4 ? (e === 'System.Single' ? buf.readFloatLE(o) : e === 'System.UInt32' ? buf.readUInt32LE(o) : buf.readInt32LE(o))
+    : e === 'System.Double' ? buf.readDoubleLE(o) : Number(buf.readBigInt64LE(o));
+  for (let i = 0; i < arr.items.length; i++) arr.items[i] = rd(i * size);
+}
 
 const sameKey = (a, b) => a.slot === b.slot && a.value === b.value && a.lo === b.lo && a.hi === b.hi && JSON.stringify(a.match) === JSON.stringify(b.match);
 /** Keys of one slot come in kinds (an id, a class name, a mod name …); a new key replaces only its own kind. */
@@ -107,6 +128,13 @@ export class Machine {
     this.onLoad = opts.onLoad ?? (() => undefined);
     this.onCall = opts.onCall ?? (() => undefined);
     this.onNew = opts.onNew ?? (() => undefined);
+    this.onArrayStore = opts.onArrayStore ?? (() => undefined); // stores into tagged arrays (static sets like TileID.Sets.Ore)
+    this.onCast = opts.onCast ?? null; // (type, value, ctx) for isinst: return a value to replace the result (a flag tags the branch)
+    this.onStoreLocal = opts.onStoreLocal ?? null; // linear mode: (index, value, ctx) for every stloc
+    this.noDead = opts.noDead ?? false; // linear mode: a branch with a known outcome never makes the skipped block dead (gate walks)
+    this.phi = opts.phi ?? false; // linear mode: different constants meeting at a join become a phi value with each arm's flags
+    this.onStoreArg = opts.onStoreArg ?? null; // (index, value, ctx) for every starg
+    this.onStaticStore = opts.onStaticStore ?? null; // (field, value, ctx) for every stsfld
     this.onStaticLoad = opts.onStaticLoad ?? (() => undefined);
     this.onReturn = opts.onReturn ?? (() => {});
     /** linear mode: every backward conditional jump (a loop) with the two compared values */
@@ -149,6 +177,7 @@ export class Machine {
     const byOffset = new Map(ins.map((x, i) => [x.offset, i]));
     const stack = [];
     const locals = [];
+    const localMaybe = new Map(); // phi mode: locals whose last store sat under a condition → the flags of that store
     const argv = sig.hasThis ? [thisVal, ...args] : [...args];
     const pop = () => (stack.length ? stack.pop() : UNKNOWN);
     const push = (v) => stack.push(v === undefined ? UNKNOWN : v);
@@ -176,16 +205,54 @@ export class Machine {
     const groupsAt = caseMap ? new Map() : null;
     const noteJump = (target, withGroups = false, groups = this.caseGroups) => {
       if (!stackAt) return;
-      if (!stackAt.has(target)) stackAt.set(target, [...stack]);
+      // a flag carried to a join point keeps the flags guarding the jump: `a ? b : false` is a && b
+      const also = plainTags(this.condTags);
+      if (!stackAt.has(target)) { stackAt.set(target, stack.map((v) => (v?.k === 'flag' && also.length ? { ...v, also: [...new Set([...(v.also ?? []), ...also])] } : v))); stackTagsAt.set(target, [...this.condTags]); }
+      if (!regionsAt.has(target)) regionsAt.set(target, regions.filter((r) => !r.dead && r.end > target));
       if (withGroups && !groupsAt.has(target)) groupsAt.set(target, groups.map((g) => [...g]));
     };
     // linear mode: forward conditional jumps open a region whose stores are "conditional"
-    const regions = []; // { end, tag, groups } — groups = the key context the if statement sits in
-    const openRegion = (target, tag = null) => { if (caseMap && target > 0) regions.push({ end: target, tag, groups: this.caseGroups.map((g) => [...g]) }); };
+    const regions = []; // { end, tag, groups } — groups = the key context the if statement sits in; els = an else-branch, not a condition of the if
+    const openRegion = (target, tags = [], els = false) => { if (caseMap && target > 0) regions.push({ end: target, tags: tags.filter(Boolean), groups: this.caseGroups.map((g) => [...g]), at: x0.offset, els }); };
+    // ...and the regions a jump target sits in: after an unconditional jump the next instruction
+    // is only reachable by jumping there, so its context is the jump source's (first jump wins)
+    const regionsAt = caseMap ? new Map() : null;
+    const stackTagsAt = caseMap ? new Map() : null; // the flags in force at the jump, for `phi` values
+    // `A || B` compiles to `A; brtrue BODY; B; brfalse END; BODY:` - the `!A` region ends exactly
+    // where the B region starts, so BODY is guarded by any of the alternatives (an untagged
+    // region ending there is an alternative without a flag: `any:*`, no requirement)
+    const orAlternatives = (start) => regions.filter((r) => !r.dead && r.end === start && r.tags.length <= 1 && !r.tags[0]?.startsWith('any:')).map((r) => (r.tags.length ? `any:${negTag(r.tags[0])}` : 'any:*'));
+    const flagRegion = (target, flagVal, negate) => {
+      if (target <= 0) return;
+      const neg = flagVal?.k === 'flag' ? negate !== !!flagVal.neg : false;
+      const tag = flagVal?.k === 'flag' ? (neg ? '!' : '') + flagKey(flagVal.name) : null;
+      const alts = tag ? orAlternatives(ins[pc + 1]?.offset ?? -1) : [];
+      // a flag that stands for `a && b` (see noteJump): true needs all, false is any of them false
+      const also = flagVal?.also ?? [];
+      const own = neg ? [tag, ...also.map((t) => `any:!${t}`)] : [tag, ...also];
+      openRegion(target, alts.length ? [...alts, `any:${tag}`] : own);
+    };
     // linear mode: a branch with a known outcome does not jump (that would skip the other cases of
     // a keyed method); the block it skips is dead while the key context stays the same.
+    /**
+     * `if (c) { X; br/ret END } ELSE:` — everything from here is the condition's negation. Every
+     * region ending where the if-block ends is one of its `&&` conditions (any of them false gets
+     * here); the else cannot outlive the region enclosing the if, so it is clamped to `limit` and
+     * to the enclosing ends. An else-branch clamped to the same end is not a condition of this if:
+     * `if (!hardMode) { if (n < 2) … else { …; br END } }` must still say `hardMode` here.
+     * Only fires when the innermost region closes right after this instruction; a br out of a
+     * block nested in a larger region is a plain jump.
+     */
+    const openElse = (limit) => {
+      const inner = regions.length ? regions[regions.length - 1] : null;
+      if (!inner || inner.end !== ins[pc + 1]?.offset) return;
+      const same = regions.filter((r) => !r.dead && !r.els && r.end === inner.end);
+      const tags = !same.length || same.some((r) => !r.tags.length) ? [] : same.length === 1 ? same[0].tags.map(negTag) : same.flatMap((r) => (r.tags.length === 1 ? [`any:${negTag(r.tags[0])}`] : []));
+      const outer = regions.filter((r) => r.end > inner.end).map((r) => r.end);
+      openRegion(Math.min(limit, ...outer), tags, true);
+    };
     const groupsKey = () => JSON.stringify(this.caseGroups);
-    const openDead = (target) => { if (caseMap && target > x0.offset) regions.push({ end: target, tag: null, dead: true, key: groupsKey(), groups: [] }); };
+    const openDead = (target) => { if (caseMap && target > x0.offset) regions.push({ end: target, tags: [], dead: true, key: groupsKey(), groups: [], at: x0.offset }); };
     let x0 = { offset: 0 };
     // `if (key == N) { … }` compiles to `bne.un END`: at END the key condition is over.
     const releaseAt = caseMap ? new Map() : null;
@@ -210,11 +277,12 @@ export class Machine {
       const op = x.op;
 
       x0 = x;
+      const closedTags = []; // tags of the regions ending right here: the arm a fall-through value came from
       if (caseMap) {
-        for (let i = regions.length - 1; i >= 0; i--) if (regions[i].end <= x.offset || (regions[i].dead && regions[i].key !== groupsKey())) regions.splice(i, 1);
+        for (let i = regions.length - 1; i >= 0; i--) if (regions[i].end <= x.offset || (regions[i].dead && regions[i].key !== groupsKey())) { if (regions[i].end === x.offset) closedTags.push(...(regions[i].tags ?? [])); regions.splice(i, 1); }
         this.dead = regions.some((r) => r.dead);
         this.conditional = regions.some((r) => !r.dead);
-        this.condTags = regions.map((r) => r.tag).filter(Boolean);
+        this.condTags = regions.flatMap((r) => r.tags ?? []);
         const prev = pc > 0 ? ins[pc - 1].op : 'ret';
         const released = releaseAt.get(x.offset);
         if (released && !TERMINATORS.has(prev)) {
@@ -227,6 +295,40 @@ export class Machine {
           const saved = stackAt.get(x.offset);
           stack.length = 0;
           if (saved) stack.push(...saved);
+          // regions too: what the jumps here carried, plus what the terminator itself opened (an else-branch)
+          const prevOff = pc > 0 ? ins[pc - 1].offset : -1;
+          const keep = regions.filter((r) => r.at === prevOff || r.dead);
+          regions.length = 0;
+          for (const r of regionsAt.get(x.offset) ?? []) if (!regions.includes(r)) regions.push(r);
+          for (const r of keep) if (!regions.includes(r)) regions.push(r);
+          this.dead = regions.some((r) => r.dead);
+          this.conditional = regions.some((r) => !r.dead);
+          this.condTags = regions.flatMap((r) => r.tags ?? []);
+        }
+        if (!TERMINATORS.has(prev) && regionsAt.has(x.offset)) {
+          // a join reached by fall-through and by a jump: a region the jump did not pass through
+          // (`(y < surface || (remix && deep)) && eclipse`: the remix check sits between the jump and
+          // here) cannot gate what follows
+          const via = new Set(regionsAt.get(x.offset));
+          for (let i = regions.length - 1; i >= 0; i--) if (!regions[i].dead && !via.has(regions[i])) regions.splice(i, 1);
+          this.conditional = regions.some((r) => !r.dead);
+          this.condTags = regions.flatMap((r) => r.tags ?? []);
+        }
+        if (!TERMINATORS.has(prev) && stackAt.has(x.offset)) {
+          // join point reached by fall-through too: a flag from one path and 0 from the other is the flag;
+          // two different constants (`hardMode ? 3981 : 2336`) become a `phi` carrying each arm's flags
+          const saved = stackAt.get(x.offset);
+          const savedTags = stackTagsAt.get(x.offset) ?? [];
+          for (let i = 0; i < Math.min(saved.length, stack.length); i++) {
+            const a = stack[stack.length - 1 - i]; const b = saved[saved.length - 1 - i];
+            if (a?.k === 'flag' && (b === 0 || b === null)) continue;
+            if (b?.k === 'flag' && (a === 0 || a === null)) { stack[stack.length - 1 - i] = b; continue; }
+            const phiable = (v) => isNum(v) || v?.k === 'oneof' || v?.k === 'phi' || v?.k === 'type';
+            if (this.phi && a !== b && phiable(a) && phiable(b) && !(a?.k === 'type' && b?.k === 'type' && a.id === b.id && a.name === b.name)) {
+              const alts = [...(a?.k === 'phi' ? a.alts : [{ v: a, tags: [...closedTags] }]), ...(b?.k === 'phi' ? b.alts : [{ v: b, tags: [...savedTags] }])];
+              stack[stack.length - 1 - i] = { k: 'phi', alts };
+            }
+          }
         }
         const mapped = caseMap.get(x.offset);
         if (mapped) setGroups(TERMINATORS.has(prev) ? [...mapped] : [...this.caseGroups, ...mapped]);
@@ -261,23 +363,43 @@ export class Machine {
             continue;
           }
           argv[x.operand] = val;
+          if (this.onStoreArg && !this.dead) this.onStoreArg(x.operand, val, ctx());
           continue;
         }
-        case 'ldloc.0': case 'ldloc.1': case 'ldloc.2': case 'ldloc.3': push(locals[+op.slice(6)]); continue;
-        case 'ldloc.s': case 'ldloc': push(locals[x.operand]); continue;
+        case 'ldloc.0': case 'ldloc.1': case 'ldloc.2': case 'ldloc.3': case 'ldloc.s': case 'ldloc': {
+          const i = op === 'ldloc.s' || op === 'ldloc' ? x.operand : +op.slice(6);
+          const v = locals[i];
+          // linear mode: a number stored under a condition is not known on every path (`flag = false;
+          // if (x) flag = true; if (flag) ...` must not make the block dead)
+          push(this.phi && localMaybe.has(i) && (isNum(v) || v?.k === 'type' || v?.k === 'oneof') ? { k: 'maybe', value: v, local: i, tags: localMaybe.get(i) } : v);
+          continue;
+        }
         case 'ldloca.s': case 'ldloca': {
           const i = x.operand;
           if (locals[i] === undefined || locals[i] === UNKNOWN) locals[i] = { k: 'obj', name: 'local', props: {} };
           push({ k: 'ref', get: () => locals[i], set: (v) => { locals[i] = v; } });
           continue;
         }
-        case 'stloc.0': case 'stloc.1': case 'stloc.2': case 'stloc.3': locals[+op.slice(6)] = pop(); continue;
-        case 'stloc.s': case 'stloc': locals[x.operand] = pop(); continue;
+        case 'stloc.0': case 'stloc.1': case 'stloc.2': case 'stloc.3': case 'stloc.s': case 'stloc': {
+          const i = op === 'stloc.s' || op === 'stloc' ? x.operand : +op.slice(6);
+          const val = pop();
+          // `v = flagA; if (!flagB) v = false;` — v stands for flagA && flagB (the dungeon crate is
+          // ZoneDungeon && downedBoss3). Only the innermost region counts; outer flags do not apply.
+          const inner = regions.length ? regions[regions.length - 1] : null;
+          const negs = val === 0 && locals[i]?.k === 'flag' && !locals[i].neg && inner && !inner.dead && inner.tags.length && inner.tags.every((t) => t.startsWith('!')) ? inner.tags.map((t) => t.slice(1)) : null;
+          if (negs) { locals[i] = { ...locals[i], also: [...new Set([...(locals[i].also ?? []), ...negs])] }; localMaybe.delete(i); continue; }
+          locals[i] = val;
+          if (this.phi) { if (this.conditional) localMaybe.set(i, [...this.condTags]); else localMaybe.delete(i); }
+          if (this.onStoreLocal && !this.dead) this.onStoreLocal(i, val, ctx());
+          continue;
+        }
         case 'dup': { const t = pop(); push(t); push(t); continue; }
         case 'pop': pop(); continue;
         case 'ret':
           if (this.linear) {
             if (sig.ret.et !== 0x01) { const rv = pop(); if (!this.dead) this.onReturn(rv, ctx()); }
+            // `if (c) { … return; } ELSE:` — an if-block can end in a return just as well as a br
+            openElse(ins[ins.length - 1].offset + 1);
             stack.length = 0;
             continue;
           }
@@ -290,7 +412,12 @@ export class Machine {
             // inside an if/else the join point keeps the keys the if statement had
             const inner = regions.length ? regions[regions.length - 1] : null;
             noteJump(x.operand, !!inner, inner?.groups ?? this.caseGroups);
-            if (inner && x.operand > x.offset) openRegion(x.operand, inner.tag); // else-branch of an if
+            // else-branch of an if: the condition is false there. Every region ending where the
+            // if-block ends is one of its `&&` conditions (any of them false gets here); the else
+            // cannot outlive the region enclosing the if.
+            // (only when the innermost region closes right after the br: `if (c) { X; br END } ELSE:`;
+            // a br out of a block nested in a larger region is a plain jump)
+            if (x.operand > x.offset) openElse(x.operand);
             stack.length = 0;
             continue;
           }
@@ -318,7 +445,10 @@ export class Machine {
           if (a?.k === 'moditem') {
             const t = owner.resolve(x.operand);
             push({ k: 'keycmp', slot: a.slot, match: { is: t?.fullName ?? t?.name ?? '?' } });
-          } else push(a);
+          } else {
+            const h = this.onCast ? this.onCast(owner.resolve(x.operand), a, ctx()) : undefined;
+            push(h !== undefined ? h : a);
+          }
           continue;
         }
         case 'box': case 'unbox': case 'unbox.any': case 'castclass': case 'mkrefany': case 'refanyval': continue;
@@ -328,7 +458,8 @@ export class Machine {
         case 'stobj': { const v = pop(); const r = pop(); if (r?.k === 'ref') r.set(v); continue; }
         case 'cpobj': pop(); pop(); continue;
         case 'localloc': pop(); push(UNKNOWN); continue;
-        case 'sizeof': case 'arglist': case 'refanytype': case 'ldftn': case 'ldvirtftn': push(UNKNOWN); continue;
+        case 'sizeof': case 'arglist': case 'refanytype': case 'ldvirtftn': push(UNKNOWN); continue;
+        case 'ldftn': { const m = owner.resolve(x.operand); push(m?.def ? { k: 'fn', method: m.def, asm: owner } : UNKNOWN); continue; }
         case 'ckfinite': continue;
         case 'calli': pop(); push(UNKNOWN); continue;
         case 'cpblk': case 'initblk': pop(); pop(); pop(); continue;
@@ -343,7 +474,13 @@ export class Machine {
         const b = pop(); const a = pop();
         if (isNum(a) && isNum(b)) push(BINOPS[op](a, b));
         else if (op === 'sub' && a?.k === 'key' && isNum(b)) push({ ...a, offset: (a.offset ?? 0) + b });
+        // `494 + Main.rand.Next(2)` (a hook returns `randn` for the roll): one of a small range
+        else if (op === 'add' && ((isNum(a) && b?.k === 'randn') || (isNum(b) && a?.k === 'randn'))) { const base = isNum(a) ? a : b; const n = (isNum(a) ? b : a).n; push({ k: 'oneof', items: Array.from({ length: n }, (_, i) => base + i) }); }
         else if (op === 'add' && a?.k === 'stat' && isNum(b)) push({ ...a, delta: b });
+        // `unknown && flag` (not short-circuited): true still needs the flag; false says nothing,
+        // and a `!flag` region is no requirement anyway
+        else if (op === 'and' && a?.k === 'flag' && b === UNKNOWN) push(a);
+        else if (op === 'and' && b?.k === 'flag' && a === UNKNOWN) push(b);
         // `item.defense += 15` / `item.damage = (int)(item.damage * 1.2f)` on a keyed item
         else if ((a?.k === 'adj' || (a?.k === 'prop' && a.path?.length === 1)) && isNum(b) && /^(add|sub|mul|div)$/.test(op)) {
           const base = a.k === 'adj' ? a : { k: 'adj', slot: a.slot, field: a.path[0], add: 0, mul: 1 };
@@ -364,7 +501,11 @@ export class Machine {
           push({ k: 'keycmp', slot: a.slot, match: null, value: isNum(b) ? b + (a.offset ?? 0) : b.id ?? b.name });
         } else if (op === 'ceq' && b?.k === 'key' && (isNum(a) || a?.k === 'type')) {
           push({ k: 'keycmp', slot: b.slot, match: null, value: isNum(a) ? a + (b.offset ?? 0) : a.id ?? a.name });
-        } else if (op === 'ceq' && (a?.k === 'flag' || b?.k === 'flag')) push(a?.k === 'flag' ? a : b);
+        } else if (op === 'ceq' && (a?.k === 'flag' || b?.k === 'flag')) {
+          const fv = a?.k === 'flag' ? a : b;
+          const n = fv === a ? b : a;
+          push(n === 0 ? { ...fv, neg: !fv.neg } : fv); // `flag == false` negates
+        }
         else push(UNKNOWN);
         continue;
       }
@@ -374,13 +515,19 @@ export class Machine {
         if (this.onBackJump && x.operand < x.offset) this.onBackJump(x, a, b, base, ctx());
         if (isNum(a) && isNum(b)) {
           // known outcome: take exactly one path (linear mode: the skipped block is dead instead)
-          if (BR_CMP[base](a, b) && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear && !process.env.TL_NO_DEAD) openDead(x.operand); else jumpTo(x.operand); }
+          if (BR_CMP[base](a, b) && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear) { if (!this.noDead && !process.env.TL_NO_DEAD) openDead(x.operand); } else jumpTo(x.operand); }
           continue;
         }
         noteJump(x.operand, true);
         if (caseMap) {
           const key = a?.k === 'key' ? a : b?.k === 'key' ? b : null;
-          if (!key && x.operand > x.offset) openRegion(x.operand, a?.k === 'flag' ? flagKey(a.name) : b?.k === 'flag' ? flagKey(b.name) : null);
+          if (!key && x.operand > x.offset) {
+            const fv = a?.k === 'flag' ? a : b?.k === 'flag' ? b : null;
+            const n = fv === a ? b : a;
+            // `flag == 0` / `flag != 1`: the fall-through runs when the flag is false
+            const fallTrue = !isNum(n) ? true : NE_BRANCH.test(op) ? n !== 0 : n === 0;
+            flagRegion(x.operand, fv, !fallTrue);
+          }
           const other = key === a ? b : a;
           const val = isNum(other) ? other + (key?.offset ?? 0) : other?.k === 'type' ? other.id ?? other.name : null;
           if (key && val !== null) {
@@ -400,6 +547,11 @@ export class Machine {
                 return [...others(g, k), bnd];
               }));
               if (x.operand > x.offset) releaseKey(x.operand, { slot: k.slot });
+              // `(uint)(type - 586) <= 1` is `type in [586, 587]`: the jump target gets that range
+              if (op.endsWith('.un') && key.offset !== undefined && (base === 'ble' || base === 'blt') && keyIsA && x.operand > x.offset) {
+                const hi = base === 'ble' ? val : val - 1;
+                for (const g of groups) addGroup(x.operand, [...others(g, k), { slot: k.slot, lo: key.offset, hi }]);
+              }
             }
           }
         }
@@ -410,7 +562,7 @@ export class Machine {
         const isTrue = op.startsWith('brtrue');
         if (isNum(c) || c === null) {
           const truthy = isNum(c) ? c !== 0 : false;
-          if (truthy === isTrue && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear && !process.env.TL_NO_DEAD) openDead(x.operand); else jumpTo(x.operand); }
+          if (truthy === isTrue && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear) { if (!this.noDead && !process.env.TL_NO_DEAD) openDead(x.operand); } else jumpTo(x.operand); }
           continue;
         }
         noteJump(x.operand, true);
@@ -424,10 +576,15 @@ export class Machine {
             const k = { slot: c.slot, match: { prop: c.path[0], value: !isTrue } };
             applyKeyBranch(k, x.operand, false);
           } else if (x.operand > x.offset) {
-            openRegion(x.operand, c?.k === 'flag' ? flagKey(c.name) : null);
+            flagRegion(x.operand, c, isTrue); // brtrue skips the block when the flag is true: the block is its negation
           }
         }
         continue;
+      }
+      if (op.startsWith('ldind.') && stack[stack.length - 1]?.k === 'stat') {
+        // a hook may know the current value of a stat ref (velocity.X *= k keeps k)
+        const v = this.onLoad(stack[stack.length - 1], '@ind', ctx());
+        if (v !== undefined) { pop(); push(v); continue; }
       }
       if (op.startsWith('ldind.')) {
         const ref = pop();
@@ -442,17 +599,27 @@ export class Machine {
       }
       if (op === 'newarr') {
         const n = pop();
-        push({ k: 'arr', items: isNum(n) ? new Array(n).fill(UNKNOWN) : [] });
+        let elem;
+        try { elem = owner.resolve(x.operand)?.fullName; } catch { /* unknown element type */ }
+        push({ k: 'arr', items: isNum(n) ? new Array(n).fill(UNKNOWN) : [], elem });
         continue;
       }
       if (op.startsWith('stelem')) {
         const val = pop(); const idx = pop(); const arr = pop();
         if (arr?.k === 'arr' && isNum(idx)) arr.items[idx] = val;
+        if (arr?.k === 'arr' && arr.tag && !this.dead) this.onArrayStore(arr, idx, val, ctx());
         continue;
       }
       if (op === 'ldelema' || op.startsWith('ldelem')) {
         const idx = pop(); const arr = pop();
+        // the address of an element: a struct built in place (`stats[i] = new WingStats(…)` compiles to
+        // ldelema + call .ctor) lands in the array, and a tagged array hears about it
+        if (op === 'ldelema' && arr?.k === 'arr' && (isNum(idx) || arr.tag)) {
+          push({ k: 'ref', get: () => (isNum(idx) ? arr.items[idx] : undefined), set: (v) => { if (isNum(idx)) arr.items[idx] = v; if (arr.tag && !this.dead) this.onArrayStore(arr, idx, v, ctx()); } });
+          continue;
+        }
         if (arr?.k === 'arr' && isNum(idx)) push(arr.items[idx]);
+        else if (arr?.k === 'arr' && arr.tag === 'players') push(PLAYER); // Main.player[i]
         else if (arr?.k === 'slots' && isNum(idx)) push({ k: 'obj', name: 'armorSlot', slot: idx, props: {} });
         else push(UNKNOWN);
         continue;
@@ -464,9 +631,10 @@ export class Machine {
       }
       if (op === 'stsfld') {
         const val = pop();
-        if (this._staticCapture) {
+        if (this._staticCapture || this.onStaticStore) {
           const f = owner.resolve(x.operand);
-          if (f) this._staticCapture.set(f.name, val);
+          if (f && this._staticCapture) this._staticCapture.set(f.name, val);
+          if (f && this.onStaticStore && !this.dead) this.onStaticStore(f, val, ctx());
         }
         continue;
       }
@@ -474,7 +642,7 @@ export class Machine {
         const f = owner.resolve(x.operand);
         let recv = pop();
         if (recv?.k === 'ref') recv = recv.get();
-        push(this.loadField(recv, f, ctx()));
+        push(this.loadField(recv, f, { ...ctx(), field: f }));
         continue;
       }
       if (op === 'stfld') {
@@ -488,7 +656,11 @@ export class Machine {
         const callee = owner.resolve(x.operand);
         const n = callee?.sig?.params.length ?? 0;
         const args = [];
+        // delegate construction: new Func<…>(target, ldftn method) keeps the method for gate scans
+        // (the ctor of an external generic delegate often has no readable signature: peek instead)
+        if (n === 0 && stack[stack.length - 1]?.k === 'fn') { const f = pop(); const target = pop(); push({ k: 'delegate', method: f.method, asm: f.asm, target }); continue; }
         for (let i = 0; i < n; i++) args.unshift(pop());
+        if (n === 2 && args[1]?.k === 'fn') { push({ k: 'delegate', method: args[1].method, asm: args[1].asm, target: args[0] }); continue; }
         const made = callee ? this.onNew(callee, args, ctx()) : undefined;
         push(made !== undefined ? made : { k: 'obj', name: callee?.declaringType?.fullName ?? callee?.declaringType?.name ?? '?', args, props: {} });
         continue;
@@ -500,6 +672,8 @@ export class Machine {
         const args = [];
         for (let i = 0; i < n; i++) args.unshift(pop());
         let recv = callee.sig.hasThis ? pop() : undefined;
+        // `new short[] { ... }` compiles to newarr + RuntimeHelpers.InitializeArray(arr, ldtoken blob)
+        if (callee.name === 'InitializeArray' && args[0]?.k === 'arr' && args[1]?.k === 'token') { fillArray(owner, args[0], args[1].token); continue; }
         if (recv?.k === 'ref') {
           if (recv.get() === undefined || recv.get() === UNKNOWN) recv.set({ k: 'obj', name: 'struct', props: {} });
           recv = recv.get();

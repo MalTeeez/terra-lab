@@ -13,7 +13,7 @@ const RECIPE_NAMES = new Set(['Register']);
  * @param {{ tml?: import('../clr/metadata.js').Assembly, methods?: Iterable<object>, modId: string }} opts
  * @returns {Array<{ result: string, count: number, ingredients: Array<{ item: string, n: number }>, groups: string[], tiles: string[], method: string }>}
  */
-export function extractRecipes(asm, { tml, methods, modId }) {
+export function extractRecipes(asm, { tml, methods, modId, groupFields = null }) {
   const out = [];
   const candidates = methods ?? allRecipeMethods(asm);
   for (const md of candidates) {
@@ -26,19 +26,28 @@ export function extractRecipes(asm, { tml, methods, modId }) {
       maxDepth: 3,
       budget: 400000,
       onLoad: () => undefined,
-      onStaticLoad: tmlStaticLoadHook,
+      onStaticLoad(f) {
+        // `RecipeGroupID.Wood` / a mod's `RecipeSystem.AnyGoldBar`: the group id registered into that field
+        const g = groupFields?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`);
+        if (g) return { k: 'groupname', name: g };
+        return tmlStaticLoadHook(f);
+      },
       onCall(callee, args, ctx) {
         const hooked = tmlStaticHook(callee, args, ctx);
         if (hooked !== undefined) return hooked;
         const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
         const name = callee.name;
         const recv = ctx.recv;
+        // a static property getter for a stored group id (Thorium's ThoriumRecipes.AnyGoldBarGroup)
+        if (/^get_/.test(name) && !callee.sig.hasThis && groupFields?.has(`${decl}::${name.slice(4)}`)) return { k: 'groupname', name: groupFields.get(`${decl}::${name.slice(4)}`) };
         if (name === 'CreateRecipe' && (recv === THIS || decl.endsWith('ModItem'))) {
           return { k: 'recipe', result: selfId, count: isNum(args[0]) ? args[0] : 1, ingredients: [], groups: [], tiles: [] };
         }
         if (decl === 'Terraria.Recipe' && name === 'Create' && !callee.sig.hasThis) {
           return { k: 'recipe', result: refId(asm, args[0]), count: isNum(args[1]) ? args[1] : 1, ingredients: [], groups: [], tiles: [] };
         }
+        // RecipeGroup.recipeGroupIDs["Wood"] → the group's name (the machine has no dictionary contents)
+        if (name === 'get_Item' && args.length === 1 && typeof args[0] === 'string' && /Dictionary/.test(decl)) return { k: 'groupname', name: args[0] };
         if (recv?.k === 'recipe') {
           const r = recv;
           if (name === 'AddIngredient') {
@@ -46,10 +55,10 @@ export function extractRecipes(asm, { tml, methods, modId }) {
             else if ((isNum(args[0]) && args[0] > 0) || args[0]?.k === 'type') r.ingredients.push({ item: refId(asm, args[0]), n: isNum(args[1]) ? args[1] : 1 });
             else r.ingredients.push({ item: null, n: isNum(args[1]) ? args[1] : 1 });
           } else if (name === 'AddRecipeGroup') {
-            r.groups.push(typeof args[0] === 'string' ? args[0] : isNum(args[0]) ? `group#${args[0]}` : '?');
+            r.groups.push(typeof args[0] === 'string' ? args[0] : args[0]?.k === 'groupname' ? args[0].name : isNum(args[0]) ? `group#${args[0]}` : '?');
           } else if (name === 'AddTile') {
             if (callee.kind === 'methodSpec') r.tiles.push(refId(asm, callee.typeArgs[0]));
-            else if (isNum(args[0])) r.tiles.push(`v:tile:${args[0]}`); // numeric = vanilla TileID, not an item
+            else if (isNum(args[0]) && args[0] >= 0) r.tiles.push(`v:tile:${args[0]}`); // numeric = vanilla TileID, not an item
             else if (args[0]?.k === 'type') r.tiles.push(refId(asm, args[0]));
           } else if (name === 'Register') {
             if (r.result) out.push({ ...r, k: undefined, method: `${td.fullName}::${md.name}` });

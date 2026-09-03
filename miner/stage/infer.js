@@ -5,28 +5,53 @@
  * progression value on one shared scale. An item's progression is the earliest point
  * it can be obtained, found by propagating to a fixed point:
  *   anchors / overrides       config says "after boss X"
- *   drops                     dropped by a boss, or by a boss's treasure bag
+ *   drops                     dropped by a boss, or by a boss's treasure bag (drop conditions apply)
+ *   enemy                     dropped by an enemy whose natural spawn is gated on a downed flag,
+ *                             a zone or an event (vanilla SpawnNPC, mod SpawnChance / EditSpawnPool)
+ *   fish                      fishing catches and crates (vanilla and ModPlayer.CatchFish)
+ *   worldgen                  chest contents placed at world generation
+ *   chest                     config: chests that need a boss-dropped key
+ *   shop                      sold by a town NPC (its move-in condition + the entry's condition)
  *   tile spawns               ore tile spawned by a boss kill → the ore item
- *   recipes                   max over ingredients (+ crafting station), min over recipes
+ *   ore                       worldgen ore / tile, gated by the pickaxe power it needs (and tile downed gates)
+ *   recipes                   max over ingredients (+ recipe groups + crafting station), min over recipes
  *   rarity                    fallback when nothing else is known
+ * Gates are flag lists: `downedX` / `hardMode` / `ZoneX` / `pumpkinMoon` / `invasion:N` resolve
+ * through the config and the boss list; `any:X` marks alternatives (the earliest gates);
+ * a flag that does not resolve leaves the evidence unusable and is reported.
+ * Pickaxes are crafted from ores, so the whole thing runs in rounds: infer, derive the
+ * pickaxe gates from the pickaxes' stages, seed the ores, infer again until stable.
  * Stages shown to the user are the bosses in progression order (plus "Pre-boss").
  */
+
+import { seedGroup } from '../extract/flags.js';
 
 export const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /**
  * @param {object} input
- * @param {object[]} input.items        all items (all mods + vanilla), with id, rarity, rarityClass, createTile
+ * @param {object[]} input.items        all items (all mods + vanilla), with id, rarity, rarityClass, createTile, pick
  * @param {object[]} input.recipes      { result, ingredients:[{item,n}], groups, tiles }
- * @param {object[]} input.drops        { source: 'npc:<id>'|'bag:<id>'|'spawn:<npc>', item: '<id>'|'tile:<id>' }
+ * @param {object[]} input.drops        { source: 'npc:<id>'|'npc:*'|'bag:<id>', item: '<id>'|'tile:<id>', cond?: [flags] }
  * @param {object[]} input.bossLogs     { kind, key, progression, npcs:[], mod }
- * @param {object[]} input.npcs         { id, name, boss }
+ * @param {object[]} input.npcs         { id, name, boss, gates?, natural?, town?, townGates? }
+ * @param {object[]} [input.groups]     recipe groups { name, items }
+ * @param {object[]} [input.tiles]      mod tiles { id, minPick, ore, gates }
+ * @param {object[]} [input.shops]      { npc, item, cond? }
+ * @param {Map} [input.spawns]          vanilla npc id → alternative gate lists (NPC.SpawnNPC)
+ * @param {object[]} [input.pools]      { npc, gates } from GlobalNPC.EditSpawnPool
+ * @param {object[]} [input.fish]       { item, cond?, via } fishing catches
+ * @param {object[]} [input.worldgen]   { item, via, cond?, after?, estimated? } chest contents at world generation
+ * @param {Set<string>} [input.worldgenTiles]  tiles a mod's world generation places
+ * @param {Set<string>} [input.vanillaZones]   Terraria.Player Zone* names (a zone not in config is reachable from the start)
  * @param {object} input.config         progression.json
  * @param {Map<string, number>} input.itemIds   vanilla ItemID name → id
  * @param {Map<string, number>} input.tileIds   vanilla TileID name → id
  * @param {string[]} input.mods         mod ids present (for class aliases)
+ * @param {Set<string>} [input.seeds]   special world seeds that are on (SEED_GROUPS keys); their
+ *                                      `seed:` gates then cost nothing instead of killing the evidence
  */
-export function inferStages({ items, recipes, drops, bossLogs, npcs, config, itemIds, tileIds, mods }) {
+export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = [], tiles = [], shops = [], spawns = new Map(), pools = [], fish = [], worldgen = [], worldgenTiles = new Set(), vanillaZones = new Set(), config, itemIds, tileIds, npcIds = new Map(), mods, seeds = new Set() }) {
   // ---- bosses & stages -------------------------------------------------------------
   const npcName = new Map(npcs.map((n) => [n.id, n.name]));
   const bosses = [];
@@ -52,7 +77,9 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, config, ite
     merged.push(b);
     for (const n of b.npcs) byNpc.set(n, b);
   }
-  const stageBosses = merged.filter((b) => b.kind === 'boss' || b.kind === 'event');
+  // minibosses are stages too: they gate real loot (Calamity's Giant Clam lets the Sea King move in),
+  // and without one the item lands on whatever stage happens to sit below it on the scale
+  const stageBosses = merged.filter((b) => b.kind === 'boss' || b.kind === 'event' || b.kind === 'miniboss');
   const stages = [{ key: 'start', label: 'Pre-boss', progression: 0, npcs: [], mod: 'v', kind: 'start' }, ...stageBosses];
   stages.forEach((s, i) => { s.index = i; });
 
@@ -61,9 +88,98 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, config, ite
   for (const b of merged) for (const n of b.npcs) { const nm = npcName.get(n); if (nm) bossByKey.set(norm(nm), bossByKey.get(norm(nm)) ?? b); }
   bossByKey.set('start', stages[0]);
   const progOfKey = (key) => bossByKey.get(norm(key))?.progression ?? null;
+  const labelOfKey = (key) => bossByKey.get(norm(key))?.label;
+  /** label of the stage an item at progression p belongs to */
+  const stageOf = (p) => {
+    let idx = 0;
+    for (const s of stages) if (s.progression <= p + 1e-6) idx = s.index; else break;
+    return idx;
+  };
+  const labelOfProg = (p) => stages[stageOf(p)].label;
+
+  // ---- progression flags (downed*, hardMode, Zone*, events) → progression ----------------
+  const flagCache = new Map();
+  // config flags by their core name: `downedMechBossAny` answers for `DownedMechBossAny` too
+  const cfgByCore = new Map();
+  for (const [k, v] of Object.entries(config.downedFlags ?? {})) if (!k.startsWith('$')) cfgByCore.set(norm(k.replace(/^(downed|Post|Downed|Is)/, '').replace(/(DropCondition|Condition)$/, '')), v);
+  /** { p, label } for a flag, null when it does not resolve. `!x` / `any:*` / `any:!x` never gate. */
+  const flagProg = (flag) => {
+    if (flagCache.has(flag)) return flagCache.get(flag);
+    let out = null;
+    if (flag.startsWith('seed:')) { // only a seed that is switched on lets its evidence through
+      const g = seedGroup(flag);
+      out = g && seeds.has(g.key) ? { p: 0, label: null } : null;
+      flagCache.set(flag, out);
+      return out;
+    }
+    const core = (f) => norm(f.replace(/^(downed|Post|Downed|Is)/, '').replace(/(DropCondition|Condition)$/, ''));
+    const cfg = config.downedFlags?.[flag] ?? config.zones?.[flag] ?? cfgByCore.get(core(flag));
+    if (cfg) out = { p: progOfKey(cfg), label: labelOfKey(cfg) };
+    else if (/^Zone[A-Z]/.test(flag) && vanillaZones.has(flag)) out = { p: 0, label: null }; // a vanilla biome not in the config: reachable from the start
+    else if (/^[A-Z]\w*Biome$/.test(flag)) out = { p: 0, label: null }; // likewise a mod biome the config does not gate
+    else if (/^(downed|Post|Downed|Is)/.test(flag)) {
+      const name = core(flag);
+      let b = bossByKey.get(name) ?? bossByKey.get(name.replace(/^the/, ''));
+      if (!b && name.length >= 4) {
+        // `downedPerforator` vs key `Perforators`, `downedCLAM` vs `GiantClam`; `downedDoG` is config
+        const cands = merged.filter((x) => { const k = norm(x.key); const l = norm(x.label).replace(/^the/, ''); return k.startsWith(name) || name.startsWith(k) || l.startsWith(name) || (name.length >= 4 && (k.includes(name) || l.includes(name))); });
+        if (cands.length) b = cands.sort((a, c) => a.progression - c.progression)[0];
+      }
+      if (b) out = { p: b.progression, label: b.label };
+    }
+    if (out && out.p === null) out = null;
+    flagCache.set(flag, out);
+    return out;
+  };
+  const seedsSeen = new Set(); // seed groups whose gates actually blocked evidence in this run
+  const unresolved = new Map(); // flag → { count, examples: Set }
+  const noteUnresolved = (flags, example) => {
+    for (const f of flags) {
+      let u = unresolved.get(f);
+      if (!u) unresolved.set(f, (u = { count: 0, examples: new Set() }));
+      u.count++;
+      if (example && u.examples.size < 8) u.examples.add(example);
+    }
+  };
+  /**
+   * Required flags AND together (the latest), `any:` alternatives OR (the earliest).
+   * @returns {{ p, label, flag, unresolved: string[] } | null}  null when there are no flags at all;
+   * `unresolved` lists what did not resolve — evidence with an unresolved requirement is unusable
+   */
+  const gateProg = (flags) => {
+    if (!flags?.length) return null;
+    let best = null;
+    let anyBest = null;
+    let anyCount = 0;
+    const bad = [];
+    for (const f of flags) {
+      if (f.startsWith('!')) continue; // the flag is false there: no requirement
+      const alt = f.startsWith('any:');
+      const name = alt ? f.slice(4) : f;
+      if (alt && (name === '*' || name.startsWith('!'))) { anyCount++; if (!anyBest || anyBest.p > 0) anyBest = { p: 0, label: null, flag: null }; continue; }
+      const g = flagProg(name);
+      if (!g) { if (alt) anyCount++; bad.push(name); continue; }
+      if (alt) { anyCount++; if (!anyBest || g.p < anyBest.p) anyBest = { ...g, flag: name }; }
+      else if (!best || g.p > best.p) best = { ...g, flag: name };
+    }
+    // alternatives: one resolved alternative is enough; a required flag must resolve
+    const requiredBad = flags.filter((f) => !f.startsWith('any:') && !f.startsWith('!') && bad.includes(f));
+    const altBad = anyCount > 0 && !anyBest ? bad.filter((f) => !requiredBad.includes(f)) : [];
+    if (anyBest && (!best || anyBest.p > best.p)) best = anyBest;
+    return { ...(best ?? { p: 0, label: null, flag: null }), unresolved: [...requiredBad, ...altBad] };
+  };
+  /** gateProg for evidence: null when unusable (an unresolved requirement), else the gate; reports the flags. */
+  const usableGate = (flags, example) => {
+    const g = gateProg(flags);
+    if (!g) return { p: 0, label: null, flag: null };
+    // a special-seed gate is unusable rather than unknown: it is offered as a toggle instead
+    if (g.unresolved.length) { for (const f of g.unresolved) { const s = seedGroup(f); if (s) seedsSeen.add(s.key); } noteUnresolved(g.unresolved.filter((f) => !f.startsWith('seed:')), example); return null; }
+    return g;
+  };
 
   // ---- evidence ------------------------------------------------------------------------
   const byId = new Map(items.map((i) => [i.id, i]));
+  const nameOf = (id) => byId.get(id)?.name ?? id;
   const vanillaId = (name) => {
     const n = itemIds.get(name);
     return n !== undefined ? `v:${n}` : null;
@@ -74,82 +190,6 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, config, ite
     if (ref.startsWith('v:') && !/^v:\d+$/.test(ref)) return vanillaId(ref.slice(2));
     return ref;
   };
-
-  /** prog[id] = { p, src } — the earliest known progression and why. */
-  const prog = new Map();
-  const better = (id, p, src) => {
-    if (p === null || p === undefined || !Number.isFinite(p)) return false;
-    const cur = prog.get(id);
-    if (cur && cur.p <= p) return false;
-    prog.set(id, { p, src });
-    return true;
-  };
-
-  // anchors & overrides
-  for (const [ref, key] of Object.entries(config.anchors)) {
-    if (ref.startsWith('$')) continue;
-    const id = resolveRef(ref);
-    const p = progOfKey(key);
-    if (id && p !== null) better(id, p, { kind: 'anchor', boss: bossByKey.get(norm(key))?.label });
-  }
-
-  // boss drops (bags and tile spawns propagate in the loop)
-  const npcProg = new Map();
-  for (const b of merged) for (const n of b.npcs) npcProg.set(n, b);
-  // minions / phases spawned by a boss's own code count as that boss
-  for (const n of npcs) {
-    const boss = npcProg.get(n.id);
-    if (!boss || !n.spawns) continue;
-    for (const s of n.spawns) if (!npcProg.has(s)) npcProg.set(s, boss);
-  }
-  const dropsByBag = new Map();
-  const tileSpawns = []; // { boss, tile }
-  for (const d of drops) {
-    const [kind, ...rest] = d.source.split(':');
-    const src = rest.join(':');
-    if (kind === 'npc') {
-      const boss = npcProg.get(src);
-      if (!boss) continue;
-      if (d.item.startsWith('tile:')) { tileSpawns.push({ boss, tile: d.item.slice(5) }); continue; }
-      // a mod boss dropping a common vanilla material (Jungle Spores from Corpse Bloom) is never
-      // its earliest source; the material's vanilla enemies are not in the drop evidence
-      if (d.item.startsWith('v:') && (!src.startsWith('v:') || (boss.mod && boss.mod !== 'v')) && (byId.get(d.item)?.rarity ?? 0) <= 1) continue;
-      better(d.item, boss.progression, { kind: 'drop', boss: boss.label });
-    } else if (kind === 'bag') {
-      let list = dropsByBag.get(src);
-      if (!list) dropsByBag.set(src, (list = []));
-      list.push(d.item);
-    }
-  }
-  // ore tiles spawned on boss kill → items that place that tile
-  const byTile = new Map();
-  for (const it of items) if (it.createTile) { let l = byTile.get(it.createTile); if (!l) byTile.set(it.createTile, (l = [])); l.push(it.id); }
-  for (const { boss, tile } of tileSpawns) for (const id of byTile.get(tile) ?? []) better(id, boss.progression, { kind: 'spawn', boss: boss.label });
-
-  // crafting station gates
-  const tileProg = new Map();
-  for (const [name, key] of Object.entries(config.stations)) {
-    if (name.startsWith('$')) continue;
-    const tid = tileIds.get(name);
-    const p = progOfKey(key);
-    if (tid !== undefined && p !== null) tileProg.set(`v:tile:${tid}`, { p, label: name });
-  }
-  const stationProg = (tileRef) => {
-    if (tileProg.has(tileRef)) return tileProg.get(tileRef).p;
-    if (tileRef.startsWith('v:')) return 0; // vanilla tiles never share ids with items
-    // mod stations: the item that places it usually shares the class name
-    const pr = prog.get(tileRef);
-    return pr ? pr.p : 0;
-  };
-
-  // recipes, bags: iterate to a fixed point
-  const recipesByResult = new Map();
-  for (const r of recipes) {
-    if (!r.result) continue;
-    let l = recipesByResult.get(r.result);
-    if (!l) recipesByResult.set(r.result, (l = []));
-    l.push(r);
-  }
   const rarityProg = (it) => {
     if (it.rarityClass && config.rarity.classes[it.rarityClass]) return progOfKey(config.rarity.classes[it.rarityClass]);
     if (it.rarity !== undefined && it.rarity !== null) {
@@ -159,75 +199,446 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, config, ite
     return null;
   };
 
-  // overrides seed the propagation too, so what is crafted from an overridden item follows it
-  const applyOverrides = () => {
-    for (const [ref, key] of Object.entries(config.overrides)) {
+  // boss npcs (minions / phases spawned by a boss's own code count as that boss)
+  const npcProg = new Map();
+  for (const b of merged) for (const n of b.npcs) npcProg.set(n, b);
+  for (const n of npcs) {
+    const boss = npcProg.get(n.id);
+    if (!boss || !n.spawns) continue;
+    for (const s of n.spawns) if (!npcProg.has(s)) npcProg.set(s, boss);
+  }
+  const npcById = new Map(npcs.map((n) => [n.id, n]));
+  const vanillaNpcName = new Map();
+  for (const [name, id] of npcIds) if (typeof id === 'number' && !vanillaNpcName.has(`v:${id}`)) vanillaNpcName.set(`v:${id}`, name);
+  // town NPCs: what must be down before they move in (mod: CanTownNPCSpawn; vanilla: config)
+  const townProg = new Map();
+  const townGate = (npcId) => {
+    if (townProg.has(npcId)) return townProg.get(npcId);
+    let g;
+    if (npcId.startsWith('v:')) {
+      const key = config.townNpcs?.[vanillaNpcName.get(npcId)];
+      g = key ? { p: progOfKey(key), label: labelOfKey(key), flag: null } : undefined; // unknown vanilla seller: no evidence
+      if (g && g.p === null) g = undefined;
+    } else {
+      const n = npcById.get(npcId);
+      g = n?.town ? usableGate(n.townGates, npcName.get(npcId)) ?? undefined : undefined;
+    }
+    townProg.set(npcId, g);
+    return g;
+  };
+  // enemy gates: the earliest of every way an enemy spawns naturally — a mod NPC's SpawnChance
+  // flags, pool entries (EditSpawnPool), vanilla SpawnNPC sites; a town NPC's move-in condition
+  const spawnAlts = new Map(); // npc id → gate lists
+  const addAlt = (id, gates) => { let l = spawnAlts.get(id); if (!l) spawnAlts.set(id, (l = [])); l.push(gates); };
+  for (const [id, alts] of spawns) for (const a of alts) addAlt(id, a);
+  for (const p of pools) addAlt(p.npc, p.gates);
+  for (const n of npcs) {
+    if (n.mod === 'v' || npcProg.has(n.id)) continue;
+    if (n.gates?.length) addAlt(n.id, n.gates);
+    else if (n.natural) addAlt(n.id, []);
+  }
+  const enemyGate = new Map(); // npc id → { p, label, flag } | null (unusable) ; absent = no spawn evidence
+  const enemyGateOf = (id) => {
+    if (enemyGate.has(id)) return enemyGate.get(id);
+    let g = null;
+    const n = npcById.get(id);
+    if (n?.town && !spawnAlts.has(id)) g = townGate(id) ?? null;
+    else if (spawnAlts.has(id)) {
+      const label = npcName.get(id) ?? id;
+      const resolved = spawnAlts.get(id).map((a) => usableGate(a, label)).filter(Boolean);
+      if (resolved.length) g = resolved.sort((a, b) => a.p - b.p)[0];
+    } else g = undefined;
+    enemyGate.set(id, g);
+    return g;
+  };
+
+  // crafting stations
+  const tileProg = new Map();
+  const tileName = new Map();
+  for (const [name, id] of tileIds) if (typeof id === 'number' && !tileName.has(`v:tile:${id}`)) tileName.set(`v:tile:${id}`, deCamelKey(name));
+  for (const [name, key] of Object.entries(config.stations)) {
+    if (name.startsWith('$')) continue;
+    const tid = tileIds.get(name);
+    const p = progOfKey(key);
+    if (tid !== undefined && p !== null) tileProg.set(`v:tile:${tid}`, { p, label: deCamelKey(name), boss: labelOfKey(key) });
+  }
+  const placedBy = new Map(); // tile ref → item ids that place it
+  for (const it of items) if (it.createTile) { let l = placedBy.get(it.createTile); if (!l) placedBy.set(it.createTile, (l = [])); l.push(it.id); }
+  const stationLabel = (tileRef) => tileProg.get(tileRef)?.label ?? tileName.get(tileRef) ?? byId.get(placedBy.get(tileRef)?.[0])?.name ?? tileRef.split(':').pop();
+  /**
+   * When a crafting station can first be used: the config's gate, else the earliest item that
+   * places the tile — vanilla ones too (the Tinkerer's Workshop is sold by the Goblin Tinkerer,
+   * who moves in only after the goblin army).
+   */
+  const stationGate = (tileRef, prog) => {
+    const cfg = tileProg.get(tileRef);
+    if (cfg) return { p: cfg.p, boss: cfg.boss };
+    let best = null;
+    for (const id of placedBy.get(tileRef) ?? []) {
+      const pr = prog.get(id);
+      if (pr && (best === null || pr.p < best.p)) best = { p: pr.p, boss: pr.src?.boss };
+    }
+    if (best) return best;
+    const pr = tileRef.startsWith('v:') ? null : prog.get(tileRef); // older mods: item and tile share the class name
+    return pr ? { p: pr.p, boss: pr.src?.boss } : { p: 0 };
+  };
+
+  // recipe groups
+  const groupMembers = new Map();
+  for (const g of groups) { let l = groupMembers.get(g.name); if (!l) groupMembers.set(g.name, (l = new Set())); for (const x of g.items) l.add(x); }
+  const groupLabel = (name) => `any ${name.replace(/^(any|Any)/, '').replace(/^[A-Za-z]+:/, '')}`;
+
+  // tiles that gate mining (config for vanilla, MinPick / CanKillTile for mods); tiles a mod's
+  // world generation places are minable with any pickaxe unless they say otherwise
+  const tileGate = new Map(); // tile ref → { minPick, ore, gates }
+  for (const [name, need] of Object.entries(config.pickaxe?.vanillaTiles ?? {})) {
+    const tid = tileIds.get(name);
+    if (tid !== undefined) tileGate.set(`v:tile:${tid}`, { minPick: need, ore: true });
+  }
+  for (const name of config.pickaxe?.vanillaOres ?? []) {
+    const tid = tileIds.get(name);
+    if (tid !== undefined && !tileGate.has(`v:tile:${tid}`)) tileGate.set(`v:tile:${tid}`, { minPick: 0, ore: true });
+  }
+  for (const t of tiles) tileGate.set(t.id, { id: t.id, minPick: t.minPick ?? 0, ore: !!t.ore, gates: t.gates });
+  for (const t of worldgenTiles) if (!tileGate.has(t)) tileGate.set(t, { id: t, minPick: 0, ore: false, worldgen: true });
+  const oreItems = items.filter((it) => it.createTile && tileGate.has(it.createTile));
+  const pickaxes = items.filter((it) => it.pick > 0);
+
+  const recipesByResult = new Map();
+  for (const r of recipes) {
+    if (!r.result) continue;
+    let l = recipesByResult.get(r.result);
+    if (!l) recipesByResult.set(r.result, (l = []));
+    l.push(r);
+  }
+  const dropsByBag = new Map();  // bag id → [{ item, cond gate }]
+  const bossDrops = [];   // { item, boss, p, gate? }
+  const enemyDrops = [];  // { item, npc, gate }
+  const tileSpawns = [];  // { boss, tile }
+  const common = (id) => id.startsWith('v:') && (byId.get(id)?.rarity ?? 0) <= 1;
+  for (const d of drops) {
+    const [kind, ...rest] = d.source.split(':');
+    const src = rest.join(':');
+    if (kind === 'npc') {
+      const boss = npcProg.get(src);
+      if (boss) {
+        if (d.item.startsWith('tile:')) { tileSpawns.push({ boss, tile: d.item.slice(5) }); continue; }
+        // a mod boss dropping a common vanilla material (Jungle Spores from Corpse Bloom) is never
+        // its earliest source; the material's vanilla enemies are not in the drop evidence
+        if (common(d.item) && (!src.startsWith('v:') || (boss.mod && boss.mod !== 'v'))) continue;
+        // the drop's own condition (Mollusk Husk from the Giant Clam only in hardmode)
+        const cond = d.cond ? usableGate(d.cond, `${nameOf(d.item)} from ${boss.label}`) : null;
+        if (d.cond && !cond) continue;
+        const p = Math.max(boss.progression, cond?.p ?? 0);
+        bossDrops.push({ item: d.item, boss, p, gate: cond && cond.p > boss.progression ? cond : null });
+        continue;
+      }
+      if (d.item.startsWith('tile:')) continue;
+      const label = `${nameOf(d.item)} from ${src === '*' ? 'any enemy' : npcName.get(src) ?? src}`;
+      const cond = d.cond ? usableGate(d.cond, label) : null;
+      if (d.cond && !cond) continue;
+      let g;
+      if (src === '*') { if (!cond) continue; g = cond; } // any enemy while X: only the condition gates
+      else {
+        const gate = enemyGateOf(src);
+        if (gate === undefined || gate === null) continue; // no spawn evidence, or a gate that does not resolve
+        g = cond && cond.p > gate.p ? cond : gate;
+      }
+      // a gated enemy that also drops something common (Yew Wood from a hardmode goblin) is not
+      // its earliest source: commons keep their rarity guess
+      if (common(d.item) && g.p > 0) continue;
+      enemyDrops.push({ item: d.item, npc: src, gate: g });
+    } else if (kind === 'bag') {
+      const cond = d.cond ? usableGate(d.cond, `${nameOf(d.item)} from ${nameOf(src)}`) : null;
+      if (d.cond && !cond) continue;
+      let list = dropsByBag.get(src);
+      if (!list) dropsByBag.set(src, (list = []));
+      list.push({ item: d.item, cond });
+    }
+  }
+
+  // critters: the item is the caught NPC, so it follows the NPC's spawn gate
+  const critters = []; // { item, npc, gate }
+  for (const it of items) {
+    if (!it.makeNPC) continue;
+    const g = enemyGateOf(it.makeNPC);
+    if (g) critters.push({ item: it.id, npc: it.makeNPC, gate: g });
+  }
+
+  // Floors: the earliest an item can possibly be, whatever evidence turns up. An anchor already
+  // works this way for ores ("Meteorite falls after the evil boss"); it means the same for a
+  // hardmode drop the miner reads a spawn site of without its guard, so it is a floor everywhere.
+  const floors = new Map(); // item id → { p, boss, via }
+  for (const [prefix, s] of Object.entries(config.structures ?? {})) {
+    if (prefix.startsWith('$')) continue;
+    const p = progOfKey(typeof s === 'string' ? s : s.after);
+    if (p === null) continue;
+    const rec = { p, boss: labelOfKey(typeof s === 'string' ? s : s.after), via: typeof s === 'string' ? undefined : s.via };
+    for (const it of items) if (it.fullName?.startsWith(prefix)) { const cur = floors.get(it.id); if (!cur || cur.p < p) floors.set(it.id, rec); }
+  }
+
+  const anchorProg = new Map();
+  for (const [ref, key] of Object.entries(config.anchors)) {
+    if (ref.startsWith('$')) continue;
+    const id = resolveRef(ref);
+    const p = progOfKey(key);
+    if (id && p !== null) {
+      anchorProg.set(id, p);
+      anchorProg.set(id + '#label', labelOfKey(key));
+      const cur = floors.get(id);
+      if (!cur || cur.p < p) floors.set(id, { p, boss: labelOfKey(key), anchor: true });
+    }
+  }
+
+  // shops: the seller's move-in condition plus the entry's own condition
+  const shopDrops = []; // { item, npc, gate }
+  for (const sh of shops) {
+    const tg = townGate(sh.npc);
+    if (!tg) continue;
+    const cond = sh.cond ? usableGate(sh.cond, `${nameOf(sh.item)} sold by ${npcName.get(sh.npc) ?? vanillaNpcName.get(sh.npc) ?? sh.npc}`) : null;
+    if (sh.cond && !cond) continue;
+    const g = cond && cond.p > tg.p ? cond : tg;
+    // a vanilla item sold by a *mod's* late seller (Coral from Thorium's Diverman) has its own
+    // vanilla sources, which the miner cannot see. A vanilla town NPC is the authority on a vanilla
+    // item though: the Spell Tome and the Tinkerer's Workshop have no source but their seller.
+    const rp = sh.item.startsWith('v:') && !sh.npc.startsWith('v:') && byId.has(sh.item) ? rarityProg(byId.get(sh.item)) : null;
+    if (rp !== null && rp < g.p) continue;
+    shopDrops.push({ item: sh.item, npc: sh.npc, gate: g });
+  }
+  // fishing catches and crates
+  const fishDrops = []; // { item, gate, via }
+  for (const f of fish) {
+    const g = usableGate(f.cond, `${nameOf(f.item)} by fishing`);
+    if (!g) continue;
+    fishDrops.push({ item: f.item, gate: g, via: f.via });
+  }
+  // chest contents placed at world generation; a mod's chest may be locked or in a late structure,
+  // which the code does not say: those keep their rarity guess as a floor (`estimated`)
+  const chestItems = new Set();
+  for (const c of Object.values(config.chests ?? {})) if (c?.items) for (const ref of c.items) { const id = resolveRef(ref); if (id) chestItems.add(id); }
+  const worldgenDrops = []; // { item, p, via, boss?, estimated? }
+  for (const w of worldgen) {
+    if (chestItems.has(w.item)) continue; // a locked chest the config knows about
+    const g = usableGate(w.cond, `${nameOf(w.item)} in a chest (${w.via})`);
+    if (!g) continue;
+    let p = g.p;
+    let boss = g.label;
+    const after = w.after ? progOfKey(w.after) : null;
+    if (after !== null && after !== undefined && after > p) { p = after; boss = labelOfKey(w.after); }
+    let estimated = false;
+    // a mod's chest may be locked (a chest tile with UnlockChest) or sit in a structure that is not
+    // meant to be reached early, which the code does not say: locked chests and hardmode-tier items
+    // keep their rarity guess as a floor
+    const rp = byId.has(w.item) ? rarityProg(byId.get(w.item)) : null;
+    const lateTier = w.mod && w.mod !== 'v' && rp !== null && rp >= (progOfKey('WallOfFlesh') ?? 7);
+    if ((w.estimated || lateTier) && rp !== null && rp > p) { p = rp; boss = labelOfProg(p); estimated = true; }
+    worldgenDrops.push({ item: w.item, p, via: w.via, boss: p > 0 ? boss : undefined, estimated });
+  }
+  // manual sources (miner/stage/sources.json): the user's own research, applied like overrides
+  const manual = [];
+  for (const [ref, m] of Object.entries(config.manual ?? {})) {
+    if (ref.startsWith('$')) continue;
+    const id = resolveRef(ref);
+    const key = typeof m === 'string' ? m : m.after;
+    const p = progOfKey(key);
+    if (id && p !== null) manual.push({ item: id, p, boss: labelOfKey(key), via: typeof m === 'string' ? undefined : m.via });
+  }
+
+  const spawnFloor = new Map(); // ore item → earliest boss that spawns its tile
+  for (const { boss, tile } of tileSpawns) for (const id of placedBy.get(tile) ?? []) { const cur = spawnFloor.get(id); if (!cur || boss.progression < cur.p) spawnFloor.set(id, { p: boss.progression, label: boss.label }); }
+
+  const chests = [];
+  for (const [name, c] of Object.entries(config.chests ?? {})) {
+    if (name.startsWith('$')) continue;
+    const p = progOfKey(c.after);
+    if (p === null) continue;
+    for (const ref of c.items) { const id = resolveRef(ref); if (id) chests.push({ item: id, p, chest: name, boss: labelOfKey(c.after) }); }
+  }
+
+  // ---- one inference pass ------------------------------------------------------------------
+  const run = (oreSeed) => {
+    /** prog[id] = { p, src } — the earliest known progression and why. */
+    const prog = new Map();
+    const better = (id, p, src) => {
+      if (p === null || p === undefined || !Number.isFinite(p)) return false;
+      // a structure's loot cannot predate the structure, whichever route found it
+      const f = floors.get(id);
+      if (f && p < f.p) { p = f.p; src = f.anchor ? { kind: 'anchor', boss: f.boss } : { kind: 'structure', boss: f.boss, via: f.via }; }
+      const cur = prog.get(id);
+      if (cur && cur.p <= p) return false;
+      prog.set(id, { p, src });
+      return true;
+    };
+
+    for (const [ref, key] of Object.entries(config.anchors)) {
       if (ref.startsWith('$')) continue;
       const id = resolveRef(ref);
       const p = progOfKey(key);
-      if (id && p !== null) prog.set(id, { p, src: { kind: 'override', boss: bossByKey.get(norm(key))?.label } });
+      if (id && p !== null) better(id, p, { kind: 'anchor', boss: labelOfKey(key) });
     }
-  };
-  applyOverrides();
+    // the ore round's answer (pickaxe + world gates) goes first: at an equal stage it explains an ore better than a bare spawn or an enemy drop
+    for (const [id, seed] of oreSeed) better(id, seed.p, seed.src);
+    for (const { item, boss, p, gate } of bossDrops) better(item, p, gate ? { kind: 'drop', boss: boss.label, gate: gate.flag ?? undefined, until: gate.label ?? undefined } : { kind: 'drop', boss: boss.label });
+    for (const { item, npc, gate } of enemyDrops) better(item, gate.p, { kind: 'enemy', via: npc === '*' ? 'any enemy' : npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { boss, tile } of tileSpawns) for (const id of placedBy.get(tile) ?? []) if (!oreSeed.has(id)) better(id, boss.progression, { kind: 'spawn', boss: boss.label });
+    for (const c of chests) better(c.item, c.p, { kind: 'chest', via: c.chest, boss: c.boss });
+    for (const { item, npc, gate } of shopDrops) better(item, gate.p, { kind: 'shop', via: npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { item, gate, via } of fishDrops) better(item, gate.p, { kind: 'fish', via, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { item, npc, gate } of critters) better(item, gate.p, { kind: 'critter', via: npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { item, p, via, boss, estimated } of worldgenDrops) better(item, p, { kind: 'worldgen', via, boss, estimated: estimated || undefined });
 
-  for (let iter = 0; iter < 40; iter++) {
-    let changed = false;
-    for (const [bag, list] of dropsByBag) {
-      const bp = prog.get(bag);
-      if (!bp) continue;
-      const bagName = byId.get(bag)?.name ?? bag;
-      for (const id of list) {
-        // a mod boss bag holding a common vanilla material is never the material's earliest source
-        if (id.startsWith('v:') && !bag.startsWith('v:') && (byId.get(id)?.rarity ?? 0) <= 1) continue;
-        if (better(id, bp.p, { kind: 'bag', boss: bp.src.boss ?? bagName, via: bagName })) changed = true;
+    const stationProg = (tileRef) => stationGate(tileRef, prog).p;
+    const progOfIngredient = (id) => {
+      const ip = prog.get(id);
+      if (ip) return ip.p;
+      const it = byId.get(id);
+      return it ? rarityProg(it) : null; // no evidence: rarity, so a recipe still resolves
+    };
+
+    // overrides seed the propagation too, so what is crafted from an overridden item follows it
+    const applyOverrides = () => {
+      for (const [ref, key] of Object.entries(config.overrides)) {
+        if (ref.startsWith('$')) continue;
+        const id = resolveRef(ref);
+        const p = progOfKey(key);
+        if (id && p !== null) prog.set(id, { p, src: { kind: 'override', boss: labelOfKey(key) } });
       }
-    }
-    for (const [result, list] of recipesByResult) {
-      for (const r of list) {
-        if (!r.ingredients.length && !r.groups.length) continue;
-        let p = 0;
-        let ok = true;
-        const chain = [];
-        for (const ing of r.ingredients) {
-          if (!ing.item) { ok = false; break; }
-          const ip = prog.get(ing.item);
-          if (!ip) {
-            // ingredients with no evidence: use their rarity fallback so a recipe still resolves
-            const it = byId.get(ing.item);
-            const rp = it ? rarityProg(it) : null;
-            if (rp === null) { ok = false; break; }
-            if (rp > p) { p = rp; chain.length = 0; chain.push(it.name); } else if (rp === p) chain.push(it.name);
-            continue;
+      for (const m of manual) prog.set(m.item, { p: m.p, src: { kind: 'manual', boss: m.boss, via: m.via } });
+    };
+    applyOverrides();
+
+    for (let iter = 0; iter < 40; iter++) {
+      let changed = false;
+      for (const [bag, list] of dropsByBag) {
+        const bp = prog.get(bag);
+        if (!bp) continue;
+        const bagName = byId.get(bag)?.name ?? bag;
+        for (const { item: id, cond } of list) {
+          // a mod boss bag holding a common vanilla material is never the material's earliest source
+          if (id.startsWith('v:') && !bag.startsWith('v:') && (byId.get(id)?.rarity ?? 0) <= 1) continue;
+          const p = Math.max(bp.p, cond?.p ?? 0);
+          if (better(id, p, { kind: 'bag', boss: cond && cond.p > bp.p ? cond.label : bp.src.boss ?? bagName, via: bagName })) changed = true;
+        }
+      }
+      for (const [result, list] of recipesByResult) {
+        const resultItem = byId.get(result);
+        // a vanilla item has its own vanilla sources (chests, drops, the world) that leave no code
+        // evidence; a mod's added recipe (Diamond from coal, Starfury from Aerialite) may only make
+        // it earlier than its rarity suggests, never later
+        const vanillaCap = result.startsWith('v:') && resultItem ? rarityProg(resultItem) : null;
+        list.forEach((r, index) => {
+          if (!r.ingredients.length && !r.groups.length) return;
+          const modRecipe = r.method && !r.method.startsWith('Terraria.');
+          let p = 0;
+          let ok = true;
+          const chain = [];
+          const push = (q, label) => { if (q > p) { p = q; chain.length = 0; chain.push(label); } else if (q === p) chain.push(label); };
+          for (const ing of r.ingredients) {
+            if (!ing.item) { ok = false; break; }
+            const q = progOfIngredient(ing.item);
+            if (q === null) { ok = false; break; }
+            push(q, byId.get(ing.item)?.name ?? ing.item);
           }
-          if (ip.p > p) { p = ip.p; chain.length = 0; chain.push(byId.get(ing.item)?.name ?? ing.item); } else if (ip.p === p) chain.push(byId.get(ing.item)?.name ?? ing.item);
-        }
-        if (!ok) continue;
-        for (const t of r.tiles) {
-          const tp = stationProg(t);
-          if (tp > p) { p = tp; chain.length = 0; chain.push(tileProg.get(t)?.label ?? byId.get(t)?.name ?? t); }
-        }
-        if (better(result, p, { kind: 'craft', from: chain.slice(0, 3) })) changed = true;
+          if (!ok) return;
+          for (const g of r.groups) {
+            const members = groupMembers.get(g);
+            if (!members) continue; // unknown group: cannot gate
+            let best = null;
+            for (const m of members) { const q = progOfIngredient(m); if (q !== null && (best === null || q < best.q)) best = { q, id: m }; }
+            if (!best) continue;
+            push(best.q, `${groupLabel(g)} (${byId.get(best.id)?.name ?? best.id})`);
+          }
+          for (const t of r.tiles) {
+            const tp = stationProg(t);
+            if (tp > p) { p = tp; chain.length = 0; chain.push(stationLabel(t)); }
+          }
+          if (modRecipe && vanillaCap !== null && p > vanillaCap) return;
+          if (better(result, p, { kind: 'craft', from: chain.slice(0, 3), recipe: index })) changed = true;
+        });
       }
+      if (!changed) break;
     }
-    if (!changed) break;
-  }
 
-  // overrides win
-  applyOverrides();
+    // overrides win
+    applyOverrides();
 
-  // rarity fallback
-  for (const it of items) {
-    if (prog.has(it.id)) continue;
-    const p = rarityProg(it);
-    if (p !== null) prog.set(it.id, { p, src: { kind: 'rarity' } });
-  }
-
-  // stage index: last stage whose progression <= item progression
-  const stageOf = (p) => {
-    let idx = 0;
-    for (const s of stages) if (s.progression <= p + 1e-6) idx = s.index; else break;
-    return idx;
+    // rarity fallback
+    for (const it of items) {
+      if (prog.has(it.id)) continue;
+      const p = rarityProg(it);
+      if (p !== null) prog.set(it.id, { p, src: { kind: 'rarity' } });
+    }
+    // and the structure floors over whatever the fallbacks and the overrides landed on
+    for (const [id, f] of floors) {
+      const cur = prog.get(id);
+      if (!cur || cur.p < f.p) prog.set(id, { p: f.p, src: f.anchor ? { kind: 'anchor', boss: f.boss } : { kind: 'structure', boss: f.boss, via: f.via } });
+    }
+    return prog;
   };
+
+  // ---- rounds: ores need pickaxes, pickaxes need ores ----------------------------------------
+  let prog = run(new Map());
+  let oreSeed = new Map();
+  for (let round = 0; round < 4; round++) {
+    const next = new Map();
+    // a pickaxe staged by rarity alone is a guess and cannot vouch for an ore
+    const picks = pickaxes.map((it) => ({ it, p: prog.get(it.id)?.p, kind: prog.get(it.id)?.src.kind })).filter((x) => x.p !== undefined && x.kind !== 'rarity' && x.kind !== 'unknown').sort((a, c) => a.p - c.p || c.it.pick - a.it.pick);
+    /** pickaxe + downed gates of one tile → { p, src } or null when nothing can mine it yet */
+    const gateOfTile = (t) => {
+      let p = 0;
+      const src = {};
+      if (t.minPick > 0) {
+        const pick = picks.find((x) => x.it.pick >= t.minPick);
+        if (!pick) return null;
+        p = pick.p;
+        src.need = t.minPick;
+        src.pickaxe = pick.it.name;
+        src.boss = labelOfProg(pick.p);
+      }
+      const g = t.gates?.length ? usableGate(t.gates, `tile ${t.id ?? ''}`) : null;
+      if (t.gates?.length && !g) return null;
+      if (g && g.p > p) { p = g.p; src.boss = g.label; src.gate = g.flag; }
+      return { p, src };
+    };
+    for (const it of oreItems) {
+      const t = tileGate.get(it.createTile);
+      // an anchor on an ore is the world gate (Meteorite falls after the evil boss), a boss that spawns
+      // the tile likewise: the floor under the pickaxe gate
+      const spawn = spawnFloor.get(it.id);
+      const floor = Math.max(anchorProg.get(it.id) ?? 0, spawn?.p ?? 0);
+      let own = gateOfTile(t);
+      if (!own) continue; // nothing mines it: leave the other evidence / rarity
+      let p = own.p;
+      let src = { kind: 'ore', ...own.src };
+      // worldgen places a different tile until a boss converts it (Calamity's disenchanted Aerialite)
+      const alt = config.pickaxe?.worldgenAs?.[it.id];
+      if (alt && tileGate.has(alt.tile)) {
+        const altGate = gateOfTile(tileGate.get(alt.tile));
+        const until = progOfKey(alt.until);
+        if (until !== null) {
+          const after = Math.max(p, until);
+          if (altGate && altGate.p < after) { p = altGate.p; src = { kind: 'ore', ...altGate.src, before: labelOfKey(alt.until) }; }
+          else { p = after; src = { kind: 'ore', ...own.src, boss: until >= own.p ? labelOfKey(alt.until) : own.src.boss, until: labelOfKey(alt.until), altNeed: altGate ? altGate.src.need : tileGate.get(alt.tile).minPick }; }
+        }
+      }
+      if (floor > p) {
+        p = floor;
+        const bySpawn = spawn && spawn.p >= (anchorProg.get(it.id) ?? 0);
+        // a converted world tile (`worldgenAs`) whose converting boss also spawns it keeps the pickaxe story
+        if (src.until && bySpawn) src = { ...src, boss: spawn.label };
+        else { src = { kind: bySpawn ? 'spawn' : 'ore', need: t.minPick || undefined, boss: bySpawn ? spawn.label : anchorProg.get(it.id + '#label') }; if (src.kind === 'ore') src.anchor = true; }
+      }
+      if (p === 0 && !src.need && !src.gate) src.kind = 'worldgen';
+      if (p === 0) delete src.boss;
+      for (const k of Object.keys(src)) if (src[k] === undefined) delete src[k];
+      next.set(it.id, { p, src });
+    }
+    const same = next.size === oreSeed.size && [...next].every(([id, s]) => oreSeed.get(id)?.p === s.p);
+    oreSeed = next;
+    prog = run(oreSeed);
+    if (same) break;
+  }
+
   const byItem = new Map();
   for (const [id, { p, src }] of prog) byItem.set(id, { progression: p, stage: stageOf(p), source: src });
 
@@ -238,7 +649,24 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, config, ite
     Object.assign(classAliases, aliases);
   }
 
-  return { stages, bosses: merged, byItem, classAliases };
+  const stations = new Map();
+  for (const r of recipes) for (const t of r.tiles ?? []) if (!stations.has(t)) {
+    const g = stationGate(t, prog);
+    const q = Number.isFinite(g.p) ? g.p : 0;
+    stations.set(t, { name: stationLabel(t), progression: q, stage: stageOf(q), boss: g.boss });
+  }
+
+  return {
+    stages, bosses: merged, byItem, classAliases,
+    groups: Object.fromEntries([...groupMembers].map(([k, v]) => [k, [...v]])),
+    stations,
+    enemyGates: enemyGate,
+    /** flags that gate evidence but did not resolve: [{ flag, count, examples }] — the config's downedFlags / zones fill these in */
+    unresolvedFlags: [...unresolved].map(([flag, u]) => ({ flag, count: u.count, examples: [...u.examples] })).sort((a, b) => b.count - a.count),
+    /** special world seeds whose gates blocked evidence here — worth re-running with each one on */
+    seedsSeen: [...seedsSeen],
+    tileGate,
+  };
 }
 
 function deCamelKey(k) {

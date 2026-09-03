@@ -7,7 +7,6 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { T } from './clr/metadata.js';
 import { UNKNOWN } from './extract/interp.js';
-import { derivesFromTml } from './extract/util.js';
 
 /** @returns {Map<string, object>} "Mod_Class" → parsed JSON */
 export function loadModConfigs(savesDir) {
@@ -23,7 +22,8 @@ export function loadModConfigs(savesDir) {
   return out;
 }
 
-const isConfigType = (asm, td) => derivesFromTml(asm, td, 'ModConfig');
+// ModConfig lives in Terraria.ModLoader.Config, not Terraria.ModLoader
+const isConfigType = (asm, td) => asm.derivesFrom(td, (b) => b.name === 'ModConfig' && b.namespace === 'Terraria.ModLoader.Config');
 
 /** `[DefaultValue(x)]` on a field or property of `td`, or undefined. */
 function defaultValue(asm, td, member) {

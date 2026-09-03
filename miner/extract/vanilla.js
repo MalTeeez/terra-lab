@@ -15,6 +15,7 @@ import { ITEM, Machine, PLAYER, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook
 import { extractVanillaDrops } from './loot.js';
 import { extractRecipes } from './recipes.js';
 import { loopCount, projTypeArg, vanillaProjectiles } from './projectiles.js';
+import { vanillaWingStats } from './wings.js';
 import { vectorHook } from './shoot.js';
 
 const KEY0 = Object.freeze({ k: 'key', slot: 0 });
@@ -70,7 +71,12 @@ export function vanillaItemDefaults(tml) {
     },
     onStore(recv, name, value, ctx) {
       if (recv !== ITEM) return;
-      for (const c of ctx.cases ?? []) if (c.slot === 0 && isNum(c.value)) rec(c.value, name, value, ctx.conditional);
+      for (const c of ctx.cases ?? []) {
+        if (c.slot !== 0) continue;
+        if (isNum(c.value)) rec(c.value, name, value, ctx.conditional);
+        // `if (type >= 3203 && type <= 3208)` (the crates): a small range keys every id in it
+        else if (c.value === undefined && Number.isFinite(c.lo) && Number.isFinite(c.hi) && c.hi - c.lo < 64) for (let t = c.lo; t <= c.hi; t++) rec(t, name, value, ctx.conditional);
+      }
     },
     onCall(callee, args, ctx) {
       const hooked = tmlStaticHook(callee, args, ctx);
@@ -265,6 +271,9 @@ export function extractVanilla(tml) {
   const defaults = vanillaItemDefaults(tml);
   const fx = vanillaEffects(tml);
   const shots = vanillaShoot(tml);
+  const wingStats = vanillaWingStats(tml);
+  const wingSlots = constMap(tml, 'Terraria.ID.ArmorIDs/Wing'); // the lunar wings' slot, by name (ItemID.WingsSolar → Wing.SolarWings)
+  const wingSlotOf = (f, internal) => (f.wingSlot > 0 ? f.wingSlot : /^Wings/.test(internal) ? [...wingSlots].find(([n]) => n.startsWith(internal.replace(/^Wings/, '')))?.[1] : undefined);
 
   const nameById = new Map();
   for (const [name, id] of itemIds) if (isNum(id) && id > 0 && !nameById.has(id)) nameById.set(id, name);
@@ -313,6 +322,8 @@ export function extractVanilla(tml) {
       autoReuse: f.autoReuse === 1 || undefined,
       noMelee: f.noMelee === 1 || undefined,
       useStyle: num(f.useStyle),
+      pick: num(f.pick) > 0 ? f.pick : undefined,
+      makeNPC: num(f.makeNPC) > 0 ? `v:${f.makeNPC}` : undefined,
       fire: VANILLA_MULTISHOT[internal] !== undefined ? { calls: [{ type: 'shoot', count: VANILLA_MULTISHOT[internal], dmgMul: 1, velMul: 1, abs: null, spread: VANILLA_MULTISHOT[internal] > 1 ? 0.2 : 0, variant: 'both' }], returnsTrue: false, defaultShot: { spam: false, stealth: false }, hasShoot: true } : shots.get(type),
       rarity: num(f.rare) ?? 0,
       value: num(f.value),
@@ -320,7 +331,10 @@ export function extractVanilla(tml) {
       vanity: f.vanity === 1,
       expert: f.expert === 1,
       consumable: f.consumable === 1,
-      wings: f.wingSlot > 0 || f.wingSlot === -1,
+      // the four lunar wings set their slot in a shared branch the walker does not take: go by the ItemID name
+      wings: f.wingSlot > 0 || f.wingSlot === -1 || /Wings/.test(internal) || undefined,
+      boots: f.shoeSlot > 0 || undefined,
+      wingStats: wingStats.get(wingSlotOf(f, internal)),
       createTile: isNum(f.createTile) && f.createTile >= 0 ? `v:tile:${f.createTile}` : undefined,
       set: [],
       effects,

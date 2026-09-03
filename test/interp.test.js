@@ -145,4 +145,55 @@ describe('Machine (linear, case tracking)', () => {
     m.run(method, ITEM, []);
     expect(seen).toEqual([[5, false], [9, true]]);
   });
+
+  test('tags the else-branch when the if-block ends in a return rather than a br', () => {
+    // if (!flag) { damage = 1; return; } useTime = 3;   — Thorium's spawn pool is shaped like this
+    const il = [
+      0x7e, ...tok(T.SFLD_FLAG), 0x2d, 9,          // 0: ldsfld flag ; 5: brtrue.s → 16
+      0x02, 0x1f, 1, 0x7d, ...tok(T.FLD_DAMAGE),   // 7: damage = 1
+      0x2a,                                        // 15: ret
+      0x02, 0x1f, 3, 0x7d, ...tok(T.FLD_USETIME),  // 16: useTime = 3
+      0x2a,                                        // 24: ret
+    ];
+    const { asm, method } = stubAssembly(il, { hasThis: true, params: [], ret: VOID });
+    const seen = [];
+    const m = new Machine(asm, {
+      linear: true,
+      onStaticLoad: (f) => (f.name === 'someFlag' ? { k: 'flag', name: 'hardMode' } : undefined),
+      onStore: (recv, name, value, ctx) => seen.push([name, [...ctx.condTags]]),
+    });
+    m.run(method, ITEM, []);
+    expect(seen).toEqual([
+      ['damage', ['!hardMode']],
+      ['useTime', ['hardMode']],
+    ]);
+  });
+
+  test('tags the else-branch of a flag with the flag, past a nested if/else that ends there', () => {
+    // if (!flag) { if (arg) { damage = 1 } else { damage = 2 } } else { useTime = 3 }
+    // — the inner else region is clamped to the outer one's end and must not erase the `flag` tag
+    const il = [
+      0x7e, ...tok(T.SFLD_FLAG), 0x2d, 23,      // 0: ldsfld flag ; 5: brtrue.s → 30
+      0x03, 0x2c, 10,                            // 7: ldarg.1 ; 8: brfalse.s → 20
+      0x02, 0x1f, 1, 0x7d, ...tok(T.FLD_DAMAGE), // 10: damage = 1
+      0x2b, 18,                                  // 18: br.s → 38
+      0x02, 0x1f, 2, 0x7d, ...tok(T.FLD_DAMAGE), // 20: damage = 2
+      0x2b, 8,                                   // 28: br.s → 38
+      0x02, 0x1f, 3, 0x7d, ...tok(T.FLD_USETIME),// 30: useTime = 3
+      0x2a,                                      // 38: ret
+    ];
+    const { asm, method } = stubAssembly(il, { hasThis: true, params: [I4], ret: VOID });
+    const seen = [];
+    const m = new Machine(asm, {
+      linear: true,
+      onStaticLoad: (f) => (f.name === 'someFlag' ? { k: 'flag', name: 'hardMode' } : undefined),
+      onStore: (recv, name, value, ctx) => seen.push([name, [...ctx.condTags]]),
+    });
+    m.run(method, ITEM, [{ k: 'key', slot: 0 }]);
+    expect(seen).toEqual([
+      ['damage', ['!hardMode']],
+      ['damage', ['!hardMode']],
+      ['useTime', ['hardMode']],
+    ]);
+  });
 });

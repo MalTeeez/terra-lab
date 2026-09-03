@@ -9,7 +9,7 @@
  *   crit       1 + crit% (summons cannot crit)
  *   hits       projectiles per use plus child projectiles (explosions, splits) weighted by where they spawn
  *   accuracy   spread × velocity × gravity × range — the share of projectiles that land on a moving boss
- *   pierce     infinite pierce hits worm segments / multi-part bosses; finite pierce a little
+ *   pierce     against the next boss: worms reward pierce, multi-part bosses a little, single targets not at all
  *   walls      projectiles that ignore tiles hit bosses through terrain
  *   debuffs    on-hit debuffs read from the projectile's OnHitNPC
  *   sustain    magic: mana per second the player can keep up
@@ -66,12 +66,29 @@ export function accuracy(p, { spread = 0, velocity = null }) {
   return { f, parts };
 }
 
+/**
+ * The boss fought next at a stage (the one after the stage just cleared): how many NPC parts it
+ * has and whether it is a worm. Pierce is worth a lot against a worm, a little against a
+ * multi-part boss and nothing against a single target (a projectile hits an NPC once per pass).
+ */
+export function bossShape(ds, stage) {
+  const npcs = ds?.stages?.[(stage ?? -1) + 1]?.npcs ?? [];
+  const worm = npcs.some((n) => VANILLA_WORMS.has(n) || /Tail|Segment/i.test(n)) || (npcs.length === 1 && /Head$/.test(npcs[0]));
+  const parts = Math.max(npcs.length, ...npcs.map((n) => VANILLA_PARTS[n] ?? 0)) || 1;
+  return { parts, worm };
+}
+// a vanilla stage lists one numeric id per boss: name the worms and the multi-part ones
+const VANILLA_WORMS = new Set(['v:13', 'v:134']); // Eater of Worlds, The Destroyer
+const VANILLA_PARTS = { 'v:35': 3, 'v:127': 5, 'v:245': 3, 'v:398': 3, 'v:266': 2 }; // Skeletron, Skeletron Prime, Golem, Moon Lord, Brain of Cthulhu
+const SINGLE = { parts: 1, worm: false };
+
 /** Per-projectile multipliers that do not depend on aim. */
-function projectileFactors(p, parts, label) {
+function projectileFactors(p, parts, label, boss = SINGLE) {
   let f = 1;
   if (!p) return f;
-  if (p.pen === -1) { f *= 1.35; parts.push({ label: `${label}infinite pierce`, mul: 1.35 }); }
-  else if (p.pen > 1) { const s = 1 + 0.08 * Math.min(p.pen - 1, 4); f *= s; parts.push({ label: `${label}pierces ${p.pen}`, mul: r2(s) }); }
+  const shape = boss.worm ? 'worm' : boss.parts > 1 ? `${boss.parts}-part boss` : 'single target';
+  if (p.pen === -1) { const s = boss.worm ? 1.5 : boss.parts > 1 ? 1.2 : 1.05; f *= s; parts.push({ label: `${label}infinite pierce (${shape})`, mul: r2(s) }); }
+  else if (p.pen > 1 && boss.parts > 1) { const s = 1 + (boss.worm ? 0.08 : 0.04) * Math.min(p.pen - 1, 4); f *= s; parts.push({ label: `${label}pierces ${p.pen} (${shape})`, mul: r2(s) }); }
   if (p.walls) { f *= 1.05; parts.push({ label: `${label}goes through walls`, mul: 1.05 }); }
   if (p.debuffs?.length) { const s = 1 + 0.03 * Math.min(p.debuffs.length, 3); f *= s; parts.push({ label: `${label}inflicts ${p.debuffs.length} debuff${p.debuffs.length > 1 ? 's' : ''}`, mul: r2(s) }); }
   return f;
@@ -93,7 +110,7 @@ function childHits(ds, p, depth = 0) {
  * One firing variant (spam or stealth): hits per use and their accuracy.
  * @returns {{ hits: number, f: number, parts: Array, spawnsDefault: boolean }}
  */
-function variantHits(item, ds, fire, variant, base) {
+function variantHits(item, ds, fire, variant, base, boss) {
   const parts = [];
   const primaryId = variant === 'stealth' && fire?.stealthMods?.type ? fire.stealthMods.type : fire?.typeOverride ?? base.primaryId;
   const primary = proj(ds, primaryId);
@@ -110,7 +127,7 @@ function variantHits(item, ds, fire, variant, base) {
     const p = c.type === 'shoot' ? primary : proj(ds, c.type);
     const n = c.count ?? 1;
     const acc = accuracy(p, { spread: c.spread ?? 0, velocity: c.abs ?? (shotVelocity ? shotVelocity * (c.velMul ?? 1) : null) });
-    const pf = projectileFactors(p, acc.parts, '');
+    const pf = projectileFactors(p, acc.parts, '', boss);
     const dm = c.dmgMul ?? 1;
     const ch = childHits(ds, p);
     g.hits += n * dm;
@@ -128,7 +145,7 @@ function variantHits(item, ds, fire, variant, base) {
   if (alts.length) { hits += alts[0].hits; weighted += alts[0].f; parts.push(...alts[0].parts); }
   if (dflt || !calls.length) {
     const acc = accuracy(primary, { spread: 0, velocity: shotVelocity });
-    const pf = projectileFactors(primary, acc.parts, '');
+    const pf = projectileFactors(primary, acc.parts, '', boss);
     const ch = childHits(ds, primary);
     hits += 1;
     weighted += acc.f * pf * (1 + ch);
@@ -151,7 +168,7 @@ export function stealthMultiplier(useTime, stealthMax = STEALTH_MAX_DEFAULT, wea
 
 /**
  * @param {object} item
- * @param {object} ctx     stat context (conds, uncertain, prefix, calibration) + optional ds, stage, stealthMax
+ * @param {object} ctx     stat context (conds, uncertain, prefix, calibration) + optional ds, stage, stealthMax, boss
  * @returns {{ value: number, kind: 'dps'|'per hit', mode: 'spam'|'stealth'|null, dps: number|null, rate: number|null, critMult: number, eff: object, parts: Array, hit: number, spam?: number, stealth?: number }}
  */
 export function realDps(item, ctx = {}) {
@@ -203,15 +220,16 @@ export function realDps(item, ctx = {}) {
   // ---- hits per use and their accuracy
   const fire = item.fire ?? null;
   const base = { primaryId, shootSpeed: item.shootSpeed ?? null };
+  const boss = ctx.boss ?? bossShape(ds, ctx.stage);
   const shoots = !!primaryId || !!fire?.calls?.length || isAmmo;
   const variant = (name) => {
     const vparts = [];
     let hitsF = 1;
-    if (trueMelee) { hitsF = 0.8; vparts.push({ label: 'contact range', mul: 0.8 }); }
+    if (trueMelee) { hitsF = 0.7; vparts.push({ label: 'contact range', mul: 0.7 }); }
     if (shoots) {
-      const v = variantHits(item, ds, fire, name, base);
+      const v = variantHits(item, ds, fire, name, base, boss);
       const projF = v.hits * v.f;
-      if (trueMelee && item.shoot) { hitsF = 0.8 + projF; vparts.push(...v.parts); }
+      if (trueMelee && item.shoot) { hitsF = 0.7 + projF; vparts.push(...v.parts); }
       else if (!trueMelee) { hitsF = projF; vparts.push(...v.parts); }
     }
     return { hitsF, parts: vparts };

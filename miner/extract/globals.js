@@ -107,7 +107,9 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
       const m = makeMachine(asm, td, {
         tml, enabledMods, cfg, linear: true,
         onReturn(v, ctx) {
-          if (v === 1) yes.push(...withCases(ctx));
+          // a `return true` we cannot pin to an item (a shared `return true` several branches jump to)
+          // means "some items, unknown which" — narrowing to nothing would drop the whole GlobalItem
+          if (v === 1) { const gs = withCases(ctx).filter((g) => g.length); if (gs.length) yes.push(...gs); else unresolved = true; }
           else if (v?.k === 'keycmp') {
             // `return entity.CountsAsClass(...)` / `return name != "X"` — ANDed with whatever guarded the return
             let own = keysToMatchers(asm, [v.value !== undefined ? { slot: 0, value: v.value } : { slot: 0, match: v.match }]);

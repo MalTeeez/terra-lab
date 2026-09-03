@@ -9,36 +9,69 @@
 @import '@fontsource/jetbrains-mono/600.css';
 
 @theme {
-  --color-paper: #f6f7f4;
+  /* surfaces — warm paper, white panels */
+  --color-paper: #eef2ea;
   --color-panel: #ffffff;
-  --color-panel2: #f0f3ee;
-  --color-line: #d9ded8;
-  --color-line-strong: #b9c2b8;
+  --color-panel2: #f4f8f2;
+  --color-line: #e1e8dd;
+  --color-line-strong: #bfcbbc;
   --color-ink: #161a17;
   --color-ink2: #3a423c;
   --color-dim: #6b736d;
+
+  /* green ramp — the primary */
   --color-green: #1e7a3c;
   --color-green-bright: #2f9e44;
   --color-green-deep: #14522a;
   --color-green-soft: #e6f2e9;
   --color-green-mid: #bfe0c8;
-  --color-warn: #b7791f;
-  --color-warn-soft: #fbf1dc;
+
+  /* secondary accents, used to tell kinds of things apart */
+  --color-warn: #a9700f;
+  --color-warn-soft: #fbf0d9;
+  --color-warn-mid: #e8d29b;
   --color-bad: #b23b3b;
   --color-bad-soft: #f8e3e3;
+  --color-info: #2f5bb7;
+  --color-info-soft: #e7edfa;
+  --color-info-mid: #bccdf0;
+  --color-plum: #7743bd;
+  --color-plum-soft: #f1eafc;
+  --color-plum-mid: #d8c6f2;
+  --color-teal: #10767c;
+  --color-teal-soft: #e0f2f2;
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-serif: ui-serif, Georgia, 'Times New Roman', serif;
 
-  --radius-lab: 2px;
+  --radius-lab: 0px;
+  --radius-chip: 0px;
+
+  /* tight, close-to-the-surface shadows + an inner top highlight for depth */
+  --shadow-panel: inset 0 1px 0 #fff, 0 1px 2px rgb(22 40 26 / 0.07);
+  --shadow-raise: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 1px 2px rgb(22 40 26 / 0.14);
+  --shadow-sunk: inset 0 1px 2px rgb(22 40 26 / 0.1), inset 0 0 0 1px rgb(22 40 26 / 0.04);
+  --shadow-pop: 0 1px 3px rgb(22 40 26 / 0.14), 0 8px 20px -8px rgb(22 40 26 / 0.3);
+  /* a band sitting a hair above what follows it */
+  --shadow-lift: 0 3px 5px -3px rgb(22 40 26 / 0.22);
+  /* a badge sitting on the surface rather than printed into it */
+  --shadow-badge: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 1px 1px -1px rgb(22 40 26 / 0.4);
 }
 
 @layer base {
   html {
-    background: var(--color-paper);
+    /* faint drafting grid under a soft wash of light */
+    background:
+      radial-gradient(1200px 600px at 15% -8%, rgb(255 255 255 / 0.9) 0%, transparent 60%),
+      radial-gradient(900px 500px at 95% 0%, var(--color-green-soft) 0%, transparent 55%),
+      repeating-linear-gradient(0deg, rgb(30 122 60 / 0.045) 0 1px, transparent 1px 32px),
+      repeating-linear-gradient(90deg, rgb(30 122 60 / 0.045) 0 1px, transparent 1px 32px),
+      var(--color-paper);
+    background-attachment: fixed;
   }
   body {
-    @apply m-0 bg-paper text-ink font-sans text-[13.5px] leading-normal;
+    @apply m-0 text-ink font-sans text-[13.5px] leading-normal;
     font-feature-settings: 'tnum' 1, 'cv11' 1;
   }
   h1, h2, h3 {
@@ -51,83 +84,323 @@
     font: inherit;
   }
   input[type='range'] {
+    accent-color: var(--accent, var(--color-green));
+  }
+  input[type='checkbox'] {
     accent-color: var(--color-green);
+    @apply h-[13px] w-[13px];
+  }
+  ::selection {
+    background: var(--color-green-mid);
+  }
+  /* Svelte's fly/fade compile to CSS animations, so this kills those too */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after, ::backdrop {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
+  /* ---------- surfaces ---------- */
   .lab-panel {
     @apply border border-line bg-panel;
     border-radius: var(--radius-lab);
+    box-shadow: var(--shadow-panel);
   }
+  /* panel header: tinted band with a coloured spine on the left */
+  .lab-head {
+    @apply relative flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-4 py-2.5;
+    background-image: linear-gradient(90deg, color-mix(in srgb, var(--accent, var(--color-green)) 8%, transparent), transparent 55%);
+    border-top-left-radius: var(--radius-lab);
+    border-top-right-radius: var(--radius-lab);
+    /* the band sits a hair above the panel body */
+    box-shadow: inset 0 1px 0 #fff, var(--shadow-lift);
+    z-index: 1;
+  }
+  .lab-head::before {
+    content: '';
+    @apply absolute left-0 top-0 h-full w-[3px];
+    background: var(--accent, var(--color-green));
+  }
+  .lab-head h2 {
+    @apply text-[12.5px] font-semibold uppercase tracking-[0.11em] text-ink2;
+  }
+  .lab-meta {
+    @apply ml-auto flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-dim;
+  }
+
+  /* a label with hairlines running out to the edges */
+  .lab-rule {
+    @apply flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-dim;
+  }
+  .lab-rule::before, .lab-rule::after {
+    content: '';
+    @apply h-px flex-1;
+    background-image: linear-gradient(90deg, transparent, var(--color-line-strong), transparent);
+  }
+  .lab-rule.start::before { display: none; }
+  .lab-rule.start::after { flex: 1; }
+
+  /* ---------- text ---------- */
   .lab-label {
-    @apply block text-[10.5px] font-semibold uppercase tracking-[0.12em] text-dim;
-  }
-  .lab-input {
-    @apply w-full border border-line bg-panel px-2 py-1.5 text-[13px] text-ink;
-    border-radius: var(--radius-lab);
-  }
-  .lab-input:focus {
-    @apply border-green outline-none;
-  }
-  .lab-chip {
-    @apply inline-flex cursor-pointer items-center gap-1 border border-line bg-panel px-2.5 py-1 text-[12.5px] font-medium text-ink2 transition-colors;
-    border-radius: var(--radius-lab);
-  }
-  .lab-chip:hover {
-    @apply border-line-strong bg-panel2;
-  }
-  .lab-chip[aria-pressed='true'], .lab-chip.is-on {
-    @apply border-green bg-green text-white;
-  }
-  .lab-btn {
-    @apply inline-flex cursor-pointer items-center gap-1.5 border border-line bg-panel px-3 py-1.5 text-[12.5px] font-medium text-ink transition-colors;
-    border-radius: var(--radius-lab);
-  }
-  .lab-btn:hover {
-    @apply border-green bg-green-soft;
-  }
-  .lab-btn.primary {
-    @apply border-green bg-green text-white;
-  }
-  .lab-btn.primary:hover {
-    @apply bg-green-deep;
-  }
-  .lab-tag {
-    @apply inline-block border border-line bg-panel2 px-1.5 py-[1px] text-[10.5px] font-semibold uppercase tracking-[0.08em] text-dim;
-    border-radius: var(--radius-lab);
-  }
-  .lab-tag.green {
-    @apply border-green-mid bg-green-soft text-green-deep;
-  }
-  .lab-tag.warn {
-    @apply border-warn/40 bg-warn-soft text-warn;
+    @apply block text-[10px] font-semibold uppercase tracking-[0.14em] text-dim;
   }
   .num {
     @apply font-mono tabular-nums;
   }
+
+  /* ---------- controls ---------- */
+  .lab-input {
+    @apply w-full border border-line bg-panel px-2 py-1.5 text-[13px] text-ink transition-colors;
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-sunk);
+  }
+  .lab-input:hover { @apply border-line-strong; }
+  .lab-input:focus {
+    @apply border-green outline-none;
+    box-shadow: var(--shadow-sunk), 0 0 0 2px var(--color-green-soft);
+  }
+  select.lab-input { @apply cursor-pointer pr-1; }
+
+  .lab-chip {
+    @apply inline-flex cursor-pointer items-center gap-1 border border-line bg-panel px-2.5 py-1 text-[12.5px] font-medium text-ink2 transition-all;
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-badge);
+  }
+  .lab-chip:hover {
+    @apply border-line-strong bg-panel2;
+    box-shadow: var(--shadow-badge), 0 2px 3px -2px rgb(22 40 26 / 0.35);
+  }
+  .lab-chip:active { box-shadow: var(--shadow-sunk); }
+  .lab-chip[aria-pressed='true'], .lab-chip.is-on {
+    color: #fff;
+    background: var(--accent, var(--color-green));
+    border-color: color-mix(in srgb, var(--accent, var(--color-green)) 75%, #000);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -1px 0 rgb(0 0 0 / 0.12);
+  }
+  .lab-chip.is-off, .lab-chip.is-off[aria-pressed='true'] {
+    @apply border-line bg-panel text-dim line-through opacity-55;
+    box-shadow: none;
+  }
+  .lab-btn {
+    @apply inline-flex cursor-pointer items-center gap-1.5 border border-line bg-panel px-3 py-1.5 text-[12.5px] font-medium text-ink transition-all;
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-panel);
+  }
+  .lab-btn:hover:not(:disabled) {
+    @apply border-green bg-green-soft;
+    box-shadow: var(--shadow-panel), 0 2px 4px -2px rgb(22 40 26 / 0.35);
+  }
+  .lab-btn:active:not(:disabled) { box-shadow: var(--shadow-sunk); }
+  .lab-btn:disabled { @apply cursor-default opacity-40; }
+  .lab-btn[aria-pressed='true'], .lab-btn[aria-expanded='true'] {
+    @apply border-green bg-green-soft text-green-deep;
+  }
+  .lab-btn.primary {
+    @apply border-green text-white;
+    background: var(--color-green);
+    box-shadow: var(--shadow-raise);
+  }
+  .lab-btn.primary:hover { background: var(--color-green-deep); }
+
+  /* removable "this setting is on" chip */
+  .lab-active {
+    @apply inline-flex cursor-pointer items-center gap-1.5 border px-2 py-[3px] text-[11.5px] font-medium transition-colors;
+    border-color: var(--color-green-mid);
+    background: var(--color-green-soft);
+    color: var(--color-green-deep);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  }
+  .lab-active:hover { border-color: var(--color-green); background: #fff; }
+  .lab-active::after { content: '✕'; @apply text-[9px] opacity-50; }
+
+  /* ---------- tags ---------- */
+  .lab-tag {
+    @apply inline-block border border-line bg-panel2 px-1.5 py-[1px] text-[10px] font-semibold uppercase tracking-[0.07em] text-dim align-[1px];
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-badge);
+  }
+  .lab-tag.green { @apply border-green-mid bg-green-soft text-green-deep; }
+  .lab-tag.warn { @apply border-warn-mid bg-warn-soft text-warn; }
+  .lab-tag.bad { @apply border-bad/30 bg-bad-soft text-bad; }
+  .lab-tag.info { @apply border-info-mid bg-info-soft text-info; }
+  .lab-tag.plum { @apply border-plum-mid bg-plum-soft text-plum; }
+  .lab-tag.solid {
+    color: #fff;
+    background: var(--accent, var(--color-green));
+    border-color: transparent;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 1px 1px -1px rgb(22 40 26 / 0.55);
+  }
+
+  /* score contribution: label with its points trailing, quietly */
+  .lab-part {
+    @apply inline-flex items-baseline gap-1 whitespace-nowrap border border-green-mid/60 bg-green-soft/60 px-1.5 py-[1px] text-[11px] text-ink2;
+    border-radius: var(--radius-chip);
+  }
+  .lab-part.neg { @apply border-bad/20 bg-bad-soft/60; }
+  /* a part's arithmetic, on hover: our own box, not the browser's title bubble */
+  .lab-part.has-tip, .has-tip { @apply relative cursor-help; }
+  .lab-part.has-tip::after, .has-tip::after {
+    content: attr(data-tip);
+    @apply pointer-events-none absolute bottom-full left-0 z-30 mb-1.5 hidden w-72 whitespace-pre-line border border-line bg-panel px-2.5 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-ink2;
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-pop, 0 6px 18px rgba(0, 0, 0, 0.12));
+  }
+  .lab-part.has-tip:hover::after, .lab-part.has-tip:focus-visible::after, .has-tip:hover::after { display: block; }
+
+  /* ---------- item browser ---------- */
+  /* a two-handle range: two native sliders on one track, only their thumbs take the pointer */
+  .lab-range { @apply relative my-1 h-6; }
+  .lab-range .track { @apply absolute left-0 right-0 top-[10px] h-1 bg-line; }
+  .lab-range .span { @apply absolute top-[10px] h-1; left: var(--lo); right: calc(100% - var(--hi)); background: var(--accent, var(--color-green)); }
+  .lab-range input[type='range'] { @apply pointer-events-none absolute inset-x-0 top-0 m-0 h-6 w-full bg-transparent; -webkit-appearance: none; appearance: none; }
+  .lab-range input[type='range']::-webkit-slider-runnable-track { @apply h-6 bg-transparent; }
+  .lab-range input[type='range']::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; margin-top: 5px; @apply h-[14px] w-[14px] cursor-pointer rounded-full border-2 border-white; background: var(--accent, var(--color-green)); box-shadow: var(--shadow-badge); }
+  .lab-range input[type='range']::-moz-range-thumb { pointer-events: auto; @apply h-[14px] w-[14px] cursor-pointer rounded-full border-2 border-white; background: var(--accent, var(--color-green)); }
+  .lab-range input[type='range']::-moz-range-track { background: transparent; }
+  /* a vertical timeline: a marker column, the moment on top, the step, and a detail line */
+  .lab-timeline { @apply m-0 list-none border-l-2 border-line p-0 pl-3; }
+  .lab-timeline > li { @apply relative pb-2.5 last:pb-0; }
+  .lab-timeline > li::before { content: ''; @apply absolute -left-[18px] top-[5px] h-2 w-2 rounded-full border-2 border-panel; background: var(--accent, var(--color-green)); }
+  .lab-timeline .when { @apply block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-dim; }
+  .lab-timeline .what { @apply block text-[12.5px] text-ink; }
+  .lab-timeline .how { @apply block text-[11.5px] text-ink2; }
+  .lab-part > b { @apply font-mono text-[10.5px] font-semibold text-green-deep tabular-nums; }
+  .lab-part.neg > b { @apply text-bad; }
+
+  /* ---------- tables ---------- */
   .lab-table {
     @apply w-full border-collapse text-[13px];
   }
   .lab-table th {
-    @apply border-b border-line-strong bg-panel2 px-2 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-dim;
+    @apply relative z-[1] border-b border-line-strong bg-panel2 px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-[0.11em] text-dim;
+    box-shadow: 0 3px 4px -3px rgb(22 40 26 / 0.2);
   }
   .lab-table td {
     @apply border-b border-line px-2 py-1.5 align-top;
   }
-  .lab-table tr:hover td {
-    @apply bg-green-soft/50;
+  .lab-table tr:last-child td { @apply border-b-0; }
+  .lab-table tbody tr.row {
+    @apply cursor-pointer transition-colors;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+  .lab-table tbody tr.row:hover {
+    background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, transparent);
+    box-shadow: inset 3px 0 0 var(--accent, var(--color-green));
   }
   .lab-table th.sortable {
-    @apply cursor-pointer select-none;
+    @apply cursor-pointer select-none transition-colors;
   }
-  .lab-table th.sortable:hover {
-    @apply text-green;
-  }
+  .lab-table th.sortable:hover { @apply bg-green-soft text-green; }
+  .lab-table th.sorted { @apply text-green-deep; }
+
+  /* ---------- bars ---------- */
   .bar {
-    @apply relative h-[6px] w-full bg-panel2;
+    @apply relative h-[7px] w-full overflow-hidden bg-panel2;
+    box-shadow: var(--shadow-sunk);
   }
   .bar > i {
-    @apply absolute inset-y-0 left-0 block bg-green;
+    @apply absolute inset-y-0 left-0 block;
+    background-image: linear-gradient(90deg, color-mix(in srgb, var(--accent, var(--color-green)) 65%, #fff), var(--accent, var(--color-green)));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
   }
+
+  /* ---------- info popovers ---------- */
+  .lab-info {
+    /* an italic serif "i" — a bold 10px sans one just reads as a smudge at this size.
+       normal-case/tracking because it lives inside uppercase letter-spaced labels, which would
+       otherwise inherit down and turn it into a capital I nudged off its own box */
+    @apply inline-grid h-[16px] w-[16px] shrink-0 cursor-pointer place-items-center border border-line-strong bg-panel text-[12px] font-normal italic normal-case leading-none tracking-normal text-dim align-[1px] transition-all;
+    font-family: var(--font-serif);
+    box-shadow: var(--shadow-badge);
+  }
+  .lab-info:hover { @apply border-green bg-green-soft text-green; }
+  .lab-info:active { box-shadow: var(--shadow-sunk); }
+  .lab-pop {
+    /* a popover renders in the top layer but still inherits from its DOM parent, and these live
+       inside uppercase, letter-spaced, semibold labels and table headers — reset all of it or the
+       explanation comes out shouting */
+    @apply border border-line bg-panel p-4 text-left text-[12.5px] font-normal normal-case not-italic leading-relaxed tracking-normal text-ink2;
+    /* preflight's `* { margin: 0 }` beats the UA sheet's `[popover] { margin: auto }`,
+       which is what otherwise parks every popover in the top-left corner */
+    margin: auto;
+    width: var(--w, 360px);
+    max-width: 92vw;
+    max-height: 88vh;
+    overflow: auto;
+    border-radius: var(--radius-lab);
+    box-shadow: var(--shadow-pop);
+    /* fade + settle on open; `allow-discrete` is what lets display/overlay join in */
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.985;
+    transition: opacity 0.14s ease, translate 0.14s ease, scale 0.14s ease, overlay 0.14s allow-discrete, display 0.14s allow-discrete;
+  }
+  .lab-pop:popover-open {
+    @apply block;
+    opacity: 1;
+    translate: none;
+    scale: 1;
+  }
+  /* header-plus-scrolling-body popover; a `flex` utility can't do this, it would also apply closed */
+  .lab-pop.col:popover-open { @apply flex flex-col; }
+  @starting-style {
+    .lab-pop:popover-open { opacity: 0; translate: 0 -6px; scale: 0.985; }
+  }
+  .lab-pop::backdrop {
+    background: rgb(20 26 20 / 0.28);
+    opacity: 0;
+    transition: opacity 0.14s ease, overlay 0.14s allow-discrete, display 0.14s allow-discrete;
+  }
+  .lab-pop:popover-open::backdrop { opacity: 1; }
+  @starting-style {
+    .lab-pop:popover-open::backdrop { opacity: 0; }
+  }
+  .lab-pop p { @apply m-0 mb-2 last:mb-0; }
+  .lab-pop em { @apply not-italic font-semibold text-ink; }
+
+  /* ---------- crafting tree graph ---------- */
+  .craft-box {
+    @apply absolute flex items-center gap-1.5 overflow-hidden border border-line bg-panel py-1 pl-2.5 pr-2 text-left text-[12px] leading-tight text-ink transition-all;
+    box-shadow: var(--shadow-badge);
+  }
+  .craft-box::before {
+    content: '';
+    @apply absolute inset-y-0 left-0 w-[3px];
+    background: var(--color-line-strong);
+  }
+  .craft-box.gating::before { background: var(--color-warn); }
+  .craft-box.root::before { background: var(--accent, var(--color-green)); }
+  .craft-box.root { @apply border-line-strong; box-shadow: var(--shadow-lift); }
+  .craft-box.station { @apply bg-panel2; }
+  button.craft-box { @apply cursor-pointer; }
+  button.craft-box:hover {
+    @apply border-green;
+    background: var(--color-green-soft);
+    box-shadow: 0 2px 10px -4px rgb(22 40 26 / 0.45);
+    z-index: 2;
+  }
+  /* the stage a box becomes obtainable, in the flow of its second line */
+  .craft-stage {
+    @apply mr-1 border border-line bg-panel2 px-1 text-[10px] font-semibold text-dim;
+  }
+  .craft-stage.warn { @apply border-warn-mid bg-warn-soft text-warn; }
+
+  /* card-ish clickable cell (accessory grid) */
+  .lab-cell {
+    @apply relative cursor-pointer bg-panel p-3 text-left transition-all;
+  }
+  .lab-cell::before {
+    content: '';
+    @apply absolute inset-y-0 left-0 w-[3px] opacity-0 transition-opacity;
+    background: var(--accent, var(--color-green));
+  }
+  .lab-cell:hover {
+    background: color-mix(in srgb, var(--accent, var(--color-green)) 6%, #fff);
+    box-shadow: 0 2px 10px -4px rgb(22 40 26 / 0.4);
+    z-index: 1;
+  }
+  .lab-cell:hover::before { @apply opacity-100; }
 }

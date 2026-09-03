@@ -1,7 +1,9 @@
 <script>
+  import { slide } from 'svelte/transition';
   import { CLASS_LABELS } from '../lib/dataset.js';
   import { prefixesFor } from '../lib/stats.js';
   import { ui } from '../lib/state.svelte.js';
+  import Info from './Info.svelte';
 
   let { ds, calibration, onselect } = $props();
   let query = $state('');
@@ -23,19 +25,20 @@
   const fmt = (v) => (v === null || v === undefined ? '–' : Math.round(v * 10) / 10);
 </script>
 
-<section class="lab-panel mx-4 mb-4 p-4">
-  <header class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-    <h2 class="text-[13px] uppercase tracking-[0.1em] text-ink2">Calibrate against the game</h2>
-    <label class="flex items-center gap-1.5 text-[12.5px]"><input type="checkbox" bind:checked={ui.calibrate} /> apply the fitted factors</label>
+<section class="lab-panel mx-5 mb-4 overflow-hidden" transition:slide={{ duration: 180 }}>
+  <header class="lab-head">
+    <h2>Calibrate against the game</h2>
+    <Info label="How calibration works" w={420}>
+      <p>Enter a few weapons with the damage the game shows in their tooltip. Best done on a character with no armor, accessories or buffs — otherwise put your character's bonus damage and crit into the two bonus fields so they can be divided out.</p>
+      <p>Each sample gives <em>observed ÷ predicted</em>; the median per class becomes a factor applied to every prediction of that class, and other classes fall back to the overall median.</p>
+      <p>Large errors point at items whose modifiers the miner missed — those are worth reporting.</p>
+    </Info>
+    <span class="lab-meta">
+      <label class="flex cursor-pointer items-center gap-1.5"><input type="checkbox" bind:checked={ui.calibrate} /> apply the fitted factors</label>
+    </span>
   </header>
-  <p class="m-0 mb-3 text-[12.5px] text-dim">
-    Enter a few weapons with the damage the game shows in their tooltip. Best done on a character with no armor, accessories or buffs;
-    otherwise put your character's bonus damage and crit into the two bonus fields so they can be divided out.
-    Each sample gives observed ÷ predicted; the median per class becomes a factor applied to every prediction of that class
-    (other classes use the overall median). Large residuals point at items whose modifiers the miner missed.
-  </p>
 
-  <div class="grid gap-4 md:grid-cols-[1fr_2fr]">
+  <div class="grid gap-4 p-4 md:grid-cols-[1fr_2fr]">
     <div>
       <span class="lab-label mb-1">Add a weapon</span>
       <input class="lab-input" placeholder="Type a name…" bind:value={query} />
@@ -78,7 +81,7 @@
                   <tr>
                     <td><button class="cursor-pointer text-left font-medium hover:text-green" onclick={() => onselect(it.id)}>{it.name}</button><div class="text-[11px] text-dim">{CLASS_LABELS[it.cls] ?? it.cls}</div></td>
                     <td>
-                      <select class="lab-input w-auto py-0.5" value={s.prefix ?? ''} onchange={(e) => update(i, { prefix: e.currentTarget.value || null })}>
+                      <select class="lab-input w-auto max-w-[140px] py-0.5" value={s.prefix ?? ''} onchange={(e) => update(i, { prefix: e.currentTarget.value || null })}>
                         <option value="">none</option>
                         {#each prefixesFor(it, ds.prefixes, ds.aliases) as p}<option value={p.id}>{p.name}</option>{/each}
                       </select>

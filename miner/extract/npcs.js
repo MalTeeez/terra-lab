@@ -6,7 +6,7 @@
 import { decodeIL } from '../clr/il.js';
 import { deCamel } from './localization.js';
 import { ITEM, Machine, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, refId } from './util.js';
+import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, gateRefs, refId } from './util.js';
 
 /** ModNPC list with boss flag and display name. */
 export function extractNpcs(asm, { tml, loc, modId }) {
@@ -35,6 +35,13 @@ export function extractNpcs(asm, { tml, loc, modId }) {
       for (const m of td.methods) for (const t of contentRefs(asm, m, 'NPCType')) spawns.add(refId(asm, t));
       spawns.delete(`${modId}:${td.name}`);
     }
+    // progression flags the spawn condition reads (downed bosses, hardmode, zones) — enemy drops are gated on them
+    const spawnChance = boss ? null : findInherited(asm, td, 'SpawnChance');
+    const gates = spawnChance ? [...gateRefs(asm, spawnChance)] : [];
+    const natural = !!spawnChance && !returnsZeroOnly(asm, spawnChance);
+    // town NPCs: what must be down before they move in (their shop items inherit it)
+    const canTown = findInherited(asm, td, 'CanTownNPCSpawn');
+    const townGates = canTown ? [...gateRefs(asm, canTown)] : null;
     out.push({
       id: `${modId}:${td.name}`,
       mod: modId,
@@ -43,9 +50,36 @@ export function extractNpcs(asm, { tml, loc, modId }) {
       boss,
       lifeMax: isNum(fields.lifeMax) ? fields.lifeMax : undefined,
       spawns: spawns.size ? [...spawns] : undefined,
+      gates: gates.length ? gates : undefined,
+      natural: natural || undefined,
+      town: canTown ? true : undefined,
+      townGates: townGates?.length ? townGates : undefined,
     });
   }
   return out;
+}
+
+/**
+ * `SpawnChance` that only ever returns 0 (an enemy placed by something else — a subworld's spawn
+ * pool, a boss). A debug build returns through a local (`result = 0f; return result;`), so a
+ * `ldloc` counts as zero when every store to that local is zero.
+ */
+function returnsZeroOnly(asm, md) {
+  const body = asm.methodBody(md);
+  if (!body) return true;
+  let ins;
+  try { ins = decodeIL(body.il); } catch { return false; }
+  const slot = (x) => (/^(ld|st)loc\.\d$/.test(x.op) ? +x.op.slice(6) : x.operand);
+  const zeroConst = (x) => !!x && (x.op === 'ldc.i4.0' || ((x.op === 'ldc.r4' || x.op === 'ldc.r8') && x.operand === 0));
+  const zeroLocal = new Map();
+  for (let i = 0; i < ins.length; i++) {
+    if (!/^stloc/.test(ins[i].op)) continue;
+    const k = slot(ins[i]);
+    zeroLocal.set(k, (zeroLocal.get(k) ?? true) && zeroConst(ins[i - 1]));
+  }
+  const zero = (x) => zeroConst(x) || (!!x && /^ldloc/.test(x.op) && zeroLocal.get(slot(x)) === true);
+  for (let i = 0; i < ins.length; i++) if (ins[i].op === 'ret' && !zero(ins[i - 1])) return false;
+  return true;
 }
 
 function npcName(loc, className) {
