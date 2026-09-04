@@ -227,6 +227,7 @@
   .lab-tag.bad { @apply border-bad/30 bg-bad-soft text-bad; }
   .lab-tag.info { @apply border-info-mid bg-info-soft text-info; }
   .lab-tag.plum { @apply border-plum-mid bg-plum-soft text-plum; }
+  .lab-tag.teal { background: var(--color-teal-soft); color: var(--color-teal); border-color: color-mix(in srgb, var(--color-teal) 28%, #fff); }
   .lab-tag.solid {
     color: #fff;
     background: var(--accent, var(--color-green));
@@ -249,17 +250,41 @@
     box-shadow: var(--shadow-pop, 0 6px 18px rgba(0, 0, 0, 0.12));
   }
   .lab-part.has-tip:hover::after, .lab-part.has-tip:focus-visible::after, .has-tip:hover::after { display: block; }
+  /* near the right edge the box would hang off the table, so hang it off the other corner */
+  .has-tip.tip-right::after { @apply left-auto right-0; }
 
   /* ---------- item browser ---------- */
   /* a two-handle range: two native sliders on one track, only their thumbs take the pointer */
-  .lab-range { @apply relative my-1 h-6; }
+  .lab-range { @apply relative mb-1 mt-5 h-6; }
+  /* the value each handle stands for, riding along above it. the box is centred on the handle but
+     clamped to the track, so a long label at either end stays inside the column instead of
+     spilling out of it */
+  .lab-range .cap {
+    @apply absolute -top-[15px] w-24 truncate text-center text-[10.5px] font-semibold leading-none text-ink;
+    left: clamp(0px, calc(var(--pos) - 3rem), calc(100% - 6rem));
+    transition: left 0.12s ease;
+  }
+  /* handles close together would have their labels on top of each other, so the lower one moves up */
+  .lab-range.stacked { @apply mt-8; }
+  .lab-range .cap.up { @apply -top-[29px]; }
+  .lab-range .cap.off { @apply font-normal text-dim; }
   .lab-range .track { @apply absolute left-0 right-0 top-[10px] h-1 bg-line; }
   .lab-range .span { @apply absolute top-[10px] h-1; left: var(--lo); right: calc(100% - var(--hi)); background: var(--accent, var(--color-green)); }
   .lab-range input[type='range'] { @apply pointer-events-none absolute inset-x-0 top-0 m-0 h-6 w-full bg-transparent; -webkit-appearance: none; appearance: none; }
   .lab-range input[type='range']::-webkit-slider-runnable-track { @apply h-6 bg-transparent; }
-  .lab-range input[type='range']::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; margin-top: 5px; @apply h-[14px] w-[14px] cursor-pointer rounded-full border-2 border-white; background: var(--accent, var(--color-green)); box-shadow: var(--shadow-badge); }
-  .lab-range input[type='range']::-moz-range-thumb { pointer-events: auto; @apply h-[14px] w-[14px] cursor-pointer rounded-full border-2 border-white; background: var(--accent, var(--color-green)); }
+  /* the handles say which way they cut: the lower one keeps what is ≥ it, the upper one what is ≤ it.
+     the chevrons come in as --chev-lo / --chev-hi, stroked in whatever accent the caller is using */
+  .lab-range input[type='range']:nth-of-type(1) { --chev: var(--chev-lo); }
+  .lab-range input[type='range']:nth-of-type(2) { --chev: var(--chev-hi); }
+  .lab-range input[type='range']::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; margin-top: 3px; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; box-shadow: var(--shadow-lift); }
+  .lab-range input[type='range']::-moz-range-thumb { pointer-events: auto; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; }
   .lab-range input[type='range']::-moz-range-track { background: transparent; }
+  .lab-range input[type='range']::-webkit-slider-thumb { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+  .lab-range input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.12); }
+  .lab-range input[type='range']:active::-webkit-slider-thumb { transform: scale(1.2); }
+  .lab-range input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--color-green)) 30%, transparent); }
+  .lab-range input[type='range'] { @apply outline-none; }
+  .lab-range .span { transition: left 0.12s ease, right 0.12s ease; }
   /* a vertical timeline: a marker column, the moment on top, the step, and a detail line */
   .lab-timeline { @apply m-0 list-none border-l-2 border-line p-0 pl-3; }
   .lab-timeline > li { @apply relative pb-2.5 last:pb-0; }
@@ -282,6 +307,8 @@
     @apply border-b border-line px-2 py-1.5 align-top;
   }
   .lab-table tr:last-child td { @apply border-b-0; }
+  /* the item list leads with the name and the sprite, so its rows get the room for both */
+  .lab-table-lg tbody tr.row > td { @apply py-2 align-middle; }
   .lab-table tbody tr.row {
     @apply cursor-pointer transition-colors;
     box-shadow: inset 3px 0 0 transparent;
@@ -295,6 +322,28 @@
   }
   .lab-table th.sortable:hover { @apply bg-green-soft text-green; }
   .lab-table th.sorted { @apply text-green-deep; }
+  /* the item browser: an open row and its detail row read as one block */
+  .lab-table tbody tr.row.open > td { background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, #fff); }
+  .lab-table tbody tr.expanded > td { background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, #fff); }
+  /* the detail row: a timeline on the left, its supporting visual on the right, split by a rule */
+  .lab-detail { @apply grid gap-4 p-3 text-[12.5px]; }
+  .lab-detail > * { @apply min-w-0; }
+  @media (min-width: 768px) {
+    .lab-detail { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 0; }
+    .lab-detail > :first-child { border-right: 1px solid var(--color-line); padding-right: 1rem; }
+    .lab-detail > :last-child { padding-left: 1rem; }
+  }
+
+  /* a running calculation: label, a dotted leader across the gap, the number. tighter than a
+     table, and the leader is what keeps a long label tied to its value */
+  .lab-calc { @apply flex flex-col text-[12px]; }
+  .lab-calc > .row { @apply flex items-baseline gap-1 py-[3px]; }
+  .lab-calc > .row + .row { @apply border-t border-dashed border-line; }
+  .lab-calc .lbl { @apply min-w-0 text-ink2; }
+  .lab-calc .lead { @apply mb-[3px] min-w-[10px] flex-1 self-end border-b border-dotted border-line-strong opacity-60; }
+  .lab-calc .val { @apply shrink-0 whitespace-nowrap text-right; }
+  .lab-calc > .row.total { @apply mt-0.5 border-t border-solid border-line-strong pt-1 font-semibold text-ink; }
+  .lab-calc > .row.total .lead { @apply opacity-0; }
 
   /* ---------- bars ---------- */
   .bar {
@@ -303,6 +352,7 @@
   }
   .bar > i {
     @apply absolute inset-y-0 left-0 block;
+    transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     background-image: linear-gradient(90deg, color-mix(in srgb, var(--accent, var(--color-green)) 65%, #fff), var(--accent, var(--color-green)));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
   }

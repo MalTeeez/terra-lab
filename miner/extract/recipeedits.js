@@ -16,7 +16,7 @@ const EDIT_HOOKS = new Set(['PostAddRecipes', 'PostSetupRecipes']);
  * @returns {Array<{ mod, result, kind: 'addTile'|'removeTile'|'addIngredient'|'removeIngredient'|'addGroup'|'disable',
  *                   tile?: string, item?: string, n?: number, group?: string, method: string }>}
  */
-export function extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }) {
+export function extractRecipeEdits(asm, { tml, modId, enabledMods, cfg, groupFields = null }) {
   const out = [];
   for (const td of asm.types) {
     for (const md of td.methods) {
@@ -26,7 +26,7 @@ export function extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }) {
         const groups = ctx.caseGroups?.length ? ctx.caseGroups : [ctx.cases ?? []];
         for (const g of groups) {
           const ids = keysToMatchers(asm, g).filter((m) => m.id).map((m) => m.id);
-          if (process.env.TL_TRACE_EDITS) console.log('edit', kind, JSON.stringify(extra), 'at', ctx.offset, 'ids', JSON.stringify(ids), 'conditional', ctx.conditional, 'tags', JSON.stringify(ctx.condTags));
+          if (process.env.TL_TRACE_EDITS) console.log('edit', kind, JSON.stringify(extra), 'at', ctx.offset, 'ids', JSON.stringify(ids), 'conditional', ctx.conditional, 'tags', JSON.stringify(ctx.condTags), 'in', method);
           if (ctx.conditional || ids.length !== 1) continue;
           out.push({ mod: modId, result: ids[0], kind, ...extra, method });
         }
@@ -38,7 +38,13 @@ export function extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }) {
         linear: true,
         maxDepth: 3,
         budget: 400000,
-        onStaticLoad: (f) => cfg?.onStaticLoad(f) ?? tmlStaticLoadHook(f),
+        onStaticLoad(f) {
+          // `AddRecipeGroup(EvilSkinRecipeGroup, 6)` passes the group itself, parked in a static
+          // field by whoever registered it — the same lookup `extractRecipes` does
+          const g = groupFields?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`);
+          if (g) return { k: 'groupname', name: g };
+          return cfg?.onStaticLoad(f) ?? tmlStaticLoadHook(f);
+        },
         onLoad: (recv, name) => cfg?.onLoad(recv, name),
         onCall(callee, args, ctx) {
           const hooked = cfg?.onCall(callee, args, ctx) ?? tmlStaticHook(callee, args, ctx);
@@ -63,7 +69,11 @@ export function extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }) {
               return UNKNOWN;
             }
             case 'RemoveIngredient': { const id = typeArg ?? item(args[0]); if (id) emit('removeIngredient', { item: id }, ctx); return UNKNOWN; }
-            case 'AddRecipeGroup': { if (typeof args[0] === 'string') emit('addGroup', { group: args[0] }, ctx); return UNKNOWN; }
+            case 'AddRecipeGroup': {
+              const g = typeof args[0] === 'string' ? args[0] : args[0]?.k === 'groupname' ? args[0].name : null;
+              if (g) emit('addGroup', { group: g, n: isNum(args[1]) ? args[1] : 1 }, ctx);
+              return UNKNOWN;
+            }
             case 'DisableRecipe': emit('disable', {}, ctx); return UNKNOWN;
             default: return UNKNOWN;
           }

@@ -14,8 +14,9 @@
  * vanilla rule API; `int[]` arrays passed to rules are always item lists.
  */
 import { ET } from '../clr/sig.js';
+import { decodeIL, ldcValue } from '../clr/il.js';
 import { Machine, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { expandValue, progressionHooks, siteGates } from './flags.js';
+import { conditionField, expandValue, progressionHooks, siteGates } from './flags.js';
 import { TYPE_ABSTRACT, contentRefs, derivesFromTml, gateRefs, refId } from './util.js';
 
 /** Item-id argument index for vanilla rule constructors / factories. */
@@ -55,7 +56,7 @@ function condValue(short) {
 }
 
 /** Items, child rules and condition flags named by a rule call's arguments. */
-function ruleItems(asm, name, args, { intsAreItems }) {
+function ruleItems(asm, name, args, { intsAreItems, locals = null }) {
   const items = new Set();
   const children = [];
   const cond = [];
@@ -66,6 +67,14 @@ function ruleItems(asm, name, args, { intsAreItems }) {
   args.forEach((a, i) => {
     for (const f of condFlags(asm, a)) cond.push(f);
     if (a?.k === 'cond' && a.neg) neg.push(...a.neg);
+    // A local the method filled in a per-key `if` chain holds only its last value by the time the
+    // rule is built (ThoriumRework picks the cosmetic of whichever boss this is, then adds it once
+    // at the end): every store into it is an arm, each under the key it was made in.
+    const arms = locals?.(a);
+    if (arms) {
+      for (const s of arms) children.push({ k: 'rule', name: 'local', items: new Set([s.item]), children: [], cond: s.gates, cases: s.cases });
+      return;
+    }
     // `Main.hardMode ? 5003 : 2336` (a phi) or a constant stored under a flag: each arm is a child
     // rule carrying that arm's flags
     if (a?.k === 'phi' || a?.k === 'maybe') {
@@ -113,6 +122,15 @@ function allItems(rule, out = new Map(), seen = new Set(), inherited = []) {
   return out;
 }
 
+/** Nested rules that carry case keys of their own (a value stored under one key, added under none). */
+function keyedArms(rule, out = [], seen = new Set()) {
+  if (!rule || seen.has(rule)) return out;
+  seen.add(rule);
+  if (rule.cases?.length) out.push(rule);
+  for (const c of rule.children ?? []) keyedArms(c, out, seen);
+  return out;
+}
+
 /** Source ids of a call site: a fixed source, or what the case keys say (`npc.type == X`, a range). */
 function sourcesOf(sourceOf, cases, fixed) {
   if (fixed) return Array.isArray(fixed) ? fixed : [fixed];
@@ -129,6 +147,9 @@ function keyedSources(asm, prefix) {
       if (c.slot !== 0) continue;
       if (isNum(c.value)) out.push(`${prefix}v:${c.value}`);
       else if (c.value !== undefined) { const r = refId(asm, c.value); if (r) out.push(`${prefix}${r}`); }
+      // a class-name key: which mod owns the class is only known once every mod is read, so the
+      // name travels and `mine.js` resolves it
+      else if (c.match) { const n = c.match.className ?? c.match.classNameContains ?? c.match.classNameStartsWith; if (n) out.push(`${prefix}class:${n}`); }
       else if (c.lo !== undefined && c.hi !== undefined && Number.isFinite(c.lo) && Number.isFinite(c.hi) && c.hi - c.lo < 64) for (let i = c.lo; i <= c.hi; i++) out.push(`${prefix}v:${i}`);
     }
     return out;
@@ -147,14 +168,34 @@ function newItemTypeIndex(callee) {
  * `sourceOf(cases)` maps the case-tracker state to source ids (or nothing to skip);
  * `anySource` is used for a drop without a key that is gated by flags (any enemy while X).
  */
-export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, anySource = null, intsAreItems = false, tileSpawns = false, newItemDrops = false }) {
+export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, anySource = null, intsAreItems = false, tileSpawns = false, newItemDrops = false, enabledMods = null, statics = null }) {
   // Rules are registered before their chains are attached, so resolve items after the run.
   const pending = [];
+  const keyedStores = new Map(); // local index → every keyed store into it, with its key and flags
+  const localOfValue = new Map(); // the stored value object → that local (the value keeps its identity)
+  /** The keyed stores a rule argument stands for, when it was read out of such a local. */
+  const ruleOpts = { intsAreItems, locals: (a) => armsOf(a) };
+  const armsOf = (a) => {
+    const i = a?.k === 'maybe' && a.local !== undefined ? a.local : localOfValue.get(a);
+    const l = i === undefined ? null : keyedStores.get(i);
+    return l?.length ? l : null;
+  };
   const later = (sources, name, cargs, ctx) => {
     const gates = siteGates(ctx); // `if (Main.hardMode) loot.Add(...)`: the block's flags gate the rule
     let list = sourcesOf(sourceOf, ctx?.cases, sources);
+    const r = ruleItems(asm, name, cargs, { ...ruleOpts, intsAreItems: false });
+    // Nothing keys the call site, but an arm of the value does: a mod picks the item in a per-boss
+    // `if (npc.ModNPC.Name == "TheGrandThunderBird")` chain and adds it once at the end, so each
+    // arm belongs to the boss it was chosen under.
+    if (!list.length) {
+      const armed = keyedArms(r);
+      if (armed.length) {
+        for (const arm of armed) for (const source of sourcesOf(sourceOf, arm.cases)) pending.push({ source, r: arm, gates });
+        return;
+      }
+    }
     if (!list.length && gates.length && anySource) list = [anySource];
-    for (const source of list) pending.push({ source, r: ruleItems(asm, name, cargs, { intsAreItems: false }), gates });
+    for (const source of list) pending.push({ source, r, gates });
   };
   const direct = (item, ctx) => {
     if (!item) return;
@@ -172,23 +213,39 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
   const prog = progressionHooks();
   const machine = new Machine(asm, {
     tml,
+    enabledMods,
     concreteType: md.declaringType,
     linear: true,
     noDead: true,
     phi: true,
     maxDepth: 3,
     budget: 400000,
+    onStoreLocal(i, val, ctx) {
+      if (val?.k !== 'type' || val.fn !== 'ItemType' || !ctx.cases?.length) return;
+      let l = keyedStores.get(i);
+      if (!l) keyedStores.set(i, (l = []));
+      l.push({ item: refId(asm, val), cases: ctx.cases, gates: siteGates(ctx) });
+      localOfValue.set(val, i);
+    },
     onLoad(recv, name) {
       if (recv?.k === 'obj' && recv.name === 'keyArg' && name === 'type') return { k: 'key', slot: 0 };
+      // `npc.ModNPC.Name == "TheGrandThunderBird"`: another mod's GlobalNPC keys on the class name
+      // rather than the type it cannot reference. The same chain a GlobalItem hook uses on its item.
+      if (recv?.k === 'obj' && recv.name === 'keyArg' && (name === 'ModNPC' || name === 'ModItem')) return { k: 'moditem', slot: 0 };
       if (recv?.k === 'obj' && recv.name === 'keyArg') return recv.props[name] ?? UNKNOWN;
       return prog.onLoad(recv, name);
     },
-    onStaticLoad: (f) => prog.onStaticLoad(f) ?? tmlStaticLoadHook(f),
+    onStaticLoad: (f) => conditionField(f) ?? prog.onStaticLoad(f) ?? statics?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`) ?? tmlStaticLoadHook(f),
     onNew(callee, cargs) {
       const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
       const short = decl.split(/[./]/).pop();
-      if (/ItemDropRules/.test(decl) && isRuleName(short)) return makeRule(asm, short, cargs, { intsAreItems });
-      if (/Conditions?[./+]|Condition$/.test(decl) || COND_CLASS_RE.test(short)) return condValue(short) ?? { k: 'cond', flags: [] };
+      if (/ItemDropRules/.test(decl) && isRuleName(short)) return makeRule(asm, short, cargs, ruleOpts);
+      if (/Conditions?[./+]|Condition$/.test(decl) || COND_CLASS_RE.test(short)) {
+        // a condition whose name does not give it away (`Conditions.YoyosYelets`): what its own
+        // `CanDrop` reads is the gate — hardMode, ZoneJungle and downedMechBossAny for that one
+        const canDrop = condValue(short) ? null : callee.declaringType?.def?.methods?.find((x) => x.name === 'CanDrop');
+        return condValue(short) ?? { k: 'cond', flags: canDrop ? [...gateRefs(asm, canDrop)] : [] };
+      }
       return undefined;
     },
     onCall(callee, cargs, ctx) {
@@ -226,11 +283,13 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
       }
       if (cargs.some(isSeedArg) && recv === undefined) return { k: 'obj', name: 'SeedLoot', props: {} };
       if (recv?.k === 'obj' && SEED_RE.test(recv.name ?? '')) return recv;
+      // `Condition.DownedEowOrBoc.ToDropCondition(…)`: a shop condition dressed as a drop condition
+      if (/^ToDropCondition/.test(name)) return cargs.find((a) => a?.k === 'cond') ?? UNKNOWN;
       // condition factories: DropHelper.PostGolem(), Conditions.IsHardmode(), DropHelper.Hardmode(ui: true) ...
       if (!callee.sig.hasThis && COND_CLASS_RE.test(name) && !isRuleName(name) && cargs.every((a) => isNum(a) || a === null || a === undefined)) return condValue(name);
       // rule factories: ItemDropRule.X(...) and mod helpers returning rules
       if (!callee.sig.hasThis && (decl.endsWith('ItemDropRule') || isRuleName(name))) {
-        return makeRule(asm, name, cargs, { intsAreItems });
+        return makeRule(asm, name, cargs, ruleOpts);
       }
       // Chains.OnSuccess(parent, child) (static extension) or parent.OnSuccess(child)
       if (name === 'OnSuccess' || name === 'OnFailedRoll' || name === 'OnFailedConditions') {
@@ -247,8 +306,10 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
       if (name === 'RegisterToNPC' || name === 'RegisterToNPCNetId') {
         const npc = cargs[0];
         if (isNum(npc)) later(`npc:v:${npc}`, '', cargs.slice(1), ctx);
-        return cargs[1]?.k === 'rule' ? cargs[1] : makeRule(asm, '', cargs.slice(1), { intsAreItems: false });
+        return cargs[1]?.k === 'rule' ? cargs[1] : makeRule(asm, '', cargs.slice(1), { ...ruleOpts, intsAreItems: false });
       }
+      // a rule every NPC rolls, gated by its own condition — how vanilla drops the biome yoyos
+      if (name === 'RegisterToGlobal') { later('npc:*', '', cargs, ctx); return cargs[0]; }
       if (name === 'RegisterToMultipleNPCs' || name === 'RegisterToMultipleNPCsNotRemixSeed' || name === 'RegisterToMultipleNPCsRemixSeed') {
         const npcs = cargs[1]?.k === 'arr' ? cargs[1].items.filter(isNum) : [];
         for (const n of npcs) later(`npc:v:${n}`, '', [cargs[0]], ctx);
@@ -283,7 +344,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
       // any other static helper that hands back a drop rule (Calamity's DropHelper.PerPlayer,
       // CalamityStyle, ...): build the rule from its arguments rather than walking into it, so the
       // set it is handed to still decides the conditions
-      if (!callee.sig.hasThis && /ItemDropRule$/.test(retTypeName(callee))) return makeRule(asm, name, cargs, { intsAreItems });
+      if (!callee.sig.hasThis && /ItemDropRule$/.test(retTypeName(callee))) return makeRule(asm, name, cargs, ruleOpts);
       return undefined;
     },
   });
@@ -307,7 +368,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
  * it adds to vanilla bags. Sources: `npc:<id>`, `bag:<id>`, `npc:*` (any enemy under a flag).
  * @returns {Array<{ source: string, item: string, cond?: string[] }>}
  */
-export function extractModDrops(asm, { tml, modId }) {
+export function extractModDrops(asm, { tml, modId, enabledMods = null, statics = null }) {
   const out = [];
   const seen = new Map();
   // `fallback` records (every ItemType<T>() the method mentions) never override a rule's conditions
@@ -323,6 +384,29 @@ export function extractModDrops(asm, { tml, modId }) {
   const lootArg = { k: 'obj', name: 'loot', props: {} };
   const npcSources = keyedSources(asm, 'npc:');
   const bagSources = keyedSources(asm, 'bag:');
+  const nested = new Map(); // owning type's full name → its nested types (compiler closures included)
+  for (const t of asm.types) {
+    const i = t.fullName.lastIndexOf('/');
+    if (i <= 0) continue;
+    const k = t.fullName.slice(0, i);
+    let l = nested.get(k);
+    if (!l) nested.set(k, (l = []));
+    l.push(t);
+  }
+  /** Does this method build drop rules? (Its IL touches the `ItemDropRules` namespace.) */
+  const buildsRules = (md) => {
+    const body = asm.methodBody(md);
+    if (!body) return false;
+    let ins;
+    try { ins = decodeIL(body.il); } catch { return false; }
+    for (const x of ins) {
+      if (x.op !== 'call' && x.op !== 'callvirt' && x.op !== 'newobj') continue;
+      let d;
+      try { d = asm.resolve(x.operand); } catch { continue; }
+      if (/ItemDropRules/.test(d?.declaringType?.fullName ?? '')) return true;
+    }
+    return false;
+  };
 
   for (const td of asm.types) {
     if (td.flags & TYPE_ABSTRACT) continue;
@@ -330,27 +414,54 @@ export function extractModDrops(asm, { tml, modId }) {
       const src = `npc:${modId}:${td.name}`;
       const m = td.methods.find((x) => x.name === 'ModifyNPCLoot' && asm.methodBody(x));
       if (m) {
-        runLootMethod(asm, m, { tml, thisVal: THIS, args: [lootArg], emit, sourceOf: () => src });
+        runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [lootArg], emit, sourceOf: () => src });
         for (const t of contentRefs(asm, m)) emit({ source: src, item: refId(asm, t) }, true);
       }
       const kill = td.methods.find((x) => x.name === 'OnKill' && asm.methodBody(x));
       if (kill) runLootMethod(asm, kill, { tml, thisVal: THIS, args: [], emit, sourceOf: () => src, tileSpawns: true, newItemDrops: true });
+      // A mod may hand its boss tables to a registry of its own instead of the loot hook — Thorium
+      // registers a lambda with its SharedBossLootSystem from SetStaticDefaults, so `ModifyNPCLoot`
+      // shows only the trophy and the bag. The rules are still written on the NPC's own type, so
+      // any other method of it (its compiler closures included) that builds drop rules is its loot.
+      for (const cand of [...td.methods, ...(nested.get(td.fullName) ?? []).flatMap((n) => n.methods)]) {
+        if (cand === m || cand === kill || !asm.methodBody(cand) || !buildsRules(cand)) continue;
+        runLootMethod(asm, cand, { tml, thisVal: THIS, args: new Array(asm.methodSig(cand).params.length).fill(UNKNOWN), emit, sourceOf: () => src });
+      }
     } else if (derivesFromTml(asm, td, 'GlobalNPC')) {
       const kill = td.methods.find((x) => x.name === 'OnKill' && asm.methodBody(x));
       // `if (npc.type == NPCID.X) SpawnOre(TileType<Y>())` / `Item.NewItem(...)` — case-tracked on npc.type
       if (kill) runLootMethod(asm, kill, { tml, thisVal: THIS, args: [npcArg], emit, sourceOf: npcSources, anySource: 'npc:*', tileSpawns: true, newItemDrops: true });
       const m = td.methods.find((x) => x.name === 'ModifyNPCLoot' && asm.methodBody(x));
-      if (m) runLootMethod(asm, m, { tml, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: npcSources, anySource: 'npc:*' });
+      if (m) runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: npcSources, anySource: 'npc:*' });
+      // Vanilla-boss tables handed to a registry of the mod's own instead of the loot hook —
+      // Thorium's `SharedBossLootSystem.ByType[NPCID.BrainofCthulhu] = new Provider(() => rules)`.
+      // The rules live in the lambda; the constant pushed before the delegate names the NPC.
+      for (const reg of td.methods) {
+        const body = asm.methodBody(reg);
+        if (!body) continue;
+        let ins;
+        try { ins = decodeIL(body.il); } catch { continue; }
+        let key;
+        for (const x of ins) {
+          const v = ldcValue(x);
+          if (v !== undefined) { if (v > 0) key = v; continue; }
+          if (x.op !== 'ldftn' || key === undefined) continue;
+          let fn;
+          try { fn = asm.resolve(x.operand)?.def; } catch { continue; }
+          if (!fn || !asm.methodBody(fn) || !buildsRules(fn)) continue;
+          runLootMethod(asm, fn, { tml, thisVal: THIS, args: new Array(asm.methodSig(fn).params.length).fill(UNKNOWN), emit, sourceOf: () => `npc:v:${key}` });
+        }
+      }
     } else if (derivesFromTml(asm, td, 'ModItem')) {
       const m = td.methods.find((x) => x.name === 'ModifyItemLoot' && asm.methodBody(x));
       if (!m) continue;
       const src = `bag:${modId}:${td.name}`;
-      runLootMethod(asm, m, { tml, thisVal: THIS, args: [lootArg], emit, sourceOf: () => src });
+      runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [lootArg], emit, sourceOf: () => src });
       for (const t of contentRefs(asm, m)) emit({ source: src, item: refId(asm, t) }, true);
     } else if (derivesFromTml(asm, td, 'GlobalItem')) {
       // what the mod adds to vanilla (and other mods') bags and crates, keyed on item.type
       const m = td.methods.find((x) => x.name === 'ModifyItemLoot' && asm.methodBody(x));
-      if (m) runLootMethod(asm, m, { tml, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: bagSources });
+      if (m) runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: bagSources });
     }
   }
   return out;

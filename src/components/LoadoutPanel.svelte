@@ -4,16 +4,21 @@
   import WikiIcon from './WikiIcon.svelte';
   import Info from './Info.svelte';
   import { ui } from '../lib/state.svelte.js';
-  import { matches } from '../lib/traits.js';
+  import { SLOT_MODES } from '../lib/dps.js';
+  import { MODE_TAG, matches } from '../lib/traits.js';
+  import { fmtFull, fmtNum } from '../lib/fmt.js';
   import TraitFilter from './TraitFilter.svelte';
 
-  let { ds, loadout, onselect } = $props();
+  let { ds, loadout, onselect, onarmor } = $props();
   let tab = $state('accessories'); // 'accessories' | 'wings' | 'boots'
   // per-section filters: free text and the traits picked from the dropdown
   let armorQ = $state(''); let armorT = $state([]);
   let weaponQ = $state(''); let weaponT = $state([]);
   let accQ = $state(''); let accT = $state([]);
   const armorShown = $derived(loadout.armorAlternatives.filter((s) => matches(s, armorQ, armorT)));
+  // how much score trying on a runner-up set costs against the solver's own pick
+  const armorDelta = $derived(loadout.armorPicked ? Math.round((loadout.armor.score - loadout.armorBestScore) * 10) / 10 : 0);
+  const setName = (s) => s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
   const weaponsShown = $derived(loadout.weapons.filter((w) => matches(w, weaponQ, weaponT)));
   const maxDps = $derived(Math.max(1, ...loadout.weapons.map((w) => w.value)));
   // every scoring accessory, ranked: the solver's picks first (one per exclusive group), then the rest
@@ -22,8 +27,23 @@
   const shown = $derived(tabList.filter((a) => matches(a, accQ, accT)));
   const maxAcc = $derived(Math.max(1, ...shown.map((a) => a.score)));
   const accent = $derived(accentOf(loadout.cls));
-  const fmt = (v) => (v >= 1000 ? Math.round(v).toLocaleString() : Math.round(v * 10) / 10);
   const modName = (it) => (it.mod === 'v' ? 'Terraria' : ds.modById.get(it.mod)?.name ?? it.mod);
+  // A summoner wears a whip *and* minions *and* a sentry, so they are listed by slot rather than in
+  // one column, where the whips would simply out-DPS the
+  // minions they are meant to be swung next to. Rogue's stealth/spam are two ways to use one weapon,
+  // not two slots, so they stay in a single ranking.
+  const weaponGroups = $derived.by(() => {
+    const groups = [];
+    for (const w of weaponsShown) {
+      const g = SLOT_MODES.has(w.mode) ? w.mode : '';
+      (groups.find((x) => x.mode === g) ?? groups[groups.push({ mode: g, list: [] }) - 1]).list.push(w);
+    }
+    return groups.length > 1 ? groups : [{ mode: '', list: weaponsShown }];
+  });
+  // ammo is its own pick: the weapons above are graded on the plain ammo of their kind, and these
+  // are graded by handing the best gun of that kind each round in turn
+  const ammoShown = $derived(loadout.ammo.filter((a) => matches({ item: a.item, parts: a.parts }, weaponQ, weaponT)));
+  const maxAmmo = $derived(Math.max(1, ...loadout.ammo.map((a) => a.value)));
 
   // reforges: off, the best prefix per item, or one named prefix (items that cannot roll it keep
   // their best). Grouped in the picker the way the game rolls them.
@@ -39,8 +59,9 @@
 {#snippet tags(p)}
   {#if p.owned}<span class="lab-tag green ml-1">yours</span>{/if}
   {#if p.pinned}<span class="lab-tag info ml-1">pinned</span>{/if}
-  {#if p.stealth}<span class="lab-tag plum ml-1" title="boosts stealth strikes">stealth</span>{/if}
-  {#if p.item.changes?.length}<span class="lab-tag warn ml-1" title="another mod rebalances this item">rebalanced</span>{/if}
+  <!-- gear only: on a weapon row `stealth` is its stealth-strike DPS, tagged by mode further down -->
+  {#if p.stealth === true}<span class="lab-tag plum ml-1" title="This boosts stealth strikes">stealth</span>{/if}
+  {#if p.item.changes?.length}<span class="lab-tag warn ml-1" title="Another mod rebalances this item">rebalanced</span>{/if}
 {/snippet}
 
 {#snippet empty(what)}
@@ -57,7 +78,11 @@
         <span class="lab-meta">
           <span class="lab-tag" class:green={loadout.armor.isSet}>{loadout.armor.isSet ? 'full set' : 'mixed'}</span>
           <span><span class="num font-semibold text-ink">{loadout.armor.defense}</span> defense</span>
-          <span title="sum of the labelled parts below">score <span class="num font-semibold" style="color:{accent}">{loadout.armor.score}</span></span>
+          <span title="The sum of the labelled parts below">score <span class="num font-semibold" style="color:{accent}">{loadout.armor.score}</span></span>
+          {#if loadout.armorPicked}
+            <span class="lab-tag warn" title="You are trying this set on. Everything else — the set bonus, max stealth, the weapon ranking — is solved as if you wear it.">trying on <span class="num">{armorDelta}</span></span>
+            <button class="lab-chip" onclick={() => onarmor(null)}>back to the best set <span class="num opacity-70">{loadout.armorBestScore}</span></button>
+          {/if}
         </span>
       {/if}
     </header>
@@ -79,7 +104,7 @@
                   </div>
                 </div>
               </td>
-              <td class="num w-14 whitespace-nowrap text-right" title="defense">{p.item.defense ?? 0}<span class="ml-0.5 text-[10px] text-dim">def</span></td>
+              <td class="num w-14 whitespace-nowrap text-right" title="How much defense this piece gives">{p.item.defense ?? 0}<span class="ml-0.5 text-[10px] text-dim">def</span></td>
               <td class="w-[44%]"><ScoreParts parts={p.parts} score={p.score} max={3} /></td>
             </tr>
           {/each}
@@ -96,12 +121,12 @@
       </table>
       {#if loadout.armorAlternatives.length}
         <div class="px-4 py-2.5">
-          <div class="lab-rule start mb-1.5">Runner-up sets{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
+          <div class="lab-rule start mb-1.5">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
           <div class="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
             {#each armorShown as s}
-              <button class="cursor-pointer text-ink2 transition-colors hover:text-green" onclick={() => onselect(s.head.item.id)}>
-                {s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '')}
+              <button class="cursor-pointer text-ink2 transition-colors hover:text-green" title="Try this set on: the loadout is re-solved as if you wear it" onclick={() => onarmor(s.head.item.id)}>
+                {setName(s)}
                 <span class="num text-dim">{s.score}</span>
               </button>
             {/each}
@@ -130,16 +155,28 @@
         <thead class="sticky top-0 z-10 bg-panel">
           <tr>
             <th>Weapon</th>
-            <th class="text-right" title="damage after every modifier">Dmg</th>
-            <th class="text-right" title="ticks per use">Use</th>
+            <th class="text-right" title="Damage after every modifier">Dmg</th>
+            <th class="text-right" title="Ticks the weapon takes per use">Use</th>
             <th class="text-right">Crit chance</th>
             <th class="w-[34%]">
               <span class="inline-flex items-center gap-1">
                 {loadout.weapons[0].kind === 'dps' ? 'Real DPS' : 'Damage per hit'}
                 <Info label="How Real DPS is computed" w={420}>
                   <p>
-                    damage (+ best ammo) × rate × crit × projectiles per use × accuracy (spread, velocity, gravity, homing)
-                    × pierce × wall pierce × debuffs × mana sustain.
+                    hits per second × damage per hit × crit × mana sustain, plus the DPS of every debuff the
+                    target boss is not immune to.
+                  </p>
+                  <p>
+                    Hits per second come from how the weapon works — a swing, a spear, a yoyo, a held beam, a shot —
+                    and from how much of what it fires lands on that boss at the distance the class fights from:
+                    its spread against the target's width, the lead a moving boss forces on a slow projectile,
+                    the drop of an arc, the range it reaches, and how much of that homing undoes.
+                    Damage per hit is the weapon's damage (plus the plain ammo of its kind — a Musket Ball,
+                    a Wooden Arrow) minus half the boss's defense.
+                  </p>
+                  <p>
+                    A gun and its ammo are two picks, so they are ranked apart: the ammo below is graded by
+                    handing the best gun of its kind each round in turn.
                   </p>
                   <p>Applied on top of balancing overlays, runtime modifiers{loadout.weapons.some((w) => w.prefix) ? ', reforges' : ''} and calibration.</p>
                   <p>
@@ -153,26 +190,60 @@
           </tr>
         </thead>
         <tbody>
-          {#each weaponsShown as w}
-            {@const i = loadout.weapons.indexOf(w)}
+          {#each weaponGroups as g}
+          {#if g.mode}<tr><td colspan="5" class="!py-1 text-[11px] font-semibold uppercase tracking-wide text-dim" title={MODE_TAG[g.mode].tip}>{g.mode}s</td></tr>{/if}
+          {#each g.list as w, i}
             <tr class="row" onclick={() => onselect(w.item.id)}>
               <td>
                 <div class="flex items-center gap-2">
                   <span class="num w-4 shrink-0 text-right text-[11px] text-dim">{i + 1}</span>
                   <WikiIcon item={w.item} />
                   <div class="min-w-0">
-                    <div class="font-medium">{w.item.name}{@render tags(w)}{#if w.mode === 'stealth'}<span class="lab-tag plum ml-1" title="graded by stealth strikes: {Math.round(w.stealth)}/s vs spam {Math.round(w.spam)}/s">stealth</span>{:else if w.mode === 'spam'}<span class="lab-tag ml-1" title="graded by normal attacks: {Math.round(w.spam)}/s vs stealth {Math.round(w.stealth)}/s">spam</span>{/if}</div>
+                    <div class="font-medium">{w.item.name}{@render tags(w)}{#if w.mode === 'stealth'}<span class="lab-tag plum ml-1" title="Graded by stealth strikes: {Math.round(w.stealth)}/s vs spam {Math.round(w.spam)}/s">stealth</span>{:else if w.mode === 'spam'}<span class="lab-tag ml-1" title="graded by normal attacks: {Math.round(w.spam)}/s vs stealth {Math.round(w.stealth)}/s">spam</span>{:else if w.mode}<span class="lab-tag ml-1 {MODE_TAG[w.mode]?.color ?? ''}" title={MODE_TAG[w.mode]?.tip ?? ''}>{w.mode}</span>{/if}{#if w.ammo}<span class="lab-tag ml-1" title="Graded firing the plain ammo of its kind — what better rounds add is the ammo list below">{w.ammo.name}</span>{/if}</div>
                     <div class="text-[11.5px] text-dim">{modName(w.item)} · {w.item.stageLabel}{w.prefix ? ` · ${w.prefix.name}` : ''}</div>
                   </div>
                 </div>
               </td>
               <td class="num text-right">{w.eff.damage}</td>
               <td class="num text-right text-dim">{Math.round(w.item.cls === 'melee' ? w.eff.useAnimation : w.eff.useTime) || '–'}</td>
-              <td class="num text-right text-dim">{w.eff.crit}%</td>
+              <!-- the crit the weapon is actually swung at: its own plus what the loadout carries -->
+              <td class="num text-right text-dim" title="{w.eff.crit}% on the weapon{loadout.bonus.crit ? ` + ${Math.round(loadout.bonus.crit)}% from the loadout` : ''}">{Math.round(w.eff.crit + (w.item.cls === 'summon' ? 0 : loadout.bonus.crit))}%</td>
               <td>
                 <div class="flex items-center gap-2">
                   <div class="bar flex-1"><i style="width:{Math.round((w.value / maxDps) * 100)}%"></i></div>
-                  <span class="num w-16 shrink-0 text-right font-semibold">{fmt(w.value)}</span>
+                  <span class="num w-16 shrink-0 text-right font-semibold" title={fmtFull(w.value)}>{fmtNum(w.value)}</span>
+                </div>
+              </td>
+            </tr>
+          {/each}
+          {/each}
+        </tbody>
+      </table>
+      </div>
+    {/if}
+    {#if ammoShown.length}
+      <div class="max-h-[16rem] overflow-y-auto border-t border-line">
+      <table class="lab-table">
+        <thead class="sticky top-0 z-10 bg-panel">
+          <tr><th>Ammo</th><th class="text-right">Dmg</th><th class="w-[34%]">In its best gun</th></tr>
+        </thead>
+        <tbody>
+          {#each ammoShown as a}
+            <tr class="row">
+              <td>
+                <div class="flex items-center gap-2">
+                  <WikiIcon item={a.item} />
+                  <div class="min-w-0">
+                    <div class="font-medium">{a.item.name}<span class="lab-tag plum ml-1" title="{a.kindName} ammo, ranked against the other {a.kindName.toLowerCase()}s — a rocket and a musket ball are not alternatives">{a.kindName.toLowerCase()}</span></div>
+                    <div class="text-[11.5px] text-dim">{modName(a.item)} · {ds.stages[a.item.stage]?.label ?? '?'} · in a {a.gun.name}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="num text-right">{a.item.damage}</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="bar flex-1"><i style="width:{Math.round((a.value / maxAmmo) * 100)}%"></i></div>
+                  <span class="num w-16 shrink-0 text-right font-semibold" title={fmtFull(a.value)}>{fmtNum(a.value)}</span>
                 </div>
               </td>
             </tr>
@@ -193,7 +264,7 @@
       </h2>
       <TraitFilter entries={tabList} bind:query={accQ} bind:selected={accT} placeholder="Filter by name, text or trait…" />
       <span class="lab-meta">
-        <label class="flex items-center gap-1.5" title="score every item as if it already carries this reforge">
+        <label class="flex items-center gap-1.5" title="Score every item as if it already carries this reforge">
           <input type="checkbox" checked={ui.reforge !== 'none'} onchange={(e) => (ui.reforge = e.currentTarget.checked ? pick : 'none')} />
           reforged
         </label>

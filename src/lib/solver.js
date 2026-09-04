@@ -3,7 +3,8 @@
  * accessory fill for a class at a gamestage — from everything obtainable or only from
  * the gear the user owns, honouring pins, exclusions and reforges.
  */
-import { W, accessoryGroup, foreignClass, pieceScore, setBonusScore, sprintFactor, weaponDps } from './score.js';
+import { ammoAt, SLOT_MODES } from './dps.js';
+import { W, accessoryGroup, foreignClass, loadoutBonus, pieceScore, setBonusScore, sprintFactor, weaponDps } from './score.js';
 import { bestPrefix, prefixesFor } from './stats.js';
 
 /** Items obtainable at `stage` from mods that are not excluded (or the owned set). */
@@ -29,7 +30,7 @@ export function solveLoadout(ds, opts) {
   const { cls, stage, slots = 6, requireSet = false, reforge = 'none', owned = {}, pinned = new Set() } = opts;
   const aliases = ds.aliases ?? {};
   const prefixes = ds.prefixes ?? [];
-  const statCtx = { conds: opts.conds ?? new Set(), uncertain: !!opts.uncertain, calibration: opts.calibration ?? null, aliases };
+  const statCtx = { conds: opts.conds ?? new Set(), uncertain: !!opts.uncertain, calibration: opts.calibration ?? null, aliases, playstyle: opts.playstyle ?? null, target: opts.target ?? null, targets: opts.targets ?? 'auto' };
   const pool = candidates(ds, opts);
   const poolIds = new Set(pool.map((i) => i.id));
   const isOwned = (it) => it.id in owned;
@@ -104,27 +105,14 @@ export function solveLoadout(ds, opts) {
     const score = bestBySlot.head.score + bestBySlot.body.score + bestBySlot.legs.score;
     mixed = { isSet: false, head: bestBySlot.head, body: bestBySlot.body, legs: bestBySlot.legs, bonus: { score: 0, parts: [] }, score: Math.round(score * 10) / 10, defense: ARMOR.reduce((s, k) => s + (bestBySlot[k].item.defense ?? 0), 0) };
   }
-  let armor = null;
-  if (requireSet && sets.length) armor = sets[0];
-  else if (sets.length && (!mixed || sets[0].score >= mixed.score)) armor = sets[0];
-  else armor = mixed;
+  let best = null;
+  if (requireSet && sets.length) best = sets[0];
+  else if (sets.length && (!mixed || sets[0].score >= mixed.score)) best = sets[0];
+  else best = mixed;
+  // `armorPick` (a head item id) wears a runner-up set instead: everything downstream — the set
+  // bonus, max stealth, the weapon ranking — is solved as if that set were the pick
+  const armor = (opts.armorPick && sets.find((s) => s.head.item.id === opts.armorPick)) || best;
   const armorAlternatives = sets.filter((s) => s !== armor).slice(0, 12);
-
-  // ---- weapons (after armor: Calamity stealth strikes scale with the set's max stealth) ----
-  const stealthMax = armor ? ARMOR.reduce((s, k) => s + stealthOf(armor[k].item), 0) || undefined : undefined;
-  const weaponCtx = { ...statCtx, ds, stage, stealthMax };
-  const weapons = pool
-    .filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0)
-    .map((it) => { const prefix = prefixFor(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
-    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.value - a.value);
-  const seenNames = new Set();
-  const topWeapons = [];
-  for (const w of weapons) {
-    if (seenNames.has(w.item.name)) continue;
-    seenNames.add(w.item.name);
-    topWeapons.push(w);
-    if (topWeapons.length >= 40) break;
-  }
 
   // ---- accessories ------------------------------------------------------------------------
   const accOf = (it) => {
@@ -154,6 +142,56 @@ export function solveLoadout(ds, opts) {
     if (a.group) usedGroups.add(a.group);
   }
 
+  // ---- weapons (after the gear: stealth strikes scale with the set's max stealth, and what the
+  // loadout carries in class damage and crit is what the weapon is actually swung with) ----------
+  const stealthMax = armor ? ARMOR.reduce((s, k) => s + stealthOf(armor[k].item), 0) || undefined : undefined;
+  const worn = [armor?.head, armor?.body, armor?.legs, ...picks, wings[0], boots[0]];
+  if (armor?.isSet) worn.push({ item: { effects: armor.head.item.setEffects, stats: armor.head.item.setStats } });
+  const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases) };
+  const weapons = pool
+    .filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0)
+    .map((it) => { const prefix = prefixFor(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.value - a.value);
+  // A summoner's whip, minions and sentry are worn together, and the pool holds far more whips than
+  // the list has rows: sorted by value alone, 30 of the 40 came back whips and the minions fell off
+  // the end. Each slot gets a share of the list first, then the best of what is left fills it up.
+  // The order is still by value — only which 40 survive changes.
+  const wornAtOnce = [...new Set(weapons.map((w) => w.mode).filter((m) => SLOT_MODES.has(m)))];
+  const share = wornAtOnce.length > 1 ? Math.ceil(40 / (wornAtOnce.length + 1)) : Infinity;
+  const seenNames = new Set();
+  const took = new Map();
+  const topWeapons = [];
+  for (const pass of [0, 1]) {
+    for (const w of weapons) {
+      if (topWeapons.length >= 40) break;
+      if (seenNames.has(w.item.name)) continue;
+      if (pass === 0 && (took.get(w.mode) ?? 0) >= share) continue;
+      seenNames.add(w.item.name);
+      took.set(w.mode, (took.get(w.mode) ?? 0) + 1);
+      topWeapons.push(w);
+    }
+  }
+  topWeapons.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.value - a.value);
+
+  // ---- ammo ---------------------------------------------------------------------------------
+  // A gun and its ammo are two picks a ranged player makes separately, so they are ranked apart:
+  // the weapon is graded on the plainest ammo of its kind, and each ammo is graded by what the
+  // best gun of that kind does with it. Ranking is only meaningful inside a kind — a rocket and a
+  // musket ball are not alternatives — so the kind rides along.
+  const ammo = [];
+  for (const kind of new Set(weapons.map((w) => w.item.useAmmo).filter((k) => k > 0))) {
+    const gun = weapons.find((w) => w.item.useAmmo === kind);
+    for (const a of ammoAt(ds, kind, stage)) {
+      const v = weaponDps(gun.item, { ...weaponCtx, prefix: gun.prefix, ammo: a });
+      ammo.push({ item: a, kind, kindName: ds.ammoKinds?.[kind] ?? String(kind), gun: gun.item, mode: 'ammo', value: v.value, parts: v.parts });
+    }
+  }
+  // grouped by kind, strongest kind first: ordering a rocket against a musket ball would only bury
+  // whichever kind the stage happens to be weak in, and both are picks a player actually makes
+  const bestOf = new Map();
+  for (const a of ammo) bestOf.set(a.kind, Math.max(bestOf.get(a.kind) ?? 0, a.value));
+  ammo.sort((a, b) => bestOf.get(b.kind) - bestOf.get(a.kind) || a.kind - b.kind || b.value - a.value);
+
   return {
     cls,
     stage,
@@ -162,9 +200,13 @@ export function solveLoadout(ds, opts) {
     source: opts.source ?? 'all',
     weapons: topWeapons,
     weaponCount: weapons.length,
+    bonus: weaponCtx.loadout,
+    ammo,
     stealthMax,
     armor,
     armorAlternatives,
+    armorPicked: !!armor && armor !== best, // a runner-up is worn, not the solver's own pick
+    armorBestScore: best?.score ?? null,
     accessories: picks,
     accessoryAlternatives: alternatives,
     accessoryCount: accs.length,

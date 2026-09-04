@@ -6,7 +6,8 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { applySeeds, indexDataset } from '../src/lib/dataset.js';
-import { craftTree } from '../src/lib/sources.js';
+import { craftTree, gatingChain } from '../src/lib/sources.js';
+import { ARCHETYPE } from '../src/lib/dps.js';
 
 const path = new URL('../data/dataset.json', import.meta.url);
 const has = existsSync(path);
@@ -15,6 +16,24 @@ const ds = has ? JSON.parse(readFileSync(path, 'utf8')) : null;
 const byName = (n) => ds.items.find((i) => i.name === n);
 
 describe('dataset.json', () => {
+  test('a recipe group added by another mod lands on the recipe', () => {
+    // InfernalEclipseAPI parks its `EvilSkinRecipeGroup` in a static field, registers it, then adds
+    // it to SOTS's Frigid Pickaxe in `PostAddRecipes` — so the pickaxe costs 12 Frigid Bar *and* 6
+    // Shadow Scale / Tissue Sample, and is gated behind the evil boss like every other pick 65.
+    expect(ds.groups['LimitedResourcesRecipes:EvilSkin']).toEqual(['v:86', 'v:1329']);
+    const [recipe] = ds.recipes['SOTS:FrigidPickaxe'];
+    expect(recipe[0]).toEqual([['SOTS:FrigidBar', 12]]);
+    expect(recipe[1]).toEqual(['LimitedResourcesRecipes:EvilSkin']);
+    const pick = ds.items.find((i) => i.id === 'SOTS:FrigidPickaxe');
+    expect(ds.stages[pick.stage].label).toMatch(/Eater of Worlds/);
+  });
+  test('every weapon type the miner emits is one the model knows how to score', () => {
+    // `ARCHETYPE` is the only thing the DPS model branches on, so a type it has no entry for would
+    // quietly fall back to "fires once per use" — this is the check that a new tag cannot do that
+    const emitted = [...new Set(ds.items.filter((i) => i.slot === 'weapon' && i.arch).map((i) => i.arch))];
+    expect(emitted.length).toBeGreaterThan(10);
+    expect(emitted.filter((a) => !ARCHETYPE[a])).toEqual([]);
+  });
   it(has)('has the expected shape', () => {
     expect(ds.items.length).toBeGreaterThan(4000);
     expect(ds.stages[0].label).toBe('Pre-boss');
@@ -37,9 +56,17 @@ describe('dataset.json', () => {
   it(has && !!ds?.items.some((i) => i.id === 'ThoriumMod:TitanSword'))('pack balancing is applied in load order', () => {
     const ts = byName('Titan Sword');
     expect(ts.base.damage).toBe(52);
-    expect(ts.changes.map((c) => c.mod)).toEqual(['CalamityBardHealer', 'ThoriumRework', 'ThoriumRework', 'ThoriumRework', 'ThoriumRework']);
-    expect(ts.damage).toBe(107);
+    // CalamityBardHealer doubles Thorium melee, but `AppliesToEntity` names thirteen swords and nine
+    // spears it skips when ThoriumRework is loaded — Titan Sword is one of them, and reading only the
+    // hook's `return true` paths used to hand it the ×2 anyway
+    // …and WHummus takes the reworked 107 back down to 88 — through a tPackBuilder `.itemmod.json`,
+    // which is data inside the .tmod rather than anything in its IL
+    expect(ts.changes.map((c) => c.mod)).toEqual(['ThoriumRework', 'ThoriumRework', 'ThoriumRework', 'ThoriumRework', 'WHummusMultiModBalancing']);
+    expect(ts.changes.at(-1)).toMatchObject({ hook: 'tPackBuilder', field: 'damage', from: 107, to: 88 });
+    expect(ts.damage).toBe(88);
     expect(ts.crit).toBe(16);
+    // …while a Thorium melee weapon the hook does not name still gets it
+    expect(byName('Bellerose').changes.some((c) => c.mod === 'CalamityBardHealer' && c.field === 'damage')).toBe(true);
   });
 
   it(has)('vanilla items and Calamity\'s vanilla rebalance', () => {
@@ -76,17 +103,32 @@ describe('dataset.json', () => {
     expect(cryo.src).toMatchObject({ kind: 'spawn', boss: 'Cryogen' });
     const astral = ds.materials['CalamityMod:AstralOre']; // unminable until Astrum Deus
     expect(astral.src).toMatchObject({ kind: 'ore', gate: 'downedAstrumDeus' });
+    // MinPick set in a method the base class calls, not in SetStaticDefaults: 210% is post-Golem,
+    // so everything made of Scoria Bars is too (it used to read as a free pre-hardmode block)
+    expect(ds.materials['CalamityMod:ScoriaOre'].src).toMatchObject({ kind: 'ore', need: 210 });
+    expect(ds.stages[byName('Subduction Slicer').stage].key).toBe('Golem');
     expect(ds.recipes['CalamityMod:SludgeSplotch'][0][1]).toEqual(['Boss2Material']);
     expect(ds.stations['v:tile:134']).toMatchObject({ name: 'Mythril Anvil', boss: 'Wall of Flesh' });
+    // a station whose own stage has not resolved yet blocks its recipes rather than reading as
+    // pre-boss: SOTS's Transmutation Altar makes Meteorite Bars out of Twilight Gel
+    expect(ds.materials['v:117'].src).toMatchObject({ kind: 'craft', from: ['Meteorite'] });
+    expect(ds.stages[byName('Star Cannon').stage].key).toBe('EaterOfWorlds');
   });
 
   it(has && !!ds?.items.some((i) => i.id === 'ThoriumMod:FlightMask'))('shops gate on the seller moving in; player-side flag effects fold into items', () => {
     const fab = ds.materials['ThoriumMod:ArcaneArmorFabricator']; // sold by the Blacksmith, who needs the Eye of Cthulhu
     expect(fab.src).toMatchObject({ kind: 'shop', via: 'Blacksmith', boss: 'Eye of Cthulhu' });
+    // the entry's own Condition outranks the seller moving in (the Bandit arrives after Skeletron)
+    expect(byName('Celestial Reaper').stageSource).toMatchObject({ kind: 'shop', via: 'Bandit', boss: 'Moon Lord' });
     expect(ds.stages[byName('Flight Hat').stage].key).toBe('EyeOfCthulhu');
     const shell = byName('Mollusk Shellmet'); // CalamityPlayer: if (molluskHelmet) Player.velocity.X *= 0.996f
     expect(shell.effects.velocityDrag).toBeCloseTo(0.996);
     expect(shell.effects.via).toContain('molluskHelmet');
+    // a drawback: `player.AddBuff(BuffID.Bleeding, 1020)` behind a coin flip the interpreter cannot
+    // settle, so it takes a second linear pass to see it at all
+    expect(byName('Bloodstained Coin').effects.selfDebuffs).toEqual(['Bleeding']);
+    // `Main.debuff` also holds the station buffs, which cost nothing: The Camper is not a drawback
+    expect(byName('The Camper').effects.selfDebuffs).toBeUndefined();
   });
 
   it(has)('weapons carry projectile behaviour and ammo', () => {
@@ -123,8 +165,38 @@ describe('dataset.json', () => {
     expect(ds.stages[byName('Mollusk Shellmet').stage].key).toBe('WallOfFlesh');
     expect(byName('Mollusk Shellmet').setBonus).toMatch(/^10\.0% increased damage reduction/); // {0} filled from UpdateArmorSet
     expect(byName('Mollusk Shellmet').tooltip).toMatch(/^5\.0% increased damage and 4% increased critical strike chance/);
+    // `{^N:second;seconds}` picks its arm from format argument N — 10 seconds, but 1 minute
+    expect(byName("Beholder's Gaze").tooltip).toMatch(/for 10 seconds\nFor 1 minute afterwards/);
+    // Thorium registers a boss's table with a registry of its own from SetStaticDefaults; the rules
+    // are in a closure on the NPC type, not in ModifyNPCLoot
+    expect(byName('Sonar Cannon').stageSource).toMatchObject({ kind: 'drop', boss: 'Viscount' });
+    // same registry for vanilla bosses: the closure is on the GlobalNPC, keyed by the npc id
+    // pushed before the delegate (The Stalker is Brain of Cthulhu loot, not a rarity guess)
+    expect(byName('The Stalker').sources).toContainEqual({ kind: 'drop', from: 'Brain of Cthulhu' });
+    // ThoriumRework picks the cosmetic of whichever boss this is in an `npc.ModNPC.Name == "…"`
+    // chain, then adds the local it filled once at the end: each arm belongs to its own boss
+    expect(byName('Zephyr Wings').stageSource).toMatchObject({ kind: 'drop', boss: 'The Grand Thunder Bird' });
     expect(byName('Antlion Skewer').stageSource).toMatchObject({ kind: 'enemy', via: 'Antlion' }); // vanilla SpawnNPC: desert, no flag
+    // the Antlion's spawn has no downed flag and vanilla spells its conditions out, so the drop is
+    // pre-boss whatever tier the mod's rarity would suggest
     expect(ds.stages[byName('Antlion Skewer').stage].label).toBe('Pre-boss');
+    // Fire Imps need the Underworld and nothing else — and `enemies` in progression.json is where a
+    // vanilla enemy whose real gate is not in the IL (the Lihzahrd needs the temple) gets its floor
+    expect(byName('Ashen Stalactite').stageSource).toMatchObject({ kind: 'enemy', via: 'Fire Imp' });
+    expect(ds.stages[byName('Ashen Stalactite').stage].label).toBe('Pre-boss');
+    expect(ds.stages[byName('Lihzahrd Tail').stage].label).toBe('Plantera');
+    // Dark Casters and Cursed Skulls spawn in `ZoneDungeon`, so everything made of Spirit Droplets
+    // waits for Skeletron — an override pinning the droplet to pre-boss used to override that
+    expect(ds.materials['ThoriumMod:SpiritDroplet'].src).toMatchObject({ kind: 'enemy', gate: 'ZoneDungeon', boss: 'Skeletron' });
+    expect(ds.stages[byName('Waterwick Candle').stage].label).toBe('Skeletron');
+    // Hallow trees do not exist until the Wall of Flesh is down, and a growing tree leaves no IL
+    // behind for the miner to read: `anchors` is the floor for what only the world can hand you
+    expect(ds.materials['v:621'].src).toMatchObject({ kind: 'anchor', boss: 'Wall of Flesh' }); // Pearlwood
+    expect(ds.stages[byName('Pearlwood Sword').stage].label).toBe('Wall of Flesh');
+    // the Skeleton Merchant's Magic Dagger is a Don't Dig Up entry: a world seed is a requirement,
+    // not a repeating condition, so in a normal world the Mimic is the source
+    expect(byName('Magic Dagger').stageSource).toMatchObject({ kind: 'enemy', via: 'Mimic', gate: 'hardMode' });
+    expect(ds.seeds.find((s) => s.key === 'remix').items['v:517'].prog).toBe(0);
     expect(byName('Wizard Hat').stageSource).toMatchObject({ kind: 'enemy', via: 'Tim' });
     expect(byName('Feral Claws').stageSource).toMatchObject({ kind: 'bag' }); // Jungle / Bramble crate, fished pre-hardmode
     expect(ds.stages[byName('Feral Claws').stage].label).toBe('Pre-boss');
@@ -175,6 +247,16 @@ describe('dataset.json', () => {
       const unknown = tree.recipes.flatMap((r) => r.ingredients).find((g) => !g.node.id);
       expect(unknown.node.name).toBe('unknown ingredient');
     }
+    // the tree bottoms out: an ingredient with a source of its own is a leaf, whatever it can also
+    // be crafted from (the four Lunar fragments make each other, Gold Ore transmutes from Silver)
+    const frag = craftTree(indexed, 'v:3458'); // Solar Fragment, staged by the Lunar Events anchor
+    expect(frag.recipes[0].ingredients.every((c) => c.node.recipes.length === 0)).toBe(true);
+    expect(gatingChain(frag).map((e) => e.node?.name)).toEqual(['Solar Fragment']);
+    // and a base resource nothing in the code produces is the base, not a rarity guess
+    expect(indexed.materials['v:9'].src.kind).toBe('start'); // Wood
+    // a bar is its ore, not the odd enemy that drops one at the same stage
+    expect(ds.materials['v:19'].src).toMatchObject({ kind: 'craft', from: ['Gold Ore'] });
+    expect(ds.materials['v:19'].drops.some((s) => s.from === 'Gilded Lycan')).toBe(true);
   });
 
   it(has && !!ds?.seeds?.length)('special world seeds are off until switched on, then only ever earlier', () => {

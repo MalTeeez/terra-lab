@@ -9,15 +9,20 @@
  * Calamity rogue weapons, whether it is on the stealth-strike or the normal path of a
  * `StealthStrikeAvailable()` check.
  */
-import { decodeIL } from '../clr/il.js';
+import { decodeIL, ldcValue } from '../clr/il.js';
 import { Machine, PLAYER, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { findInherited } from './util.js';
-import { loopCount, projTypeArg } from './projectiles.js';
+import { loopTracker, projTypeArg } from './projectiles.js';
 
 const VEC = Object.freeze({ k: 'vec', mul: 1, spread: 0 });
 const DMG = Object.freeze({ k: 'adj', slot: 'dmg', field: 'damage', add: 0, mul: 1 });
 const SHOOT_TYPE = Object.freeze({ k: 'shootType' });
 const isVec = (v) => v?.k === 'vec';
+/** Calamity's "is this a stealth strike" test, as a branch tag. */
+const STEALTH_FLAG = 'stealthStrike';
+// `if (StealthStrikeAvailable() || AdditionalStealthCheck())` tags the block it guards `any:…`,
+// because either test getting there is enough
+const taggedStealth = (tags) => !!tags?.some((t) => t === STEALTH_FLAG || t === `any:${STEALTH_FLAG}`);
 const rand = (lo, hi) => ({ k: 'rand', lo, hi });
 const mag = (v) => (isNum(v) ? Math.abs(v) : v?.k === 'rand' ? Math.max(Math.abs(v.lo), Math.abs(v.hi)) : v?.k === 'adj' && v.slot === 'angle' ? Math.abs(v.add) : null);
 
@@ -61,8 +66,11 @@ export function vectorHook(callee, args, ctx) {
   }
   if (short === 'Utils' || short === 'CalamityUtils' || short === 'ThoriumUtils' || /Utils$/.test(short)) {
     const v = args[0];
-    if (name === 'RotatedBy' && isVec(v)) { const m = mag(args[1]); return { ...v, spread: Math.max(v.spread, m ?? 0.2) }; }
-    if (name === 'RotatedByRandom' && isVec(v)) { const m = mag(args[1]); return { ...v, spread: Math.max(v.spread, m ?? 0.2) }; }
+    // a fan (`RotatedBy` once per loop index) puts its shots at fixed angles, so a wide boss can
+    // catch several of them; `RotatedByRandom` scatters them and only the share inside the
+    // silhouette lands. The model needs the difference, not just the half-angle.
+    if (name === 'RotatedBy' && isVec(v)) { const m = mag(args[1]); return { ...v, spread: Math.max(v.spread, m ?? 0.2), fan: true }; }
+    if (name === 'RotatedByRandom' && isVec(v)) { const m = mag(args[1]); return { ...v, spread: Math.max(v.spread, m ?? 0.2), fan: false }; }
     if (name === 'SafeNormalize' && isVec(v)) return { ...v, unit: true, mul: 1 };
     if (name === 'ToRotation' && isVec(v)) return { k: 'adj', slot: 'angle', field: 'rot', add: 0, mul: 1 };
     if (name === 'ToRotationVector2') return { ...VEC, unit: true };
@@ -71,8 +79,13 @@ export function vectorHook(callee, args, ctx) {
   return undefined;
 }
 
-/** Ranges of a Shoot method guarded by Calamity's StealthStrikeAvailable(): [{ lo, hi, stealth }]. */
-export function stealthRanges(asm, m) {
+/**
+ * Ranges of a method guarded by a condition the miner can name, as `[{ lo, hi, on }]` — `on` marks
+ * the side of the branch the condition holds on. `scan(ins, branchAt)` walks the IL and calls
+ * `branchAt(i)` at each branch that consumes the condition, which is what differs between one guard
+ * and the next; the region arithmetic below is the same for all of them.
+ */
+function guardRanges(asm, m, scan) {
   const body = asm.methodBody(m);
   if (!body) return [];
   let ins;
@@ -82,42 +95,77 @@ export function stealthRanges(asm, m) {
   const branchAt = (i) => {
     const x = ins[i];
     if (!x) return;
-    if (!/^br(true|false)/.test(x.op)) return;
+    // `brfalse` and `bne.un` both jump away when the condition fails, so the fall-through is the
+    // side it holds on; `brtrue` and `beq` jump *to* that side.
+    const isFalse = /^brfalse/.test(x.op) || /^bne\.un/.test(x.op);
+    if (!isFalse && !/^brtrue/.test(x.op) && !/^beq/.test(x.op)) return;
     const target = x.operand;
-    const isFalse = x.op.startsWith('brfalse');
     const next = ins[i + 1]?.offset ?? x.offset;
     const ti = byOffset.get(target);
     const before = ti !== undefined ? ins[ti - 1] : null;
     const elseEnd = before && /^br(\.s)?$/.test(before.op) && before.operand > target ? before.operand : null;
     if (isFalse) {
-      out.push({ lo: next, hi: target, stealth: true });
-      if (elseEnd) out.push({ lo: target, hi: elseEnd, stealth: false });
+      out.push({ lo: next, hi: target, on: true });
+      if (elseEnd) out.push({ lo: target, hi: elseEnd, on: false });
     } else {
-      out.push({ lo: next, hi: target, stealth: false });
-      if (elseEnd) out.push({ lo: target, hi: elseEnd, stealth: true });
+      out.push({ lo: next, hi: target, on: false });
+      if (elseEnd) out.push({ lo: target, hi: elseEnd, on: true });
       else {
-        // `if (stealth) { ... return; }` - the block ends at its first terminator
+        // `if (cond) { ... return; }` - the block ends at its first terminator
         const end = ins.slice(ti).find((y) => /^(ret|br|br\.s|throw)$/.test(y.op));
-        out.push({ lo: target, hi: end ? end.offset + 1 : Infinity, stealth: true });
+        out.push({ lo: target, hi: end ? end.offset + 1 : Infinity, on: true });
       }
     }
   };
-  for (let i = 0; i < ins.length; i++) {
-    const x = ins[i];
-    if (x.op !== 'call' && x.op !== 'callvirt') continue;
-    const r = asm.resolve(x.operand);
-    if (r?.name !== 'StealthStrikeAvailable') continue;
-    const nx = ins[i + 1];
-    if (nx && /^stloc/.test(nx.op)) {
-      const slot = nx.op === 'stloc.s' || nx.op === 'stloc' ? nx.operand : +nx.op.slice(6);
-      for (let j = i + 2; j < ins.length; j++) {
-        const y = ins[j];
-        const isLd = (y.op === 'ldloc.s' || y.op === 'ldloc') ? y.operand === slot : y.op === `ldloc.${slot}`;
-        if (isLd) branchAt(j + 1);
-      }
-    } else branchAt(i + 1);
-  }
+  scan(ins, branchAt);
   return out;
+}
+
+/** Which side of a set of guard ranges an offset sits on: true, false, or neither. */
+const sideAt = (ranges, o) => {
+  const r = ranges.filter((x) => o >= x.lo && o < x.hi);
+  if (!r.length) return undefined;
+  return r.every((x) => x.on) ? true : r.every((x) => !x.on) ? false : undefined;
+};
+
+/** Ranges of a Shoot method guarded by Calamity's StealthStrikeAvailable(): [{ lo, hi, on }]. */
+export function stealthRanges(asm, m) {
+  return guardRanges(asm, m, (ins, branchAt) => {
+    for (let i = 0; i < ins.length; i++) {
+      const x = ins[i];
+      if (x.op !== 'call' && x.op !== 'callvirt') continue;
+      const r = asm.resolve(x.operand);
+      if (r?.name !== 'StealthStrikeAvailable') continue;
+      const nx = ins[i + 1];
+      if (nx && /^stloc/.test(nx.op)) {
+        const slot = nx.op === 'stloc.s' || nx.op === 'stloc' ? nx.operand : +nx.op.slice(6);
+        for (let j = i + 2; j < ins.length; j++) {
+          const y = ins[j];
+          const isLd = (y.op === 'ldloc.s' || y.op === 'ldloc') ? y.operand === slot : y.op === `ldloc.${slot}`;
+          if (isLd) branchAt(j + 1);
+        }
+      } else branchAt(i + 1);
+    }
+  });
+}
+
+/**
+ * Ranges of a Shoot method guarded by `player.altFunctionUse == 2` — the right-click attack.
+ *
+ * A weapon with two clicks has two attacks, and the player uses one at a time. Without this the
+ * miner hands both to the model as one use, which then either sums them or averages them as if a
+ * coin decided which fired: Sahara Slicers stabs on the left button and throws the bolts its stabs
+ * collected on the right, and read together the throw was a free extra on every stab.
+ */
+export function altRanges(asm, m) {
+  return guardRanges(asm, m, (ins, branchAt) => {
+    for (let i = 0; i < ins.length; i++) {
+      if (ins[i].op !== 'ldfld' || asm.resolve(ins[i].operand)?.name !== 'altFunctionUse') continue;
+      if (ldcValue(ins[i + 1]) !== 2) continue;
+      // `== 2` compared straight into a branch, or through a `ceq` the branch then reads
+      branchAt(ins[i + 2]?.op === 'ceq' ? i + 3 : i + 2);
+    }
+  });
 }
 
 /**
@@ -130,6 +178,7 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
   const calls = [];
   const rets = [];
   let loops = [];
+  const track = loopTracker();
   let cur = null;
   const machine = new Machine(asm, {
     tml,
@@ -138,7 +187,9 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     maxDepth: 3,
     budget: 60000,
     onLoad(recv, name) {
-      if (isVec(recv)) return { k: 'adj', slot: 'vel', field: name, add: 0, mul: recv.mul };
+      // `NewProjectile(v.X * k, v.Y * k, …)` passes the components, not the vector — keep the
+      // vector on the adjustment so the angle it was rotated by survives to the call
+      if (isVec(recv)) return { k: 'adj', slot: 'vel', field: name, add: 0, mul: recv.mul, vec: recv };
       return undefined;
     },
     onCall(callee, args, ctx) {
@@ -154,14 +205,18 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         let vel = n >= 12 ? args[3] : args[2];
         if (!isVec(vel)) {
           // float variant: velocity.X * k
-          if (vel?.k === 'adj' && vel.slot === 'vel') vel = { ...VEC, mul: vel.mul, perturbed: vel.add !== 0 };
+          if (vel?.k === 'adj' && vel.slot === 'vel') vel = { ...(vel.vec ?? VEC), mul: vel.mul, perturbed: (vel.vec?.perturbed ?? false) || vel.add !== 0 };
           else if (isNum(vel) && vel !== 0) vel = { ...VEC, abs: Math.abs(vel) };
           else vel = { ...VEC, unknown: true };
         }
         calls.push({ offset: ctx.offset, method: ctx.method, type, dmg, vel, depth: ctx.depth, region: ctx.region });
         return UNKNOWN;
       }
-      if (name === 'StealthStrikeAvailable') return UNKNOWN;
+      // Calamity asks this to decide what a stealth strike changes, and it asks it inside helpers
+      // the machine inlines (`RogueWeapon.ModifyShootStats` calls `ModifyStatsExtra`, which is
+      // where a weapon swaps in its stealth projectile). Handing it back as a flag tags the branch,
+      // which survives inlining — matching offsets against the outer method's IL does not.
+      if (name === 'StealthStrikeAvailable' || name === 'AdditionalStealthCheck') return { k: 'flag', name: STEALTH_FLAG };
       return vectorHook(callee, args, ctx);
     },
     onNew(callee, args) {
@@ -181,20 +236,35 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
       return tmlStaticLoadHook(f);
     },
     onReturn(v, ctx) { if (ctx.method === cur) rets.push({ v, offset: ctx.offset }); },
-    onBackJump(x, a, b, op, ctx) { loops.push({ lo: x.operand, hi: x.offset, n: loopCount(a, b, op), method: ctx.method }); },
+    onStoreLocal: track.onStoreLocal,
+    onBackJump(x, a, b, op, ctx) { loops.push({ lo: x.operand, hi: x.offset, n: track.count(x, a, b, op), method: ctx.method }); },
   });
 
   const out = { calls: [], returnsTrue: true, hasShoot: !!shoot };
   let at = 0;
   machine.trace = (x) => { at = x.offset; };
   if (modify) {
-    cur = modify;
-    const ranges = stealthRanges(asm, modify);
-    const inStealth = (o) => ranges.some((r) => r.stealth && o >= r.lo && o < r.hi) && !ranges.some((r) => !r.stealth && o >= r.lo && o < r.hi);
+    let ranges = stealthRanges(asm, modify);
+    const inStealth = (o) => sideAt(ranges, o) === true;
     const cells = { velocity: VEC, type: SHOOT_TYPE, damage: DMG, position: UNKNOWN, knockback: UNKNOWN };
     const stealthCells = {};
-    const ref = (k) => ({ k: 'ref', get: () => stealthCells[k] ?? cells[k], set: (v) => { if (inStealth(at)) stealthCells[k] = v; else cells[k] = v; } });
-    try { machine.run(modify, THIS, [PLAYER, ref('position'), ref('velocity'), ref('type'), ref('damage'), ref('knockback')]); } catch { /* partial */ }
+    const ref = (k) => ({ k: 'ref', get: () => stealthCells[k] ?? cells[k], set: (v, sctx) => { if (inStealth(at) || taggedStealth(sctx?.condTags)) stealthCells[k] = v; else cells[k] = v; } });
+    const args = () => [PLAYER, ref('position'), ref('velocity'), ref('type'), ref('damage'), ref('knockback')];
+    cur = modify;
+    try { machine.run(modify, THIS, args()); } catch { /* partial */ }
+    // Calamity's `RogueWeapon.ModifyShootStats` calls `ModifyStatsExtra` from *outside* its stealth
+    // branch, and that is where a weapon swaps in its stealth projectile. Inlined, the callee's
+    // offsets mean nothing against the caller's stealth ranges and nested runs carry no branch
+    // tags, so the swap read as unconditional — Ashen Stalactite threw its stealth stalagmite on
+    // every normal attack. Running the override on its own, against its own ranges, sees it.
+    const extra = findInherited(asm, td, 'ModifyStatsExtra');
+    if (extra && extra.declaringType === td) {
+      delete cells.type; delete stealthCells.type;
+      cells.type = SHOOT_TYPE;
+      ranges = stealthRanges(asm, extra);
+      cur = extra;
+      try { machine.run(extra, THIS, args()); } catch { /* partial */ }
+    }
     if (isVec(cells.velocity) && cells.velocity !== VEC) out.velMul = cells.velocity.abs ? null : cells.velocity.mul;
     if (cells.type !== SHOOT_TYPE) out.typeOverride = projRef(cells.type) ?? undefined;
     if (cells.damage?.k === 'adj' && cells.damage.mul !== 1) out.dmgMul = cells.damage.mul;
@@ -210,10 +280,10 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     loops = [];
     try { machine.run(shoot, THIS, [PLAYER, UNKNOWN, { k: 'obj', name: 'position', props: {} }, VEC, SHOOT_TYPE, DMG, UNKNOWN]); } catch { /* partial */ }
     const ranges = stealthRanges(asm, shoot);
-    const variantAt = (o) => {
-      const r = ranges.filter((x) => o >= x.lo && o < x.hi);
-      return r.length ? (r.every((x) => x.stealth) ? 'stealth' : r.every((x) => !x.stealth) ? 'spam' : 'both') : 'both';
-    };
+    const alts = altRanges(asm, shoot);
+    const variantAt = (o) => { const s = sideAt(ranges, o); return s === true ? 'stealth' : s === false ? 'spam' : 'both'; };
+    // which click fires it: true = only the right one does, false = only the left, undefined = both
+    const altAt = (o) => sideAt(alts, o);
     for (const c of calls) {
       if (c.depth !== 0) continue; // helpers called from Shoot are counted through their own calls
       const n = loops.filter((l) => l.method === shoot && c.offset >= l.lo && c.offset <= l.hi).reduce((p, l) => p * l.n, 1);
@@ -224,7 +294,9 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         velMul: c.vel.abs ? null : c.vel.mul,
         abs: c.vel.abs ?? null,
         spread: c.vel.spread + (c.vel.perturbed ? 0.08 : 0),
+        fan: c.vel.fan === true && !c.vel.perturbed ? true : undefined,
         variant: variantAt(c.offset),
+        alt: altAt(c.offset),
         region: c.region ?? undefined,
       });
     }
@@ -237,10 +309,19 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     const dflt = (variant) => { const k = truthy(variant); return k.length ? k.some((r) => r.v !== 0) : out.calls.filter((c) => c.variant === 'both' || c.variant === variant).length === 0; };
     out.defaultShot = { spam: dflt('spam'), stealth: dflt('stealth') };
     out.returnsTrue = out.defaultShot.spam;
-    // helpers such as CalamityUtils.ProjectileBarrage inside Shoot: count nested calls once each
+    // Helpers such as CalamityUtils.ProjectileBarrage inside Shoot: one call per projectile type,
+    // not per call site. The same helper reached from several branches (a bard instrument picking
+    // one of five notes at random) is one shot, and the miner cannot tell that apart from a
+    // barrage — so it assumes the fewer projectiles.
     const nested = calls.filter((c) => c.depth > 0);
     if (!out.calls.length && nested.length) {
-      for (const c of nested) out.calls.push({ type: c.type === SHOOT_TYPE ? 'shoot' : projRef(c.type), count: 1, dmgMul: 1, velMul: 1, abs: null, spread: 0.1, variant: 'both' });
+      const seen = new Set();
+      for (const c of nested) {
+        const type = c.type === SHOOT_TYPE ? 'shoot' : projRef(c.type);
+        if (seen.has(type)) continue;
+        seen.add(type);
+        out.calls.push({ type, count: 1, dmgMul: 1, velMul: 1, abs: null, spread: 0.1, variant: 'both' });
+      }
       out.returnsTrue = known.length ? known.some((v) => v !== 0) : false;
     }
   }

@@ -6,23 +6,23 @@
  */
 import { ET } from '../clr/sig.js';
 import { Machine, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { expandValue, progressionHooks, siteGates } from './flags.js';
+import { conditionField, expandValue, progressionHooks, seedGroup, siteGates } from './flags.js';
 import { TYPE_ABSTRACT, derivesFromTml, findInherited, gateRefs, refId } from './util.js';
 
 /**
  * @returns {Array<{ npc: string, item: string, cond?: string[] }>}
  */
-export function extractShops(asm, { tml, modId }) {
+export function extractShops(asm, { tml, modId, enabledMods = null, statics = null }) {
   const out = [];
   for (const td of asm.types) {
     if (td.flags & TYPE_ABSTRACT) continue;
     if (td.name.includes('`') || td.name.startsWith('<')) continue;
     if (derivesFromTml(asm, td, 'ModNPC')) {
       const m = findInherited(asm, td, 'AddShops');
-      if (m) runShopMethod(asm, m, { tml, thisVal: THIS, args: [], out, selfNpc: `${modId}:${td.name}` });
+      if (m) runShopMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [], out, selfNpc: `${modId}:${td.name}` });
     } else if (derivesFromTml(asm, td, 'GlobalNPC')) {
       const m = td.methods.find((x) => x.name === 'ModifyShop' && asm.methodBody(x));
-      if (m) runShopMethod(asm, m, { tml, thisVal: THIS, args: [{ k: 'obj', name: 'shopArg', props: {} }], out, selfNpc: null });
+      if (m) runShopMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [{ k: 'obj', name: 'shopArg', props: {} }], out, selfNpc: null });
     }
   }
   return dedupe(out);
@@ -60,7 +60,7 @@ const condFlags = (asm, a) => {
   return [];
 };
 
-function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc }) {
+function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc, enabledMods = null, statics = null }) {
   const itemOf = (a, callee) => {
     if (callee?.kind === 'methodSpec' && callee.typeArgs?.length) return refId(asm, callee.typeArgs[0]);
     if (isNum(a) && a > 0) return `v:${a}`;
@@ -80,6 +80,7 @@ function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc }) {
   };
   const machine = new Machine(asm, {
     tml,
+    enabledMods,
     concreteType: md.declaringType,
     linear: true,
     maxDepth: 2,
@@ -88,10 +89,9 @@ function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc }) {
       if (recv?.k === 'obj' && recv.name === 'shopArg') return name === 'NpcType' ? { k: 'key', slot: 0 } : UNKNOWN;
       return undefined;
     },
-    onStaticLoad(f) {
-      if ((f.declaringType?.fullName ?? '') === 'Terraria.Condition') return { k: 'cond', flags: /^Not|Moon|^In[A-Z]|Time|Near|World$|Multiplayer|Happy|Nearby|Shimmered|Christmas|Halloween|Party/.test(f.name) ? [] : [f.name] };
-      return tmlStaticLoadHook(f);
-    },
+    // `MoonPhase|BloodMoon` rather than a bare `Moon`, which also swallowed `DownedMoonLord` and
+    // sold Calamity's post-Moon-Lord stock at the Bandit's move-in
+    onStaticLoad: (f) => conditionField(f) ?? statics?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`) ?? tmlStaticLoadHook(f),
     onNew(callee, cargs) {
       const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
       if (decl === 'Terraria.ModLoader.NPCShop') {
@@ -108,11 +108,24 @@ function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc }) {
       const recv = ctx.recv;
       if (name === 'get_Type' && recv === THIS && selfNpc) return { k: 'type', fn: 'NPCType', name: selfNpc.split(':').pop(), id: selfNpc };
       if (name === 'get_NpcType' && recv?.k === 'obj' && recv.name === 'shopArg') return { k: 'key', slot: 0 };
+      // an entry keeps its own item and conditions: `shop.Add(new Entry[]{ new Entry(item, conds) })`
+      // is how the Tavernkeep's Defender Medal stock — every Old One's Army set — is written
+      if (/^(ReserveSlot|AddShopOpenedCallback|Disable|OrderLast)$/.test(name)) return recv?.k === 'obj' ? recv : cargs[0];
       const shop = recv?.k === 'shop' || (recv?.k === 'obj' && recv.name === 'shopArg') ? recv : cargs[0]?.k === 'shop' ? cargs[0] : null;
       if (shop && /^(Add|InsertAt|InsertBefore|InsertAfter)$/.test(name)) {
         const args = recv === shop ? cargs : cargs.slice(1);
-        const item = itemOf(args.find((a) => isNum(a) || a?.k === 'type' || a?.k === 'obj'), callee);
         const npc = npcOf(shop, ctx.cases);
+        const isEntry = (a) => (a?.k === 'obj' && /Entry$/.test(a.name ?? '') && a.args ? a : null);
+        const entries = args.flatMap((a) => (a?.k === 'arr' ? a.items.map(isEntry).filter(Boolean) : isEntry(a) ? [a] : []));
+        if (entries.length && npc) {
+          for (const e of entries) {
+            const item = itemOf(e.args[0]);
+            const cond = e.args.flatMap((x) => condFlags(asm, x));
+            if (item) out.push(cond.length ? { npc, item, cond } : { npc, item });
+          }
+          return shop;
+        }
+        const item = itemOf(args.find((a) => isNum(a) || a?.k === 'type' || a?.k === 'obj'), callee);
         const cond = args.flatMap((a) => condFlags(asm, a));
         if (item && npc) out.push(cond.length ? { npc, item, cond } : { npc, item });
         return shop;

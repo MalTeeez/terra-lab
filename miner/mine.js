@@ -20,16 +20,17 @@ import { loadAssembly } from './clr/metadata.js';
 import { classOf, cleanText, parseTooltipStats, VANILLA_RARITY_NAMES } from './classify.js';
 import { configHooks, loadModConfigs } from './config.js';
 import { extractGlobalOverrides, extractModItemModifiers } from './extract/globals.js';
-import { extractItems } from './extract/items.js';
+import { archetypeOf, extractItems } from './extract/items.js';
 import { extractProjectiles } from './extract/projectiles.js';
-import { evalStatics } from './extract/interp.js';
+import { evalLoadStatics, evalStatics } from './extract/interp.js';
 import { loadLocalization } from './extract/localization.js';
 import { extractModDrops } from './extract/loot.js';
-import { extractBossLog, extractNpcs } from './extract/npcs.js';
+import { extractBossLog, extractNpcs, vanillaNpcStats } from './extract/npcs.js';
 import { extractModPrefixes, VANILLA_PREFIXES } from './extract/prefixes.js';
 import { extractRecipes } from './extract/recipes.js';
 import { applyRecipeEdit, extractRecipeEdits } from './extract/recipeedits.js';
 import { extractRecipeGroups, vanillaRecipeGroups } from './extract/groups.js';
+import { extractPackBuilder } from './extract/packbuilder.js';
 import { extractTiles } from './extract/tiles.js';
 import { extractShops, extractTravelShop, extractVanillaShops } from './extract/shops.js';
 import { extractFlagEffects } from './extract/flageffects.js';
@@ -37,7 +38,9 @@ import { extractOnHitSpawns } from './extract/onhit.js';
 import { extractSpawnPools, extractVanillaSpawns } from './extract/spawns.js';
 import { extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
 import { extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
-import { extractVanilla } from './extract/vanilla.js';
+import { extractVanilla, constMap } from './extract/vanilla.js';
+import { extractDebuffs } from './extract/effects.js';
+import { deCamel } from './extract/localization.js';
 import { loadOrder } from './loadorder.js';
 import { defaultPaths, readEnabled, resolveMods } from './resolve.js';
 import { inferStages } from './stage/infer.js';
@@ -111,6 +114,14 @@ const ordered = loadOrder(loaded);
 const allItems = [];
 const allRecipes = [];
 const allRecipeEdits = []; // PostAddRecipes passes that edit recipes other mods registered
+const allPackItems = []; // tPackBuilder `.itemmod.json` stat changes — data, not code
+// A mod's `BalancingConstants` static class: the numbers its own mechanics are built on, which the
+// model would otherwise have to invent. Calamity's stealth strike lives here — the 0.42 damage
+// factor, the 4-second stealth fill and the half-rate while moving.
+const balance = {};
+const packSkipped = new Map();
+const vanillaItemIds = constMap(tml, 'Terraria.ID.ItemID');
+const vanillaTileIds = constMap(tml, 'Terraria.ID.TileID');
 const allDrops = [];
 const allNpcs = [];
 const allBossLogs = [];
@@ -126,6 +137,7 @@ const allWorldgen = [];   // chest contents placed at world generation
 const worldgenTiles = new Set();
 const groupFields = new Map(); // static field → recipe group name (RecipeGroupID.Wood, a mod's AnyGoldBar)
 const vanillaGroups = flag('--no-vanilla') ? [] : vanillaRecipeGroups(tml, groupFields);
+const debuffRefs = new Set(); // buffs the game marks as debuffs (`Main.debuff[x] = true`)
 const flagEffects = new Map(); // modId → Map(flag → effects)
 const modInfo = [];
 const localizations = new Map();
@@ -137,15 +149,23 @@ for (const m of ordered) {
   localizations.set(modId, loc);
   try {
     const cfg = configHooks(asm, modId, configs);
+    for (const td of asm.types) {
+      if (td.name !== 'BalancingConstants' || process.env.TL_NO_BALANCE) continue;
+      const vals = Object.fromEntries([...evalStatics(asm, td, tml)].filter(([, v]) => isNumber(v)));
+      if (Object.keys(vals).length) balance[modId] = { ...(balance[modId] ?? {}), ...vals };
+    }
     const items = extractItems(asm, { tml, loc, modId, ammoIds });
     const projectiles = extractProjectiles(asm, { tml, modId });
     allProjectiles.push(...projectiles);
     const npcs = extractNpcs(asm, { tml, loc, modId });
     const bossLogs = extractBossLog(asm, { tml, modId }).map((b) => ({ ...b, mod: modId }));
     const groups = extractRecipeGroups(asm, { tml, fields: groupFields });
-    const recipes = extractRecipes(asm, { tml, modId, groupFields });
+    // ids another mod's content fills in at load time, so what is keyed on them can be read
+    const statics = evalLoadStatics(asm, { tml, enabledMods });
+    const recipes = extractRecipes(asm, { tml, modId, groupFields, enabledMods, statics });
     const tiles = extractTiles(asm, { tml, modId });
-    const shops = extractShops(asm, { tml, modId });
+    // `from`: which mod registered the entry — it is the one whose code holds the condition
+    const shops = extractShops(asm, { tml, modId, enabledMods, statics }).map((s) => ({ ...s, from: modId }));
     flagEffects.set(modId, extractFlagEffects(asm, { tml }));
     // projectiles a flag spawns on hit (Scuttler's Jewel's spike): stored on the flag's effects
     for (const [flag, spawns] of extractOnHitSpawns(asm, { tml })) {
@@ -153,7 +173,7 @@ for (const m of ordered) {
       fx.onHit = spawns;
       flagEffects.get(modId).set(flag, fx);
     }
-    const drops = extractModDrops(asm, { tml, modId });
+    const drops = extractModDrops(asm, { tml, modId, enabledMods, statics });
     allPools.push(...extractSpawnPools(asm, { tml, modId }));
     allFish.push(...extractModFishing(asm, { tml, modId }));
     const wg = extractModWorldgen(asm, { modId });
@@ -162,7 +182,12 @@ for (const m of ordered) {
     const overrides = extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg });
     const itemMods = extractModItemModifiers(asm, { tml, modId, enabledMods, cfg });
     const prefixes = extractModPrefixes(asm, { tml, loc, modId });
-    allRecipeEdits.push(...extractRecipeEdits(asm, { tml, modId, enabledMods, cfg }));
+    allRecipeEdits.push(...extractRecipeEdits(asm, { tml, modId, enabledMods, cfg, groupFields }));
+    // …and the changes this mod ships as tPackBuilder data rather than code
+    const pack = extractPackBuilder(tmod, { modId, itemIds: vanillaItemIds, tileIds: vanillaTileIds });
+    if (!process.env.TL_NO_PACK_RECIPES) allRecipeEdits.push(...pack.recipes);
+    if (!process.env.TL_NO_PACK_ITEMS) allPackItems.push(...pack.items);
+    for (const [k, v] of pack.skipped) packSkipped.set(k, (packSkipped.get(k) ?? 0) + v);
     allItems.push(...items);
     allNpcs.push(...npcs);
     allBossLogs.push(...bossLogs);
@@ -192,7 +217,7 @@ if (!flag('--no-vanilla')) {
   allDrops.push(...vanilla.drops);
   allProjectiles.push(...vanilla.projectiles);
   allGroups.push(...vanillaGroups);
-  allShops.push(...extractVanillaShops(tml), ...extractTravelShop(tml));
+  allShops.push(...[...extractVanillaShops(tml), ...extractTravelShop(tml)].map((s) => ({ ...s, from: 'v' })));
   allFish.push(...extractVanillaFishing(tml));
   allPools.push(...extractVanillaFishingEnemies(tml));
   // chests placed by vanilla world generation; locked ones (dungeon, temple, biome chests) gate on the config
@@ -215,14 +240,20 @@ printTable(['mod', 'version', 'items', 'equip', 'npcs', 'bosses', 'recipes', 'dr
   const byResult = new Map();
   for (const r of allRecipes) { if (!r.result) continue; let l = byResult.get(r.result); if (!l) byResult.set(r.result, (l = [])); l.push(r); }
   let applied = 0;
+  let phantom = 0;
+  const known = new Set(allItems.map((it) => it.id));
   for (const e of allRecipeEdits) {
     const list = byResult.get(e.result);
     if (!list) continue;
+    // `thorium.Find<ModItem>("DragonTalonNecklace")` names an item this Thorium does not have — the
+    // balancing mod is written against another version. An ingredient nothing in the pack defines
+    // is a read that cannot be trusted, and adding it makes the whole recipe unstageable.
+    if (e.item && !known.has(e.item)) { phantom++; continue; }
     for (const r of list) { applyRecipeEdit(r, e); applied++; }
   }
   const disabled = allRecipes.filter((r) => r.disabled).length;
   for (let i = allRecipes.length - 1; i >= 0; i--) if (allRecipes[i].disabled) allRecipes.splice(i, 1);
-  console.log(`recipe edits: ${allRecipeEdits.length} records, ${applied} applications, ${disabled} recipes disabled`);
+  console.log(`recipe edits: ${allRecipeEdits.length} records, ${applied} applications, ${disabled} recipes disabled, ${phantom} naming an item the pack does not have`);
 }
 
 // CloneDefaults: inherit what the item did not set itself (stats, class, rarity)
@@ -242,11 +273,29 @@ printTable(['mod', 'version', 'items', 'equip', 'npcs', 'bosses', 'recipes', 'dr
 
 // Projectiles: CloneDefaults / AIType inherit behaviour from the copied projectile
 const projById = new Map(allProjectiles.map((p) => [p.id, p]));
+// A weapon can put its real attack into play through a spawner — Catalyst's Congealed Duo-Whip
+// shoots a `DuoWhipSpawner` that lashes with two whips of its own — so what a projectile hatches
+// travels with it, for the archetype rules that ask.
+const withKids = (p) => (p?.children?.length ? { ...p, kids: p.children.map((c) => projById.get(c.type)).filter(Boolean) } : p);
 for (const p of allProjectiles) {
   const src = p.cloneOf ? projById.get(p.cloneOf) : p.aiType !== undefined ? projById.get(`v:${p.aiType}`) : null;
   if (!src) continue;
-  for (const k of ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'homing', 'walls', 'minion', 'sentry', 'slots']) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
+  for (const k of ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'gravityK', 'drag', 'homing', 'held', 'still', 'explode', 'falloff', 'armorPen', 'walls', 'width', 'height', 'minion', 'sentry', 'slots']) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
   if (p.cloneOf && !p.children && src.children) p.children = src.children;
+}
+
+// Tile damage travels up the projectile graph: one that spawns — or merely names — a projectile
+// that takes the world apart is a weapon that takes the world apart, however rarely the branch it
+// sits behind is taken. `mentions` is what the linear walk could not follow; it is dropped again
+// once the flag has been carried, so nothing downstream can mistake it for a real child.
+for (let pass = 0; pass < 4; pass++) {
+  let changed = false;
+  for (const p of allProjectiles) {
+    if (p.digs) continue;
+    const kids = [...(p.mentions ?? []), ...(p.children ?? []).map((c) => c.type)];
+    if (kids.some((id) => projById.get(id)?.digs)) { p.digs = true; changed = true; }
+  }
+  if (!changed) break;
 }
 
 // Some mods implement IsArmorSet / UpdateArmorSet on the body or legs piece: move the set to the head
@@ -325,6 +374,7 @@ const conds = new Set();
     if (m.not) return !matchOne(it, m.not);
     if (m.id) return it.id === m.id;
     if (m.className) return it.className === m.className;
+    if (m.classEndsWith) return (it.className ?? '').endsWith(m.classEndsWith);
     if (m.modName) return it.mod === m.modName;
     if (m.nsPrefix) return (it.fullName ?? '').startsWith(m.nsPrefix);
     if (m.typeName) return it.fullName === m.typeName;
@@ -388,6 +438,26 @@ const conds = new Set();
   console.log(`balancing overlays: ${allOverrides.length} records, ${applied} applications, conditions seen: ${[...conds].join(', ') || 'none'}`);
 }
 
+// tPackBuilder item changes name their target outright, so they need none of the matcher machinery
+// above — only the same `base` / `changes` bookkeeping, so the site can still say what was rebalanced.
+{
+  const byId = new Map(allItems.map((it) => [it.id, it]));
+  let applied = 0;
+  let missing = 0;
+  for (const c of allPackItems) {
+    const it = byId.get(c.id);
+    if (!it) { missing++; continue; }
+    const from = it[c.field];
+    if (from === c.to) continue;
+    (it.base ??= {})[c.field] ??= from;
+    (it.changes ??= []).push({ mod: c.mod, hook: 'tPackBuilder', field: c.field, from, to: c.to });
+    it[c.field] = c.to;
+    applied++;
+  }
+  const skips = [...packSkipped].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ×${v}`);
+  console.log(`tPackBuilder data: ${allPackItems.length} item changes (${applied} applied, ${missing} for items the pack does not have)${skips.length ? `, not read: ${skips.join(', ')}` : ''}`);
+}
+
 for (const ref of (process.env.TL_DEBUG_ITEM ?? '').split(',').filter(Boolean)) {
   const it = ref.startsWith('name:') ? allItems.find((i) => i.name === ref.slice(5)) : allItems.find((i) => i.id === ref);
   const id = it?.id ?? ref;
@@ -414,6 +484,20 @@ const vanillaZones = new Set();
   const pt = tml.typeByName.get('Terraria.Player');
   for (const f of pt?.fields ?? []) if (/^Zone[A-Z]/.test(f.name)) vanillaZones.add(f.name);
   for (const m of pt?.methods ?? []) if (/^get_Zone[A-Z]/.test(m.name)) vanillaZones.add(m.name.slice(4));
+}
+// `npc.ModNPC.Name == "TheGrandThunderBird"`: a mod's GlobalNPC keys another mod's boss by class
+// name, which only resolves to an id once every mod has been read. A name nothing owns is dropped.
+{
+  const npcByClass = new Map(allNpcs.map((n) => [n.id.split(':').pop(), n.id]));
+  const itemByClass = new Map(allItems.map((i) => [i.id.split(':').pop(), i.id]));
+  let w = 0;
+  for (const d of allDrops) {
+    const m = /^(npc|bag):class:(.+)$/.exec(d.source);
+    if (!m) { allDrops[w++] = d; continue; }
+    const id = (m[1] === 'npc' ? npcByClass : itemByClass).get(m[2]);
+    if (id) allDrops[w++] = { ...d, source: `${m[1]}:${id}` };
+  }
+  allDrops.length = w;
 }
 const stageArgs = {
   items: allItems,
@@ -486,6 +570,23 @@ for (const w of allWorldgen) { let l = worldgenSources.get(w.item); if (!l) worl
 
 const rarityName = (it) => it.rarityClass ? it.rarityClass.replace(/Rarity$/, '').replace(/([a-z])([A-Z])/g, '$1 $2') : VANILLA_RARITY_NAMES[String(it.rarity)] ?? (it.rarity !== undefined ? `Rarity ${it.rarity}` : '');
 
+const knownDebuffs = JSON.parse(readFileSync(new URL('./stage/debuffs.json', import.meta.url), 'utf8'));
+for (const b of extractDebuffs(tml)) debuffRefs.add(b);
+for (const b of Object.keys(knownDebuffs)) if (b !== '$comment') debuffRefs.add(b);
+const buffInternal = new Map([...constMap(tml, 'Terraria.ID.BuffID')].map(([n, v]) => [`v:${v}`, n]));
+const buffName = (ref) => {
+  const internal = buffInternal.get(ref);
+  return (internal ? vanilla?.loc.get(`BuffName.${internal}`) ?? deCamel(internal) : null) ?? deCamel(ref);
+};
+/** Buffs an equip hook puts on the player: keep only the ones that are debuffs, by name. */
+function foldSelfDebuffs(fx) {
+  if (!fx?.selfBuffs) return fx ?? undefined;
+  const bad = [...new Set(fx.selfBuffs.filter((b) => debuffRefs.has(b)).map(buffName))];
+  delete fx.selfBuffs;
+  if (bad.length) fx.selfDebuffs = bad;
+  return Object.keys(fx).length ? fx : undefined;
+}
+
 const items = [];
 for (const it of allItems) {
   if (!EQUIP_SLOTS.has(it.slot)) continue;
@@ -523,6 +624,15 @@ for (const it of allItems) {
     autoReuse: it.autoReuse,
     noMelee: it.noMelee,
     useStyle: it.useStyle,
+    useLimit: it.useLimit,
+    maxOut: it.maxOut,
+    armorPen: it.armorPen,
+    scale: it.scale !== 1 ? it.scale : undefined,
+    // every projectile the weapon spawns when it is used, the default shot first: what a weapon *is*
+    // is decided by all of them, not just by the one `Item.shoot` names
+    arch: it.slot === 'weapon'
+      ? archetypeOf(it, [projById.get(it.shoot), ...(it.fire?.calls ?? []).map((c) => projById.get(c.type === 'shoot' ? it.shoot : c.type))].map(withKids), cls)
+      : undefined,
     fire: it.slot === 'weapon' ? fireRecord(it.fire) : undefined,
     defense: it.defense,
     pick: it.pick,
@@ -532,8 +642,8 @@ for (const it of allItems) {
     tooltip,
     setBonus: cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs)),
     set: it.set?.length ? it.set : undefined,
-    effects: it.effects ?? undefined,
-    setEffects: it.setEffects ?? undefined,
+    effects: foldSelfDebuffs(it.effects),
+    setEffects: foldSelfDebuffs(it.setEffects),
     stats: Object.keys(parsed.stats).length ? parsed.stats : undefined,
     placeholders: parsed.placeholders || undefined,
     condStats: condKeys(parsed, it),
@@ -561,7 +671,7 @@ const ammo = [];
 for (const it of allItems) {
   if (!(it.ammo > 0) || !(it.damage >= 0)) continue;
   const st = stageResult.byItem.get(it.id);
-  ammo.push(compact({ id: it.id, mod: it.mod, name: it.name, kind: it.ammo, damage: it.damage, knockback: it.knockback, shoot: it.shoot, stage: st ? st.stage : null, consumable: it.consumable || undefined }));
+  ammo.push(compact({ id: it.id, mod: it.mod, name: it.name, icon: iconHash(it.mod, it.name), kind: it.ammo, damage: it.damage, knockback: it.knockback, shoot: it.shoot, stage: st ? st.stage : null, stageSource: st?.source, consumable: it.consumable || undefined }));
 }
 // projectiles referenced by weapons and ammo (and their children), as a map
 const projectiles = {};
@@ -582,10 +692,29 @@ const projectiles = {};
     seen.add(id);
     const p = projById.get(id);
     if (!p) continue;
-    const { id: _id, cloneOf: _c, ...rest } = p;
+    const { id: _id, cloneOf: _c, mentions: _m, ...rest } = p;
     projectiles[id] = rest;
     for (const ch of p.children ?? []) if (seen.size < 6000) want.push(ch.type);
   }
+}
+
+// the NPCs the stages name, as the target the DPS model scores against: size, defense, life and
+// the debuffs that bounce off. A mod boss whose immunities live in a data table the interpreter
+// cannot walk (Calamity's NPCDebuffImmunityData) is marked `immuneUnknown` — the model then assumes
+// it shrugs everything off, which is both the pessimistic answer and the usual one.
+const npcsOut = {};
+{
+  const vanillaStats = vanilla ? vanillaNpcStats(tml) : new Map();
+  const modStats = new Map(allNpcs.map((n) => [n.id, n.stats]));
+  for (const s of stageResult.stages) {
+    for (const id of s.npcs ?? []) {
+      if (npcsOut[id]) continue;
+      const st = id.startsWith('v:') ? vanillaStats.get(id) : modStats.get(id);
+      if (!st) continue;
+      npcsOut[id] = compact({ ...st, name: npcNameOf.get(id), immuneUnknown: !id.startsWith('v:') && !st.immune ? true : undefined });
+    }
+  }
+  console.log(`boss NPCs: ${Object.keys(npcsOut).length} of ${stageResult.stages.reduce((n, s) => n + (s.npcs?.length ?? 0), 0)} stage NPCs have stats (${vanillaStats.size} vanilla read)`);
 }
 
 // crafting trees: every item reachable from equipment through recipes, groups, stations and ore gates
@@ -643,10 +772,13 @@ const dataset = {
   classAliases: stageResult.classAliases,
   conditions: [...conds],
   prefixes: allPrefixes,
+  balance,
   ammoKinds: Object.fromEntries([...ammoIds].filter(([, v]) => isNumber(v) && v > 0).map(([k, v]) => [v, k])),
   items,
   ammo,
   projectiles,
+  npcs: npcsOut,
+  debuffs: knownDebuffs,
   materials,
   recipes: recipesOut,
   groups: groupsOut,
@@ -685,7 +817,7 @@ function isNumber(v) { return typeof v === 'number' && Number.isFinite(v); }
 function fireRecord(f) {
   if (!f) return undefined;
   const r3 = (v) => (isNumber(v) ? Math.round(v * 1000) / 1000 : v ?? undefined);
-  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, variant: c.variant !== 'both' ? c.variant : undefined, region: c.region }));
+  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, fan: c.fan, variant: c.variant !== 'both' ? c.variant : undefined, alt: c.alt, region: c.region }));
   const out = compact({
     calls: calls.length ? calls : undefined,
     defaultShot: f.defaultShot && (!f.defaultShot.spam || !f.defaultShot.stealth) ? f.defaultShot : undefined,
@@ -718,6 +850,7 @@ function mergeEffects(a, b) {
     else if (k === 'cond') out.cond = [...new Set([...(out.cond ?? []), ...v])];
     else if (k === 'onHit') out.onHit = [...(out.onHit ?? []), ...v];
     else if (k === 'via') out.via = [...new Set([...(out.via ?? []), ...v])];
+    else if (k === 'selfBuffs') out.selfBuffs = [...new Set([...(out.selfBuffs ?? []), ...v])];
     else if (k === 'velocityDrag') out.velocityDrag = Math.round((out.velocityDrag ?? 1) * v * 10000) / 10000;
     else if (typeof v === 'object') { out[k] ??= {}; for (const [c, n] of Object.entries(v)) out[k][c] = Math.round(((out[k][c] ?? 0) + n) * 10000) / 10000; }
     else out[k] = Math.round(((out[k] ?? 0) + v) * 10000) / 10000;
@@ -741,7 +874,10 @@ function resolveRefs(text, modId) {
 }
 /** `{0}% increased damage` with the format arguments the item's code passes (unknown ones stay). */
 function formatText(text, args) {
-  if (!text || !args?.length || !text.includes('{')) return text ?? '';
+  if (!text || !text.includes('{')) return text ?? '';
+  // `for {0} {^0:second;seconds}`: the arm argument 0 selects (singular only at exactly 1)
+  text = text.replace(/\{\^(\d+):([^};]*);([^}]*)\}/g, (m, i, one, many) => (args?.[+i] == null ? m : Number(args[+i]) === 1 ? one : many));
+  if (!args?.length) return text;
   return text.replace(/\{(\d+)(?::[^}]*)?\}/g, (m, i) => (args[+i] !== null && args[+i] !== undefined ? String(args[+i]) : m));
 }
 function printTable(head, body) {

@@ -26,6 +26,21 @@ export const SEED_GROUPS = [
 /** `seed:RemixSeedEasymode` → the SEED_GROUPS entry, or null. */
 export const seedGroup = (flag) => (flag.startsWith('seed:') ? SEED_GROUPS.find((g) => g.re.test(flag.slice(5))) ?? null : null);
 
+/**
+ * A `Terraria.Condition` static (`Condition.DownedEowOrBoc`, `Condition.Hardmode`) as a condition
+ * value, or null for a field of any other type. Shops take these directly; a drop rule takes them
+ * through `Extensions.ToDropCondition` — the Strange Crate's Aquaite Bar hangs off a
+ * `LeadingConditionRule(Condition.DownedEowOrBoc)`, and without this the crate looked unconditional.
+ * Conditions that repeat rather than gate (a moon phase, the weather, a biome) carry no progression.
+ */
+export function conditionField(f) {
+  if ((f.declaringType?.fullName ?? '') !== 'Terraria.Condition') return null;
+  // …but a world seed is a requirement, not a repeating condition: the Skeleton Merchant only
+  // sells the Magic Dagger in a Don't Dig Up world, and `World$` used to read that as "always"
+  if (!/^Not/.test(f.name) && seedGroup(`seed:${f.name}`)) return { k: 'cond', flags: [`seed:${f.name}`] };
+  return { k: 'cond', flags: /^Not|MoonPhase|BloodMoon|^In[A-Z]|Time|Near|World$|Multiplayer|Happy|Nearby|Shimmered|Christmas|Halloween|Party/.test(f.name) ? [] : [f.name] };
+}
+
 /** Hooks to spread into a Machine (`onStaticLoad`, `onLoad`, `onCall` fall through when they return undefined). */
 export function progressionHooks() {
   return {

@@ -2,12 +2,15 @@
   import { tick } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
-  import { CLASS_LABELS, SOURCE_HINT, SOURCE_TONE, accentOf } from '../lib/dataset.js';
+  import { ARCH_HINT, ARCH_LABELS, CLASS_LABELS, SOURCE_HINT, SOURCE_TONE, accentOf } from '../lib/dataset.js';
   import { accessoryGroup, pieceScore, setBonusScore, weaponDps } from '../lib/score.js';
   import { effectiveStats, prefixesFor } from '../lib/stats.js';
   import { setOwned, toggleIn, ui } from '../lib/state.svelte.js';
   import { craftTree, gateText, gatingChain } from '../lib/sources.js';
+  import { MODE_TAG } from '../lib/traits.js';
   import { wikiHost, wikiUrl } from '../lib/wiki.js';
+  import { fmtFull, fmtNum, fmtPart } from '../lib/fmt.js';
+  import { FACTORS, SIGN_COLOR, factorOf, factorTip, signOf } from '../lib/factors.js';
   import WikiIcon from './WikiIcon.svelte';
   import CraftGraph from './CraftGraph.svelte';
   import { layout, toDisplay } from '../lib/treelayout.js';
@@ -36,15 +39,14 @@
     const out = [];
     for (const [k, v] of Object.entries(fx)) {
       if (k === 'flags' || k === 'mod') continue;
-      if (typeof v === 'object') for (const [c, n] of Object.entries(v)) out.push(`${k} ${c}: ${fmtNum(k, n)}`);
-      else out.push(`${k}: ${fmtNum(k, v)}`);
+      if (typeof v === 'object') for (const [c, n] of Object.entries(v)) out.push(`${k} ${c}: ${fmtStat(k, n)}`);
+      else out.push(`${k}: ${fmtStat(k, v)}`);
     }
     if (fx.mod) for (const [k, v] of Object.entries(fx.mod)) out.push(`${k}: ${v}`);
     if (fx.flags?.length) out.push(`flags: ${fx.flags.join(', ')}`);
     return out;
   };
-  const fmtNum = (k, n) => (/damage|attackSpeed|moveSpeed|endurance|manaCost|Mult/.test(k) && Math.abs(n) < 5 ? `${n > 0 ? '+' : ''}${Math.round(n * 1000) / 10}%` : `${n > 0 ? '+' : ''}${n}`);
-  const r1 = (v) => Math.round(v * 10) / 10;
+  const fmtStat = (k, n) => (/damage|attackSpeed|moveSpeed|endurance|manaCost|Mult/.test(k) && Math.abs(n) < 5 ? `${n > 0 ? '+' : ''}${Math.round(n * 1000) / 10}%` : `${n > 0 ? '+' : ''}${n}`);
   const r2 = (v) => Math.round(v * 100) / 100;
   const PREVIEW_SCALE = 0.82; // the sidebar column is narrow
   let zoom = $state(1);
@@ -114,14 +116,15 @@
           <span>{item.modName}</span>
           <span class="lab-tag">{item.slot}</span>
           {#if item.cls}<span class="lab-tag solid">{CLASS_LABELS[item.cls] ?? item.cls}</span>{/if}
+          {#if item.arch}<span class="lab-tag" title={ARCH_HINT[item.arch] ?? ''}>{ARCH_LABELS[item.arch] ?? item.arch}</span>{/if}
           {#if item.rarityName}<span>{item.rarityName}</span>{/if}
           {#if item.expert}<span class="lab-tag plum">expert</span>{/if}
-          {#if item.changes?.length}<span class="lab-tag warn" title="another mod changes this item">rebalanced</span>{/if}
+          {#if item.changes?.length}<span class="lab-tag warn" title="Another mod changes this item">rebalanced</span>{/if}
         </div>
       </div>
       <div class="flex shrink-0 gap-1">
-        {#if wiki}<a class="lab-btn px-2 py-1" href={wiki} target="_blank" rel="noreferrer" title="Open on {wikiHost(wiki)}">Wiki ↗</a>{/if}
-        <button class="lab-btn px-2 py-1" onclick={onclose} aria-label="Close" title="Close (Esc)">✕</button>
+        {#if wiki}<a class="lab-btn px-2 py-1" href={wiki} target="_blank" rel="noreferrer" title="Read about this item on {wikiHost(wiki)}">Wiki ↗</a>{/if}
+        <button class="lab-btn px-2 py-1" onclick={onclose} aria-label="Close" title="Close this panel (you can also press Esc)">✕</button>
       </div>
     </div>
   </header>
@@ -138,8 +141,8 @@
         </select>
       </label>
     {/if}
-    <button class="lab-chip py-0.5" aria-pressed={ui.pinned.includes(item.id)} onclick={() => toggleIn('pinned', item.id)} title="Always put this in the loadout">pin</button>
-    <button class="lab-chip py-0.5" aria-pressed={ui.excluded.includes(item.id)} onclick={() => toggleIn('excluded', item.id)} title="Never pick this">exclude</button>
+    <button class="lab-chip py-0.5" aria-pressed={ui.pinned.includes(item.id)} onclick={() => toggleIn('pinned', item.id)} title="Always keep this in the loadout">pin</button>
+    <button class="lab-chip py-0.5" aria-pressed={ui.excluded.includes(item.id)} onclick={() => toggleIn('excluded', item.id)} title="Never suggest this item">exclude</button>
   </div>
 
   <!-- the number that matters, big -->
@@ -147,12 +150,15 @@
     <div class="flex items-end justify-between gap-3 border-b border-line px-5 py-3" style="background:linear-gradient(90deg, color-mix(in srgb, {accent} 10%, transparent), transparent)">
       <div>
         <div class="lab-label">Real {dps.kind}</div>
-        <div class="num text-[28px] font-bold leading-none" style="color:{accent}">{r1(dps.value)}</div>
+        <div class="num text-[28px] font-bold leading-none" style="color:{accent}" title={fmtFull(dps.value)}>{fmtNum(dps.value)}</div>
       </div>
       <div class="pb-0.5 text-right text-[11.5px] text-dim">
         {#if dps.mode === 'stealth' || dps.mode === 'spam'}
-          <span class="lab-tag" class:plum={dps.mode === 'stealth'}>{dps.mode}</span>
-          <div class="num mt-1">spam {r1(dps.spam)} · stealth {r1(dps.stealth)}</div>
+          <span class="lab-tag {MODE_TAG[dps.mode].color}" title={MODE_TAG[dps.mode].tip}>{dps.mode}</span>
+          <div class="num mt-1">spam {fmtNum(dps.spam)} + stealth {fmtNum(dps.stealth)}</div>
+        {:else if dps.mode}
+          <span class="lab-tag {MODE_TAG[dps.mode]?.color ?? ''}" title={MODE_TAG[dps.mode]?.tip ?? ''}>{dps.mode}</span>
+          {#if dps.rate}<div class="num mt-1">{dps.rate}/s × {Math.round(dps.critMult * 100) / 100} crit</div>{/if}
         {:else if dps.rate}
           <span class="num">{dps.rate}/s × {Math.round(dps.critMult * 100) / 100} crit</span>
         {/if}
@@ -164,16 +170,16 @@
   {#if hasStats}
   <div class="grid grid-cols-[repeat(auto-fit,minmax(88px,1fr))] gap-px border-b border-line bg-line">
     {#if item.damage !== undefined}
-      <div class="bg-panel">{@render stat('Damage', eff ? eff.damage : item.damage, eff && eff.damage !== item.damage ? `mined ${item.damage}${item.dc ? ` · ${item.dc.replace(/DamageClass$/, '')}` : ''}` : item.dc ?? '')}</div>
+      <div class="bg-panel">{@render stat('Damage', eff ? eff.damage : item.damage, eff && eff.damage !== item.damage ? `The mod itself sets ${item.damage}${item.dc ? ` ${item.dc.replace(/DamageClass$/, '').toLowerCase()}` : ''} damage.` : item.dc ?? '')}</div>
     {/if}
     {#if item.useTime !== undefined || item.useAnimation !== undefined}
-      <div class="bg-panel">{@render stat('Use / anim', `${eff ? eff.useTime : item.useTime ?? '–'} / ${eff ? eff.useAnimation : item.useAnimation ?? '–'}`, 'ticks between uses / of the animation')}</div>
+      <div class="bg-panel">{@render stat('Use / anim', `${eff ? eff.useTime : item.useTime ?? '–'} / ${eff ? eff.useAnimation : item.useAnimation ?? '–'}`, 'Ticks between two uses, then ticks the animation takes.')}</div>
     {/if}
     {#if item.crit !== undefined || eff}
       <div class="bg-panel">{@render stat('Crit chance', `${eff ? eff.crit : item.crit}%`)}</div>
     {/if}
     {#if item.defense !== undefined}
-      <div class="bg-panel">{@render stat('Defense', item.defense, item.base?.defense !== undefined ? `mined ${item.base.defense}` : '')}</div>
+      <div class="bg-panel">{@render stat('Defense', item.defense, item.base?.defense !== undefined ? `The mod itself sets ${item.base.defense} defense.` : '')}</div>
     {/if}
     {#if item.knockback !== undefined}<div class="bg-panel">{@render stat('Knockback', item.knockback)}</div>{/if}
     {#if item.mana !== undefined}<div class="bg-panel">{@render stat('Mana', item.mana)}</div>{/if}
@@ -204,18 +210,21 @@
     {#if dps && dps.kind === 'dps'}
       <section>
         <div class="lab-rule start mb-1.5">Real DPS{dps.mode === 'stealth' ? ' — stealth strikes' : dps.mode === 'spam' ? ' — spam' : ''}</div>
-        <table class="lab-table">
-          <tbody>
-            {#each (dps.mode === 'stealth' ? dps.stealthParts : dps.parts) as p}
-              <tr><td class="text-[12px] text-ink2">{p.label}</td><td class="num text-right">{p.value !== undefined ? p.value : `×${p.mul}${p.unit ?? ''}`}</td></tr>
-            {/each}
-            <tr class="font-semibold"><td>per second</td><td class="num text-right" style="color:{accent}">{r1(dps.value)}</td></tr>
-          </tbody>
-        </table>
+        <!-- what the arithmetic below was computed against: the weapon's shape, the target and the range -->
+        <div class="mb-1.5 text-[12px] text-dim">
+          {dps.arch ?? 'shot'}{dps.distance ? ` at ${Math.round(dps.distance)} px` : ''}
+          {#if dps.boss?.name} · vs {dps.boss.name} ({dps.boss.w}×{dps.boss.h} px, {dps.boss.defense} defense{dps.boss.worm ? ', worm' : dps.boss.parts > 1 ? `, ${dps.boss.parts} parts` : ''}){/if}
+        </div>
+        <div class="lab-calc">
+          {#each (dps.mode === 'stealth' ? dps.stealthParts : dps.parts) as p}
+            <div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p.label, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>
+          {/each}
+          <div class="row total"><span class="lbl">per second</span><i class="lead"></i><span class="val num" style="color:{accent}" title={fmtFull(dps.value)}>{fmtNum(dps.value)}</span></div>
+        </div>
         {#if dps.mode === 'stealth' || dps.mode === 'spam'}
           <details class="mt-1.5 text-[12px] text-dim">
-            <summary class="cursor-pointer hover:text-green">the other way: {dps.mode === 'stealth' ? 'spam' : 'stealth'} {r1(dps.mode === 'stealth' ? dps.spam : dps.stealth)}/s</summary>
-            <table class="lab-table mt-1"><tbody>{#each (dps.mode === 'stealth' ? dps.parts : dps.stealthParts) as p}<tr><td class="text-[12px]">{p.label}</td><td class="num text-right">{p.value !== undefined ? p.value : `×${p.mul}${p.unit ?? ''}`}</td></tr>{/each}</tbody></table>
+            <summary class="cursor-pointer hover:text-green">the other half: {dps.mode === 'stealth' ? 'spam' : 'stealth'} {fmtNum(dps.mode === 'stealth' ? dps.spam : dps.stealth)}/s</summary>
+            <div class="lab-calc mt-1">{#each (dps.mode === 'stealth' ? dps.parts : dps.stealthParts) as p}<div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p.label, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>{/each}</div>
           </details>
         {/if}
       </section>
@@ -295,13 +304,11 @@
           {#if eff && eff.chain.length > 1}
             <div>
               <span class="lab-label mb-1">How the damage is derived</span>
-              <table class="lab-table">
-                <tbody>
-                  {#each eff.chain as step}
-                    <tr><td class="text-[12px] text-ink2">{step.label}</td><td class="num text-right">{step.damage ?? ''}</td><td class="num text-right text-dim">{step.crit !== undefined ? `${step.crit}%` : ''}</td><td class="num text-right text-dim">{step.useTime !== undefined ? `${step.useTime}t` : ''}</td></tr>
-                  {/each}
-                </tbody>
-              </table>
+              <div class="lab-calc">
+                {#each eff.chain as step}
+                  <div class="row"><span class="lbl">{step.label}</span><i class="lead"></i><span class="val num">{step.damage ?? ''}</span><span class="val num w-12 text-dim">{step.crit !== undefined ? `${step.crit}%` : ''}</span><span class="val num w-10 text-dim">{step.useTime !== undefined ? `${step.useTime}t` : ''}</span></div>
+                {/each}
+              </div>
             </div>
           {/if}
           {#if hasNotes}
@@ -340,7 +347,7 @@
       <span class="lab-meta">
         <span class="flex items-center gap-1">
           <button class="lab-btn px-2 py-0.5" onclick={() => (zoom = Math.max(MIN_FIT, r2(zoom - 0.15)))} aria-label="Zoom out">−</button>
-          <button class="lab-btn px-2 py-0.5 tabular-nums" onclick={openFullTree} title="Fit the whole tree to the window">{Math.round(zoom * 100)}%</button>
+          <button class="lab-btn px-2 py-0.5 tabular-nums" onclick={openFullTree} title="Fit the whole tree into the window">{Math.round(zoom * 100)}%</button>
           <button class="lab-btn px-2 py-0.5" onclick={() => (zoom = Math.min(1.6, r2(zoom + 0.15)))} aria-label="Zoom in">+</button>
         </span>
         <button class="lab-btn py-0.5" popovertarget="crafttree" popovertargetaction="hide">Done</button>

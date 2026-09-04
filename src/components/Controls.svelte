@@ -1,7 +1,8 @@
 <script>
   import { CLASS_LABELS, accentOf, eraOf, stageEras } from '../lib/dataset.js';
   import { fly } from 'svelte/transition';
-  import { toggleIn, ui } from '../lib/state.svelte.js';
+  import { setPlaystyle, toggleIn, ui } from '../lib/state.svelte.js';
+  import { ENGAGE, PLAYSTYLE, bossOf, targetStages } from '../lib/dps.js';
   import Info from './Info.svelte';
 
   let { ds, calibration } = $props();
@@ -21,6 +22,23 @@
   const MODES = [['loadout', 'Loadout'], ['timeline', 'All stages'], ['items', 'Items only']];
   const COND_LABELS = { expert: 'Expert', master: 'Master', revenge: 'Revengeance', death: 'Death', malice: 'Malice', eternity: 'Eternity', infernum: 'Infernum', bossrush: 'Boss Rush' };
   const ownedCount = $derived(Object.keys(ui.owned).length);
+  const STYLE_LABELS = { sniper: 'Sniper', rapid: 'Rapid', nuke: 'Nuke', spray: 'Spray', spam: 'Spam', stealth: 'Stealth' };
+  // classes whose engagement distance the player can choose, in the order the class picker shows them
+  const styleClasses = $derived(ds.classList.filter((c) => PLAYSTYLE[c]));
+  // the boss weapons are scored against; `null` follows the gamestage (the boss you fight next)
+  // …with how many bodies each one puts in front of you, since that is what pierce is scored on
+  const targets = $derived(targetStages(ds).map((s) => {
+    const b = bossOf(ds, s.index);
+    return { ...s, bodies: b.worm ? `${Math.min(b.parts, 8)} segments` : b.parts > 1 ? `${b.parts} parts` : '' };
+  }));
+  // how many bodies the fight puts in front of you: what pierce is worth hangs off this
+  const TARGET_MODES = [
+    ['auto', 'Auto', 'Score against the fight as it is: a worm gives its segments, a single boss does not.'],
+    ['single', '1', 'Single target: one body, whatever the boss really is. What a pure boss-killer is worth.'],
+    ['multi', 'Many', 'Multi-target: a worm, an event wave, a boss with adds. Pierce and lingering shots pay off here.'],
+  ];
+  const accent = $derived(accentOf(ui.cls));
+  const nextTarget = $derived(ds.stages[ui.stage + 1] ?? null);
 
   /** Everything currently bending the result, as chips you can click off. */
   const active = $derived.by(() => {
@@ -34,6 +52,9 @@
     if (ui.slots !== 6) a.push({ label: `${ui.slots} accessory slots`, clear: () => (ui.slots = 6) });
     if (ui.unknownStage) a.push({ label: 'unknown-stage items', clear: () => (ui.unknownStage = false) });
     if (ui.uncertain) a.push({ label: 'uncertain modifiers', clear: () => (ui.uncertain = false) });
+    for (const [c, k] of Object.entries(ui.playstyle ?? {})) if (PLAYSTYLE[c]?.[k]) a.push({ label: `${CLASS_LABELS[c] ?? c}: ${STYLE_LABELS[k] ?? k}`, clear: () => setPlaystyle(c, null) });
+    if (ui.target !== null && ds.stages[ui.target]) a.push({ label: `vs ${ds.stages[ui.target].label}`, clear: () => (ui.target = null) });
+    if ((ui.targets ?? 'auto') !== 'auto') a.push({ label: ui.targets === 'single' ? 'single target' : 'multi-target', clear: () => (ui.targets = 'auto') });
     if (ui.excludedMods.length) a.push({ label: `${ui.excludedMods.length} mods off`, clear: () => (ui.excludedMods = []) });
     if (ui.pinned.length) a.push({ label: `${ui.pinned.length} pinned`, clear: () => (ui.pinned = []) });
     if (ui.excluded.length) a.push({ label: `${ui.excluded.length} excluded`, clear: () => (ui.excluded = []) });
@@ -42,73 +63,89 @@
   });
 </script>
 
-<div class="sticky top-0 z-30 bg-paper/60 px-5 pb-3 pt-2 backdrop-blur-sm">
-  <section class="lab-panel px-4 py-3 backdrop-blur" style="--accent:{accentOf(ui.cls)}; background-color:rgb(255 255 255 / 0.92); box-shadow:var(--shadow-panel), 0 6px 12px -8px rgb(22 40 26 / 0.45)">
-    <div class="flex flex-wrap items-start gap-x-6 gap-y-3">
-      <!-- class -->
-      <div>
-        <span class="lab-label mb-1.5">Class</span>
-        <div class="flex flex-wrap gap-1">
-          {#each ds.classList as c}
-            <button class="lab-chip" style="--accent:{accentOf(c)}" aria-pressed={ui.cls === c} onclick={() => (ui.cls = c)}>{CLASS_LABELS[c] ?? c}</button>
-          {/each}
-        </div>
+<div class="sticky top-0 z-30 bg-paper/60 px-5 pb-2.5 pt-2 backdrop-blur-sm">
+  <section class="lab-panel px-4 py-2.5 backdrop-blur" style="--accent:{accentOf(ui.cls)}; background-color:rgb(255 255 255 / 0.92); box-shadow:var(--shadow-panel), 0 6px 12px -8px rgb(22 40 26 / 0.45)">
+    <!-- who the loadout is for, and what you are looking at -->
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span class="lab-label shrink-0">Class</span>
+      <div class="flex flex-wrap gap-1">
+        {#each ds.classList as c}
+          <button class="lab-chip" style="--accent:{accentOf(c)}" aria-pressed={ui.cls === c} onclick={() => (ui.cls = c)}>{CLASS_LABELS[c] ?? c}</button>
+        {/each}
       </div>
 
-      <!-- stage -->
-      <div class="min-w-[300px] flex-1" style="--accent:{era.color}">
-        <span class="lab-label mb-1.5 flex items-center gap-1.5">
-          Gamestage
-          <span class="normal-case tracking-normal" style="color:{era.color}">· {era.label}</span>
-          <span class="num normal-case tracking-normal text-dim/70">{ui.stage}/{ds.stages.length - 1}</span>
-          <Info label="Gamestage" w={340}>
-            <p>Everything that is <em>obtainable once you have beaten this boss</em> — the loadout is solved from exactly that pool.</p>
-            <p>Drag the slider to walk a run forward; “All stages” shows where the loadout actually changes.</p>
-          </Info>
-        </span>
-        <div class="flex items-stretch gap-1">
-          <button class="lab-btn px-2" onclick={() => stepStage(-1)} title="Previous stage" aria-label="Previous stage">‹</button>
-          <select class="lab-input min-w-0 flex-1" bind:value={ui.stage}>
-            {#each eras as e}
-              <optgroup label={e.label}>
-                {#each e.stages as s}
-                  <option value={s.index}>{s.index === 0 ? s.label : `Post ${s.label}`}{s.mod !== 'v' ? ` · ${ds.modById.get(s.mod)?.name ?? s.mod}` : ''}</option>
-                {/each}
-              </optgroup>
-            {/each}
-          </select>
-          <button class="lab-btn px-2" onclick={() => stepStage(1)} title="Next stage" aria-label="Next stage">›</button>
-        </div>
-        <input type="range" min="0" max={ds.stages.length - 1} bind:value={ui.stage} class="mt-1.5 w-full" aria-label="Gamestage" />
+      <span class="lab-label ml-auto shrink-0">View</span>
+      <div class="flex gap-1">
+        {#each MODES as [m, label]}
+          <button class="lab-chip" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>{label}</button>
+        {/each}
       </div>
 
-      <!-- view -->
-      <div>
-        <span class="lab-label mb-1.5">View</span>
-        <div class="flex gap-1">
-          {#each MODES as [m, label]}
-            <button class="lab-chip" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>{label}</button>
-          {/each}
-        </div>
-      </div>
-
-      <!-- panels + options -->
-      <div class="flex gap-1 pt-[18px]">
+      <div class="flex gap-1">
         <button class="lab-btn" aria-pressed={ui.panel === 'gear'} onclick={() => (ui.panel = ui.panel === 'gear' ? null : 'gear')} title="Items you own, pins and exclusions">
           My gear {#if ownedCount}<span class="num text-green-deep">{ownedCount}</span>{/if}
         </button>
         <button class="lab-btn" aria-pressed={ui.panel === 'calibrate'} onclick={() => (ui.panel = ui.panel === 'calibrate' ? null : 'calibrate')} title="Fit predictions against damage numbers from the game">
           Calibrate {#if ui.samples.length}<span class="num text-green-deep">{ui.samples.length}</span>{/if}
         </button>
-        <button class="lab-btn" popovertarget="opts" title="Solver assumptions, difficulty and mods">⚙ Options</button>
+        <button class="lab-btn" popovertarget="opts" title="Change the solver assumptions, the difficulty and which mods count">⚙ Options</button>
+      </div>
+    </div>
+
+    <!-- when in the run you are, and which boss the weapons are scored against -->
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div class="flex min-w-[380px] flex-[3] items-center gap-2" style="--accent:{era.color}">
+        <span class="lab-label inline-flex shrink-0 items-center gap-1">
+          Stage
+          <Info label="Gamestage" w={340}>
+            <p>Everything that is <em>obtainable once you have beaten this boss</em> — the loadout is solved from exactly that pool.</p>
+            <p>Drag the slider to walk a run forward; “All stages” shows where the loadout actually changes.</p>
+          </Info>
+        </span>
+        <button class="lab-btn shrink-0 px-2" onclick={() => stepStage(-1)} title="Go back one gamestage" aria-label="Previous stage">‹</button>
+        <select class="lab-input min-w-0 flex-1" bind:value={ui.stage} title="{ui.stage === 0 ? stage.label : `Post ${stage.label}`} — everything obtainable by this point">
+          {#each eras as e}
+            <optgroup label={e.label}>
+              {#each e.stages as s}
+                <option value={s.index}>{s.index === 0 ? s.label : `Post ${s.label}`}{s.mod !== 'v' ? ` · ${ds.modById.get(s.mod)?.name ?? s.mod}` : ''}</option>
+              {/each}
+            </optgroup>
+          {/each}
+        </select>
+        <button class="lab-btn shrink-0 px-2" onclick={() => stepStage(1)} title="Go on to the next gamestage" aria-label="Next stage">›</button>
+        <input type="range" min="0" max={ds.stages.length - 1} bind:value={ui.stage} class="w-[130px] shrink-0" aria-label="Gamestage" />
+        <span class="shrink-0 whitespace-nowrap text-[11.5px]" style="color:{era.color}" title="{era.label}">
+          {era.label} <span class="num text-dim/70">{ui.stage}/{ds.stages.length - 1}</span>
+        </span>
+      </div>
+
+      <div class="flex min-w-[260px] flex-[2] items-center gap-2">
+        <span class="lab-label inline-flex shrink-0 items-center gap-1">
+          Scored vs
+          <Info label="Target boss" w={360}>
+            <p>Real DPS is computed against one boss: its size decides how much of a spread lands, its defense eats half a point of every hit, and what it is immune to decides whether a debuff counts.</p>
+            <p>By default that is the boss you fight next at this gamestage. Pick another one to see how a weapon holds up against it — a wide, slow, many-segment worm rewards very different weapons from a small, fast, armoured one.</p>
+          </Info>
+        </span>
+        <select class="lab-input min-w-0 flex-1" bind:value={ui.target}>
+          <option value={null}>Assume next boss{nextTarget ? ` · ${nextTarget.label}` : ''}</option>
+          {#each targets as s}
+            <option value={s.index}>{s.label}{s.mod !== 'v' ? ` · ${ds.modById.get(s.mod)?.name ?? s.mod}` : ''}{s.bodies ? ` · ${s.bodies}` : ''}</option>
+          {/each}
+        </select>
+        <span class="flex shrink-0 items-center">
+          {#each TARGET_MODES as [k, label, hint]}
+            <button class="lab-chip" style="--accent:{accent}" aria-pressed={(ui.targets ?? 'auto') === k} title={hint} onclick={() => (ui.targets = k)}>{label}</button>
+          {/each}
+        </span>
       </div>
     </div>
 
     <!-- always rendered: letting this row appear and vanish shoved the whole page up and down -->
-    <div class="mt-3 flex min-h-[23px] flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-2.5">
-      <span class="lab-rule start w-[86px] shrink-0">Active</span>
+    <div class="mt-2 flex min-h-[23px] flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-2">
+      <span class="lab-rule start w-[70px] shrink-0">Active</span>
       {#each active as a (a.label)}
-        <button class="lab-active" onclick={a.clear} title="Turn this off" transition:fly={{ y: -4, duration: 130 }}>{a.label}</button>
+        <button class="lab-active" onclick={a.clear} title="Turn this setting off" transition:fly={{ y: -4, duration: 130 }}>{a.label}</button>
       {:else}
         <span class="text-[11.5px] text-dim/70">nothing changed from the defaults</span>
       {/each}
@@ -137,7 +174,7 @@
         <label class="flex items-center justify-between gap-2">
           <span class="text-dim">Accessory slots</span>
           <input type="number" min="4" max="10" class="lab-input w-16 py-0.5 text-center" bind:value={ui.slots} />
-          <span class="text-dim" title="rows of ranked accessories shown before the list scrolls">Accessory rows</span>
+          <span class="text-dim" title="How many rows of ranked accessories to show before the list scrolls">Accessory rows</span>
           <input type="number" min="1" max="8" class="lab-input w-16 py-0.5 text-center" bind:value={ui.accRows} />
         </label>
         <label class="flex items-center gap-2"><input type="checkbox" bind:checked={ui.requireSet} /> Prefer a full armor set</label>
@@ -155,6 +192,22 @@
     </div>
 
     <div>
+      {#if styleClasses.length}
+        <div class="lab-rule start mb-2 flex items-center gap-1">Playstyle
+          <Info label="Playstyle" w={380}><p>How far from the boss you fight. The distance decides how much of a shot's spread lands on the target, how far ahead it has to lead a moving boss, and whether it reaches at all — so a close-range weapon scores low for a class that stands back without anyone saying so. Each class has a default; these pick a different one.</p></Info>
+        </div>
+        <div class="mb-4 flex flex-col gap-1">
+          {#each styleClasses as c}
+            <div class="flex items-center gap-1">
+              <span class="text-dim w-20 text-xs">{CLASS_LABELS[c] ?? c}</span>
+              <button class="lab-chip py-0.5" aria-pressed={!ui.playstyle?.[c]} onclick={() => setPlaystyle(c, null)} title={`${ENGAGE[c]} px`}>Default</button>
+              {#each Object.entries(PLAYSTYLE[c]) as [k, px]}
+                <button class="lab-chip py-0.5" aria-pressed={ui.playstyle?.[c] === k} onclick={() => setPlaystyle(c, k)} title={`${px} px`}>{STYLE_LABELS[k] ?? k}</button>
+              {/each}
+            </div>
+          {/each}
+        </div>
+      {/if}
       {#if ds.conditions.length}
         <div class="lab-rule start mb-2">Difficulty</div>
         <div class="mb-4 flex flex-wrap gap-1">

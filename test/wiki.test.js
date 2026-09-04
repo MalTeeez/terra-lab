@@ -12,6 +12,13 @@ test('wiki links', () => {
   // mods without their own wiki live on the shared one: subpage article, bracketed file name
   expect(wikiUrl({ mod: 'SOTS', name: 'Elemental Helmet' })).toBe('https://terrariamods.wiki.gg/wiki/Secrets_Of_The_Shadows/Elemental_Helmet');
   expect(wikiImg({ mod: 'SOTS', name: 'Elemental Helmet', icon: 'c/cb' })).toBe('https://terrariamods.wiki.gg/images/c/cb/Elemental_Helmet_(Secrets_Of_The_Shadows).png');
+  // mods whose wiki article is named after the mod's title, not its internal name
+  expect(wikiUrl({ mod: 'CalamityHunt', name: 'Trailblazed Goggles' })).toBe('https://terrariamods.wiki.gg/wiki/Hunt_of_the_Old_God/Trailblazed_Goggles');
+  expect(wikiUrl({ mod: 'CatalystMod', name: 'Catharsis' })).toBe('https://terrariamods.wiki.gg/wiki/Catalyst/Catharsis');
+  expect(wikiUrl({ mod: 'NoxusBoss', name: 'Divine Wings' })).toBe('https://terrariamods.wiki.gg/wiki/Wrath_of_the_Gods/Divine_Wings');
+  expect(wikiImg({ mod: 'CatalystMod', name: 'Catharsis', icon: '4/45' })).toBe('https://terrariamods.wiki.gg/images/4/45/Catharsis_(Catalyst).png');
+  // an apostrophe in the mod title survives: encodeURIComponent leaves it alone, and so does the wiki
+  expect(wikiImg({ mod: 'CalValEX', name: 'Exodium Orbiter', icon: 'f/f2' })).toBe("https://terrariamods.wiki.gg/images/f/f2/Exodium_Orbiter_(Calamity's_Vanities).png");
   expect(wikiUrl({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
   expect(wikiImg({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
 });

@@ -38,6 +38,7 @@ export function keysToMatchers(asm, keys) {
       else if (m.is) out.push({ is: m.is });
       else if (m.cls) out.push({ cls: m.cls });
       else if (m.prop) out.push({ prop: m.prop, value: m.value });
+      else if (m.classNameEndsWith) out.push({ classEndsWith: m.classNameEndsWith });
       else if (m.displayName) out.push({ displayName: m.displayName });
       else out.push({ unknown: true });
     } else if (isNum(k.lo) || isNum(k.hi)) out.push({ range: [k.lo ?? -Infinity, k.hi ?? Infinity] });
@@ -103,6 +104,7 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
     const ate = td.methods.find((m) => m.name === 'AppliesToEntity' && asm.methodBody(m));
     if (ate) {
       const yes = [];
+      const no = []; // paths that bail out: what the hook does *not* apply to
       let unresolved = false;
       const m = makeMachine(asm, td, {
         tml, enabledMods, cfg, linear: true,
@@ -113,13 +115,40 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
           else if (v?.k === 'keycmp') {
             // `return entity.CountsAsClass(...)` / `return name != "X"` — ANDed with whatever guarded the return
             let own = keysToMatchers(asm, [v.value !== undefined ? { slot: 0, value: v.value } : { slot: 0, match: v.match }]);
-            if (v.neg) own = own.map((m) => ({ not: m }));
+            if (v.neg) {
+              // `return name != "X"` is the last link of a bail-out chain, so it names an excluded
+              // item as surely as a `return false` does — and the earlier links of that same chain
+              // are already read as bail-outs. Only a *named* item is taken this way: a negated
+              // class or property is a shape, and a shape may well be included by another path.
+              for (const m of own) if (m.className || m.id || m.displayName) no.push([m]);
+              own = own.map((m) => ({ not: m }));
+            }
             for (const g of withCases(ctx)) yes.push([...g, ...own]);
-          } else if (v !== 0 && v !== null) unresolved = true;
+          } else if (v === 0) {
+            // A `return false` is evidence too. `AppliesToEntity` is usually written as a list of
+            // bail-outs, and reading only the `return true` paths collapses a chain of
+            // `name != A && name != B && …` to its last comparison — CalamityBardHealer's doubling
+            // of Thorium melee resolved to "any Thorium item that is not Pearl Pike", which is
+            // nearly the whole mod, and doubled 9 spears and 13 swords the hook explicitly skips.
+            no.push(...withCases(ctx));
+          } else if (v !== null) unresolved = true;
         },
       });
       m.run(ate, THIS, [ITEMARG, 1]);
       applies = yes.filter((g) => g.length);
+      // Each bail-out narrows the scope by whatever it holds *beyond* what every including path
+      // already required. One extra condition negates exactly; a conjunction of several does not
+      // (¬(A∧B) is a disjunction), and one the matchers cannot express is left alone rather than
+      // guessed at — both keep the hook applying where the miner cannot prove it should not.
+      if (applies.length && no.length) {
+        const key = (m) => JSON.stringify(m);
+        const common = new Set(applies[0].map(key).filter((k) => applies.every((g) => g.some((m) => key(m) === k))));
+        for (const g of no) {
+          const extra = g.filter((m) => !common.has(key(m)));
+          if (extra.length !== 1 || extra[0].unknown) continue;
+          for (const a of applies) if (!a.some((m) => key(m) === key({ not: extra[0] }))) a.push({ not: extra[0] });
+        }
+      }
       if (!applies.length) applies = unresolved ? null : [];
     }
     if (process.env.TL_DEBUG_ATE && ate) console.log('AppliesToEntity', td.name, JSON.stringify(applies));

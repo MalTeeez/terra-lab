@@ -44,7 +44,11 @@ export function extractFlagEffects(asm, { tml }) {
         const key = tags[tags.length - 1];
         const name = boolFields.get(key);
         if (!name) return;
-        deltas.push({ flag: name, d });
+        if (process.env.TL_TRACE_FLAGS === name) console.log('  delta', md.name, name, JSON.stringify(d), 'untagged', JSON.stringify(ctx?.untagged), 'tags', JSON.stringify(ctx?.condTags));
+        // an unnamed condition nested inside the flag region gates this stat too — Laudanum's
+        // "+15 defense" is one arm of a walk over the buffs you happen to have, not a stat the
+        // accessory carries. The solver halves what is marked conditional.
+        deltas.push({ flag: name, d: ctx?.untagged?.length ? { ...d, cond: true } : d });
       });
       const machine = new Machine(asm, {
         tml,
@@ -109,12 +113,27 @@ export function extractFlagEffects(asm, { tml }) {
   return out;
 }
 
+/**
+ * One record per (stat, class). Unconditional deltas add up — that is what the code does. Deltas
+ * behind an unnamed condition do not: they are almost always the arms of one `if/else if` chain
+ * (Laudanum's 14 "if you have *this* debuff" cases), and you are in at most one arm at a time, so
+ * the flag is worth the biggest arm, not their sum.
+ */
 function dedupe(deltas) {
   const seen = new Set();
-  return deltas.filter((d) => {
-    const k = `${d.stat}|${d.cls ?? ''}|${d.value}`;
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
+  const best = new Map(); // stat|cls → the largest conditional delta
+  const out = [];
+  for (const d of deltas) {
+    const k = `${d.stat}|${d.cls ?? ''}`;
+    if (d.cond) {
+      const cur = best.get(k);
+      if (!cur) { best.set(k, d); out.push(d); }
+      else if (Math.abs(d.value) > Math.abs(cur.value)) { out[out.indexOf(cur)] = d; best.set(k, d); }
+      continue;
+    }
+    if (seen.has(`${k}|${d.value}`)) continue;
+    seen.add(`${k}|${d.value}`);
+    out.push(d);
+  }
+  return out;
 }

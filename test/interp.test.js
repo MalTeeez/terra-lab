@@ -146,6 +146,25 @@ describe('Machine (linear, case tracking)', () => {
     expect(seen).toEqual([[5, false], [9, true]]);
   });
 
+  test('a block only reachable by a backward jump keeps the condition around it', () => {
+    // if (flag) { for (;;) { damage = 9; } }  — the loop body sits after a `br` over it, so the
+    // linear walk arrives there before it has read the jump that leads back in. Clearing the
+    // regions there would call the body unconditional, which is how Calamity's stealth-strike
+    // fragment loops came out looking like something every throw does.
+    const il = [
+      0x7e, ...tok(T.SFLD_FLAG), 0x2c, 12,   // ldsfld flag ; brfalse.s END
+      0x2b, 5,                               // br.s → the loop test, over the body
+      0x02, 0x1f, 9, 0x7d, ...tok(T.FLD_DAMAGE), // BODY: damage = 9
+      0x16, 0x2d, 0xf9,                      // ldc.i4.0 ; brtrue.s → BODY (backward)
+      0x2a,                                  // END: ret
+    ];
+    const { asm, method } = stubAssembly(il, { hasThis: true, params: [], ret: VOID });
+    const seen = [];
+    const m = new Machine(asm, { linear: true, onStore: (recv, name, value, ctx) => seen.push([value, ctx.conditional]) });
+    m.run(method, ITEM, []);
+    expect(seen).toEqual([[9, true]]);
+  });
+
   test('tags the else-branch when the if-block ends in a return rather than a br', () => {
     // if (!flag) { damage = 1; return; } useTime = 3;   — Thorium's spawn pool is shaped like this
     const il = [

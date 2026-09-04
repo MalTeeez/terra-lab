@@ -196,9 +196,12 @@
   ],
   "anchors": {
     "$comment": "item → boss key it becomes obtainable after: a floor, never a way to make something earlier. Vanilla items by ItemID name, mod items by Mod:Class. The Frost Staff and Ice Sickle are here because vanilla spawns the Ice Elemental from a site the miner reads without its hardmode guard.",
+    "v:DemoniteOre": "EyeOfCthulhu",
+    "v:CrimtaneOre": "EyeOfCthulhu",
     "v:Hellstone": "EaterOfWorlds",
     "v:Meteorite": "EaterOfWorlds",
     "v:Bone": "Skeletron",
+    "v:Spike": "Skeletron",
     "v:CobaltOre": "WallOfFlesh",
     "v:PalladiumOre": "WallOfFlesh",
     "v:MythrilOre": "WallOfFlesh",
@@ -272,7 +275,41 @@
     "v:TatteredCloth": "EaterOfWorlds",
     "v:ShadowScale": "EaterOfWorlds",
     "v:TissueSample": "EaterOfWorlds",
-    "v:BeeWax": "QueenBee"
+    "v:BeeWax": "QueenBee",
+    "CalamityMod:AstralStone": "WallOfFlesh",
+    "CalamityMod:AstralSnow": "WallOfFlesh",
+    "CalamityMod:AstralIce": "WallOfFlesh",
+    "CalamityMod:AstralClay": "WallOfFlesh",
+    "CalamityMod:AstralDirt": "WallOfFlesh",
+    "CalamityMod:AstralSand": "WallOfFlesh",
+    "CalamityMod:AstralMonolith": "WallOfFlesh",
+    "v:Pearlwood": "WallOfFlesh",
+    "v:PearlsandBlock": "WallOfFlesh",
+    "v:HallowHardenedSand": "WallOfFlesh",
+    "v:PearlstoneBlock": "WallOfFlesh"
+  },
+  "enemies": {
+    "$comment": "Enemy → boss key it starts spawning after, for the ones whose spawn the miner cannot read (a tile-depth check, a biome local, a mod event that runs its own spawning). Vanilla by NPCID name, mod NPCs by Mod:Class or Mod:Display Name (the name data/unknown-sources.md prints next to `drop`). Everything it drops follows, so this beats pinning the items one by one in `anchors`; it is the gate itself when the code shows none, and the item's rarity no longer overrules it.",
+    "Mummy": "WallOfFlesh",
+    "DarkMummy": "WallOfFlesh",
+    "LightMummy": "WallOfFlesh",
+    "BloodMummy": "WallOfFlesh",
+    "IceElemental": "WallOfFlesh",
+    "IlluminantBat": "WallOfFlesh",
+    "IlluminantSlime": "WallOfFlesh",
+    "GraniteGolem": "WallOfFlesh",
+    "GraniteFlyer": "WallOfFlesh",
+    "DevourerHead": "WallOfFlesh",
+    "Lihzahrd": "Plantera",
+    "LihzahrdCrawler": "Plantera",
+    "DesertDjinn": "WallOfFlesh",
+    "SOTS:Otherworldly Spirit": "start",
+    "SOTS:Evil Spirit": "WallOfFlesh",
+    "SOTS:Inferno Spirit": "WallOfFlesh",
+    "CalamityMod:Acid Eel": "EyeOfCthulhu",
+    "CalamityMod:Nuclear Toad": "EyeOfCthulhu",
+    "CalamityMod:Radiator": "EyeOfCthulhu",
+    "CalamityMod:Skyfin": "EyeOfCthulhu"
   },
   "stations": {
     "$comment": "Vanilla crafting stations (TileID names) that gate recipes.",
@@ -445,7 +482,7 @@
     "PlanetariumBiome": "start"
   },
   "chests": {
-    "$comment": "Chests that need a boss-dropped key or a boss kill to open; item → the chest and the boss. Vanilla items by ItemID name.",
+    "$comment": "Chests that need a boss-dropped key or a boss kill to open; item → the chest and the boss. Vanilla items by ItemID name. A mod that fills these same chests at world generation (Thorium's WorldGenerationSystem.GenerateExtraLoot) is listed here too — its one worldgen method covers every chest style in the world, so the code alone cannot say which of its items landed behind a lock.",
     "Dungeon chest (Golden Key)": {
       "after": "Skeletron",
       "items": [
@@ -457,7 +494,12 @@
         "v:AquaScepter",
         "v:Valor",
         "v:ShadowKey",
-        "v:BoneWelder"
+        "v:BoneWelder",
+        "ThoriumMod:NaiadShiv",
+        "ThoriumMod:BoneReaper",
+        "ThoriumMod:StreamSting",
+        "ThoriumMod:HighTide",
+        "ThoriumMod:StrongestLink"
       ]
     },
     "Shadow Chest (Shadow Key)": {
@@ -468,7 +510,11 @@
         "v:FlowerofFire",
         "v:Sunfury",
         "v:HellwingBow",
-        "v:TreasureMagnet"
+        "v:TreasureMagnet",
+        "ThoriumMod:EternalNight",
+        "ThoriumMod:Nocturne",
+        "ThoriumMod:LightsLament",
+        "ThoriumMod:IncandescentAlacrity"
       ]
     },
     "Biome chest (Plantera)": {
@@ -575,7 +621,6 @@
     "$comment": "Item id → boss key, applied last. Add corrections here, but only where the miner cannot see the source at all: an override that merely repeats what the evidence already says is dead weight (check with the overrides emptied before adding one).",
     "SOTS:RoyalRubyShard": "QueenBee",
     "ThoriumMod:MagmaLocket": "EyeOfCthulhu",
-    "ThoriumMod:SpiritDroplet": "start",
     "SOTS:DissolvingDeluge": "start"
   },
   "structures": {

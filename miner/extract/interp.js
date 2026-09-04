@@ -47,6 +47,8 @@ export const UNKNOWN = Object.freeze({ k: '?' });
 export const THIS = Object.freeze({ k: 'this' });
 export const ITEM = Object.freeze({ k: 'item' });
 export const PLAYER = Object.freeze({ k: 'player' });
+/** An NPC out of `Main.npc[i]`, so a hook can tell "reads an enemy" from "reads the player". */
+export const NPC = Object.freeze({ k: 'npc' });
 
 export const isNum = (v) => typeof v === 'number';
 export const isKnown = (v) => v !== UNKNOWN && v !== undefined;
@@ -197,7 +199,7 @@ export class Machine {
     };
     const ctxBase = { owner, method, depth, machine: this };
     let pc = 0;
-    const ctx = () => ({ ...ctxBase, cases: this.cases, caseGroups: this.caseGroups, conditional: this.conditional, condTags: this.condTags, offset: ins[pc]?.offset, region: regions.length ? regions[regions.length - 1].end : null });
+    const ctx = () => ({ ...ctxBase, cases: this.cases, caseGroups: this.caseGroups, conditional: this.conditional, condTags: this.condTags, offset: ins[pc]?.offset, region: regions.length ? regions[regions.length - 1].end : null, untagged: regions.filter((r) => !r.dead && !r.tags.length).map((r) => r.end) });
     // linear mode: the stack a jump would arrive with, per target offset
     const stackAt = caseMap ? new Map() : null;
     // …and the key context a *conditional* jump carries: the keys guarding the branch itself
@@ -208,7 +210,7 @@ export class Machine {
       // a flag carried to a join point keeps the flags guarding the jump: `a ? b : false` is a && b
       const also = plainTags(this.condTags);
       if (!stackAt.has(target)) { stackAt.set(target, stack.map((v) => (v?.k === 'flag' && also.length ? { ...v, also: [...new Set([...(v.also ?? []), ...also])] } : v))); stackTagsAt.set(target, [...this.condTags]); }
-      if (!regionsAt.has(target)) regionsAt.set(target, regions.filter((r) => !r.dead && r.end > target));
+      if (!regionsAt.has(target)) regionsAt.set(target, { at: x0.offset, list: regions.filter((r) => !r.dead && r.end > target) });
       if (withGroups && !groupsAt.has(target)) groupsAt.set(target, groups.map((g) => [...g]));
     };
     // linear mode: forward conditional jumps open a region whose stores are "conditional"
@@ -246,6 +248,10 @@ export class Machine {
     const openElse = (limit) => {
       const inner = regions.length ? regions[regions.length - 1] : null;
       if (!inner || inner.end !== ins[pc + 1]?.offset) return;
+      // `if (!config.X) return;` with X known on: the early return is dead, so the rest of the
+      // method is the *only* path, not the else-branch of a live condition. Opening a region here
+      // put every recipe edit in the method under an untagged condition and dropped all of them.
+      if (inner.dead) return;
       const same = regions.filter((r) => !r.dead && !r.els && r.end === inner.end);
       const tags = !same.length || same.some((r) => !r.tags.length) ? [] : same.length === 1 ? same[0].tags.map(negTag) : same.flatMap((r) => (r.tags.length === 1 ? [`any:${negTag(r.tags[0])}`] : []));
       const outer = regions.filter((r) => r.end > inner.end).map((r) => r.end);
@@ -298,8 +304,13 @@ export class Machine {
           // regions too: what the jumps here carried, plus what the terminator itself opened (an else-branch)
           const prevOff = pc > 0 ? ins[pc - 1].offset : -1;
           const keep = regions.filter((r) => r.at === prevOff || r.dead);
+          // A loop body sitting after a `br` over it is reached only by the backward jump at its
+          // end, which the linear walk has not read yet — so nothing has been recorded for this
+          // offset and clearing the regions would say the body is unconditional. What still
+          // encloses the offset is the honest answer until a jump says otherwise.
+          const enclosing = regionsAt.has(x.offset) ? [] : regions.filter((r) => !r.dead && r.end > x.offset);
           regions.length = 0;
-          for (const r of regionsAt.get(x.offset) ?? []) if (!regions.includes(r)) regions.push(r);
+          for (const r of regionsAt.get(x.offset)?.list ?? enclosing) if (!regions.includes(r)) regions.push(r);
           for (const r of keep) if (!regions.includes(r)) regions.push(r);
           this.dead = regions.some((r) => r.dead);
           this.conditional = regions.some((r) => !r.dead);
@@ -309,7 +320,7 @@ export class Machine {
           // a join reached by fall-through and by a jump: a region the jump did not pass through
           // (`(y < surface || (remix && deep)) && eclipse`: the remix check sits between the jump and
           // here) cannot gate what follows
-          const via = new Set(regionsAt.get(x.offset));
+          const via = new Set(regionsAt.get(x.offset).list);
           for (let i = regions.length - 1; i >= 0; i--) if (!regions[i].dead && !via.has(regions[i])) regions.splice(i, 1);
           this.conditional = regions.some((r) => !r.dead);
           this.condTags = regions.flatMap((r) => r.tags ?? []);
@@ -455,7 +466,7 @@ export class Machine {
         case 'ldobj': { const r = pop(); push(r?.k === 'ref' ? r.get() : r); continue; }
         case 'ldtoken': push({ k: 'token', token: x.operand }); continue;
         case 'initobj': { const r = pop(); if (r?.k === 'ref') r.set({ k: 'obj', name: 'struct', props: {} }); continue; }
-        case 'stobj': { const v = pop(); const r = pop(); if (r?.k === 'ref') r.set(v); continue; }
+        case 'stobj': { const v = pop(); const r = pop(); if (r?.k === 'ref') r.set(v, ctx()); continue; }
         case 'cpobj': pop(); pop(); continue;
         case 'localloc': pop(); push(UNKNOWN); continue;
         case 'sizeof': case 'arglist': case 'refanytype': case 'ldvirtftn': push(UNKNOWN); continue;
@@ -466,7 +477,9 @@ export class Machine {
       }
       if (op.startsWith('conv.')) {
         const a = pop();
-        if (!isNum(a)) { push(a?.k === 'key' || a?.k === 'adj' ? a : UNKNOWN); continue; }
+        // a flag widened to a number still stands for the flag: `ai[0] = stealthStrike > 0` keeps
+        // the fact alive for the branch further down that reads it back
+        if (!isNum(a)) { push(a?.k === 'key' || a?.k === 'adj' || a?.k === 'flag' ? a : UNKNOWN); continue; }
         push(/conv\.(r4|r8|r\.un)/.test(op) ? a : Math.trunc(a));
         continue;
       }
@@ -474,6 +487,10 @@ export class Machine {
         const b = pop(); const a = pop();
         if (isNum(a) && isNum(b)) push(BINOPS[op](a, b));
         else if (op === 'sub' && a?.k === 'key' && isNum(b)) push({ ...a, offset: (a.offset ?? 0) + b });
+        // `shoot = type - 3278 + ProjectileID.WoodenYoyo` (the vanilla yoyo block): the key keeps
+        // its running offset so the consumer can resolve it per item id
+        else if (op === 'add' && a?.k === 'key' && isNum(b)) push({ ...a, offset: (a.offset ?? 0) - b });
+        else if (op === 'add' && b?.k === 'key' && isNum(a)) push({ ...b, offset: (b.offset ?? 0) - a });
         // `494 + Main.rand.Next(2)` (a hook returns `randn` for the roll): one of a small range
         else if (op === 'add' && ((isNum(a) && b?.k === 'randn') || (isNum(b) && a?.k === 'randn'))) { const base = isNum(a) ? a : b; const n = (isNum(a) ? b : a).n; push({ k: 'oneof', items: Array.from({ length: n }, (_, i) => base + i) }); }
         else if (op === 'add' && a?.k === 'stat' && isNum(b)) push({ ...a, delta: b });
@@ -505,6 +522,12 @@ export class Machine {
           const fv = a?.k === 'flag' ? a : b;
           const n = fv === a ? b : a;
           push(n === 0 ? { ...fv, neg: !fv.neg } : fv); // `flag == false` negates
+        } else if (/^(cgt|clt)/.test(op) && (a?.k === 'flag' || b?.k === 'flag')) {
+          // `flag > 0` is how a bool is turned back into a number before it is stashed somewhere;
+          // it still stands for the flag, and `0 < flag` is the same test the other way round
+          const fv = a?.k === 'flag' ? a : b;
+          const n = fv === a ? b : a;
+          push(n === 0 ? fv : UNKNOWN);
         }
         else push(UNKNOWN);
         continue;
@@ -560,8 +583,11 @@ export class Machine {
       if (POP1_BRANCH.test(op)) {
         const c = pop();
         const isTrue = op.startsWith('brtrue');
-        if (isNum(c) || c === null) {
-          const truthy = isNum(c) ? c !== 0 : false;
+        // A resolved `Mod` instance is a mod that is loaded, so `if (thorium != null)` is a question
+        // already answered — and leaving it open made every recipe edit under a `sots && thorium`
+        // guard read as conditional and get dropped.
+        if (isNum(c) || c === null || c?.k === 'mod') {
+          const truthy = isNum(c) ? c !== 0 : c?.k === 'mod';
           if (truthy === isTrue && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear) { if (!this.noDead && !process.env.TL_NO_DEAD) openDead(x.operand); } else jumpTo(x.operand); }
           continue;
         }
@@ -588,13 +614,15 @@ export class Machine {
       }
       if (op.startsWith('ldind.')) {
         const ref = pop();
-        push(ref?.k === 'stat' ? 0 : ref?.k === 'ref' ? ref.get() : ref?.k === 'obj' ? ref : UNKNOWN);
+        // the address of a tracked slot reads back as that slot, so `velocity.Y += k` written
+        // through a by-ref helper still arrives at the store as an adjustment of velocity.Y
+        push(ref?.k === 'stat' ? 0 : ref?.k === 'adj' ? ref : ref?.k === 'ref' ? ref.get() : ref?.k === 'obj' ? ref : UNKNOWN);
         continue;
       }
       if (op.startsWith('stind.')) {
         const val = pop(); const ref = pop();
-        if (ref?.k === 'stat' && !this.dead) this.onStore(ref, '@ind', val, ctx());
-        else if (ref?.k === 'ref') ref.set(val);
+        if ((ref?.k === 'stat' || ref?.k === 'adj') && !this.dead) this.onStore(ref, '@ind', val, ctx());
+        else if (ref?.k === 'ref') ref.set(val, ctx());
         continue;
       }
       if (op === 'newarr') {
@@ -620,6 +648,7 @@ export class Machine {
         }
         if (arr?.k === 'arr' && isNum(idx)) push(arr.items[idx]);
         else if (arr?.k === 'arr' && arr.tag === 'players') push(PLAYER); // Main.player[i]
+        else if (arr?.k === 'arr' && arr.tag === 'npcs') push(NPC); // Main.npc[i]
         else if (arr?.k === 'slots' && isNum(idx)) push({ k: 'obj', name: 'armorSlot', slot: idx, props: {} });
         else push(UNKNOWN);
         continue;
@@ -795,14 +824,17 @@ export class Machine {
     if (declName === 'Terraria.ModLoader.ModLoader' && this.enabledMods) {
       if (name === 'HasMod' && typeof args[0] === 'string') return this.enabledMods.has(args[0]) ? 1 : 0;
       if (name === 'TryGetMod' && typeof args[0] === 'string') {
-        if (!this.enabledMods.has(args[0])) return 0;
-        if (args[1]?.k === 'ref') args[1].set({ k: 'mod', name: args[0] });
-        return 1;
+        // null, not "could not read": a mod that is not in the pack is a mod that is not there, and
+        // the `out` slot has to say so or the caller's null check goes unresolved
+        if (args[1]?.k === 'ref') args[1].set(this.enabledMods.has(args[0]) ? { k: 'mod', name: args[0] } : null);
+        return this.enabledMods.has(args[0]) ? 1 : 0;
       }
-      if (name === 'GetMod' && typeof args[0] === 'string') return this.enabledMods.has(args[0]) ? { k: 'mod', name: args[0] } : UNKNOWN;
+      if (name === 'GetMod' && typeof args[0] === 'string') return this.enabledMods.has(args[0]) ? { k: 'mod', name: args[0] } : null;
     }
     if (recv?.k === 'mod' && (name === 'Find' || name === 'TryFind') && typeof args[0] === 'string') {
-      const t = { k: 'type', fn: 'ItemType', name: args[0], id: `${recv.name}:${args[0]}` };
+      // `cal.Find<ModNPC>("HiveMind")` is an NPC, not an item: what is asked for decides the kind
+      const kind = simpleName(callee.typeArgs?.[0] ?? '').replace(/^Mod/, '');
+      const t = { k: 'type', fn: /^(NPC|Tile|Projectile|Buff)$/.test(kind) ? `${kind}Type` : 'ItemType', name: args[0], id: `${recv.name}:${args[0]}` };
       if (name === 'TryFind') { if (args[1]?.k === 'ref') args[1].set(t); return 1; }
       return t;
     }
@@ -814,6 +846,9 @@ export class Machine {
     }
     if (recv?.k === 'type' && name === 'get_Type') return recv;
     if (recv?.k === 'mod' && name === 'get_Name') return recv.name;
+    // `this.Mod.TryFind<ModItem>("ZephyrWingsCosmetic", out item)`: a mod's own content by name,
+    // which is how it reaches a class another mod may or may not have loaded
+    if (recv === THIS && name === 'get_Mod') return { k: 'mod', name: (ctx.owner ?? this.asm).name };
     if (!callee.sig.hasThis && FLAG_NAMES.test(name)) return { k: 'flag', name };
 
     // List<T> / Dictionary<K,V> built in code: keep their contents.
@@ -977,6 +1012,40 @@ export function evalStatics(asm, td, tml = null) {
   const machine = new Machine(asm, { tml, budget: 20000, maxDepth: 2 });
   machine._staticCapture = out;
   try { machine.run(cctor, undefined, []); } catch { /* partial */ }
+  return out;
+}
+
+/**
+ * Cross-mod id tables: the `static int` fields a mod fills in at load time out of another mod's
+ * content (CalValEX's `CalNPCID.HiveMind = NPCRelation("HiveMind", 13)`, which is Calamity's NPC
+ * when Calamity is in the pack and a vanilla fallback when it is not). Nothing keyed on one can be
+ * read until the pack is known — CalValEX hangs every one of its wing drops off exactly these.
+ * @returns {Map<string, any>} "Type::Field" → value
+ */
+export function evalLoadStatics(asm, { tml = null, enabledMods = null } = {}) {
+  const out = new Map();
+  for (const td of asm.types) {
+    for (const m of td.methods) {
+      if (!/^(Load|PostSetupContent)$/.test(m.name)) continue;
+      let body;
+      try { body = asm.methodBody(m); } catch { continue; }
+      if (!body) continue;
+      let il;
+      try { il = decodeIL(body.il); } catch { continue; }
+      if (!il.some((x) => x.op === 'stsfld')) continue;
+      const machine = new Machine(asm, {
+        tml,
+        enabledMods,
+        budget: 100000,
+        maxDepth: 3,
+        onStaticStore(f, val) { if (val?.k === 'type' || isNum(val)) out.set(`${f.declaringType?.fullName ?? ''}::${f.name}`, val); },
+      });
+      // deliberately without an `onStaticLoad` off this same map: letting the pass answer its own
+      // reads decides branches the extractors were reading both ways on purpose, and whole blocks
+      // of drops fall out of the ones it gets wrong. A table that needs another to resolve stays open.
+      try { machine.run(m, THIS, []); } catch { /* partial is fine */ }
+    }
+  }
   return out;
 }
 

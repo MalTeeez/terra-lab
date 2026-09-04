@@ -13,7 +13,7 @@ const RECIPE_NAMES = new Set(['Register']);
  * @param {{ tml?: import('../clr/metadata.js').Assembly, methods?: Iterable<object>, modId: string }} opts
  * @returns {Array<{ result: string, count: number, ingredients: Array<{ item: string, n: number }>, groups: string[], tiles: string[], method: string }>}
  */
-export function extractRecipes(asm, { tml, methods, modId, groupFields = null }) {
+export function extractRecipes(asm, { tml, methods, modId, groupFields = null, enabledMods = null, statics = null }) {
   const out = [];
   const candidates = methods ?? allRecipeMethods(asm);
   for (const md of candidates) {
@@ -21,6 +21,7 @@ export function extractRecipes(asm, { tml, methods, modId, groupFields = null })
     const selfId = derivesFromTml(asm, td, 'ModItem') && !(td.flags & TYPE_ABSTRACT) ? `${modId}:${td.name}` : null;
     const machine = new Machine(asm, {
       tml,
+      enabledMods, // `ModLoader.TryGetMod("CalamityMod", out var cal)` → cal.Find<ModItem>("AerialiteBar")
       concreteType: td,
       linear: true,
       maxDepth: 3,
@@ -28,9 +29,10 @@ export function extractRecipes(asm, { tml, methods, modId, groupFields = null })
       onLoad: () => undefined,
       onStaticLoad(f) {
         // `RecipeGroupID.Wood` / a mod's `RecipeSystem.AnyGoldBar`: the group id registered into that field
-        const g = groupFields?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`);
+        const key = `${f.declaringType?.fullName ?? ''}::${f.name}`;
+        const g = groupFields?.get(key);
         if (g) return { k: 'groupname', name: g };
-        return tmlStaticLoadHook(f);
+        return statics?.get(key) ?? tmlStaticLoadHook(f);
       },
       onCall(callee, args, ctx) {
         const hooked = tmlStaticHook(callee, args, ctx);
@@ -40,6 +42,9 @@ export function extractRecipes(asm, { tml, methods, modId, groupFields = null })
         const recv = ctx.recv;
         // a static property getter for a stored group id (Thorium's ThoriumRecipes.AnyGoldBarGroup)
         if (/^get_/.test(name) && !callee.sig.hasThis && groupFields?.has(`${decl}::${name.slice(4)}`)) return { k: 'groupname', name: groupFields.get(`${decl}::${name.slice(4)}`) };
+        // `ThoriumItem.GetDonatorRecipe(Type, 1)`: a mod helper the machine walks into creates the
+        // recipe from the item's own `Type`, which is otherwise unknowable inside the helper
+        if (name === 'get_Type' && recv === THIS && selfId) return { k: 'type', name: td.name, id: selfId };
         if (name === 'CreateRecipe' && (recv === THIS || decl.endsWith('ModItem'))) {
           return { k: 'recipe', result: selfId, count: isNum(args[0]) ? args[0] : 1, ingredients: [], groups: [], tiles: [] };
         }

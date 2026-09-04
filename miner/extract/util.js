@@ -68,6 +68,24 @@ export function refId(asm, ref) {
 }
 
 /**
+ * tModLoader's `SpawnCondition` statics multiply a spawn chance to zero outside their zone or
+ * event, so a `SpawnChance` built out of one is gated by it as surely as an `if`. Only the fields
+ * that answer to a progression flag are listed; the rest spawn from the start as far as this can
+ * tell, and a body that touches one of those gets no gate at all (they are alternatives).
+ */
+const SPAWN_CONDITIONS = {
+  Dungeon: 'ZoneDungeon', DungeonNormal: 'ZoneDungeon', DungeonGuardian: 'ZoneDungeon',
+  JungleTemple: 'ZoneLihzahrdTemple',
+  OverworldHallow: 'ZoneHallow',
+  HardmodeJungle: 'hardMode', HardmodeJungleWater: 'hardMode', HardmodeCrimsonWater: 'hardMode',
+  HardmodeMushroomWater: 'hardMode', SolarEclipse: 'hardMode', FrostMoon: 'hardMode',
+  PumpkinMoon: 'hardMode', MartianMadness: 'hardMode', MartianProbe: 'hardMode', Pirates: 'hardMode',
+  FrostLegion: 'hardMode', IceGolem: 'hardMode', RainbowSlime: 'hardMode', AngryNimbus: 'hardMode',
+  Wraith: 'hardMode', OverworldMimic: 'hardMode', UndergroundMimic: 'hardMode',
+  NebulaTower: 'downedGolemBoss', VortexTower: 'downedGolemBoss', StardustTower: 'downedGolemBoss', SolarTower: 'downedGolemBoss',
+};
+
+/**
  * Progression flags a method body *requires*: `downed*` / `hardMode` statics (NPC, Main, a
  * mod's DownedBossSystem) and `Zone*` player fields / getters, counted only where the flag
  * being false leads straight to `return 0` / `return false` (`if (!downedX) return 0f;`,
@@ -124,8 +142,13 @@ export function gateRefs(asm, method, { depth = 1, seen = new Set() } = {}) {
   // the later flags are alternatives too, not requirements
   let sawAlternative = false;
   const required = (flag) => out.add(sawAlternative ? `any:${flag}` : flag);
+  const conditions = new Set(); // SpawnCondition statics this body builds its chance out of
   for (let i = 0; i < ins.length; i++) {
     const x = ins[i];
+    if (x.op === 'ldsfld') {
+      const d = asm.resolve(x.operand);
+      if (d?.declaringType?.name === 'SpawnCondition') conditions.add(d.name);
+    }
     const flag = flagName(x);
     if (flag) {
       const next = ins[i + 1];
@@ -160,5 +183,8 @@ export function gateRefs(asm, method, { depth = 1, seen = new Set() } = {}) {
       if (d?.def) for (const g of gateRefs(asm, d.def, { depth: depth - 1, seen })) out.add(g);
     }
   }
+  // every condition must gate for the chance to be gated: one ungated way in is a way in
+  const mapped = [...new Set([...conditions].map((n) => SPAWN_CONDITIONS[n]))];
+  if (mapped.length && mapped.every(Boolean)) for (const f of mapped) out.add(mapped.length > 1 ? `any:${f}` : f);
   return out;
 }

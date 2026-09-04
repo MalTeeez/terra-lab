@@ -1,3 +1,547 @@
 {
-  "$comment": "Manual sources: item id → { after: <boss key or 'start'>, via: <where it comes from> } (or just the boss key). Applied like overrides; the item card shows 'via'. Fill this from data/unknown-sources.md (node tools/unknown-sources.mjs). Vanilla items by ItemID name (v:Muramasa) or id (v:155), mod items by Mod:Class."
+  "$comment": "Manual sources: item id → { after: <boss key or 'start'>, via: <where it comes from> } (or just the boss key); 'unobtainable' where the mod removed it or left it unreachable, which keeps it out of every stage instead of guessing one. Applied like overrides; the item card shows 'via'. Fill this from data/unknown-sources.md (node tools/unknown-sources.mjs). Vanilla items by ItemID name (v:Muramasa) or id (v:155), mod items by Mod:Class.",
+  "StarsAbove:EssenceOfDespair": {
+    "after": "start",
+    "via": "a Guide Voodoo Doll held on a Hardcore character"
+  },
+  "StarsAbove:EssenceOfTheCosmos": {
+    "after": "unobtainable",
+    "via": "removed from the mod"
+  },
+  "ThoriumMod:SoulofPlight": {
+    "after": "WallOfFlesh",
+    "via": "dropped in the hardmode Underworld"
+  },
+  "ThoriumMod:PharaohsBreath": {
+    "after": "WallOfFlesh",
+    "via": "the hardmode Underground Desert"
+  },
+  "CalamityMod:Acidwood": {
+    "after": "start",
+    "via": "the Sulphurous Sea"
+  },
+  "CalamityMod:AcidwoodPlatform": {
+    "after": "start",
+    "via": "crafted from Acidwood"
+  },
+  "CalamityMod:Rock": {
+    "after": "Calamitas",
+    "via": "a Boss Rush reward"
+  },
+  "CalamityMod:PlasmaDriveCore": {
+    "after": "start",
+    "via": "a planetoid chest"
+  },
+  "CalamityMod:SuspiciousScrap": {
+    "after": "start",
+    "via": "Draedon's laboratories"
+  },
+  "CatalystMod:AstraJelly": {
+    "after": "WallOfFlesh",
+    "via": "dropped in the Astral Infection"
+  },
+  "SOTS:DissolvingBrilliance": {
+    "after": "Lux",
+    "via": "dropped by Lux"
+  },
+  "SOTS:SkipShard": {
+    "after": "start",
+    "via": "a wormhole conversion"
+  },
+  "SOTS:RubyKeystone": {
+    "after": "EaterOfWorlds",
+    "via": "the Cursed Pyramid"
+  },
+  "SOTS:WonderEgg": {
+    "after": "start",
+    "via": "found from the start"
+  },
+  "CalValEX:BrimmyBody": {
+    "after": "BrimstoneElemental",
+    "via": "dropped by the Brimstone Elemental"
+  },
+  "CalValEX:BrimmySpirit": {
+    "after": "BrimstoneElemental",
+    "via": "dropped by the Brimstone Elemental"
+  },
+  "CalValEX:SignusNether": {
+    "after": "Signus",
+    "via": "dropped by Signus"
+  },
+  "InfernumMode:LunarCoin": {
+    "after": "Providence",
+    "via": "an Infernum dev wish"
+  },
+  "ThoriumMod:LegendaryHelmet": {
+    "after": "start",
+    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
+  },
+  "ThoriumMod:LegendaryChainmail": {
+    "after": "start",
+    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
+  },
+  "ThoriumMod:LegendaryGreaves": {
+    "after": "start",
+    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
+  },
+  "SOTS:DissolvingNihility": {
+    "after": "start",
+    "via": "a Dissolving Element converted at a wormhole"
+  },
+  "XDContentMod:FusionModule": {
+    "after": "start",
+    "via": "sold by the Star Merchant"
+  },
+  "StarsAbove:EssenceOfNature": {
+    "after": "EyeOfCthulhu",
+    "via": "a placed Tier 2 Stellaglyph"
+  },
+  "StarsAbove:EssenceOfTheAutomaton": {
+    "after": "EyeOfCthulhu",
+    "via": "a placed Tier 2 Stellaglyph"
+  },
+  "v:3275": {
+    "after": "WallOfFlesh",
+    "via": "the hardmode evil desert"
+  },
+  "v:3274": {
+    "after": "WallOfFlesh",
+    "via": "the hardmode evil desert"
+  },
+  "v:2891": {
+    "after": "start",
+    "via": "caught with a Bug Net"
+  },
+  "StarsAbove:EssenceOfAbsoluteChaos": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfAdagium": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfASingularity": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfAuthority": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfBalance": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfBlasting": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfBlood": {
+    "after": "Golem",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfChemtech": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfChionicEnergy": {
+    "after": "SkeletronPrime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDancingSeas": {
+    "after": "ThespianBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDestiny": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDreams": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfEternity": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfExplosions": {
+    "after": "Golem",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfFirepower": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfFoxfire": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfGold": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfHydro": {
+    "after": "ThespianBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfInk": {
+    "after": "PenthesileaBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfPiracy": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfQuantum": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfRadiance": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSakura": {
+    "after": "EmpressOfLight",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSilence": {
+    "after": "Golem",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfKinetics": {
+    "after": "DukeFishron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfLifethirsting": {
+    "after": "PumpkinMoon",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfLightning": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfLuminance": {
+    "after": "TsukiyomiBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfMania": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfCookies": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfMisery": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfNecrosis": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfOuterGods": {
+    "after": "EaterOfWorlds",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSpinning": {
+    "after": "VagrantBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSurya": {
+    "after": "TsukiyomiBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTechnology": {
+    "after": "EmpressOfLight",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheAbyss": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSugar": {
+    "after": "ThespianBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheAerialAce": {
+    "after": "SkeletronPrime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheAscendant": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheBeginningAndEnd": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheBehemothTyphoon": {
+    "after": "MartianMadness",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheBionis": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheChimera": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheDragon": {
+    "after": "ThespianBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheFuture": {
+    "after": "TsukiyomiBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheGunlance": {
+    "after": "SkeletronPrime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTwinStars": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfVampirism": {
+    "after": "Deerclops",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfWolves": {
+    "after": "EaterOfWorlds",
+    "via": "essence unlock"
+  },
+  "StarsAbove:SpatialMemoriam": {
+    "after": "TsukiyomiBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHuntress": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheObservatory": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheOcean": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheOverwhelmingBlaze": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheDarkMaker": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfThePhoenix": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheRenegade": {
+    "after": "SkeletronPrime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheRifle": {
+    "after": "LunarEvents",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheShield": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheSoldier": {
+    "after": "EaterOfWorlds",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheStars": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheTimeless": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheWatch": {
+    "after": "VagrantBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheWhiteNight": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfAsh": {
+    "after": "EaterOfWorlds",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfAzakana": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDeathsApprentice": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDrivingThunder": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfFingers": {
+    "after": "QueenBee",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfIRyS": {
+    "after": "FrostMoon",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfLunarDominion": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSouls": {
+    "after": "MoonLord",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfStaticShock": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfStyle": {
+    "after": "KingSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSurpassingLimits": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfAlpha": {
+    "after": "DukeFishron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheDragonslayer": {
+    "after": "SkeletronPrime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheFallen": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheGardener": {
+    "after": "EyeOfCthulhu",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHarbinger": {
+    "after": "Golem",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHawkmoon": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHollowheart": {
+    "after": "PolluxBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfThePegasus": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheSharpshooter": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheVoid": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTime": {
+    "after": "PenthesileaBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfBitterfrost": {
+    "after": "QueenBee",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfButterflies": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfDuality": {
+    "after": "FrostMoon",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfEnergy": {
+    "after": "ThespianBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfIzanagi": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfKingslaying": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfLiberation": {
+    "after": "NalhaunBossPhase2",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSilverAsh": {
+    "after": "WallOfFlesh",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfSin": {
+    "after": "DukeFishron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheAegis": {
+    "after": "KingSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheAnomaly": {
+    "after": "EaterOfWorlds",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheBull": {
+    "after": "TheTwins",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheDarkMoon": {
+    "after": "EyeOfCthulhu",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheFreeshooter": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHallownest": {
+    "after": "Skeletron",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheHunt": {
+    "after": "QueenSlime",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheMoonlitAdepti": {
+    "after": "Golem",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfThePhantom": {
+    "after": "PolluxBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheSwarm": {
+    "after": "Plantera",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheTreasury": {
+    "after": "WarriorOfLightBoss",
+    "via": "essence unlock"
+  },
+  "StarsAbove:EssenceOfTheUnyieldingEarth": {
+    "after": "LunaticCultist",
+    "via": "essence unlock"
+  }
 }

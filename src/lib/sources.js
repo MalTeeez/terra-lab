@@ -22,6 +22,7 @@ export function gateText(node, ds) {
     case 'chest': return `${s.via}${after}`;
     case 'shop': return `sold by ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
     case 'manual': return `${s.via ? s.via + ' — ' : ''}after ${s.boss} (your sources.json)`;
+    case 'unobtainable': return `not obtainable${s.via ? ` — ${s.via}` : ''} (your sources.json)`;
     case 'spawn': return `ore spawned by ${s.boss}`;
     case 'ore': {
       const parts = [];
@@ -36,6 +37,7 @@ export function gateText(node, ds) {
     case 'anchor': return `after ${s.boss} (world progression)`;
     case 'override': return `after ${s.boss} (pinned from the class-setup guides)`;
     case 'craft': return s.from?.length ? `crafted — gated by ${s.from.join(', ')}` : 'crafted';
+    case 'start': return 'a base resource — in the world from the start';
     case 'rarity': return 'no source found — guessed from rarity';
     default: return node.stage === null ? 'unknown' : '';
   }
@@ -47,12 +49,16 @@ const groupLabel = (name) => `any ${name.replace(/^(any|Any)/, '').replace(/^[A-
  * Build the tree for an item id.
  * @returns {{ id, name, stage, stageLabel, prog, src, equip, gate, drops, recipes: Array<{ chosen, prog, ingredients, groups, stations }>, children: number } | null}
  */
-export function craftTree(ds, id, { depth = 5, seen = new Set() } = {}) {
+export function craftTree(ds, id, { depth = 5, seen = new Set(), root = true } = {}) {
   const node = nodeOf(ds, id);
   if (!node) return null;
   node.gate = gateText(node, ds);
   node.recipes = [];
-  if (depth <= 0 || seen.has(id)) return node;
+  // The bottom layer: an ingredient you can have without crafting it — ore in the world, a drop, an
+  // event — is where the tree stops. Gold Ore is not "3 Silver Ore at a transmutation altar", Solar
+  // Fragment is not "the other three fragments", and following those only walks in circles. The
+  // item the tree was asked about keeps its recipes either way: that is the question being asked.
+  if (depth <= 0 || seen.has(id) || (!root && node.src?.kind !== 'craft')) return node;
   const raw = ds.recipes[id] ?? [];
   const nextSeen = new Set(seen).add(id);
   raw.forEach(([ings, groups, tiles], index) => {
@@ -61,13 +67,13 @@ export function craftTree(ds, id, { depth = 5, seen = new Set() } = {}) {
     for (const [iid, n] of ings) {
       // an ingredient the miner could not resolve to an item is null: the recipe needs *something*
       // there, so show it as unknown rather than pretending the recipe is one ingredient shorter
-      const child = (iid ? craftTree(ds, iid, { depth: depth - 1, seen: nextSeen }) : null)
+      const child = (iid ? craftTree(ds, iid, { depth: depth - 1, seen: nextSeen, root: false }) : null)
         ?? { id: iid, name: iid ? iid.split(':').pop() : 'unknown ingredient', stage: null, prog: null, src: { kind: 'unknown' }, recipes: [], gate: iid ? 'not in the dataset' : 'the miner could not read this ingredient' };
       rec.ingredients.push({ node: child, n });
       bump(child.prog);
     }
     for (const g of groups) {
-      const members = (ds.groups[g] ?? []).map((m) => craftTree(ds, m, { depth: depth - 1, seen: nextSeen })).filter(Boolean);
+      const members = (ds.groups[g] ?? []).map((m) => craftTree(ds, m, { depth: depth - 1, seen: nextSeen, root: false })).filter(Boolean);
       let best = null;
       for (const m of members) if (m.prog !== null && (best === null || m.prog < best.prog)) best = m;
       rec.groups.push({ name: g, label: groupLabel(g), members, best });
@@ -99,7 +105,9 @@ export function gatingChain(tree) {
   const out = [];
   const walk = (node, viaGroup) => {
     if (!node) return;
-    const rec = node.recipes.find((r) => r.chosen);
+    // only a node the miner staged *by* crafting is explained by its recipe; one that is dropped or
+    // mined is itself the gate, whatever else it can also be crafted from
+    const rec = node.src?.kind === 'craft' ? node.recipes.find((r) => r.chosen) : null;
     if (!rec || rec.prog === 0) { if (node.prog > 0) out.push({ node, viaGroup }); return; }
     for (const c of rec.ingredients) if (c.gating) walk(c.node);
     for (const g of rec.groups) if (g.gating) walk(g.best, g.label);

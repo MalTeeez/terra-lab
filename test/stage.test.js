@@ -26,6 +26,8 @@ const items = [
   { id: 'M:Forced', name: 'Overridden', rarity: 0 },
   { id: 'M:Ore', name: 'Mod ore', rarity: 0, createTile: 'M:OreTile' },
   { id: 'M:NoRarity', name: 'Nothing known' },
+  { id: 'M:Mystery', name: 'Mystery material' },
+  { id: 'M:MadeOfMystery', name: 'Weapon from a mystery', rarity: 0, slot: 'weapon' },
   { id: 'M:Minion', name: 'Minion drop', rarity: 0 },
   { id: 'v:86', name: 'Shadow Scale', rarity: 6 },
   { id: 'M:Loomed', name: 'Made at a loom', rarity: 0 },
@@ -36,6 +38,7 @@ const recipes = [
   { result: 'M:Crafted', ingredients: [{ item: 'M:Drop', n: 1 }, { item: 'v:2', n: 1 }], groups: [], tiles: [] },
   { result: 'M:Forced', ingredients: [{ item: 'v:1', n: 1 }], groups: [], tiles: [] },
   { result: 'M:Loomed', ingredients: [{ item: 'v:11', n: 1 }], groups: [], tiles: ['v:tile:86'] },
+  { result: 'M:MadeOfMystery', ingredients: [{ item: 'M:Mystery', n: 1 }], groups: [], tiles: [] },
 ];
 const drops = [
   { source: 'npc:v:4', item: 'v:10' },
@@ -91,6 +94,9 @@ describe('inferStages', () => {
     expect(stage('M:Forced').source.kind).toBe('override');
     expect(label('M:Forced')).toBe('Plantera');
     expect(stage('M:NoRarity')).toBeUndefined();
+    // equipment whose recipe never resolved is *not* an item with no evidence: guessing from its
+    // rarity would say pre-boss for a weapon gated by something nobody could read
+    expect(stage('M:MadeOfMystery')).toBeUndefined();
   });
 
   test('class aliases apply for the mods present', () => {
@@ -321,13 +327,19 @@ describe('inferStages: spawns, fishing, world generation and unresolved gates', 
   test('vanilla enemies gate on their SpawnNPC sites: the earliest alternative wins', () => {
     expect(stage('v:10').source).toMatchObject({ kind: 'enemy', via: 'v:82', boss: 'Wall of Flesh', gate: 'hardMode' });
     expect(label('v:11')).toBe('Plantera'); // dungeon + hardmode + Plantera: the latest required flag
-    expect(label('v:12')).toBe('Pre-boss'); // an ungated site beats the graveyard-only one
+    // an ungated site beats the graveyard-only one, so the drop is the source — and `SpawnNPC`
+    // saying "no conditions" is evidence, not a gap: the item's own rarity does not float it up
+    expect(stage('v:12').source).toMatchObject({ kind: 'enemy', via: 'v:3' });
+    expect(stage('v:12').source.gate).toBeUndefined();
+    expect(label('v:12')).toBe('Pre-boss'); // rarity 3, but the enemy is there from the start
     expect(stage('v:13').source).toMatchObject({ kind: 'enemy', gate: 'dd2:1' });
     expect(label('v:13')).toBe('Eye of Cthulhu');
   });
 
   test('spawn pools: an alternative without a requirement means no gate', () => {
-    expect(label('M:PoolDrop')).toBe('Pre-boss');
+    expect(stage('M:PoolDrop').source).toMatchObject({ kind: 'enemy' });
+    expect(stage('M:PoolDrop').source.gate).toBeUndefined(); // the pool has an alternative with no requirement
+    expect(label('M:PoolDrop')).toBe('Skeletron'); // …but rarity 3 is the floor for an ungated enemy
   });
 
   test('a boss drop keeps the drop condition', () => {

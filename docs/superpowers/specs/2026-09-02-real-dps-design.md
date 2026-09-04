@@ -2,6 +2,12 @@
 
 Date: 2026-09-02. Extends the 2026-09-01 design.
 
+> **Superseded in part on 2026-09-03** by `docs/rework-weapon-scoring.md`, which replaced the
+> accuracy / pierce / debuff factors below with a landing model against the mined boss, an
+> archetype per weapon, and a debuff table. The mined data listed here is still the base; the
+> fields the rework added are marked *(2026-09-03)*. The formula in "Real DPS (site)" is the old
+> one — see the README's *Real DPS* block for what runs now.
+
 ## Problem
 
 Weapons rank by `damage × rate × (1 + crit)`. That ignores everything that decides whether a
@@ -26,10 +32,35 @@ For every `ModProjectile` (and vanilla `Projectile.SetDefaults1/2` via the case 
 | `local` | `usesLocalNPCImmunity` → `localNPCHitCooldown`; `usesIDStaticNPCImmunity` → `idStaticNPCHitCooldown` |
 | `minion`, `sentry`, `slots` | `minion`, `sentry`, `minionSlots` |
 | `gravity` | `velocity.Y += k` (k > 0) in AI, or vanilla aiStyle in {2, 5, 8, 10, 14, 16, 25} or aiStyle 1 with `arrow` |
+| `gravityK` *(2026-09-03)* | the `k` of that `velocity.Y += k`, or 0.1 for an aiStyle-only arc |
+| `drag` *(2026-09-03)* | `velocity *= k` / `velocity.X *= k` per tick (flame cones, decaying spears) |
 | `homing` | a call in AI whose name matches `/Hom|Closest|Nearest|FindTarget|Seek|Track|CanBeChasedBy/` or a curated vanilla list |
+| `homing` *(2026-09-03)* | now an object `{ range, speed, inertia, delay }`: `HomeInOnNPC(proj, ignoreTiles, range, speed, N)` carries all three, `(velocity·(N−1) + …)/N` and `Vector2.Lerp` give the inertia, anything else gets a pessimistic 300 px range |
+| `held`, `still` *(2026-09-03)* | `Main.player[owner].heldProj = …` / `velocity = Vector2.Zero` in AI |
+| `explode` *(2026-09-03)* | `Resize(w, h)` or a `width` store outside AI: the blast radius of a Kill |
+| `falloff` *(2026-09-03)* | `damage = (int)(damage × k)` in OnHitNPC: what each extra pierce costs |
+| `armorPen` *(2026-09-03)* | `ArmorPenetration` |
+| `width`, `height` *(2026-09-03)* | the hitbox |
+| `yoyo`, `whip` *(2026-09-03)* | `ProjectileID.Sets.YoyosMaximumRange / YoyosTopSpeed / YoyosLifeTimeMultiplier` and `IsAWhip`, read from the `SetFactory` calls in the static constructor — the yoyo aiStyle never touches `SetDefaults`, so the case tracker never sees it |
 | `children` | `NewProjectile*` calls in AI / OnKill / Kill / OnHitNPC → `{ type, count, where }` |
+| `children[].dmgMul` *(2026-09-03)* | the damage argument of that call as a multiple of the parent's `Projectile.damage` (`dmgAbs` when it is a constant) |
 | `debuffs` | `NPC.AddBuff(type)` in OnHitNPC |
 | `stealth` | reads of Calamity's `stealthStrike` flag anywhere in the type |
+
+### Weapon archetype *(2026-09-03)* — `miner/extract/items.js`
+
+`archetypeOf(item, projectile, class)` tags every weapon with one of `swing`, `shortsword`,
+`spear`, `yoyo`, `flail`, `boomerang`, `held`, `placed`, `shot`, `minion`, `sentry`, `whip`, from
+the projectile's aiStyle and the fields above. The DPS model branches on this tag and on nothing
+else about use styles.
+
+### Bosses *(2026-09-03)* — `miner/extract/npcs.js`
+
+`dataset.npcs` holds `{ w, h, defense, life, immune, immuneAll }` for every NPC a stage names:
+vanilla from `NPC.SetDefaults` walked with the case tracker plus `NPCID.Sets.ImmuneToAllBuffs`,
+mods from `ModNPC.SetDefaults` and its `buffImmune[…] = true` stores. What each debuff does to the
+NPC carrying it is `miner/stage/debuffs.json` (`{ dot, defense, dmgTaken }` per buff), keyed by
+buff and never by weapon.
 
 ### Weapons — `miner/extract/shoot.js`
 
@@ -88,5 +119,6 @@ gives them. Tiers map to the stage just before the named boss.
 
 ## Out of scope
 
-Damage-over-time numbers per debuff, minion AI attack timers, Thorium inspiration costs, bard
-empowerments, exact hit geometry per boss.
+Minion AI attack timers, Thorium inspiration costs, bard empowerments. Damage-over-time per debuff
+and per-boss hit geometry moved *into* scope on 2026-09-03 (see `docs/rework-weapon-scoring.md`);
+boss movement is still a stage-scaled constant rather than mined AI.

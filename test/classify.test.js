@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { classOf, cleanText, parseTooltipStats } from '../miner/classify.js';
+import { archetypeOf } from '../miner/extract/items.js';
+import { extractPackBuilder } from '../miner/extract/packbuilder.js';
+import { REACH } from '../src/lib/dps.js';
 
 describe('classOf', () => {
   test('maps damage class names from several mods', () => {
@@ -23,13 +26,41 @@ describe('parseTooltipStats', () => {
     expect(parseTooltipStats('15% of your throwing damage is duplicated').stats).toEqual({ throwerDamage: 0.15 }); // no condition: the full stat
     expect(parseTooltipStats('Stealth strikes grant 15% critical strike chance to non-stealth strikes for 10 seconds').stats).toEqual({ rogueCondCrit: 15 }); // a timed buff, not the strike itself
     expect(parseTooltipStats('Stealth strikes have +8 armor penetration and deal 8% more damage').stats).toEqual({ rogueStealthArmorPen: 8, rogueStealthDamage: 0.08 });
-    expect(parseTooltipStats('Stealth strikes only expend 90% of your max stealth\n6% increased rogue crit chance').stats).toEqual({ rogueCrit: 6 });
+    // Coin of Deceit: a strike that costs 90% of the bar comes round more often
+    expect(parseTooltipStats('Stealth strikes only expend 90% of your max stealth\n6% increased rogue crit chance').stats).toEqual({ stealthCost: 0.9, rogueCrit: 6 });
+    expect(parseTooltipStats('Stealth generates 10% faster').stats).toEqual({ stealthRegen: 0.1 });
     expect(parseTooltipStats('Enemies you hit take 200% more damage from poison').stats).toEqual({});
     expect(parseTooltipStats('Increases rocket damage by 100% and ranged damage briefly stuns enemies').stats).toEqual({});
   });
+  test('critical strike damage is its own stat, not crit chance', () => {
+    expect(parseTooltipStats('Increases critical strike damage by 20%').stats).toEqual({ critDamage: 0.2 });
+    expect(parseTooltipStats('10% increased critical strike damage').stats).toEqual({ critDamage: 0.1 });
+    expect(parseTooltipStats('5% increased critical strike chance').stats).toEqual({ allCrit: 5 });
+  });
+  test('flat crit bonuses keep the chance that comes with them', () => {
+    expect(parseTooltipStats('Critical strikes deal 40 more damage').stats).toEqual({ critFlat: 40 });
+    expect(parseTooltipStats('Critical strikes have a 50% chance to deal 30 more damage').stats).toEqual({ critFlat: 30, critFlatChance: 0.5 });
+  });
+  test('abilities read the same in a conditional line as in a flat one', () => {
+    expect(parseTooltipStats('Gives a chance to dodge attacks').flags).toContain('dodge');
+    expect(parseTooltipStats('Grants or improves the ability to dodge attacks').flags).toContain('dodge');
+    // named debuffs are not a blanket immunity, and fire blocks are not knockback
+    expect(parseTooltipStats('Immunity to Poison and Bleeding').flags).toEqual(['debuffResist']);
+    expect(parseTooltipStats('Immunity to most debuffs').flags).toEqual(['debuffImmune']);
+    expect(parseTooltipStats('Grants immunity to fire blocks').flags).toEqual(['lava']);
+  });
+  test('reads the stats a class calls by its own name', () => {
+    expect(parseTooltipStats('Reduces damage taken by 17%').stats).toEqual({ damageReduction: 0.17 });
+    expect(parseTooltipStats('5% increased symphonic playing speed').stats).toEqual({ bardSpeed: 0.05 });
+    expect(parseTooltipStats('15% increased healing speed').stats).toEqual({ healerSpeed: 0.15 });
+    expect(parseTooltipStats('Increases whip range by 30%').stats).toEqual({ whipRange: 0.3 });
+    expect(parseTooltipStats('You constantly generate a 20 life shield').stats).toEqual({ maxLife: 20 });
+    // the sentence can put its percentage last
+    expect(parseTooltipStats('After dodging, summon damage and crit chance are boosted by 10%').stats).toEqual({ summonCondCrit: 10, summonCondDamage: 0.1 });
+  });
   test('stats only conditional lines mention are reported, and jump speed is not an extra jump', () => {
     const r = parseTooltipStats('Increased defense by 5 when submerged in liquid\n10% increased movement speed and +1 HP/s life regen while wearing Victide armor');
-    expect(r.stats).toEqual({});
+    expect(r.stats).toEqual({ condLifeRegen: 2 }); // "+1 HP/s" only while the armour is on: a conditional value, not a stat
     expect(r.conditional.sort()).toEqual(['defense', 'lifeRegen', 'moveSpeed']);
     const u = parseTooltipStats('+4 defense\nIncreased defense by 5 when submerged');
     expect(u.conditional).toEqual([]); // an unconditional line covers it
@@ -47,6 +78,8 @@ describe('cleanText', () => {
     expect(cleanText("[c/F41A31:'There will be blood!']")).toBe("'There will be blood!'");
     expect(cleanText('Curses with [cbuff:CalamityMod/BrimstoneFlames]')).toBe('Curses with Brimstone Flames');
     expect(cleanText('[DAMAGELINE]\nfoo\n\n\nbar')).toBe('foo\nbar');
+    // plural marker whose argument never resolved: keep the plural arm
+    expect(cleanText('lasts {2} {^2:second;seconds}')).toBe('lasts {2} seconds');
   });
 });
 
@@ -73,5 +106,73 @@ describe('parseTooltipStats', () => {
     expect(r.stats.minionSlots).toBe(1);
     expect(r.stats.healerDamage).toBeGreaterThan(0);
     expect(r.placeholders).toBe(true);
+  });
+});
+
+describe('archetypeOf', () => {
+  const weapon = (item, ...projectiles) => archetypeOf({ useStyle: 5, noMelee: true, shoot: 'p', ...item }, projectiles, item.cls ?? 'melee');
+
+  test('reads every projectile the weapon spawns, not just the one `shoot` names', () => {
+    // Sahara Slicers' shape: `shoot` is the right-click bolt, the daggers are spawned in `Shoot`
+    const bolt = { pen: 2, life: 300 };
+    const blade = { held: true, dc: 'Melee' };
+    expect(weapon({ channel: true }, bolt, bolt, blade)).toBe('held');
+    expect(weapon({ channel: true }, bolt)).toBe('shot'); // the old answer, from the bolt alone
+  });
+  test("a held projectile the game calls true melee is at arm's length, not a beam", () => {
+    expect(weapon({ channel: true }, { held: true, dc: 'TrueMeleeDamageClass' })).toBe('truemelee');
+    expect(weapon({ channel: true }, { held: true, dc: 'Melee' })).toBe('held');
+    expect(REACH.truemelee).toBeLessThan(REACH.held);
+  });
+  test('a whip spawned by a spawner is still a whip', () => {
+    // Catalyst's Congealed Duo-Whip: `shoot` is a held spawner whose only job is to lash with two
+    // whips of its own. Without the child it read as a beam and out-scored every minion at the stage.
+    const lash = { held: true, dc: 'SummonMeleeSpeedDamageClass' };
+    const spawner = { held: true, dc: 'Summon', kids: [lash, lash] };
+    expect(weapon({ cls: 'summon', channel: true }, spawner)).toBe('whip');
+    expect(weapon({ cls: 'summon', channel: true }, { ...spawner, kids: [] })).toBe('held'); // the old answer
+    expect(weapon({ cls: 'summon' }, lash)).toBe('whip');
+  });
+  test('ammo names the weapon before anything it holds does', () => {
+    // a charge bow puts a drawn-bow sprite in the player's hands; the damage leaves in the arrow
+    expect(weapon({ cls: 'ranged', useAmmo: 40 }, { ai: 20 })).toBe('bow');
+    expect(weapon({ cls: 'ranged', useAmmo: 40, autoReuse: true }, { ai: 20 })).toBe('repeater');
+    expect(weapon({ cls: 'magic' }, { ai: 20 })).toBe('held');
+  });
+});
+
+describe('extractPackBuilder', () => {
+  // a .tmod entry is anything with a `read()` returning a Buffer
+  const tmod = (files) => ({ entries: new Map(Object.entries(files).map(([k, v]) => [k, { read: () => Buffer.from(JSON.stringify(v)) }])) });
+  const opts = { modId: 'Pack', itemIds: new Map([['TissueSample', 3212]]), tileIds: new Map([['Anvils', 16]]) };
+
+  test('reads item stat changes, mod items and vanilla alike', () => {
+    const { items } = extractPackBuilder(tmod({
+      'a.itemmod.json': { Items: ['ThoriumMod/PearlPike'], Changes: [{ $type: 'X.VanillaItemChange, PackBuilder', Damage: 30, UseTime: 22.0 }] },
+    }), opts);
+    expect(items).toEqual([
+      { mod: 'Pack', id: 'ThoriumMod:PearlPike', field: 'damage', to: 30, file: 'a.itemmod.json' },
+      { mod: 'Pack', id: 'ThoriumMod:PearlPike', field: 'useTime', to: 22, file: 'a.itemmod.json' },
+    ]);
+  });
+  test('a recipe change needs exactly one CreatesResult and nothing it cannot read', () => {
+    const change = { $type: 'X.RemoveIngredient, PackBuilder', Item: 'Terraria/TissueSample' };
+    const pinned = { $type: 'X.CreatesResult, PackBuilder', Item: 'ThoriumMod/JestersMask', Count: -1 };
+    const one = extractPackBuilder(tmod({ 'r.recipemod.json': { Conditions: [pinned], Changes: [change] } }), opts);
+    expect(one.recipes).toEqual([{ mod: 'Pack', result: 'ThoriumMod:JestersMask', method: 'r.recipemod.json', kind: 'removeIngredient', item: 'v:3212' }]);
+    // an ingredient condition narrows a set the miner cannot enumerate: applying it anyway would
+    // hit every recipe in the game
+    const wide = extractPackBuilder(tmod({ 'r.recipemod.json': { Conditions: [pinned, { $type: 'X.RequiresIngredient, PackBuilder' }], Changes: [change] } }), opts);
+    expect(wide.recipes).toEqual([]);
+    expect(wide.skipped.get('RequiresIngredient')).toBe(1);
+  });
+  test('a tile swap is a remove and an add, so the stage graph sees both', () => {
+    const { recipes } = extractPackBuilder(tmod({
+      't.recipemod.json': {
+        Conditions: [{ $type: 'X.CreatesResult, PackBuilder', Item: 'ThoriumMod/JestersMask' }],
+        Changes: [{ $type: 'X.ChangeTile, PackBuilder', Tile: 'Terraria/Anvils', NewTile: 'ThoriumMod/ArcaneArmorFabricator' }],
+      },
+    }), opts);
+    expect(recipes.map((r) => [r.kind, r.tile])).toEqual([['removeTile', 'v:tile:16'], ['addTile', 'ThoriumMod:ArcaneArmorFabricator']]);
   });
 });

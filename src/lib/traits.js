@@ -9,20 +9,34 @@ const GEAR_RULES = [
   [/^flight boost/, 'flight boost'],
   [/^flight/, 'flight'],
   [/sprint speed/, 'movement speed'],
+  [/lava/, 'lava protection'], // the flag and the scored part name it differently
   [/set bonus/, 'set bonus'],
   [/stealth strike/, 'stealth strike bonus'],
 ];
 const WEAPON_RULES = [
   [/pierce/, 'pierce'], [/homing/, 'homing'], [/gravity/, 'gravity arc'], [/spread/, 'spread'], [/velocity/, 'slow projectile'],
-  [/walls/, 'through walls'], [/debuff/, 'inflicts debuffs'], [/child/, 'child projectiles'], [/projectiles per use/, 'multi-shot'],
+  [/destroys tiles/, 'destroys tiles'], [/walls/, 'through walls'], [/debuff/, 'inflicts debuffs'], [/child/, 'child projectiles'], [/projectiles per use/, 'multi-shot'],
   [/contact range/, 'true melee'], [/mana\/s/, 'mana hungry'], [/minion/, 'minion'], [/sentry/, 'sentry'], [/stealth/, 'stealth'],
 ];
 const FLAG_TRAITS = { noKnockback: 'knockback immunity', knockbackImmune: 'knockback immunity', dash: 'dash', dashType: 'dash', jump: 'extra jump', debuffImmune: 'debuff immunity', lava: 'lava protection', lavaRose: 'lava protection', fireWalk: 'lava protection', iceSkate: 'mobility', waterWalk: 'mobility', mobility: 'mobility' };
 
 /** A gear part's label without its numbers: "+27% rogue damage ½" → "rogue damage". */
+/**
+ * How a weapon's grade tag reads: the colour tells a whip from a minion from a sentry at a glance,
+ * because a summoner wears one of each rather than choosing between them. Rogue's stealth and spam
+ * are the other kind of tag — two ways to use the same weapon — and keep their own colour.
+ */
+export const MODE_TAG = {
+  stealth: { color: 'plum', tip: 'Graded by its stealth strike rather than by spamming it.' },
+  spam: { color: '', tip: 'Graded by its normal attacks rather than by its stealth strike.' },
+  whip: { color: 'teal', tip: 'A whip is worn alongside the minions, not instead of them: it tags the boss and buys them damage.' },
+  minion: { color: 'green', tip: 'Minion damage, per minion slot it costs.' },
+  sentry: { color: 'info', tip: 'A sentry stands where you put it, so it only connects while the fight comes back to it.' },
+};
+
 export function traitOfLabel(label) {
   for (const [re, t] of GEAR_RULES) if (re.test(label)) return t;
-  const s = label.replace(/½/g, '').replace(/\(.*?\)/g, '').replace(/[+\-−]?\d+(?:\.\d+)?%?/g, '').replace(/[×:]/g, ' ').replace(/\s+/g, ' ').trim();
+  const s = label.replace(/[½⅙]/g, '').replace(/\(.*?\)/g, '').replace(/[+\-−]?\d+(?:\.\d+)?%?/g, '').replace(/[×:]/g, ' ').replace(/\s+/g, ' ').trim();
   return s || null;
 }
 
@@ -48,7 +62,7 @@ export function traitsOf(e) {
   if (it?.changes?.length) out.add('rebalanced');
   if (e.prefix) out.add('reforged');
   if (it?.useAmmo) out.add('uses ammo');
-  if (it?.effects?.onHit?.length) out.add('on-hit spawn');
+  for (const s of it?.effects?.onHit ?? []) out.add(s.hurt ? 'retaliation' : 'on-hit spawn');
   if (it?.condStats?.length) out.add('conditional');
   if (it?.placeholders && it?.effects?.via?.length) out.add('runtime formula');
   for (const f of it?.effects?.flags ?? []) if (FLAG_TRAITS[f]) out.add(FLAG_TRAITS[f]);

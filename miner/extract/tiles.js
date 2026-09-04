@@ -4,8 +4,10 @@
  * until Astrum Deus is down). Vanilla tile requirements are a config table
  * (`Player.GetPickaxeDamage` is a hard-coded chain).
  */
-import { Machine, THIS, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { TYPE_ABSTRACT, derivesFromTml, findInherited, gateRefs } from './util.js';
+import { Machine, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
+import { TYPE_ABSTRACT, callsMethodNamed, derivesFromTml, findInherited, gateRefs } from './util.js';
+
+const MINPICK = new Set(['set_MinPick']);
 
 /**
  * @returns {Array<{ id: string, minPick?: number, ore?: boolean, gates?: string[] }>}
@@ -38,6 +40,14 @@ export function extractTiles(asm, { tml, modId }) {
     });
     const ssd = findInherited(asm, td, 'SetStaticDefaults');
     if (ssd) { try { machine.run(ssd, THIS, []); } catch { /* keep what we have */ } }
+    // The real setup can sit behind a call the interpreter never reaches: Calamity's GlowMaskTile
+    // base checks a field it cannot read, logs "has called SetStaticDefaults themselve!" and returns
+    // before `SetupStatic()`, which is where Scoria Ore's 210% MinPick lives. Whatever the method is
+    // called, run the tile's own method that sets MinPick.
+    for (const m of td.methods) {
+      if (m === ssd || !asm.methodBody(m) || !callsMethodNamed(asm, m, MINPICK)) continue;
+      try { machine.run(m, THIS, new Array(asm.methodSig(m).params.length).fill(UNKNOWN)); } catch { /* keep what we have */ }
+    }
     const gates = new Set();
     for (const name of ['CanKillTile', 'CanExplode']) {
       const m = findInherited(asm, td, name);

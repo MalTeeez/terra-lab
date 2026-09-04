@@ -50,18 +50,22 @@
   });
 
   $effect(() => {
-    void [ui.cls, ui.stage, ui.mode, ui.excludedMods, ui.slots, ui.requireSet, ui.unknownStage, ui.conds, ui.seeds, ui.uncertain, ui.reforge, ui.source, ui.owned, ui.pinned, ui.excluded, ui.samples, ui.calibrate, ui.query, ui.slotFilter, ui.classFilter, ui.modFilter, ui.stageFilter, ui.sortK, ui.sortDir];
+    void [ui.cls, ui.stage, ui.mode, ui.excludedMods, ui.slots, ui.requireSet, ui.unknownStage, ui.conds, ui.seeds, ui.uncertain, ui.reforge, ui.source, ui.owned, ui.pinned, ui.excluded, ui.samples, ui.calibrate, ui.query, ui.browse, ui.target, ui.targets, ui.playstyle];
     persist();
   });
 
   const excluded = $derived(new Set(ui.excludedMods));
   const conds = $derived(new Set(ui.conds));
   const calibration = $derived(ds && ui.samples.length ? fitCalibration(ui.samples, ds, { conds, uncertain: ui.uncertain }) : null);
-  const statCtx = $derived({ conds, uncertain: ui.uncertain, calibration: ui.calibrate && calibration?.sampleCount ? calibration : null, aliases: ds?.aliases ?? {}, ds, stage: ui.stage });
+  const statCtx = $derived({ conds, uncertain: ui.uncertain, calibration: ui.calibrate && calibration?.sampleCount ? calibration : null, aliases: ds?.aliases ?? {}, ds, stage: ui.stage, playstyle: ui.playstyle, target: ui.target, targets: ui.targets });
+  // trying on a runner-up armor set: not persisted, and dropped when the class or stage moves
+  let armorPick = $state(null);
+  $effect(() => { void [ui.cls, ui.stage, ui.source]; armorPick = null; });
   const opts = $derived({
+    armorPick,
     cls: ui.cls, stage: ui.stage, excludedMods: excluded, slots: ui.slots, requireSet: ui.requireSet, unknownStage: ui.unknownStage,
     conds, uncertain: ui.uncertain, reforge: ui.reforge, owned: ui.owned, source: ui.source,
-    pinned: new Set(ui.pinned), excluded: new Set(ui.excluded), calibration: statCtx.calibration,
+    pinned: new Set(ui.pinned), excluded: new Set(ui.excluded), calibration: statCtx.calibration, playstyle: ui.playstyle, target: ui.target, targets: ui.targets,
   });
   const loadout = $derived(ds && ui.mode !== 'timeline' ? solveLoadout(ds, opts) : null);
 
@@ -99,12 +103,15 @@
         excludedMods: [...o.excludedMods], conds: [...o.conds], pinned: [...o.pinned], excluded: [...o.excluded],
         owned: $state.snapshot(o.owned),
         calibration: o.calibration ? { factors: o.calibration.factors } : null,
+        playstyle: $state.snapshot(o.playstyle ?? {}),
+        target: o.target ?? null,
       },
     });
   });
   const selectedItem = $derived(ds && ui.selected ? ds.byId.get(ui.selected) : null);
-  // what the item table / card evaluate weapons with: the loadout's armor decides max stealth
-  const viewCtx = $derived({ ...statCtx, stealthMax: loadout?.stealthMax });
+  // what the item table / card evaluate weapons with: the solved loadout decides max stealth, and
+  // the class damage and crit it carries are what the weapon is actually swung with
+  const viewCtx = $derived({ ...statCtx, stealthMax: loadout?.stealthMax, loadout: loadout?.bonus });
 
   function select(id) {
     ui.selected = id;
@@ -127,7 +134,7 @@
 
     <main class="flex flex-col gap-4 px-5 pb-8">
       {#if ui.mode === 'loadout'}
-        <LoadoutPanel {ds} {loadout} onselect={select} />
+        <LoadoutPanel {ds} {loadout} onselect={select} onarmor={(id) => (armorPick = id)} />
       {:else if ui.mode === 'timeline'}
         {#if timeline}
           <Timeline {ds} {timeline} onselect={select} />

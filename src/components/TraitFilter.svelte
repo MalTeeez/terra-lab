@@ -14,7 +14,7 @@
     traits{#if selected.length} <span class="num">{selected.length}</span>{/if} ▾
   </button>
   {#if selected.length || query}
-    <button type="button" class="lab-chip py-0.5" title="Clear the filter" onclick={() => { selected = []; query = ''; }}>✕</button>
+    <button type="button" class="lab-chip py-0.5" title="Clear this filter" onclick={() => { selected = []; query = ''; }}>✕</button>
   {/if}
 </span>
 <div {id} popover="auto" class="lab-pop col" style="--w:520px">

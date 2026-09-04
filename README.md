@@ -34,7 +34,8 @@ on the full 78-mod run, Node does not.
             ├─ effects.js      UpdateEquip / UpdateAccessory / UpdateArmorSet → player stat deltas
             ├─ globals.js      GlobalItem hooks of balancing mods → overrides keyed to other mods' items
             ├─ prefixes.js     vanilla prefix table + every ModPrefix (SetStats, CanRoll, accessory effects)
-            ├─ projectiles.js  ModProjectile.SetDefaults + AI traits (gravity, homing, pierce, children, debuffs)
+            ├─ projectiles.js  ModProjectile.SetDefaults + AI traits (gravity k, drag, homing range/speed/inertia,
+            │                  pierce, blast radius, children with their damage share, debuffs) + ProjectileID.Sets
             ├─ groups.js       recipe groups (RegisterGroup, ValidItems.Add, vanilla SetupRecipeGroups)
             ├─ tiles.js        ModTile MinPick / Sets.Ore / CanKillTile gates (what a pickaxe can mine, and when)
             ├─ shops.js        NPCShop registrations (mod AddShops / ModifyShop, vanilla NPCShopDatabase, the Travelling Merchant) with conditions
@@ -46,7 +47,8 @@ on the full 78-mod run, Node does not.
             ├─ shoot.js        Shoot / ModifyShootStats → projectiles per use, spread, velocity, stealth paths
             ├─ recipes.js      CreateRecipe … Register → ingredient graph
             ├─ loot.js         ModifyNPCLoot / ModifyItemLoot (mod and global) / OnKill → drops with conditions, bags, ore spawns
-            ├─ npcs.js         bosses, minions they spawn, BossChecklist progression values
+            ├─ npcs.js         bosses, minions they spawn, BossChecklist progression values, boss size /
+            │                  defense / life / buff immunities (vanilla NPC.SetDefaults + NPCID.Sets)
             └─ vanilla.js      the same for Terraria itself, out of tModLoader.dll
         config.js              the player's ModConfigs/*.json + [DefaultValue] attributes
         loadorder.js           AssemblyRef topological order (balancing mods apply last)
@@ -79,16 +81,39 @@ Everything is read out of compiled code, not wikis:
   `SetStats` (Calamity's rogue prefixes, Thorium's bard prefixes, ThoriumRework's magic ones),
   with the classes they roll on from `CanRoll` and accessory effects from `ApplyAccessoryEffects`.
 - **Projectiles** come from each `ModProjectile.SetDefaults` (pierce, tile collision, extra
-  updates, local immunity frames, minion slots) and a walk of its AI / OnKill / OnHitNPC:
-  `velocity.Y += k` means gravity, calls named like `HomeInOnNPC` / `FindTarget` /
-  `CanBeChasedBy` mean homing, `NewProjectile` calls (with their loop counts) are child
-  projectiles, `AddBuff` on hit is a debuff, reads of Calamity's `stealthStrike` flag mark
-  stealth-aware projectiles. Vanilla projectiles come out of `Projectile.SetDefaults1/2` with
-  the case tracker plus an aiStyle table for gravity.
+  updates, local immunity frames, hitbox, minion slots, armor penetration) and a walk of its
+  AI / OnKill / OnHitNPC: `velocity.Y += k` is gravity with its constant, `velocity *= k` is
+  per-tick drag, `Main.player[owner].heldProj = …` marks a projectile the player holds out,
+  `velocity = Vector2.Zero` one that parks itself, `Resize` in a Kill is a blast radius,
+  `damage = (int)(damage * k)` in OnHitNPC is the pierce falloff. Homing comes out as an object:
+  Calamity's `HomeInOnNPC(proj, ignoreTiles, range, speed, inertia)` carries all three numbers,
+  a `velocity = (velocity·(N−1) + …)/N` or a `Vector2.Lerp` gives the inertia, and anything that
+  merely looks like a seeker gets a pessimistic 300 px range. `NewProjectile` calls (with their
+  loop counts) are child projectiles, each with the share of the parent's damage the call passes
+  it; `AddBuff` on hit is a debuff; reads of Calamity's `stealthStrike` flag mark stealth-aware
+  projectiles. Vanilla projectiles come out of `Projectile.SetDefaults1/2` with the case tracker
+  plus an aiStyle table for gravity, and `ProjectileID.Sets` (built by tModLoader's `SetFactory`
+  from a default and an `id, value` array) supplies what the case tracker never sees: every yoyo's
+  range, top speed and lifetime, and which projectiles are whips.
+- **How a weapon works** is one tag per weapon (`arch`), derived from its fields and the projectile
+  it fires: `swing`, `shortsword`, `spear`, `yoyo`, `flail`, `boomerang`, `held`, `placed`, `shot`,
+  `minion`, `sentry`, `whip`. A held projectile from a weapon that does not `channel` is a stab; one
+  that channels is a beam or a drill. The DPS model branches on this and on nothing else.
+- **Bosses** get their own table (`dataset.npcs`) for the NPC ids the stages name: width, height,
+  defense, max life and the buffs they are immune to, from `NPC.SetDefaults` walked with the case
+  tracker (plus `NPCID.Sets.ImmuneToAllBuffs`) for vanilla and from `ModNPC.SetDefaults`
+  (`buffImmune[…] = true`) for mods. What a debuff does to the NPC carrying it is a table of its
+  own, `miner/stage/debuffs.json`, keyed by buff and never by weapon — those numbers are computed in
+  `GlobalNPC.UpdateLifeRegen` at runtime, out of the interpreter's reach, so they come from the
+  mods' wikis. A debuff with no entry counts for nothing.
 - **What a weapon fires** comes from its `Shoot` / `ModifyShootStats`, run with symbolic
   arguments: every `NewProjectile` is recorded with its type, damage multiplier, velocity
   multiplier, spread (`RotatedBy`, `RotatedByRandom`, `NextFloat`, `Lerp`, `ToRadians`) and the
-  loop it sits in (backward branches with their compared bound → count). Calamity rogue
+  loop it sits in (backward branches with their compared bound → count). A `RotatedBy` spread is a
+  *fan* — fixed angles a wide boss can catch several of — while `RotatedByRandom` scatters, and the
+  model needs the difference. Helper calls inside `Shoot` are counted once per projectile type, not
+  once per call site: the same helper reached from five branches (a bard instrument picking one of
+  five notes) is one shot, and the miner cannot tell that from a barrage. Calamity rogue
   weapons are split into the normal and the `StealthStrikeAvailable()` path. Vanilla
   multi-shot is read from `Player.ItemCheck_Shoot` keyed on the item type, with a small table
   for the random-count shotguns. Ammo items (`Item.ammo`) form their own list with damage and
@@ -124,7 +149,11 @@ fallback. `infer.js` then propagates to a fixed point, keeping the earliest evid
    `GlobalNPC.EditSpawnPool` entry; a loot rule's condition (`AddIf(() => downedX, …)`,
    `if (Main.hardMode) loot.Add(...)`) and `Item.NewItem` straight from `OnKill` count too;
    `npc:*` is a drop from any enemy under a flag (an event); a town NPC's own drops follow its
-   move-in; a critter item follows the NPC it becomes,
+   move-in; a critter item follows the NPC it becomes. An enemy the miner found no gate at all for
+   would put its drops at pre-boss; when the item's own mod rates it far above that tier the rating
+   is the floor, since a mod's biome enemy is usually gated by something the code does not say
+   (a special world seed that genuinely spawns the enemy early is the answer, not a gap, and keeps
+   its stage),
 4. fishing: `Projectile.FishingCheck_RollItemDrop` and `ModPlayer.CatchFish` (with the helpers
    they call), so crates carry the flags of their roll and their contents follow,
 5. chests placed at world generation: `WorldGen.AddBuriedChest` and its callers (the pyramid,
@@ -137,8 +166,10 @@ fallback. `infer.js` then propagates to a fixed point, keeping the earliest evid
 6. shops: an item a town NPC sells waits for the NPC to move in (mod NPCs: the flags
    `CanTownNPCSpawn` requires; vanilla NPCs: `townNpcs` in the config) and for the entry's own
    condition (`Condition.DownedPlantera`, `Hardmode`, lambdas); the Travelling Merchant's
-   stock comes from `Chest.SetupTravelShop` — vanilla items keep their vanilla sources and are
-   never made later by a shop,
+   stock comes from `Chest.SetupTravelShop`. A shop entry another mod registered (a cross-mod ammo
+   dealer stocking Calamity's post-Providence rounds on day one, a vanilla item at Thorium's
+   Diverman) is not evidence in either direction — the item's rarity stands, as a ceiling and as a
+   floor — while an entry the item's own mod registered is the authority wherever it sells it,
 7. ores: an item placing a tile with a `MinPick` (or `Sets.Ore`, or a tile a mod's world
    generation places) is world-generated and gated by
    the earliest pickaxe with enough power — pickaxes come from the same fixed point, so it
@@ -202,6 +233,18 @@ mined base → balancing overlays (load order) → difficulty variants → runti
            → reforge prefix → calibration factor
 ```
 
+A balancing overlay is anything another mod does to an item it did not make. Most of it is code —
+`GlobalItem.SetDefaults`, `PostAddRecipes` walking `Main.recipe` — but a pack built on **tPackBuilder**
+ships its changes as `.itemmod.json` and `.recipemod.json` files inside the .tmod instead, and those
+are read too (`miner/extract/packbuilder.js`). Nothing in the IL mentions them, so a miner that only
+reads code would miss the whole balancing layer: in this pack that is 608 item stat changes, 554 of
+them damage.
+
+Recipe edits carry recipe groups too: a mod may register `new RecipeGroup(…, ShadowScale, TissueSample)`
+into a static field and later add it to somebody else's recipe by that field, which is how SOTS's
+Frigid Pickaxe ends up costing 12 Frigid Bar *and* 6 Shadow Scale / Tissue Sample and being gated
+behind the evil boss.
+
 Difficulty flags found in the pack appear as toggles under *Options*; "Apply uncertain modifiers"
 (same panel) includes the ones whose in-code guard the miner could not resolve. Whatever is on
 shows up as a chip in the *Active* strip under the controls, and clicking the chip turns it off.
@@ -245,30 +288,156 @@ Wings are ranked in their own tab (everyone wears one pair, so they never compet
 the accessory grid lists every scoring accessory, the solver's picks first, and scrolls past the
 number of rows set under *Options → Accessory rows*.
 
-Weapons rank by **Real DPS** (`src/lib/dps.js`), damage per second against a boss-sized target:
+Weapons rank by **Real DPS** (`src/lib/dps.js`), damage per second against the boss fought next,
+swung by the loadout the solver just picked — its class damage and its crit, summed from the armour,
+the set bonus, the accessories, the wings and the boots (`loadoutBonus`). Graded outside a loadout
+(the item browser with nothing solved) a weapon falls back to a progression curve instead.
 
 ```
-hit      effective damage (+ the best ammo obtainable at the stage for ammo weapons)
-rate     uses per second; guns firing several shots per animation count them
-crit     1 + crit%                       (minions cannot crit)
-hits     projectiles per use, plus child projectiles weighted by where they spawn
-         (on death 0.6, on hit 0.5, periodically 0.2); past 4 hits per use only half land
-accuracy spread (share of a cone that covers a 100px boss at 350px) × velocity (below 10 px/tick
-         a moving boss dodges) × gravity arc 0.85 × contact-only 0.7 for true melee; homing = 1
-pierce   against the boss fought next at the stage: infinite pierce ×1.5 on a worm, ×1.2 on a
-         multi-part boss, ×1.05 on a single target; finite pierce +8% / +4% per extra target
-         on worms / multi-part bosses and nothing on a single target
-walls    ×1.05 for projectiles that ignore tiles
-debuffs  +3% per on-hit debuff
-sustain  magic: 25 mana/s is what potions keep up
-minions  damage × hits per second (from local immunity frames, else 2/s) ÷ minion slots
+value = hits/s × damage per hit × crit × sustain × risk  +  debuff DPS
 ```
 
-Calamity rogue weapons get two numbers. *Spam* is the normal attack; *stealth* is one stealth
-strike per 5 s with the multiplier Calamity computes from max stealth (read from the chosen
+The target is real: the NPCs a stage lists carry their mined `width`, `height`, `defense` and buff
+immunities (`dataset.npcs`), so a hit is `damage − defense/2 + armor pen/2` and a debuff only counts
+when that boss is not immune to it. A mod boss whose immunity table lives in a data structure the
+interpreter cannot walk (Calamity's) counts as immune to everything — the pessimistic answer, and
+usually the right one. *Scored against* in the header picks which boss that is: the default is the
+one you fight next at the gamestage, and choosing another shows how a weapon holds up against it —
+a wide, slow, many-segment worm rewards very different weapons from a small, fast, armoured one.
+
+**Hits per second** start from what kind of weapon it is. The miner tags every weapon with an
+*archetype* — decided by mined fields, never by an item's name — following the wiki's weapon-type
+lists:
+
+| class | types |
+| --- | --- |
+| melee | `swing` (broadswords) · `shortsword` · `specialsword` · `spear` · `yoyo` · `flail` · `boomerang` |
+| ranged | `bow` · `repeater` (a bow with `autoReuse`) · `gun` · `launcher` · `flamethrower` |
+| magic | `shot` · `held` (beams, drills, the Arkhalis) · `truemelee` (a held blade: the game's own `TrueMeleeDamageClass`) · `placed` (rain clouds, mines) |
+| summon | `minion` · `sentry` · `whip` |
+| rogue | `bomb` · `boomerang` · `dagger` · `javelin` · `spikyball` |
+
+Wands, magic guns and spell tomes stay one tag, because nothing downstream would branch on the
+difference — a name is not a mechanism. The rogue split is mechanical: a `bomb` has a blast radius
+or dies into a child that does, a `spikyball` comes to rest on the ground and waits to be walked
+into, a `javelin` sticks in what it hits. What a weapon *is* comes from every projectile it spawns
+when used, not only from the one `Item.shoot` names — a weapon whose real attack is spawned in
+`Shoot` would otherwise read as whatever its right-click happens to be.
+
+`ARCHETYPE` in `src/lib/dps.js` is the one place each type is described, and the model reads it
+rather than testing the tag anywhere else. Each type says what clock its hits come off: `use` (the
+animation), `flight` (only one is out at a time — a boomerang is gone until it returns, so the round
+trip is the rate and the use time is only a floor under it), `contact` (the projectile's own
+immunity clock times the share of the fight it stays on the boss) or `slot` (a summon, paid for in
+minion slots). A whip is scored for the mark it leaves rather than its own lash: what it is worth is
+the tag every minion hit then carries, and that is a fixed number of minion hits rather than a
+multiplier on the lash — what the minions add does not depend on how many projectiles the whip
+throws. A broadsword swings on its *animation*, which is not always the clock what it fires comes
+off: a sword whose `useTime` outruns its animation still swings every animation and merely drops its
+star less often.
+
+**How much of it lands** is one story, told at the distance the fight actually happens at. `ENGAGE`
+is how far from the boss a class would *rather* stand (260 px for melee up to 420 px for summoner,
+with a playstyle toggle under *Options*) and nothing about any weapon; what pulls the player in is
+the weapon's own reach — its type's (`REACH`) and its projectile's. The gap between the two is what
+`RISK` prices, for every class including melee, because "you must stand next to the boss" is exactly
+what the guides' `†` mark means and a melee player with a yoyo is not taking that risk.
+A whip's lash, a spear's thrust, a minion and a sentry are *attached* — swung or placed at the boss
+rather than thrown at it — so none of the flight terms below applies to them; they reach as far as
+their `REACH` says and no further:
+
+```
+aim       a random spread lands the share of its cone inside the boss's silhouette; a fan puts its
+          shots at fixed angles, so a wide boss catches several and a narrow one catches the middle
+travel    the boss moves while the shot flies: size / (size + speed_boss × flight ÷ 2)
+homing    range, turn speed and inertia read from the AI: a seeker that can correct more lateral
+          error than the boss can create cancels the lead; one slower than the boss never catches it
+gravity   the arc drops ½·k·t² against the boss's height, with k read from `velocity.Y +=`
+range     life × speed with the per-tick drag integrated: short of the distance is zero, and a
+          weapon used at the very edge of its reach keeps half
+walls     ×1.05 for projectiles that ignore tiles
+```
+
+`shootSpeed` is a *launch* speed, and under 4 px/tick it is not a cruising speed at all but a
+projectile whose AI takes over the moment it exists — a scythe that accelerates from 0.2, a summoned
+knife that homes from 1. Below that floor the number is treated as unread, like an absent
+`shootSpeed`, rather than charging the weapon six hundred ticks of travel lead.
+
+**Hits per landed projectile** are the part that separates a weapon that really does hit a lot from
+one that only looks like it. Pierce on its own buys nothing: a projectile hits again only once its
+immunity frames have run out *and* it is still both alive and inside the target, so the count is
+
+```
+1 + time on target / immunity      time on target = min(life left on arrival,
+                                                       how long it takes to cross the silhouette)
+```
+
+A projectile moves once per *update*, and `extraUpdates` buys it several updates a game tick — so
+extra updates make a shot arrive sooner without making it travel further, and they spend its
+lifetime proportionally faster in real time. `timeLeft` and a local hit cooldown are both counted in
+updates, the boss's movement in ticks, and the model keeps the two clocks apart.
+
+which is why lifetime matters twice — a long flight eats the very life the projectile needed for its
+extra hits. A slow, lingering, high-pierce projectile racks up hits; a fast one that clips the boss
+once and expires does not, however many targets it could in principle pierce. The extra hits are
+also conditioned on the landing chance a second time: the first hit is what the aim already paid
+for, every one after it needs the boss to still be in the projectile's path, which a homing
+projectile manages and a dumb one thrown across a room mostly does not. A worm multiplies by the
+segments in the path; a spear or boomerang hits out and back.
+
+**And the whole weapon shares one clock.** A projectile that sets no immunity of its own goes
+through the player's own invincibility window on that NPC — and so does the swing itself — so
+everything a weapon throws shares one 10-tick cooldown and it cannot land more than six hits a
+second on one part, however many shots or pierces it has. Local immunity is what buys a weapon out
+of that, which is why the weapons that really do hit a lot have it. This is the ceiling that stops a
+fast sword with a free wall-piercing bolt from outscoring a real multi-hit weapon.
+
+A weapon with a right click has *two* attacks, and the miner reads which one fires each shot from the
+`player.altFunctionUse` branch in `Shoot` — the same way it reads Calamity's stealth guard. The model
+grades the clicks separately and the weapon is worth its **better** one: two attacks the player
+chooses between are not two that happen at once. Stealth is the exception and stays additive, because
+stealth builds back while you throw. An on-hit child that the *other* click throws is ammunition this
+attack is stocking rather than damage it is dealing, so a weapon that collects on one button and
+spends on the other is not paid twice for the same projectile.
+
+Spawned children are read with the damage share the code passes them (`dmgMul`) and conditioned on
+the parent — on-hit children only exist if the parent hit, an on-death child helps a miss only when
+the blast is wider than the boss — and capped at `CHILD_CAP` extra hits, because the miner reads
+what a child does but not how often it may spawn. A child spawned with a *number* for its damage is
+its own weapon rather than this one's DPS, and one spawned with `0` is not damage at all — a third
+of the children in the pool are sparkles, splatters and bells. Past `DMG_MUL_MAX` a share stops
+being a share: Calamity pays a projectile fifteen times the weapon's damage precisely because it is
+one branch in ten, and the linear machine cannot see which branch runs. Where `Shoot` picks between
+alternatives the miner cannot resolve, the weapon fires the average of them rather than whichever
+scores best.
+
+A weapon that shoots but whose `shootSpeed` the miner could not read is flown at
+`SHOOT_SPEED_UNKNOWN` rather than exempted from all of this — skipping the landing model would be
+the most optimistic answer available, not the pessimistic one. And the class's engagement distance
+is a ceiling, not a requirement: a player does not stand where their weapon cannot reach, so a
+short-ranged weapon is scored from as close as it needs and pays the risk of standing there,
+instead of scoring zero.
+
+A gun and its ammo are two picks a ranged player makes separately, so they are ranked apart. The
+weapon takes the *plain* round of its kind and is tagged with it — an `AmmoID` constant is the item
+id of the ammo it is named for (`Bullet` is 97, the Musket Ball; `Arrow` is 40, the Wooden Arrow), so
+that needs no table — and each ammo is graded by handing the best gun of its kind that round, listed
+inside its own kind because a rocket and a musket ball are not alternatives. Magic pays for mana
+against the stage's regen plus potions, with a floor. A close-range archetype costs a class that
+would rather not stand there (`RISK`) — the guides' `†` mark, as a rule rather than a list.
+
+A summoner wears a whip *and* minions *and* a sentry, so a summon weapon is tagged with the slot it
+fills rather than ranked against the other two — whips out-DPS the minions they exist to buff. What
+a weapon is comes from what it puts into play: `SummonMeleeSpeedDamageClass` is Terraria's own word
+for whip damage, and it is read through a spawner (a held projectile whose only job is to lash with
+whips of its own).
+
+Calamity rogue weapons get two numbers that add up. *Spam* is the normal attack; *stealth* is one
+stealth strike per 5 s with the multiplier Calamity computes from max stealth (read from the chosen
 armor), the weapon's use time and its own `StealthDamageMultiplier`, on the projectiles of the
-stealth path. The higher one is the weapon's grade, as the guides do it, and the item card
-shows both. Armor compares the best full set (pieces + set bonus) against the best loose
+stealth path. Stealth builds back on its own, so the strike lands on top of the throwing rather
+than instead of it; the bigger of the two names the grade the way the guides do, and the item card
+shows both halves. Armor compares the best full set (pieces + set bonus) against the best loose
 pieces. Accessories fill the slot count greedily, one per exclusive group (wings, boots, shield,
 dash), skipping anything whose bonuses target another class. Where a mod applies its numbers
 through flags on its own `ModPlayer`, the tooltip is parsed as a fallback (`15% increased rogue
@@ -277,6 +446,43 @@ damage`), conditional lines excluded.
 **Reforges** default to "assume the best prefix" for every candidate (the prefix that maximises
 DPS or class score among those the item can roll); items you mark as owned keep the prefix you
 give them.
+
+### Browsing items
+
+*Items only* (and the panel under every loadout) is a filter column plus one card per item, each
+scored for the class and gamestage in view — the same numbers the solver uses, so nothing is
+ranked twice.
+
+The column holds the context (what the scores are for), a sort control, and collapsible groups:
+slot, class (with the best value in each), gamestage and score as two-handle ranges, features
+(wings, dash, stealth strikes, on-hit spawns, pierce, …) as an icon list, source, and mod. Every
+count is computed with that group's own selection ignored, so a checkbox never reads zero because
+of itself. Above the results, a strip of neighbouring gamestages shows how many items each adds
+and jumps the whole view there, and *Columns* folds any of the table's columns away (Mod is folded
+by default). The feature icons come from Lucide and are declared once, in
+`src/components/FeatureIcon.svelte`, which is also the list of what counts as a feature.
+
+Results are one aligned table, a row per item: name, mod, slot, class (in the class's colour),
+where it becomes obtainable (the stage in its era's colour, then the evidence tag), damage / use /
+crit / defense, its feature icons, and a bar with the score or DPS. Nothing repeats the column's
+own name, and tags sit at the right edge of their cell so they line up down the page. Clicking a
+row expands it into a bordered panel with headed columns: *Details* (the item drawn the way the
+game draws it — sprite, name in its rarity colour, the stat lines Terraria itself prints, the
+tooltip and what it sells for — beside the numbers the lab reads), *Real DPS* / *Score*,
+*Sources*, and *Effects* for gear. Weapons keep their damage chain and what they fire in one
+tab. The tab row also carries own / pin / exclude, the item's wiki and the full panel. Column
+headers sort.
+
+A range filter's handles are the comparison they stand for — `›` keeps what is above it, `‹` what
+is below — and each carries its value above it, prefixed `≥` or `≤` while it is actually cutting
+something off and dimmed when it is not. Two handles close together stack their labels instead of
+overlapping.
+
+A crafting tree in the browser carries its own zoom (`−` / `%` / `+`, the percentage resets it)
+and opens full size in the same popover the item panel uses.
+
+Section filters work the same way in the loadout view: armor, weapons and accessories each have a
+text box and a *traits* dropdown listing what is actually in that list (`src/lib/traits.js`).
 
 ### My gear
 
@@ -316,29 +522,68 @@ Scale or Tissue Sample).
 ## Checking against the class-setup guides
 
 ```sh
-node tools/guide-check.mjs                  # both guides, every tier and class
+node tools/guides.mjs                       # parse the guides → data/guides.json + data/guides.md
+node tools/guides.mjs --refresh             # re-download the wikitext first (cached in data/guides/)
+node tools/guide-check.mjs                  # every tier and class, full report
+node tools/guide-check.mjs --pre --summary  # pre-hardmode metrics only (the tuning set)
 node tools/guide-check.mjs --cls rogue      # one class
-node tools/guide-check.mjs --refresh        # re-download the wikitext (cached in data/guides/)
+node tools/guide-check.mjs --why "Ashen Stalactite"   # the pick's DPS parts next to the lab's #1
 node tools/il-dump.mjs CalamityMod Viperfish SpawnChance   # the IL the miner sees, operands resolved
 node tools/il-dump.mjs ThoriumMod --grep MusicPlayerNotActivated   # every method mentioning a member
 ```
 
-The tool reads the Calamity wiki's class setups (Cargo table `ClassSetups`) and the Infernal
-Eclipse of Ragnarok guide templates, maps every recommended weapon, armor set and accessory to
-a dataset item and reports, per tier and class, what is missing, what the lab stages later than
-the guide (with the gating ingredient), and where the lab ranks it — including whether a rogue
-weapon's spam/stealth grade agrees. Tiers map to the stage just before the named boss.
+`tools/guides.mjs` turns both guides into data: the Calamity wiki's class setups (Cargo table
+`ClassSetups`) and every Infernal Eclipse of Ragnarok guide template, one record per
+recommendation with its tier, class, kind, role (spam / stealth / minion / support / …), the marks
+the guides use, the note behind them and the dataset item it resolves to. It writes
+`data/guides.json` for the checker and [`data/guides.md`](data/guides.md) to read by eye.
 
-A `LATE` pick is a lead, not a verdict: the guides order bosses by difficulty (Deerclops before
-Skeletron) while the lab follows BossChecklist's progression, and the miner's answer comes with
-its evidence. When the evidence is wrong the fix goes into the miner or the config; nothing is
-pinned to the guides.
+| mark | meaning |
+| --- | --- |
+| `†` | risky: you have to be next to the boss |
+| `C` | crowd control, best on worms |
+| `+` | support or a secondary weapon |
+| `≤` | upgrades of it are viable too |
+| `*` | tedious to get at this tier |
+| `ν` | SOTS void subclass |
+| `Ω` | use it together with the item in `with` |
+| `Δ` | its set bonus changed (Calamity) |
+
+`tools/guide-check.mjs` reads that and reports, per tier and class, what is missing from the
+dataset, what the lab stages later than the guide (with the gating evidence), and where the lab
+ranks it — including whether a rogue weapon's spam/stealth grade agrees — plus per-class and
+per-tier metrics with mean reciprocal rank. Tiers map to the stage just before the named boss
+(`pre-X`) or to that boss's own stage (`post-X`).
+
+Three kinds of lead come out of it, and all are leads rather than verdicts:
+
+- **LATE** — the lab stages a pick after the guide's tier. The guides order bosses by difficulty
+  (Deerclops before Skeletron) while the lab follows BossChecklist's progression, and the miner's
+  answer comes with its evidence.
+- **EARLY** — the lab puts an item in a stage's top 5 that no guide lists until two tiers later.
+  That is the item wrongly winning a stage, and it is usually a staging bug rather than a scoring one.
+- **UNLISTED** — a weapon holding top-8 slots that no guide names for that class at *any* tier, so
+  EARLY cannot see it: there is no tier to compare against. These are half the pre-hardmode top-8
+  slots, which makes them the ceiling on the metric and the actual worklist. A staging source that
+  cannot be right (a Dungeon material staged pre-boss) is a bug; the rest is the guides not
+  enumerating a pool this size.
+
+When the evidence is wrong the fix goes into the miner or the config; nothing is pinned to the
+guides. Picks marked `+` (support) are reported but left out of the top-k metric: the guides list
+them for what they add to the main weapon, so the model *should* rank them below it.
 
 ## Known limits
 
-- Real DPS is still a ranking, not a measurement: hit geometry is a fixed boss silhouette,
-  child projectiles are weighted guesses, minion AI timers and Thorium inspiration are not
-  modelled, and a stealth strike's special behaviour is a flat bonus.
+- Real DPS is still a ranking, not a measurement. The boss's size and defense are mined but its
+  movement is a stage-scaled constant (`bossSpeed`), not its AI; spawned projectiles are read for
+  what they do but not for how often they may spawn, so they are capped; minion AI timers, Thorium
+  inspiration and bard empowerments are not modelled; a charged shot's multiplier is counted as if
+  every shot were charged, minus that cap.
+- A mod boss whose debuff immunities live in a data table (Calamity's `NPCDebuffImmunityData`)
+  counts as immune to everything, so debuff DPS only ever shows up against vanilla bosses.
+- The engagement distance is a class constant with a playstyle toggle, not something a weapon
+  carries: a close-range weapon scores low for a far-standing class as a rule, which is right in
+  aggregate and wrong for the occasional weapon you would close in for.
 - Effects applied outside the equip hooks (Celestial Shell's buffs) are only partially seen;
   `{0}` placeholders in tooltips and set bonuses are filled from a `Tooltip` getter's
   `WithFormatArgs` and from `GetLocalization("SetBonus").Format(...)` in `UpdateArmorSet` —

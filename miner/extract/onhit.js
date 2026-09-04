@@ -14,7 +14,11 @@ import { playerHooks } from './effects.js';
 import { projRef } from './projectiles.js';
 
 const HIT_SENTINEL = 1000; // the hit's damage, so `damageDone / 2` comes out as a share of it
-const HIT_HOOKS = /^(OnHitNPC(?:WithProj|WithItem)?|ModifyHitNPC(?:WithProj|WithItem)?|OnKill|OnHitByNPC|OnHitByProjectile|PostHurt)$/;
+const HIT_HOOKS = /^(OnHitNPC(?:WithProj|WithItem)?|ModifyHitNPC(?:WithProj|WithItem)?|OnKill)$/;
+// the mirror hooks: the player took the hit. The same NewProjectile call, a completely different
+// trigger rate — you get hit a handful of times a fight, not three times a second — so spawns from
+// them are tagged and graded as a rare retaliation, not as a proc.
+const HURT_HOOKS = /^(OnHitByNPC|OnHitByProjectile|PostHurt|OnHurt|ModifyHurt)$/;
 const GLOBALS = ['GlobalProjectile', 'GlobalItem', 'GlobalNPC'];
 
 /** @returns {Map<string, Array<{ type: string, damage: number|null, cls?: string, stealth?: true, cooldown?: number }>>} flag → spawns */
@@ -30,7 +34,8 @@ export function extractOnHitSpawns(asm, { tml }) {
     const kind = derivesFromTml(asm, td, 'ModPlayer') ? 'player' : GLOBALS.some((b) => derivesFromTml(asm, td, b)) ? 'global' : null;
     if (!kind) continue;
     for (const md of td.methods) {
-      if (!HIT_HOOKS.test(md.name) || !asm.methodBody(md)) continue;
+      const hurt = HURT_HOOKS.test(md.name);
+      if ((!hurt && !HIT_HOOKS.test(md.name)) || !asm.methodBody(md)) continue;
       let statCls = null;
       const spawns = []; // this method's, to receive a cooldown set in the same flag region
       const cooldowns = new Map(); // flag → ticks
@@ -79,13 +84,17 @@ export function extractOnHitSpawns(asm, { tml }) {
                 type, damage: d !== null && !fromHit ? Math.round(d) : null,
                 share: fromHit ? Math.min(1, Math.round((d / HIT_SENTINEL) * 100) / 100) : undefined, // never more than the hit itself
                 cls, stealth: tags.some((t) => /stealth/i.test(t)) || undefined,
-                crit: tags.includes('hit:crit') || undefined, chance: chance < 1 ? Math.round(chance * 1000) / 1000 : undefined,
+                crit: !hurt && tags.includes('hit:crit') || undefined, chance: chance < 1 ? Math.round(chance * 1000) / 1000 : undefined,
+                hurt: hurt || undefined,
               };
               statCls = null;
               for (const flag of flags) {
                 let l = byFlag.get(flag);
                 if (!l) byFlag.set(flag, (l = []));
-                if (!l.some((s) => s.type === type)) { const s = { ...spawn }; l.push(s); spawns.push([flag, s]); }
+                const had = l.find((s) => s.type === type);
+                // the same projectile off both hooks (hit and hurt) is an on-hit proc: keep that reading
+                if (had) { if (had.hurt && !hurt) Object.assign(had, spawn); continue; }
+                const s = { ...spawn }; l.push(s); spawns.push([flag, s]);
               }
             }
             return UNKNOWN;

@@ -11,6 +11,12 @@ const WIKIS = {
   ThoriumMod: { base: 'https://thoriummod.wiki.gg/' },
   StarsAbove: { base: 'https://starsabovemod.wiki.gg/' },
   SOTS: { base: 'https://terrariamods.wiki.gg/', page: 'Secrets_Of_The_Shadows/', file: ' (Secrets Of The Shadows)' },
+  // the mod's in-game name is not its wiki's: CalamityHunt is "Hunt of the Old God", NoxusBoss is
+  // "Wrath of the Gods". Article hit rate over this pack's items: 20/23, 31/31, 3/5.
+  CalamityHunt: { base: 'https://terrariamods.wiki.gg/', page: 'Hunt_of_the_Old_God/', file: ' (Hunt of the Old God)' },
+  CatalystMod: { base: 'https://terrariamods.wiki.gg/', page: 'Catalyst/', file: ' (Catalyst)' },
+  NoxusBoss: { base: 'https://terrariamods.wiki.gg/', page: 'Wrath_of_the_Gods/', file: ' (Wrath of the Gods)' },
+  CalValEX: { base: 'https://terrariamods.wiki.gg/', page: "Calamity's_Vanities/", file: " (Calamity's Vanities)" }, // 61/77, the misses are undocumented vanity
 };
 
 const enc = (s) => encodeURIComponent(s.replace(/ /g, '_'));

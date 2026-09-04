@@ -1,111 +1,753 @@
 import { describe, expect, test } from 'bun:test';
-import { accuracy, bestAmmo, bossShape, realDps, stealthMultiplier } from '../src/lib/dps.js';
+import {
+  ARCHETYPE, BOSS_DEFAULT, CHILD_CAP, CROWD, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, PIERCE_KEEP, REACH, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
+  asTarget,
+  boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages,
+} from '../src/lib/dps.js';
 import { indexDataset } from '../src/lib/dataset.js';
 
 const raw = {
   mods: [{ id: 'v', name: 'Terraria', equipment: 1 }, { id: 'M', name: 'Mod', equipment: 1 }],
-  stages: [{ index: 0, key: 'start', label: 'Pre-boss', progression: 0, mod: 'v', kind: 'start' }, { index: 1, key: 'b', label: 'Boss', progression: 1, mod: 'v', kind: 'boss', npcs: ['v:4'] }, { index: 2, key: 'w', label: 'Worm', progression: 2, mod: 'v', kind: 'boss', npcs: ['v:13', 'v:14', 'v:15'] }, { index: 3, key: 'm', label: 'Twins', progression: 3, mod: 'v', kind: 'boss', npcs: ['v:125', 'v:126'] }],
+  stages: [
+    { index: 0, key: 'start', label: 'Pre-boss', progression: 0, mod: 'v', kind: 'start' },
+    { index: 1, key: 'b', label: 'Boss', progression: 1, mod: 'v', kind: 'boss', npcs: ['v:4'] },
+    { index: 2, key: 'w', label: 'Worm', progression: 2, mod: 'v', kind: 'boss', npcs: ['v:13', 'v:14', 'v:15'] },
+    { index: 3, key: 'm', label: 'Twins', progression: 3, mod: 'v', kind: 'boss', npcs: ['v:125', 'v:126'] },
+    { index: 4, key: 'e', label: 'Eater', progression: 4, mod: 'v', kind: 'boss', npcs: ['v:20', 'v:21', 'v:22'] },
+  ],
   classAliases: { thrower: 'rogue' },
   prefixes: [],
   ammoKinds: { 97: 'Bullet' },
+  npcs: {
+    'v:4': { name: 'Eye', w: 100, h: 100, defense: 10, life: 2800, immune: ['Bleeding'] },
+    'v:13': { name: 'Worm Head', w: 40, h: 40, defense: 4, life: 150 },
+    'v:14': { name: 'Worm Body', w: 40, h: 40, defense: 6 },
+    'v:15': { name: 'Worm Tail', w: 40, h: 40, defense: 8 },
+    'v:125': { name: 'Twin A', w: 60, h: 60, defense: 20, immuneAll: true },
+    'v:126': { name: 'Twin B', w: 60, h: 60, defense: 20, immuneAll: true },
+    // a vanilla worm: every segment carries the same name
+    'v:20': { name: 'Eater of Worlds', w: 38, h: 38, defense: 2 },
+    'v:21': { name: 'Eater of Worlds', w: 38, h: 38, defense: 4 },
+    'v:22': { name: 'Eater of Worlds', w: 38, h: 38, defense: 8 },
+  },
+  debuffs: { 'v:24': { dot: 4, name: 'On Fire!' }, 'v:69': { defense: -15, name: 'Ichor' }, Bleeding: { dot: 10 } },
   ammo: [
-    { id: 'v:97', name: 'Musket Ball', kind: 97, damage: 7, shoot: 'v:14', stage: 0 },
-    { id: 'M:bigshot', name: 'Big Shot', kind: 97, damage: 20, shoot: 'v:14', stage: 1 },
+    { id: 'v:97', name: 'Musket Ball', kind: 97, damage: 7, shoot: 'v:14p', stage: 0 },
+    { id: 'M:bigshot', name: 'Big Shot', kind: 97, damage: 20, shoot: 'v:14p', stage: 1 },
   ],
   projectiles: {
-    'v:14': { pen: 1, updates: 1 },
-    'v:1': { ai: 1, gravity: true },
-    'M:knife': { pen: 1, stealth: true },
-    'M:spear': { pen: -1, gravity: true, debuffs: ['Bleeding'] },
-    'M:bomb': { pen: 1, gravity: true, children: [{ type: 'M:boom', count: 1, where: 'kill' }] },
-    'M:boom': { pen: -1 },
+    'v:14p': { pen: 1, updates: 1, life: 600 },
+    'v:arrow': { ai: 1, gravity: true, gravityK: 0.1, life: 600 },
+    'M:fan': { pen: 1, life: 600 },
+    'M:knife': { pen: 1, stealth: true, life: 600 },
+    'M:stealthSpear': { pen: -1, life: 600, debuffs: ['Bleeding'] }, // no arc: it is thrown flat
+    'M:spear': { pen: -1, gravity: true, gravityK: 0.1, life: 600, debuffs: ['Bleeding'] },
+    'M:bomb': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:boom', count: 1, where: 'kill', dmgMul: 1 }] },
+    'M:dud': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:pebble', count: 1, where: 'kill', dmgMul: 1 }] },
+    'M:acidFlask': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:acid', count: 1, where: 'kill', dmgMul: 1 }] },
+    'M:boom': { pen: -1, explode: 200, life: 5 },
+    'M:acid': { pen: -1, explode: 200, life: 180, local: 30 }, // a cloud that stays and keeps ticking
+    'M:fanDig': { pen: 1, life: 600, digs: true },
+    'M:digBomb': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:digBoom', count: 1, where: 'kill', dmgMul: 1 }] },
+    'M:digBoom': { pen: -1, explode: 200, life: 5, digs: true },
+    'M:pebble': { pen: 1, width: 8, life: 5 },
     'M:minion': { minion: true, slots: 1, local: 20 },
-    'M:missile': { homing: true, updates: 0 },
+    'M:missile': { homing: { range: 800, speed: 12, inertia: 8 }, life: 600 },
+    'M:blind': { homing: { range: 40, speed: 12, inertia: 8 }, life: 600 },
+    'M:beam': { pen: -1, local: 6, life: 5, held: true, walls: true },
+    'M:yoyo': { pen: -1, local: 10, ai: 99, yoyo: { range: 300, speed: 12, life: -1 } },
+    'M:cloud': { pen: -1, local: 20, still: true, life: 600 },
+    'M:short': { pen: 1, life: 4 },
+    'M:fire': { pen: 1, life: 600, debuffs: ['v:24'] },
+    'M:ichor': { pen: 1, life: 600, debuffs: ['v:69'] },
+    'M:splitter': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1 }] },
+    'M:rebound': { pen: -1, life: 600, bounces: true }, // it changes course the moment it connects
+    'M:shatter': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 5, where: 'kill', dmgMul: 0.5, stealth: true }] },
+    'M:midrange': { pen: 1, life: 20 },
+    // tuned to land between the two reaches the model used to compute: 9.6 px/tick at gravity 0.2
+    // carries 215 px against the boss's half-height and 225 px against the old flat tolerance, so a
+    // 220 px throw was walked to a distance the shot was then told it could not cover
+    'M:dropKnife': { pen: 1, life: 600, gravity: true, gravityK: 0.2 },
+    'M:plainPierce': { pen: 2, local: 20, life: 600, homing: { range: 300 } },
+    'M:strikePierce': { pen: 2, stealthPen: 4, local: 20, life: 600, homing: { range: 300 } },
+    'M:rangProj': { pen: 1, life: 600 }, // 12 px/tick × 20 = 240 px of the 380 a ranged player wants
+    'M:whipProj': { whip: true },
+    'M:lash': { pen: -1, life: 600 },
+    'M:bigMul': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 15 }] },
   },
   items: [
-    { id: 'v:sword', mod: 'v', name: 'Sword', slot: 'weapon', class: 'melee', damage: 20, useTime: 20, useAnimation: 20, crit: 4, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
-    { id: 'v:gun', mod: 'v', name: 'Gun', slot: 'weapon', class: 'ranged', damage: 10, useTime: 10, useAnimation: 10, crit: 4, useAmmo: 97, shoot: 'v:10', shootSpeed: 8, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
-    { id: 'v:bow', mod: 'v', name: 'Bow', slot: 'weapon', class: 'ranged', damage: 10, useTime: 10, useAnimation: 10, crit: 4, shoot: 'v:1', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+    { id: 'v:sword', mod: 'v', name: 'Sword', slot: 'weapon', class: 'melee', arch: 'swing', damage: 20, useTime: 20, useAnimation: 20, crit: 4, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'v:gun', mod: 'v', name: 'Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 4, useAmmo: 97, shoot: 'v:10', shootSpeed: 8, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'v:bow', mod: 'v', name: 'Bow', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 4, shoot: 'v:arrow', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
       fire: { calls: [{ type: 'shoot', count: 3, spread: 0.5 }], defaultShot: { spam: false, stealth: false } } },
-    { id: 'M:rogue', mod: 'M', name: 'Knife', slot: 'weapon', class: 'thrower', damage: 30, useTime: 20, useAnimation: 20, crit: 4, shoot: 'M:knife', shootSpeed: 12, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' },
-      fire: { calls: [{ type: 'M:spear', count: 6, variant: 'stealth', region: 50 }], defaultShot: { spam: true, stealth: false }, stealthMods: { dmgMul: 1.5 }, stealth: true } },
-    { id: 'M:staff', mod: 'M', name: 'Staff', slot: 'weapon', class: 'summon', damage: 12, useTime: 30, useAnimation: 30, shoot: 'M:minion', stage: 0, stageSource: { kind: 'rarity' } },
-    { id: 'M:tome', mod: 'M', name: 'Tome', slot: 'weapon', class: 'magic', damage: 40, useTime: 6, useAnimation: 6, crit: 4, mana: 10, shoot: 'M:missile', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
-    { id: 'M:bomb', mod: 'M', name: 'Bomb', slot: 'weapon', class: 'thrower', damage: 30, useTime: 30, useAnimation: 30, crit: 4, shoot: 'M:bomb', shootSpeed: 8, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:fanGun', mod: 'M', name: 'Fan Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fan', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'shoot', count: 3, spread: 0.5, fan: true }], defaultShot: { spam: false, stealth: false } } },
+    { id: 'M:randGun', mod: 'M', name: 'Rand Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fan', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'shoot', count: 3, spread: 0.5 }], defaultShot: { spam: false, stealth: false } } },
+    { id: 'M:dropper', mod: 'M', name: 'Dropper', slot: 'weapon', class: 'thrower', arch: 'dagger', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:dropKnife', shootSpeed: 9.6, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:rogue', mod: 'M', name: 'Knife', slot: 'weapon', class: 'thrower', arch: 'shot', damage: 30, useTime: 20, useAnimation: 20, crit: 4, shoot: 'M:knife', shootSpeed: 12, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'M:stealthSpear', count: 6, variant: 'stealth', region: 50 }], defaultShot: { spam: true, stealth: false }, stealthMods: { dmgMul: 1.5 }, stealth: true } },
+    { id: 'M:staff', mod: 'M', name: 'Staff', slot: 'weapon', class: 'summon', arch: 'minion', damage: 12, useTime: 30, useAnimation: 30, shoot: 'M:minion', stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:tome', mod: 'M', name: 'Tome', slot: 'weapon', class: 'magic', arch: 'shot', damage: 40, useTime: 6, useAnimation: 6, crit: 4, mana: 10, shoot: 'M:missile', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:blindTome', mod: 'M', name: 'Blind Tome', slot: 'weapon', class: 'magic', arch: 'shot', damage: 40, useTime: 6, useAnimation: 6, crit: 4, mana: 10, shoot: 'M:blind', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:bomb', mod: 'M', name: 'Bomb', slot: 'weapon', class: 'thrower', arch: 'shot', damage: 30, useTime: 30, useAnimation: 30, crit: 4, shoot: 'M:bomb', shootSpeed: 8, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:flask', mod: 'M', name: 'Flask', slot: 'weapon', class: 'thrower', arch: 'bomb', damage: 30, useTime: 30, useAnimation: 30, crit: 4, shoot: 'M:acidFlask', shootSpeed: 8, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:dud', mod: 'M', name: 'Dud', slot: 'weapon', class: 'thrower', arch: 'shot', damage: 30, useTime: 30, useAnimation: 30, crit: 4, shoot: 'M:dud', shootSpeed: 8, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:drill', mod: 'M', name: 'Drill', slot: 'weapon', class: 'melee', arch: 'held', damage: 15, useTime: 20, useAnimation: 20, crit: 4, shoot: 'M:beam', shootSpeed: 10, channel: true, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:yoyoItem', mod: 'M', name: 'Yoyo', slot: 'weapon', class: 'melee', arch: 'yoyo', damage: 15, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:yoyo', shootSpeed: 16, channel: true, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:rod', mod: 'M', name: 'Rod', slot: 'weapon', class: 'magic', arch: 'placed', damage: 15, useTime: 25, useAnimation: 25, crit: 0, mana: 1, shoot: 'M:cloud', shootSpeed: 10, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:pike', mod: 'M', name: 'Pike', slot: 'weapon', class: 'melee', arch: 'spear', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:spear', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:rang', mod: 'M', name: 'Rang', slot: 'weapon', class: 'melee', arch: 'boomerang', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:fan', shootSpeed: 12, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:knifeSame', mod: 'M', name: 'Same Knife', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:rangProj', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:rangSame', mod: 'M', name: 'Same Rang', slot: 'weapon', class: 'ranged', arch: 'boomerang', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:rangProj', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:popgun', mod: 'M', name: 'Popgun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:short', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:torch', mod: 'M', name: 'Torch', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fire', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:ichorGun', mod: 'M', name: 'Ichor Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:ichor', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:mystery', mod: 'M', name: 'Mystery Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fan', noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:midGun', mod: 'M', name: 'Mid Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:midrange', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:shatterBrick', mod: 'M', name: 'Shatter Brick', slot: 'weapon', class: 'thrower', arch: 'bomb', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:shatter', shootSpeed: 12, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:splitGun', mod: 'M', name: 'Split Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:splitter', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    // two clicks: the left throws a splitter that spawns pebbles on hit, the right throws the pebbles
+    { id: 'M:twoClick', mod: 'M', name: 'Two Click', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:splitter', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'shoot', alt: false }, { type: 'M:pebble', alt: true }], defaultShot: { spam: false, stealth: false } } },
+    // a dud left click and a real right click: the weapon is worth the right one
+    { id: 'M:altBetter', mod: 'M', name: 'Alt Better', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:short', shootSpeed: 4, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'shoot', alt: false }, { type: 'M:fan', alt: true }], defaultShot: { spam: false, stealth: false } } },
+    { id: 'M:pen', mod: 'M', name: 'Pen Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, armorPen: 20, shoot: 'M:fan', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    // a sword whose `useTime` outlasts its animation: it still swings every animation
+    { id: 'M:starSword', mod: 'M', name: 'Star Sword', slot: 'weapon', class: 'melee', arch: 'swing', damage: 20, useTime: 40, useAnimation: 20, crit: 4, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:whipItem', mod: 'M', name: 'Whip', slot: 'weapon', class: 'summon', arch: 'whip', damage: 10, useTime: 30, useAnimation: 30, shoot: 'M:whipProj', shootSpeed: 4, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:sprayWhip', mod: 'M', name: 'Spray Whip', slot: 'weapon', class: 'summon', arch: 'whip', damage: 10, useTime: 30, useAnimation: 30, shoot: 'M:whipProj', shootSpeed: 4, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'M:lash', count: 8 }], defaultShot: { spam: false, stealth: false } } },
+    { id: 'M:crawler', mod: 'M', name: 'Crawler', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fan', shootSpeed: 1, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:mulGun', mod: 'M', name: 'Mul Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:bigMul', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
   ],
 };
 const ds = indexDataset(structuredClone(raw));
 const ctx = (extra = {}) => ({ conds: new Set(), uncertain: false, prefix: null, calibration: null, ds, stage: 0, ...extra });
+const dps = (id, extra) => realDps(ds.byId.get(id), ctx(extra));
+const part = (r, re) => r.parts.find((p) => re.test(p.label));
 
-describe('bossShape', () => {
-  test("reads the next stage's boss: single target, worm, multi-part", () => {
-    expect(bossShape(ds, 0)).toEqual({ parts: 1, worm: false });
-    expect(bossShape(ds, 1)).toEqual({ parts: 3, worm: true });
-    expect(bossShape(ds, 2)).toEqual({ parts: 2, worm: false });
-    expect(bossShape(ds, 3)).toEqual({ parts: 1, worm: false });
-    expect(bossShape(null, undefined)).toEqual({ parts: 1, worm: false });
+describe('boss', () => {
+  test("reads the next stage's NPCs: size, defense, parts, worm", () => {
+    const b = boss(ds, 0);
+    expect(b.name).toBe('Eye');
+    expect(b.w).toBe(100);
+    expect(b.defense).toBe(10);
+    expect(b.parts).toBe(1);
+    expect(b.worm).toBe(false);
+    const w = boss(ds, 1);
+    expect(w.worm).toBe(true);
+    expect(w.parts).toBe(3);
+    expect(boss(ds, 2).parts).toBe(2);
+    expect(boss(null, undefined).name).toBe(null);
   });
-  test('pierce is worth nothing against a single boss and a lot against a worm', () => {
-    const knife = ds.byId.get('M:rogue');
-    const single = realDps(knife, ctx({ stage: 0 })).stealth;
-    const worm = realDps(knife, ctx({ stage: 1 })).stealth;
-    const twins = realDps(knife, ctx({ stage: 2 })).stealth;
-    expect(worm / single).toBeCloseTo(1.5 / 1.05, 2);
-    expect(twins / single).toBeCloseTo(1.2 / 1.05, 2);
+  test('a vanilla worm is one boss named three times, and aims wider than a segment', () => {
+    const w = bossOf(ds, 4);
+    expect(w.worm).toBe(true);       // no Head/Body/Tail in the names, just three the same
+    expect(w.w).toBe(38);            // one segment, for how long a shot spends crossing it
+    expect(w.aimW).toBe(38 * 3);     // …but the body you aim at is the whole chain
+    expect(bossOf(ds, 1).aimW).toBe(bossOf(ds, 1).w); // a single boss aims at itself
+  });
+  test('an invulnerable phase is not armour: 9999 defense falls back to the default', () => {
+    expect(fightableDefense([{ defense: 9999 }])).toBe(BOSS_DEFAULT.defense);
+    expect(fightableDefense([{ defense: 9999 }, { defense: 12 }])).toBe(12);
+    expect(fightableDefense([{ defense: 4 }, { defense: 9 }])).toBe(4); // the softest part you can hit
+  });
+  test('a boss whose immunities could not be read is assumed immune to everything', () => {
+    expect(boss(ds, 2).immuneAll).toBe(true);
+    expect(boss(ds, 0).immuneAll).toBe(false);
+  });
+  test('a target can be picked instead of the boss fought next', () => {
+    expect(boss(ds, 0).name).toBe('Eye');            // the default: whatever comes next
+    expect(boss(ds, 0, 2).name).toBe('Worm Head');   // …or the one asked for
+    expect(bossOf(ds, 3).name).toBe('Twin A');
+    expect(targetStages(ds).map((s) => s.index)).toEqual([1, 2, 3, 4]); // stage 0 has no NPCs
+    // and the pick reaches the score: the worm's 4 defense eats less of a hit than the Eye's 10,
+    // and it is a chain of small segments rather than one wide silhouette
+    const worm = dps('M:fanGun', { target: 2 });
+    expect(worm.boss.name).toBe('Worm Head');
+    expect(worm.boss.worm).toBe(true);
+    expect(worm.hit).toBeGreaterThan(dps('M:fanGun', { target: 1 }).hit);
+    // the Twins shrug off every debuff, so a weapon that only wins on DoT loses its edge there
+    expect(dps('M:torch', { target: 1 }).value).toBeGreaterThan(dps('M:torch', { target: 3 }).value);
+  });
+  test('boss speed grows with progression', () => {
+    expect(bossSpeed(0)).toBeCloseTo(5);
+    expect(bossSpeed(28)).toBeCloseTo(14);
+    expect(bossSpeed(100)).toBeCloseTo(14);
+  });
+});
+
+describe('engagement distance', () => {
+  test('a class default, clamped by what the archetype can reach', () => {
+    expect(engagement('ranged', 'shot', null)).toBe(ENGAGE.ranged);
+    expect(engagement('ranged', 'swing', null)).toBe(REACH.swing);
+    expect(engagement('melee', 'shot', null)).toBe(ENGAGE.melee);
+  });
+  test('the playstyle toggle moves only the distance', () => {
+    expect(engagement('ranged', 'shot', { ranged: 'sniper' })).toBe(520);
+    expect(engagement('ranged', 'shot', { ranged: 'rapid' })).toBe(280);
+    expect(engagement('ranged', 'shot', { magic: 'nuke' })).toBe(ENGAGE.ranged);
+  });
+});
+
+describe('landing', () => {
+  const b = boss(ds, 0);
+  test('a random spread only lands the share of its cone inside the silhouette', () => {
+    const wide = landing(null, { D: 400, boss: b, spread: 0.5, velocity: null });
+    const theta = Math.atan(50 / 400);
+    expect(wide.f).toBeCloseTo(theta / 0.5, 3);
+    expect(landing(null, { D: 400, boss: b, spread: 0.05, velocity: null }).f).toBe(1);
+  });
+  test('a fan puts its shots at fixed angles: a wide target catches more of them than a random spread', () => {
+    const fan = landing(null, { D: 400, boss: b, spread: 0.5, fan: true, count: 3, velocity: null });
+    const rand = landing(null, { D: 400, boss: b, spread: 0.5, fan: false, count: 3, velocity: null });
+    expect(fan.f).toBe(1 / 3); // only the middle shot is inside ±7°
+    expect(fan.f).toBeGreaterThan(rand.f);
+  });
+  test('a slow projectile over a long distance gives a moving boss time to leave', () => {
+    const slow = landing({ life: 600 }, { D: 400, boss: b, velocity: 4, vb: 5 });
+    const fast = landing({ life: 600 }, { D: 400, boss: b, velocity: 40, vb: 5 });
+    expect(slow.f).toBeLessThan(fast.f);
+    expect(fast.f).toBeGreaterThan(0.75);
+    expect(landing({ life: 600 }, { D: 400, boss: b, velocity: 4, vb: 0 }).f).toBe(1);
+  });
+  test('gravity drops the arc below the silhouette', () => {
+    const flat = landing({ life: 600 }, { D: 400, boss: b, velocity: 8, vb: 5 });
+    const arc = landing({ life: 600, gravity: true, gravityK: 0.1 }, { D: 400, boss: b, velocity: 8, vb: 5 });
+    expect(arc.f).toBeLessThan(flat.f);
+    expect(part(arc, /arc drops/)).toBeTruthy();
+  });
+  test('homing needs to see the target and to be quicker than it', () => {
+    const at = (homing) => landing({ life: 600, ...(homing ? { homing } : {}) }, { D: 400, boss: b, velocity: 12, vb: 5 });
+    const dumb = at(null);
+    expect(at({ range: 800, speed: 12, inertia: 4 }).f).toBeGreaterThan(dumb.f);
+    expect(at({ range: 40, speed: 12, inertia: 4 }).f).toBeCloseTo(dumb.f, 5); // it never sees it
+    expect(at({ range: 800, speed: 1, inertia: 4 }).f).toBeCloseTo(dumb.f, 5); // it never catches it
+  });
+  test('the landing factors multiply out to the number they explain', () => {
+    const r = landing({ life: 600, gravity: true, gravityK: 0.1, walls: true, homing: { range: 800, speed: 12, inertia: 4 } },
+      { D: 400, boss: b, velocity: 12, vb: 5 });
+    expect(part(r, /homing/)).toBeTruthy();
+    expect(r.parts.reduce((n, x) => n * x.mul, 1)).toBeCloseTo(r.f, 1);
+  });
+  test('extra updates make a projectile arrive sooner, not travel further', () => {
+    // `life` is counted in updates, so three updates a tick spend it three times as fast
+    expect(reachOf({ life: 600, updates: 2 }, 10)).toBe(6000);
+    expect(reachOf({ life: 600 }, 10)).toBe(6000);
+    expect(flightOf({ life: 600, updates: 2 }, 30, 300).flight).toBeCloseTo(10, 5); // 30 px a tick
+    expect(flightOf({ life: 600, updates: 2 }, 30, 300).alive).toBeCloseTo(190, 5); // 200 ticks of life, 10 spent
+    expect(flightOf({ life: 600 }, 10, 300).alive).toBeCloseTo(570, 5);
+  });
+  test('an arcing shot is out of range when it has fallen too far, not when it expires', () => {
+    // a knife that lives 300 ticks at 12 px/tick would cross the world; what it cannot do is stay
+    // level, so the reach is how far it gets before it has dropped out of the silhouette
+    const flat = reachOf({ life: 300 }, 12, 50);
+    const arc = reachOf({ life: 300, gravity: true, gravityK: 0.15 }, 12, 50);
+    expect(flat).toBe(3600);
+    expect(arc).toBeCloseTo(12 * Math.sqrt(100 / 0.15), 5);
+    expect(arc).toBeLessThan(flat / 5);
+    // …and a seeker climbs back onto the target, so the arc stops limiting it
+    expect(reachOf({ life: 300, gravity: true, gravityK: 0.15, homing: { range: 300 } }, 12, 50)).toBe(3600);
+  });
+  test('a projectile that expires before it arrives never lands', () => {
+    expect(landing({ life: 4 }, { D: 400, boss: b, velocity: 8 }).f).toBe(0);
+    expect(landing({ life: 60 }, { D: 400, boss: b, velocity: 8 }).f).toBeLessThan(1); // 480 px: only just
+    expect(landing({ life: 600 }, { D: 400, boss: b, velocity: 8 }).f).toBeGreaterThan(0.4);
+  });
+  test('drag shortens the reach', () => {
+    expect(reachOf({ life: 600 }, 10)).toBe(6000);
+    expect(reachOf({ life: 600, drag: 0.9 }, 10)).toBeCloseTo(100, 5);
+  });
+});
+
+describe('hits per projectile', () => {
+  const single = boss(ds, 0);
+  const worm = boss(ds, 1);
+  test('infinite pierce on a single target is worth a hit or two, not a multiplier', () => {
+    const r = hitsPerProjectile({ pen: -1, local: 10 }, { boss: single, velocity: 10, arch: 'shot' });
+    expect(r.hits).toBeGreaterThan(1);
+    expect(r.hits).toBeLessThan(3);
+  });
+  test('single / multi target: pierce is worth what there is to pierce', () => {
+    const p = { pen: -1, local: 10, life: 600 };
+    const one = hitsPerProjectile(p, { boss: asTarget(single, 'single'), velocity: 10, arch: 'shot' });
+    const many = hitsPerProjectile(p, { boss: asTarget(single, 'multi'), velocity: 10, arch: 'shot' });
+    // the extras fall off geometrically now, so a crowd is worth more but not `CROWD` times more
+    expect(many.hits).toBeGreaterThan(one.hits);
+    expect(many.hits).toBeLessThan(one.hits * CROWD);
+    expect(many.label).toContain(`${CROWD} targets`);
+    // a worm is already several bodies, so asking for one strips them
+    expect(hitsPerProjectile(p, { boss: asTarget(worm, 'single'), velocity: 10, arch: 'shot' }).hits)
+      .toBeLessThan(hitsPerProjectile(p, { boss: worm, velocity: 10, arch: 'shot' }).hits);
+    // a shot that cannot pierce gains nothing from a crowd
+    const once = { pen: 1, local: 10, life: 600 };
+    expect(hitsPerProjectile(once, { boss: asTarget(single, 'multi'), velocity: 10, arch: 'shot' }).hits)
+      .toBe(hitsPerProjectile(once, { boss: asTarget(single, 'single'), velocity: 10, arch: 'shot' }).hits);
+    // …and only the pierce path reaches a second body, so only it is exempt from the crowd waste
+    expect(many.spread).toBe(true);
+    expect(hitsPerProjectile({ pen: -1, local: 10, life: 600, bounces: true }, { boss: asTarget(single, 'multi'), velocity: 10, arch: 'shot' }).spread)
+      .toBeUndefined();
+  });
+  test('time on target saturates: a seeker is not worth one hit per immunity window for ten seconds', () => {
+    // `LIFE_UNKNOWN` is 600 ticks and a 10-tick cooldown divides into it 55 times, which is what a
+    // homing infinite-pierce shot was being paid against a *single* target. The fight moves, the
+    // seeker overshoots and comes back, and the lifetime is usually a guess rather than a read.
+    const seeker = { pen: -1, local: 10, life: 600, homing: { range: 300 } };
+    const opts = { boss: asTarget(single, 'single'), velocity: 10, arch: 'shot', land: 1 };
+    const hits = hitsPerProjectile(seeker, opts).hits;
+    expect(hits).toBeGreaterThan(5);                 // it does keep coming back
+    expect(hits).toBeLessThan(1 + RECONNECT_SEEK);   // …but not once per window for its whole life
+    // a shot that cannot steer has to drift back into the target by luck, and is worth much less
+    const plain = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, opts).hits;
+    expect(plain).toBeLessThan(hits / 2);
+    // longer life still helps, with diminishing returns rather than in proportion
+    const longer = hitsPerProjectile({ ...seeker, life: 6000 }, opts).hits;
+    expect(longer).toBeGreaterThan(hits);
+    expect(longer).toBeLessThan(hits * 1.5);
+  });
+  test('a crowd sweeps distinct bodies, so a capped pierce reliably gets its own cap', () => {
+    // the geometric falloff answers "will it find another body", which a crowd has already
+    // answered. Under it a pierce-2 shot got *less* out of six bodies than out of one, which is
+    // backwards — the crowd is the case its pierce was bought for.
+    const p = { pen: 2, local: 10, life: 600 };
+    const one = hitsPerProjectile(p, { boss: asTarget(single, 'single'), velocity: 10, arch: 'shot', land: 0.7 });
+    const many = hitsPerProjectile(p, { boss: asTarget(single, 'multi'), velocity: 10, arch: 'shot', land: 0.7 });
+    expect(many.hits).toBeGreaterThan(one.hits);
+    expect(many.hits).toBeLessThanOrEqual(2);
+  });
+  test('without local immunity it falls back to the player’s own 10-tick window', () => {
+    const own = hitsPerProjectile({ pen: -1, life: 600 }, { boss: single, velocity: 10, arch: 'shot' });
+    const local = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { boss: single, velocity: 10, arch: 'shot' });
+    expect(own.hits).toBeCloseTo(local.hits, 5); // the same 10 ticks, whoever owns the cooldown
+    expect(own.hits).toBeGreaterThan(1);
+  });
+  test('extra hits need life left when the projectile arrives', () => {
+    const near = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { boss: single, velocity: 10, arch: 'shot', D: 50 });
+    const far = hitsPerProjectile({ pen: -1, local: 10, life: 51 }, { boss: single, velocity: 10, arch: 'shot', D: 500 });
+    expect(far.hits).toBeLessThan(1.2); // it expires as it arrives, however far it pierces
+    expect(near.hits).toBeGreaterThan(far.hits); // it arrives with life to spend
+  });
+  test('a slow, lingering projectile racks up hits a fast one cannot', () => {
+    const slow = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { boss: single, velocity: 2, arch: 'shot' });
+    const fast = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { boss: single, velocity: 30, arch: 'shot' });
+    // …by less than it used to: repeat hits saturate now, so time on target is worth real hits but
+    // not one per immunity window for the whole of a lifetime
+    expect(slow.hits).toBeGreaterThan(fast.hits * 1.2);
+  });
+  test('pierce caps the count, and the extra hits are conditioned on staying on target', () => {
+    const opts = { boss: single, velocity: 2, arch: 'shot' };
+    // pierce 2 is a ceiling, not a promise: a thrown weapon has to line up on the second body, and
+    // at `PIERCE_KEEP` per extra it mostly does not
+    expect(hitsPerProjectile({ pen: 2, local: 10, life: 600 }, { ...opts, land: 1 }).hits).toBeCloseTo(1 + PIERCE_KEEP, 5);
+    // what it cost to carry as far as the first body is paid on that hit, not again on every body
+    // it pierces into: `aim` is the landing chance without the range term, and it is what the
+    // falloff runs on.
+    expect(hitsPerProjectile({ pen: 2, local: 10, life: 600 }, { ...opts, land: 0.2, aim: 1 }).hits)
+      .toBeCloseTo(hitsPerProjectile({ pen: 2, local: 10, life: 600 }, { ...opts, land: 1 }).hits, 5);
+    expect(hitsPerProjectile({ pen: 2, local: 10, life: 600 }, { ...opts, land: 1 }).hits).toBeLessThan(2);
+    // …a seeker steers onto it, so it keeps the whole pierce
+    expect(hitsPerProjectile({ pen: 2, local: 10, life: 600, homing: { range: 800 } }, { ...opts, land: 1 }).hits).toBe(2);
+    const sure = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { ...opts, land: 1 });
+    const iffy = hitsPerProjectile({ pen: -1, local: 10, life: 600 }, { ...opts, land: 0.25 });
+    expect(iffy.hits).toBeLessThan(sure.hits);
+  });
+  test('a worm multiplies pierce by the segments in the path', () => {
+    const w = hitsPerProjectile({ pen: -1, local: 10 }, { boss: worm, velocity: 10, arch: 'shot' });
+    const s = hitsPerProjectile({ pen: -1, local: 10 }, { boss: single, velocity: 10, arch: 'shot' });
+    expect(w.hits).toBeGreaterThan(s.hits);
+    expect(hitsPerProjectile({ pen: 2, local: 10 }, { boss: worm, velocity: 10, arch: 'shot' }).hits).toBeLessThanOrEqual(2);
+  });
+  test('a spear hits out and back when it has local immunity', () => {
+    expect(hitsPerProjectile({ pen: -1, local: 10 }, { boss: single, arch: 'spear' }).hits).toBe(2);
+    expect(hitsPerProjectile({ pen: -1 }, { boss: single, arch: 'spear' }).hits).toBe(1);
+  });
+  test('a contact weapon counts contact time, not a pass', () => {
+    expect(hitsPerProjectile({ pen: -1, local: 6 }, { boss: single, arch: 'held' }).hits).toBe(1);
+  });
+  test('a projectile that changes course on hit is not piercing through it', () => {
+    const opts = { boss: single, velocity: 8, arch: 'shot', D: 200 };
+    // Thorium's baseball reads as infinite pierce and actually bounces back to your hand
+    expect(hitsPerProjectile({ pen: -1, life: 600, bounces: true }, opts).hits).toBe(1);
+    expect(hitsPerProjectile({ pen: -1, life: 600 }, opts).hits).toBeGreaterThan(1);
+  });
+  test('a projectile that sticks in what it hits does not go through it', () => {
+    const opts = { boss: single, velocity: 8, arch: 'shot', D: 200 };
+    // infinite pierce and a wide hitbox buy nothing once it is embedded in the first thing it hits
+    expect(hitsPerProjectile({ pen: -1, life: 120, width: 36, sticks: true }, opts).hits).toBe(1);
+    expect(hitsPerProjectile({ pen: -1, life: 120, width: 36 }, opts).hits).toBeGreaterThan(1);
+  });
+  test('a javelin keeps wounding what it is stuck in, on its own cooldown', () => {
+    const opts = { boss: single, velocity: 8, arch: 'shot', D: 200 };
+    const bola = hitsPerProjectile({ pen: -1, life: 600, sticks: true }, opts);           // no cooldown of its own
+    const javelin = hitsPerProjectile({ pen: -1, life: 600, local: 20, sticks: true }, opts);
+    expect(bola.hits).toBe(1);
+    expect(javelin.hits).toBeCloseTo(1 + STUCK_TICKS / 20, 5);
+    // …but never past its own pierce
+    expect(hitsPerProjectile({ pen: 3, life: 600, local: 20, sticks: true }, opts).hits).toBe(3);
+  });
+  test('a negative hit cooldown is once per NPC ever, whatever the pierce says', () => {
+    const opts = { boss: single, velocity: 2, arch: 'shot', life: 600 };
+    expect(hitsPerProjectile({ pen: -1, local: -1, life: 600 }, opts).hits).toBe(1);
+    expect(hitsPerProjectile({ pen: -1, life: 600 }, opts).hits).toBeGreaterThan(1);
+  });
+});
+
+describe('damage per hit', () => {
+  test('defense comes off the damage a loadout does, not off the printed number', () => {
+    // a flat defense taken from the item's own damage is a tax on every weapon that hits often for
+    // a little; the player fighting that boss is wearing a set and six reforged accessories
+    expect(playerDamage(0)).toBeGreaterThan(1);
+    expect(playerDamage(7)).toBeGreaterThan(playerDamage(0));
+    const r = dps('v:sword');
+    expect(part(r, /damage a .* loadout carries/).mul).toBeCloseTo(playerDamage(0), 2);
+    expect(r.hit).toBeCloseTo(20 * playerDamage(0) - 5, 5); // 20 damage buffed, then the Eye's 10 defense
+  });
+  test('defense eats half a point per point; armour penetration buys it back, never more', () => {
+    const b = boss(ds, 0);
+    expect(hitDamage(30, b)).toBe(25);
+    expect(hitDamage(30, b, 10)).toBe(30);
+    expect(hitDamage(30, b, 999)).toBe(30);
+    expect(hitDamage(2, b)).toBe(1);
+  });
+  test('a defense debuff gives every hit some of it back', () => {
+    expect(hitDamage(30, boss(ds, 0), 0, -6)).toBe(28);
+  });
+  test('armor penetration on the item reaches the DPS', () => {
+    expect(dps('M:pen').hit).toBeGreaterThan(dps('M:fanGun').hit);
   });
 });
 
 describe('realDps', () => {
-  test('true melee: damage × rate × crit × contact range', () => {
-    const r = realDps(ds.byId.get('v:sword'), ctx());
+  test('a swing hits once per use at contact range', () => {
+    const r = dps('v:sword');
     expect(r.kind).toBe('dps');
-    expect(r.value).toBeCloseTo(20 * 3 * 1.04 * 0.7);
-    expect(r.parts.map((p) => p.label)).toContain('contact range');
+    expect(r.arch).toBe('swing');
+    expect(r.distance).toBe(engagement('melee', 'swing')); // the swing's reach clamps the class distance
+    expect(part(r, /contact swing/)).toBeTruthy();
+    // (20 damage as the loadout swings it, − 10/2 defense), 3 uses/s, crit, reach, and what
+    // fighting closer than the class would like costs
+    const risk = part(r, /fights at .* px of the/)?.mul ?? 1;
+    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * 0.85 * risk, 0); // `risk` is the rounded part
   });
-  test('ammo weapons add the best ammo at the stage and use its projectile', () => {
-    const gun = ds.byId.get('v:gun');
-    const r0 = realDps(gun, ctx({ stage: 0 }));
-    expect(r0.hit).toBe(17);
-    expect(bestAmmo(ds, 97, 1).name).toBe('Big Shot');
-    expect(realDps(gun, ctx({ stage: 1 })).hit).toBe(30);
-    // bullet: 16 px/tick effective (8 × 2 updates) → no velocity penalty
-    expect(r0.parts.some((p) => /velocity/.test(p.label))).toBe(false);
-    expect(r0.value).toBeCloseTo(17 * 6 * 1.04);
+  test('a gun is graded on the standard ammo of its kind, not the best one it could hold', () => {
+    // AmmoID.Bullet is 97, the Musket Ball's item id — so the plain bullet needs no table, and the
+    // Big Shot's 20 damage belongs to the ammo pick rather than to every gun that could fire it
+    expect(standardAmmo(ds, 97, 4).name).toBe('Musket Ball'); // not the Big Shot, obtainable since stage 1
+    expect(dps('v:gun', { stage: 0 }).hit).toBeCloseTo((10 + 7) * playerDamage(0) - 5, 5);
+    // and the ammo is graded by handing the same gun the round in question
+    expect(realDps(ds.byId.get('v:gun'), ctx({ stage: 0, ammo: ds.ammo[1] })).value).toBeGreaterThan(dps('v:gun', { stage: 0 }).value);
   });
-  test('spread, gravity and slow projectiles reduce accuracy; count multiplies', () => {
-    const r = realDps(ds.byId.get('v:bow'), ctx());
-    const acc = accuracy(ds.projectiles['v:1'], { spread: 0.5, velocity: 4 });
-    expect(acc.f).toBeCloseTo((0.14 / 0.5) * 0.55 * 0.85);
-    expect(r.parts.find((p) => /projectiles per use/.test(p.label)).mul).toBe(3);
-    expect(r.value).toBeCloseTo(10 * 6 * 1.04 * 3 * acc.f);
+  test('a deterministic fan beats the same spread thrown at random', () => {
+    expect(dps('M:fanGun').value).toBeGreaterThan(dps('M:randGun').value);
   });
-  test('homing ignores spread and gravity, magic pays for mana', () => {
-    const r = realDps(ds.byId.get('M:tome'), ctx());
-    expect(r.parts.some((p) => p.label === 'homing')).toBe(true);
-    const mana = r.parts.find((p) => /mana\/s/.test(p.label));
-    expect(mana.mul).toBeCloseTo(0.5); // 100 mana/s → floor
-    expect(r.value).toBeCloseTo(40 * 10 * 1.04 * 0.5);
+  test('homing that reaches the boss beats homing that cannot see it', () => {
+    expect(dps('M:tome').value).toBeGreaterThan(dps('M:blindTome').value);
   });
-  test('pierce, debuffs and child projectiles add hits', () => {
-    const r = realDps(ds.byId.get('M:bomb'), ctx());
-    expect(r.parts.some((p) => /child projectiles/.test(p.label))).toBe(true);
-    expect(r.value).toBeGreaterThan(30 * 2 * 1.04 * 0.85 * 0.55);
+  test('magic pays for mana against regen, with a floor', () => {
+    const r = dps('M:tome');
+    expect(part(r, /mana\/s/).mul).toBeCloseTo(SUSTAIN_FLOOR, 5); // 100 mana/s against ~9.5 regen
+    expect(manaRegen(0)).toBeCloseTo(9.5);
+  });
+  test('a shot that dies before it arrives scores nothing', () => {
+    expect(dps('M:popgun').value).toBe(0); // 4 px/tick for 4 ticks: not even MIN_ENGAGE away
+  });
+  test('a weapon that cannot cover the class distance is used from closer, not written off', () => {
+    const r = dps('M:midGun'); // reaches 240 px; ranged would rather stand at 380
+    expect(r.distance).toBe(240);
+    expect(r.value).toBeGreaterThan(0); // it still fires — standing at the edge costs, it is not a zero
+    expect(part(r, /reaches /).mul).toBeGreaterThan(0);
+  });
+  test('a shot with no readable velocity is flown slowly, not exempted from landing', () => {
+    const r = dps('M:mystery'); // same projectile as M:randGun, no shootSpeed
+    expect(part(r, /px\/tick over/)).toBeDefined();
+    expect(r.value).toBeLessThan(dps('M:fanGun').value / 2 * 3); // no free pass
+    expect(r.value).toBeLessThan(realDps({ ...ds.byId.get('M:mystery'), shootSpeed: 20 }, ctx()).value);
+  });
+  test('a child the code only spawns on a stealth strike is not counted on a normal throw', () => {
+    const r = dps('M:shatterBrick', { stealthMax: 1 });
+    expect(r.parts.some((p) => /pebble/.test(p.label))).toBe(false);          // the spam grade
+    expect(r.stealthParts.some((p) => /pebble/.test(p.label))).toBe(true);    // …and the strike
+  });
+  test('an on-hit child only exists as often as its parent lands', () => {
+    const near = dps('M:splitGun', { playstyle: { ranged: 'rapid' } });   // 280 px
+    const far = dps('M:splitGun', { playstyle: { ranged: 'sniper' } });   // 520 px
+    const child = (r) => Number(/\+([\d.]+) hits/.exec(part(r, /pebble on hit/).label)[1]);
+    expect(child(near)).toBeGreaterThan(child(far)); // the parent lands less often out there
+  });
+  test('children add up: each one is printed as what it adds on top of the last', () => {
+    const many = structuredClone(raw);
+    many.projectiles['M:splitter'].children = [
+      { type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1 },
+      { type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1 },
+      { type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1 },
+    ];
+    const ds2 = indexDataset(many);
+    const r = realDps(ds2.byId.get('M:splitGun'), ctx({ ds: ds2 }));
+    const kids = r.parts.filter((p) => /pebble on hit/.test(p.label));
+    expect(kids).toHaveLength(3);
+    // three children worth the same each: the third adds proportionally less than the first
+    expect(kids[0].mul).toBeGreaterThan(kids[2].mul);
+    expect(kids.reduce((n, p) => n * p.mul, 1)).toBeLessThan(4);
+  });
+  test('a zero-damage child is a sparkle, not a hit', () => {
+    const fx = structuredClone(raw);
+    fx.projectiles['M:splitter'].children = [{ type: 'M:pebble', count: 1, where: 'hit', dmgAbs: 0 }];
+    const ds2 = indexDataset(fx);
+    const r = realDps(ds2.byId.get('M:splitGun'), ctx({ ds: ds2 }));
+    expect(part(r, /pebble on hit/)).toBeUndefined();
+    expect(r.value).toBeCloseTo(realDps({ ...ds2.byId.get('M:splitGun'), shoot: 'M:fan' }, ctx({ ds: ds2 })).value, 5);
+  });
+  test('a blast goes off once, but one with a cooldown of its own keeps ticking where it landed', () => {
+    // a bomb's splash does not fly through the boss, so it is not charged a crossing time: it is
+    // one hit, unless it says it lingers
+    const once = dps('M:bomb');
+    const cloud = dps('M:flask');
+    const extraHits = (r, re) => Number(/\+([\d.]+) hits/.exec(part(r, re).label)[1]);
+    expect(extraHits(once, /boom on death/)).toBeCloseTo(1, 5);       // it goes off, once
+    expect(extraHits(cloud, /acid on death/)).toBeGreaterThan(3);     // …this one keeps ticking
+  });
+  test('a child that explodes wide still helps when the parent misses; a pebble does not', () => {
+    expect(dps('M:bomb').value).toBeGreaterThan(dps('M:dud').value);
+  });
+  test('spawned projectiles are capped: the miner cannot read how often they spawn', () => {
+    const big = structuredClone(raw);
+    big.projectiles['M:bomb'].children = [{ type: 'M:boom', count: 40, where: 'hit', dmgMul: 5 }];
+    const huge = indexDataset(big);
+    const r = realDps(huge.byId.get('M:bomb'), ctx({ ds: huge }));
+    expect(part(r, /capped at/)).toBeTruthy();
+    expect(r.value).toBeLessThan(dps('M:bomb').value * (1 + CHILD_CAP) * 2);
+  });
+  test('a held beam hits on its own immunity clock, not the use time', () => {
+    const r = dps('M:drill');
+    expect(part(r, /hits\/s in contact/).mul).toBeCloseTo(10, 5); // 60 / 6-tick immunity
+    expect(part(r, /of the time on the boss/).mul).toBeCloseTo(ARCHETYPE.held.uptime, 5);
+  });
+  test('a yoyo out of its range spends less of the fight on the boss', () => {
+    const near = realDps(ds.byId.get('M:yoyoItem'), ctx());
+    expect(near.arch).toBe('yoyo');
+    expect(part(near, /hits\/s in contact/)).toBeTruthy();
+  });
+  test('a placed projectile is honestly low: the boss is rarely in it', () => {
+    const r = dps('M:rod');
+    expect(r.arch).toBe('placed');
+    expect(part(r, /of the time on the boss/).mul).toBeCloseTo(ARCHETYPE.placed.uptime, 5);
+  });
+  test('fighting closer than the class wants costs, and costs more the closer it drags you', () => {
+    // a graded exposure, not a cliff: a rain cloud you stand on top of pays nearly the whole
+    // penalty, a drill held at arm's length pays part of it, and neither pays none
+    const rod = part(dps('M:rod'), /fights at .* px of the/).mul;          // magic, 80 px
+    const drill = part(dps('M:drill'), /fights at .* px of the/)?.mul ?? 1; // melee, 180 px
+    expect(rod).toBeLessThan(1);
+    expect(rod).toBeGreaterThanOrEqual(RISK.magic);
+    expect(drill).toBeGreaterThan(rod);
+  });
+  test('a debuff the boss is not immune to adds its DoT; an immune boss adds nothing', () => {
+    const fire = dps('M:torch');
+    const plain = dps('M:fanGun');
+    expect(fire.value).toBeGreaterThan(plain.value);
+    expect(part(fire, /On Fire/)).toBeTruthy();
+    const immune = dps('M:torch', { stage: 2 }); // the Twins: immunities unread → assumed immune
+    expect(part(immune, /is immune/)).toBeTruthy();
+    // a debuff the boss's own SetDefaults lists is ignored too
+    expect(part(dps('M:pike'), /is immune/)).toBeTruthy();
+  });
+  test('a defense debuff raises every hit instead', () => {
+    expect(dps('M:ichorGun').hit).toBeGreaterThan(dps('M:fanGun').hit);
   });
   test('summons rank by damage per slot × attack rate', () => {
-    const r = realDps(ds.byId.get('M:staff'), ctx());
+    const r = dps('M:staff');
     expect(r.mode).toBe('minion');
-    expect(r.value).toBeCloseTo(12 * 3); // 60/20 = 3 hits/s
+    // 60/20 = 3 hits/s, defense 10, and a minion is not on the boss every second of the fight
+    expect(r.value).toBeCloseTo((12 * playerDamage(0) - 5) * 3 * ARCHETYPE.minion.uptime, 5);
   });
-  test('rogue weapons are graded stealth or spam, whichever is higher', () => {
-    const r = realDps(ds.byId.get('M:rogue'), ctx({ stealthMax: 1 }));
-    expect(r.mode).toBe('stealth');
-    expect(r.spam).toBeCloseTo(30 * 3 * 1.04);
-    const mult = stealthMultiplier(20, 1, 1.5);
-    expect(mult).toBeGreaterThan(3);
-    // stealth: six spears (infinite pierce vs a single boss, gravity, 1 debuff) once per 5 s; past 4 hits per use only half land
-    expect(r.stealth).toBeCloseTo((30 * mult * 1.04 * 5 * (1.05 * 1.03 * 0.85) * 1.15) / 5);
-    expect(r.value).toBe(r.stealth);
-    const low = realDps(ds.byId.get('M:rogue'), ctx({ stealthMax: 0.1 }));
-    expect(low.mode).toBe('spam');
+  test('the stealth strike lands on top of the spam, and names the grade', () => {
+    const r = dps('M:rogue', { stealthMax: 1 });
+    expect(stealthMultiplier(20, 1, 1.5)).toBeGreaterThan(3);
+    expect(r.value).toBeCloseTo(r.spam + r.stealth, 5); // stealth builds while you throw
+    expect(r.mode).toBe('stealth'); // …and here it is the bigger half
+    expect(dps('M:rogue', { stealthMax: 0.05 }).mode).toBe('spam');
+  });
+  test('a rogue weapon with no coded stealth branch is still graded', () => {
+    const r = dps('M:bomb', { stealthMax: 1 }); // no `fire` at all
+    expect(r.mode).toBe('spam'); // the generic strike does not beat spamming it
+    expect(r.stealth).toBeGreaterThan(0);
+    expect(r.value).toBeCloseTo(r.spam + r.stealth, 5);
+  });
+  test('the two rogue grades are scored at their own engagement distances', () => {
+    const r = dps('M:rogue', { stealthMax: 1 });
+    expect(r.distance).toBe(420); // stealth: far
+    expect(dps('M:rogue', { stealthMax: 0.05 }).distance).toBe(220); // spam: close
+  });
+  test('a boomerang comes back', () => {
+    expect(dps('M:rang').arch).toBe('boomerang');
+    expect(dps('M:pike').arch).toBe('spear');
+  });
+  test('a weapon that allows several out at once throws that many times as often', () => {
+    const one = dps('M:rangSame');
+    const three = realDps({ ...ds.byId.get('M:rangSame'), maxOut: 3 }, ctx());
+    expect(part(one, /one out at a time/)).toBeTruthy();
+    expect(part(three, /3 out at a time/)).toBeTruthy();
+    expect(three.value).toBeGreaterThan(one.value);
+  });
+  test('a boomerang is gone until it returns: the round trip is the rate, not the use time', () => {
+    // same damage, same use time, same projectile — only the type differs
+    const knife = dps('M:knifeSame');
+    const rang = dps('M:rangSame');
+    expect(part(rang, /one out at a time/)).toBeTruthy();
+    expect(part(knife, /one out at a time/)).toBeUndefined();
+    expect(rang.value).toBeLessThan(knife.value);
+  });
+  test('a boomerang cannot hit past where it turns round, however long its projectile lives', () => {
+    // `M:rangProj` lives 600 ticks: read off lifetime alone its reach is thousands of px, and the
+    // model was charging the throw a round trip to `THROW_OUT` and then letting it land hits four
+    // times further out than that. The same weapon as a knife keeps the long reach.
+    const rang = dps('M:rangSame');
+    const knife = dps('M:knifeSame');
+    expect(part(rang, /reaches \d+ px/)?.mul).toBeLessThan(1);
+    expect(part(knife, /reaches \d+ px/)).toBeUndefined();
+  });
+  test('a stealth strike is graded on the pierce its own AI gives it', () => {
+    // Calamity's rogue projectiles re-set `penetrate` on their first tick, as
+    // `penetrate = stealthStrike ? 4 : 2`, so the strike's copy is a stronger projectile.
+    const item = { ...ds.byId.get('M:rogue'), shoot: 'M:strikePierce', fire: undefined };
+    const plain = realDps({ ...item, shoot: 'M:plainPierce' }, ctx({ stealthMax: 1 }));
+    const strike = realDps(item, ctx({ stealthMax: 1 }));
+    expect(plain.stealth).toBeLessThan(strike.stealth);
+    expect(plain.spam).toBeCloseTo(strike.spam, 5); // …and the ordinary throw is untouched
+  });
+  test('a seeker keeps coming back, so its time on target is its life and not one fly-past', () => {
+    const seeking = { pen: 4, local: 10, life: 600, homing: { range: 300 } };
+    const straight = { pen: 4, local: 10, life: 600 };
+    const opts = { boss: BOSS_DEFAULT, velocity: 10, arch: 'shot', land: 1 };
+    expect(hitsPerProjectile(seeking, opts).hits).toBeGreaterThan(hitsPerProjectile(straight, opts).hits);
+    expect(hitsPerProjectile(seeking, opts).hits).toBeLessThanOrEqual(4); // its pierce still caps it
+  });
+  test('every factor is a factor: the parts multiply out to the score they explain', () => {
+    // The one rule the model is built on. Three ways it was being broken: a swing part that divided
+    // by a 0.01 floor when the weapon fired nothing (a broadsword read `×364`), a debuff that
+    // *replaced* the running number with its own DoT instead of adding to it, and a grandchild
+    // whose hits went into the total with no part at all.
+    const product = (parts) => parts.reduce((a, p) => (p.mul !== undefined ? a * p.mul : p.value), 1);
+    for (const id of ['v:sword', 'M:starSword', 'M:rogue', 'M:torch', 'M:rangSame', 'M:shatterBrick', 'M:yoyoItem', 'M:whipItem', 'M:staff']) {
+      const r = dps(id, { stealthMax: 1 });
+      for (const [grade, parts] of [[r.spam ?? r.value, r.parts], [r.stealth, r.stealthParts]]) {
+        if (!(grade > 0) || !parts) continue;
+        expect([id, product(parts) / grade]).toEqual([id, expect.closeTo(1, 1)]);
+      }
+    }
+  });
+  test('the distance the player is walked to is one the shot can actually cover', () => {
+    // `closeIn` and `landing` both answer "how far does this carry", and they were answering it
+    // differently — a flat drop tolerance against the boss's half-height, and the stealth strike's
+    // throwing speed ignored. The player was placed at the first answer and scored against the
+    // second, for a flat ×0 on a weapon that reaches perfectly well.
+    const r = dps('M:dropper', { stealthMax: 1 });
+    expect(part(r, /reaches \d+ px/)?.mul ?? 1).toBeGreaterThan(0);
+    expect(r.spam).toBeGreaterThan(0);
+    expect(r.stealth).toBeGreaterThan(0);
+  });
+  test('a weapon that destroys tiles keeps only a fraction of its DPS', () => {
+    // same weapon, same projectile, one of them digs
+    const clean = dps('M:randGun');
+    const digger = realDps({ ...ds.byId.get('M:randGun'), shoot: 'M:fanDig' }, ctx());
+    expect(digger.value).toBeCloseTo(clean.value * TERRAIN_PENALTY, 5);
+    expect(part(digger, /destroys tiles/)).toBeTruthy();
+    // it counts however deep the digging sits: here it is the blast the bomb spawns on death
+    const bomb = realDps({ ...ds.byId.get('M:bomb'), shoot: 'M:digBomb' }, ctx());
+    expect(bomb.value).toBeCloseTo(realDps(ds.byId.get('M:bomb'), ctx()).value * TERRAIN_PENALTY, 5);
+    // both rogue grades take the same cut, so it never decides between spam and stealth
+    const rogue = realDps({ ...ds.byId.get('M:rogue'), shoot: 'M:fanDig' }, ctx());
+    const rogueClean = dps('M:rogue');
+    expect(rogue.stealth).toBeCloseTo(rogueClean.stealth * TERRAIN_PENALTY, 5);
+    expect(rogue.mode).toBe(rogueClean.mode);
+  });
+  test('the blade swings on the animation, not on the use time', () => {
+    // `useTime` only decides how often the item acts inside an animation; a new animation starts as
+    // soon as the last ends, so a 40-tick use time on a 20-tick animation halves the star, not the
+    // swing (Starfury, Ice Blade, Enchanted Sword and Seashine Sword are all that shape)
+    const slow = dps('M:starSword');
+    const plain = dps('v:sword'); // same damage and animation, useTime 20
+    expect(slow.value).toBeCloseTo(plain.value, 5);
+    expect(part(slow, /contact swing every 20 ticks/)).toBeTruthy();
+  });
+  test('a whip is swung at the boss, not thrown at it', () => {
+    const r = dps('M:whipItem');
+    expect(r.arch).toBe('whip');
+    expect(part(r, /px\/tick over/)).toBeUndefined(); // 4 px/tick is how fast it extends, not a flight
+    expect(part(r, /reaches /)).toBeUndefined();
+  });
+  test('a summoner weapon is tagged by the slot it fills, not ranked against the other slots', () => {
+    // a summoner wears a whip *and* minions *and* a sentry, so the tag says which of the three it is
+    expect(dps('M:whipItem').mode).toBe('whip');
+    expect(dps('M:staff').mode).toBe('minion');
+    expect(dps('v:sword').mode).toBe(null); // melee has no slots to tell apart
+  });
+  test("a whip's tag is what the minions carry, so it adds instead of multiplying", () => {
+    const plain = part(dps('M:whipItem'), /summon tag/).mul;
+    const spray = part(dps('M:sprayWhip'), /summon tag/).mul;
+    expect(plain).toBeCloseTo(1 + ARCHETYPE.whip.tag / 2, 1); // 2 lashes/s, one hit each
+    expect(spray).toBeLessThan(plain); // eight extra projectiles do not make the mark eight times as good
+  });
+  test('a launch speed too slow to be one is treated as unread', () => {
+    // 0.1 or 1 px/tick is a projectile whose AI takes over, not a cruising speed
+    expect(dps('M:crawler').value).toBeCloseTo(realDps({ ...ds.byId.get('M:crawler'), shootSpeed: SHOOT_SPEED_UNKNOWN }, ctx()).value, 5);
+    expect(SHOOT_SPEED_MIN).toBeLessThan(SHOOT_SPEED_UNKNOWN);
+  });
+  test('a damage multiplier too large to be one is dropped, not paid', () => {
+    // Wyvern's Call's ×15 is the one branch in ten that fires a wyvern; the linear machine hands it
+    // to the feather, so above the ceiling the child does the weapon's damage
+    const r = dps('M:mulGun');
+    expect(part(r, /pebble on hit/).label).toContain('at 100%');
+    expect(DMG_MUL_MAX).toBeGreaterThan(1);
+  });
+  test('a contact projectile that hits once per NPC ever is on the weapon’s clock, not its own', () => {
+    // `localNPCHitCooldown = -1` is "once, ever" — a new one has to be made before the next hit, so
+    // a slow blade held in the boss is a slow blade, not six hits a second
+    const once = structuredClone(raw);
+    once.projectiles['M:cloud'] = { ...once.projectiles['M:cloud'], local: -1 };
+    const ds2 = indexDataset(once);
+    const r = realDps(ds2.byId.get('M:rod'), ctx({ ds: ds2 }));
+    expect(part(r, /hits\/s in contact/)).toBeUndefined();
+    expect(part(r, /every .* ticks/)).toBeTruthy();
+    expect(r.value).toBeLessThan(dps('M:rod').value);
+  });
+  test('being dragged in closer than the class wants costs, melee included', () => {
+    const near = part(dps('M:rod'), /fights at .* px of the/);        // placed: 80 px of magic's 340
+    expect(near.mul).toBeLessThan(1);
+    expect(near.mul).toBeGreaterThan(RISK.magic);                     // not the whole penalty: it is a share
+    // melee is not exempt: a sword at contact range pays where a yoyo on its string does not
+    const sword = part(dps('v:sword'), /fights at .* px of the/);
+    const yoyo = part(dps('M:yoyoItem'), /fights at .* px of the/);
+    expect(sword.mul).toBeLessThan(1);
+    expect(yoyo).toBeUndefined();                                     // 300 px of reach, 260 px wanted
+    expect(RISK.melee).toBeLessThan(1);
+  });
+  test('the two clicks are two attacks: the weapon is worth its better one, not their sum', () => {
+    const r = dps('M:altBetter');
+    // the left click's projectile dies after 4 ticks and reaches nothing; the right one is the weapon
+    const rightOnly = realDps({ ...ds.byId.get('M:altBetter'), fire: { calls: [{ type: 'M:fan' }], defaultShot: { spam: false, stealth: false } } }, ctx());
+    expect(part(r, /right click: the better/)).toBeTruthy();
+    expect(r.value).toBeCloseTo(rightOnly.value, 5);
+  });
+  test('what one click stocks is the other click’s ammunition, not damage now', () => {
+    const r = dps('M:twoClick');
+    expect(part(r, /pebble is stocked for the other click/i)).toBeTruthy();
+    expect(part(r, /pebble on hit/)).toBeUndefined();
+    // …and without the right click there is nothing to stock it for, so it counts as a hit again
+    const oneClick = realDps({ ...ds.byId.get('M:twoClick'), fire: { calls: [{ type: 'shoot' }], defaultShot: { spam: false, stealth: false } } }, ctx());
+    expect(part(oneClick, /pebble on hit/)).toBeTruthy();
+    expect(oneClick.value).toBeGreaterThan(r.value);
+  });
+  test('every weapon type says how it delivers its damage', () => {
+    // the model branches on nothing else, so a type the miner can emit and the table cannot
+    // describe would silently fall back to "fires once per use"
+    for (const a of ['swing', 'shortsword', 'specialsword', 'spear', 'yoyo', 'flail', 'boomerang',
+      'bow', 'repeater', 'gun', 'launcher', 'flamethrower', 'shot', 'held', 'truemelee', 'placed',
+      'minion', 'sentry', 'whip', 'dagger', 'bomb', 'javelin', 'spikyball']) {
+      expect(ARCHETYPE[a]).toBeDefined();
+      expect(['use', 'flight', 'contact', 'slot']).toContain(ARCHETYPE[a].cycle);
+    }
   });
 });

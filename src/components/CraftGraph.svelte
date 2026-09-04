@@ -3,8 +3,22 @@
   import { elbow, layout, toDisplay } from '../lib/treelayout.js';
   import WikiIcon from './WikiIcon.svelte';
 
-  let { ds, tree, onselect = null, scale = 1 } = $props();
+  let { ds, tree, onselect = null, scale = 1, zoomable = false } = $props();
+  // `scale` is the size the caller wants; when the graph carries its own controls that is only the
+  // starting point, and the buttons take it from there
+  const clamp = (z) => Math.round(Math.min(1.6, Math.max(0.3, z)) * 100) / 100;
+  let step = $state(0);
+  const zoom = $derived(zoomable ? clamp(scale + step * 0.15) : scale);
   const g = $derived(layout(toDisplay(tree)));
+  // the roomy view, in the popover every other big view in the app uses
+  const popId = $props.id();
+  let fullEl = $state(null);
+  let fullZoom = $state(1);
+  const fit = () => {
+    if (!fullEl) return;
+    const pad = 32; // the p-4 around the graph
+    fullZoom = clamp(Math.min(1, Math.min((fullEl.clientWidth - pad) / g.width, (fullEl.clientHeight - pad) / g.height)));
+  };
   const others = $derived(tree.recipes?.filter((r) => !r.chosen) ?? []);
   let showOthers = $state(false);
 
@@ -19,8 +33,9 @@
   const recipeStage = (r) => ds.stages[Math.max(0, ds.stages.findLastIndex((s) => s.progression <= r.prog + 1e-6))]?.label ?? '?';
 </script>
 
-<div style="width:{Math.ceil(g.width * scale)}px; height:{Math.ceil(g.height * scale)}px">
-  <div class="relative" style="width:{g.width}px; height:{g.height}px; transform:scale({scale}); transform-origin:0 0">
+{#snippet graph(z)}
+<div style="width:{Math.ceil(g.width * z)}px; height:{Math.ceil(g.height * z)}px">
+  <div class="relative" style="width:{g.width}px; height:{g.height}px; transform:scale({z}); transform-origin:0 0">
     <svg class="pointer-events-none absolute inset-0" width={g.width} height={g.height} aria-hidden="true">
       {#each g.edges as e, i (i)}
         <path d={elbow(e)} fill="none" shape-rendering="crispEdges"
@@ -53,6 +68,42 @@
     {/each}
   </div>
 </div>
+{/snippet}
+
+{#if zoomable}
+  <!-- with controls the graph owns its viewport, so the buttons can float over a scrolled tree -->
+  <div class="relative border border-line bg-panel2/40">
+    <div class="absolute right-1.5 top-1.5 z-10 flex items-center gap-1">
+      <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (step -= 1)} disabled={zoom <= 0.3} aria-label="Zoom out" title="Draw the tree smaller">−</button>
+      <button type="button" class="lab-btn num px-2 py-0.5" onclick={() => (step = 0)} title="Go back to the starting zoom">{Math.round(zoom * 100)}%</button>
+      <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (step += 1)} disabled={zoom >= 1.6} aria-label="Zoom in" title="Draw the tree bigger">+</button>
+      <button type="button" class="lab-btn px-2 py-0.5" popovertarget={popId} title="Open the whole tree in a bigger view">⤢</button>
+    </div>
+    <div class="max-h-[340px] overflow-auto p-1" style="display:grid; place-content:safe center">{@render graph(zoom)}</div>
+  </div>
+
+  <div id={popId} popover="auto" class="lab-pop col p-0" style="--w:85vw; height:85vh; overflow:hidden"
+       ontoggle={(ev) => ev.newState === 'open' && fit()}>
+    <div class="lab-head shrink-0">
+      <h2>How to get {g.root?.name ?? 'it'}</h2>
+      <span class="lab-meta">
+        <span class="flex items-center gap-1">
+          <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (fullZoom = clamp(fullZoom - 0.15))} aria-label="Zoom out" title="Draw the tree smaller">−</button>
+          <button type="button" class="lab-btn num px-2 py-0.5" onclick={fit} title="Fit the whole tree into the window">{Math.round(fullZoom * 100)}%</button>
+          <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (fullZoom = clamp(fullZoom + 0.15))} aria-label="Zoom in" title="Draw the tree bigger">+</button>
+        </span>
+        <button type="button" class="lab-btn py-0.5" popovertarget={popId} popovertargetaction="hide">Done</button>
+      </span>
+    </div>
+    <!-- `safe` keeps a tree bigger than the window scrollable from its top-left instead of
+         centring it into its own clipped edges -->
+    <div bind:this={fullEl} class="min-h-0 flex-1 overflow-auto p-4" style="display:grid; place-content:safe center">
+      {@render graph(fullZoom)}
+    </div>
+  </div>
+{:else}
+  {@render graph(scale)}
+{/if}
 
 {#if others.length}
   <div class="mt-2">

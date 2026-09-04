@@ -14,7 +14,7 @@ import { playerHooks, normalizeEffects } from './effects.js';
 import { ITEM, Machine, PLAYER, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { extractVanillaDrops } from './loot.js';
 import { extractRecipes } from './recipes.js';
-import { loopCount, projTypeArg, vanillaProjectiles } from './projectiles.js';
+import { loopTracker, projTypeArg, vanillaProjectiles } from './projectiles.js';
 import { vanillaWingStats } from './wings.js';
 import { vectorHook } from './shoot.js';
 
@@ -244,6 +244,20 @@ export function vanillaRecipes(tml) {
       }
       if (recv === TILES && name === 'set_Item' && isNum(args[1]) && args[1] >= 0) { cur.tiles.push(`v:tile:${args[1]}`); return undefined; }
       if (recv === TILES && name === 'Add' && isNum(args[0])) { cur.tiles.push(`v:tile:${args[0]}`); return undefined; }
+      // 1.4.4's array form, which the Tinkerer's combinations and the Ash Wood set are written in:
+      // `SetIngredients(new[]{ id, n, id, n })`, `SetCraftingStation(new[]{ tile })` (a one-element
+      // ingredient array means one of that item)
+      if (recv === CUR && name === 'SetIngredients' && args[0]?.k === 'arr') {
+        const v = args[0].items;
+        cur.ingredients = v.length === 1
+          ? (isNum(v[0]) ? [{ item: `v:${v[0]}`, n: 1 }] : [])
+          : v.flatMap((x, i) => (i % 2 === 0 || !isNum(v[i - 1]) || v[i - 1] <= 0 ? [] : [{ item: `v:${v[i - 1]}`, n: isNum(x) ? x : 1 }]));
+        return undefined;
+      }
+      if (recv === CUR && name === 'SetCraftingStation' && args[0]?.k === 'arr') {
+        for (const t of args[0].items) if (isNum(t) && t >= 0) cur.tiles.push(`v:tile:${t}`);
+        return undefined;
+      }
       if (name === 'AddRecipe' && !callee.sig.hasThis) {
         if (cur.result) out.push({ ...cur, ingredients: cur.ingredients.filter(Boolean) });
         cur = fresh();
@@ -314,7 +328,9 @@ export function extractVanilla(tml) {
       crit: num(f.crit),
       knockback: num(f.knockBack),
       mana: num(f.mana),
-      shoot: num(f.shoot) > 0 ? `v:${f.shoot}` : undefined,
+      // `shoot = type - 3278 + ProjectileID.WoodenYoyo` (the whole vanilla yoyo block) leaves the
+      // key with a running offset instead of a number: resolve it against this item's own id
+      shoot: num(f.shoot) > 0 ? `v:${f.shoot}` : f.shoot?.k === 'key' && f.shoot.offset ? `v:${type - f.shoot.offset}` : undefined,
       shootSpeed: num(f.shootSpeed),
       useAmmo: num(f.useAmmo) > 0 ? f.useAmmo : undefined,
       ammo: num(f.ammo) > 0 ? f.ammo : undefined,
@@ -322,6 +338,9 @@ export function extractVanilla(tml) {
       autoReuse: f.autoReuse === 1 || undefined,
       noMelee: f.noMelee === 1 || undefined,
       useStyle: num(f.useStyle),
+      useLimit: num(f.useLimitPerAnimation),
+      armorPen: num(f.ArmorPenetration),
+      scale: num(f.scale),
       pick: num(f.pick) > 0 ? f.pick : undefined,
       makeNPC: num(f.makeNPC) > 0 ? `v:${f.makeNPC}` : undefined,
       fire: VANILLA_MULTISHOT[internal] !== undefined ? { calls: [{ type: 'shoot', count: VANILLA_MULTISHOT[internal], dmgMul: 1, velMul: 1, abs: null, spread: VANILLA_MULTISHOT[internal] > 1 ? 0.2 : 0, variant: 'both' }], returnsTrue: false, defaultShot: { spam: false, stealth: false }, hasShoot: true } : shots.get(type),
@@ -398,6 +417,7 @@ export function vanillaShoot(tml) {
   const VEC = { k: 'vec', mul: 1, spread: 0 };
   const calls = [];
   const loops = [];
+  const track = loopTracker();
   const machine = new Machine(tml, {
     tml,
     linear: true,
@@ -419,7 +439,8 @@ export function vanillaShoot(tml) {
       return vectorHook(callee, args, ctx);
     },
     onStaticLoad: tmlStaticLoadHook,
-    onBackJump(x, a, b, op, ctx) { if (ctx.method === m) loops.push({ lo: x.operand, hi: x.offset, n: loopCount(a, b, op) }); },
+    onStoreLocal: track.onStoreLocal,
+    onBackJump(x, a, b, op, ctx) { if (ctx.method === m) loops.push({ lo: x.operand, hi: x.offset, n: track.count(x, a, b, op) }); },
   });
   machine.run(m, PLAYER, [UNKNOWN, ITEM_ARG, { k: 'adj', slot: 'dmg', field: 'damage', add: 0, mul: 1 }]);
   for (const c of calls) {

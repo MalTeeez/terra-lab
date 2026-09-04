@@ -2,6 +2,7 @@
   import { CLASS_LABELS, accentOf, eraOf } from '../lib/dataset.js';
   import { ui } from '../lib/state.svelte.js';
   import WikiIcon from './WikiIcon.svelte';
+  import { fmtNum } from '../lib/fmt.js';
 
   let { ds, timeline, onselect } = $props();
   let onlyChanges = $state(true);
@@ -52,7 +53,7 @@
                   <WikiIcon item={lo.weapons[0].item} size={22} />
                   <span>
                     <div class="font-medium">{lo.weapons[0].item.name}</div>
-                    <div class="text-[11px] text-dim"><span class="num">{Math.round(lo.weapons[0].value)}</span> {lo.weapons[0].kind}{lo.weapons[1] ? ` · then ${lo.weapons[1].item.name}` : ''}</div>
+                    <div class="text-[11px] text-dim"><span class="num">{fmtNum(lo.weapons[0].value)}</span> {lo.weapons[0].kind}{lo.weapons[1] ? ` · then ${lo.weapons[1].item.name}` : ''}</div>
                   </span>
                 </button>
               {:else}<span class="text-dim">–</span>{/if}
@@ -60,10 +61,10 @@
             <td class:bg-green-soft={r.changes.has('accessories')}>
               <div class="flex flex-wrap gap-x-1 gap-y-1">
                 {#if lo.wings?.[0]}
-                  <button class="lab-chip py-0 text-[11.5px] font-normal" title="best wings" onclick={() => onselect(lo.wings[0].item.id)}><span class="text-dim">wings</span> {lo.wings[0].item.name} <span class="num text-[10.5px] text-dim">{lo.wings[0].score}</span></button>
+                  <button class="lab-chip py-0 text-[11.5px] font-normal" title="The best wings at this stage" onclick={() => onselect(lo.wings[0].item.id)}><span class="text-dim">wings</span> {lo.wings[0].item.name} <span class="num text-[10.5px] text-dim">{lo.wings[0].score}</span></button>
                 {/if}
                 {#if lo.boots?.[0]}
-                  <button class="lab-chip py-0 text-[11.5px] font-normal" title="best boots" onclick={() => onselect(lo.boots[0].item.id)}><span class="text-dim">boots</span> {lo.boots[0].item.name} <span class="num text-[10.5px] text-dim">{lo.boots[0].score}</span></button>
+                  <button class="lab-chip py-0 text-[11.5px] font-normal" title="The best boots at this stage" onclick={() => onselect(lo.boots[0].item.id)}><span class="text-dim">boots</span> {lo.boots[0].item.name} <span class="num text-[10.5px] text-dim">{lo.boots[0].score}</span></button>
                 {/if}
                 {#each lo.accessories as a}
                   <button class="lab-chip py-0 text-[11.5px] font-normal" onclick={() => onselect(a.item.id)}>{a.item.name} <span class="num text-[10.5px] text-dim">{a.score}</span></button>

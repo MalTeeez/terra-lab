@@ -73,7 +73,10 @@ describe('solver with owned gear', () => {
     const lo = solveLoadout(ds, { cls: 'melee', stage: 0, slots: 2, reforge: 'best', owned: { 'M:sword': { prefix: 'v:Ruthless' } } });
     expect(lo.weapons[0].prefix.name).toBe('Ruthless');
     expect(lo.weapons[0].owned).toBe(true);
-    expect(lo.accessories[0].prefix.name).toBe('Menacing');
+    // pre-boss (progression 0) a boss hit is ~30, so Warding's +4 defense cuts more off it than
+    // Menacing's +4% adds — and melee counts survivability at CLASS_PREF.melee.tank. It flips to
+    // Menacing around Plantera, when defenseScale has fallen far enough.
+    expect(lo.accessories[0].prefix.name).toBe('Warding');
     const onlyOwned = solveLoadout(ds, { cls: 'melee', stage: 0, slots: 2, source: 'owned', owned: { 'M:sword': { prefix: null } } });
     expect(onlyOwned.weapons[0].prefix).toBeNull();
     expect(onlyOwned.accessories.length).toBe(0);

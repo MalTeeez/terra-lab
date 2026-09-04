@@ -24,6 +24,12 @@ export function extractRecipeGroups(asm, { tml, methods, fields = null } = {}) {
     return one ? [one] : [];
   };
   for (const md of candidates) {
+    // `EvilSkinRecipeGroup = new RecipeGroup(…); RegisterGroup("…:EvilSkin", EvilSkinRecipeGroup);`
+    // builds the group, parks it in a static field and reads it back to register it — so the field
+    // has to hold the group across the two statements, or `RegisterGroup` is handed an unknown and
+    // the group is never seen at all.
+    const held = new Map();
+    const fieldKey = (f) => `${f.declaringType?.fullName ?? ''}::${f.name}`;
     const machine = new Machine(asm, {
       tml,
       concreteType: md.declaringType,
@@ -31,9 +37,12 @@ export function extractRecipeGroups(asm, { tml, methods, fields = null } = {}) {
       maxDepth: 2,
       budget: 400000,
       onLoad: () => undefined,
-      onStaticLoad: tmlStaticLoadHook,
+      onStaticLoad: (f) => held.get(fieldKey(f)) ?? tmlStaticLoadHook(f),
       // `RecipeGroupID.Wood = RegisterGroup("Wood", ...)` / a mod's `static int AnyGoldBar`: the field stands for the group
-      onStaticStore(f, val) { if (val?.k === 'groupid' && fields) fields.set(`${f.declaringType?.fullName ?? ''}::${f.name}`, val.name); },
+      onStaticStore(f, val) {
+        if (val?.k === 'group') held.set(fieldKey(f), val);
+        if (val?.k === 'groupid' && fields) fields.set(fieldKey(f), val.name);
+      },
       onNew(callee, args) {
         const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
         if (/\bRecipeGroup$/.test(decl)) return { k: 'group', name: null, items: args.slice(1).flatMap(itemsOf) };
@@ -48,6 +57,9 @@ export function extractRecipeGroups(asm, { tml, methods, fields = null } = {}) {
           args[1].name = args[0];
           out.push({ name: args[0], items: [...new Set(args[1].items)] });
           args[1].items = [];
+          // the field the group was parked in now stands for it, the same as one holding the id:
+          // that is how `recipe.AddRecipeGroup(EvilSkinRecipeGroup, 6)` elsewhere finds its name
+          if (fields) for (const [k, v] of held) if (v === args[1]) fields.set(k, args[0]);
           return { k: 'groupid', name: args[0] };
         }
         // `AnyGoldBarGroup = RegisterGroup(...)` through a property setter: the field stands for the group
