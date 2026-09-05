@@ -11,6 +11,7 @@ const defaults = {
   accRows: 3,         // rows of accessories visible before the list scrolls
   requireSet: false,
   unknownStage: false,
+  sound: true,        // interaction sounds (see lib/sound.js)
   // modifiers
   conds: [],          // active difficulty / mode flags (from dataset.conditions)
   seeds: [],          // special world seeds that are on (from dataset.seeds) — a normal world by default
@@ -32,7 +33,7 @@ const defaults = {
   panel: null,        // null | 'gear' | 'calibrate'
   // item browser: the filter column (null ranges follow the view)
   // `hidden` lists the table columns folded away, so a column added later shows up by default
-  browse: { slots: [], classes: [], mods: [], stage: null, score: null, features: [], sources: [], sort: 'value', hidden: ['mod'] },
+  browse: { slots: [], classes: [], mods: [], stage: null, score: null, features: [], sources: [], types: [], sort: 'value', hidden: ['mod'] },
   // item browser: free-text search
   query: '',
   selected: null,
@@ -43,7 +44,9 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...defaults };
     const saved = JSON.parse(raw);
-    return { ...defaults, ...saved, selected: null, panel: null };
+    // `browse` is the one nested object here, so a filter added later is missing from every saved
+    // one — and `B().types.length` on a stale record throws before the page draws anything
+    return { ...defaults, ...saved, browse: { ...defaults.browse, ...saved.browse }, selected: null, panel: null };
   } catch {
     return { ...defaults };
   }

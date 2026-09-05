@@ -28,6 +28,7 @@
  * Every factor is reported in `parts` ({ label, mul | value }) so the item card shows the
  * arithmetic. Scoring stays pessimistic: what the miner could not read gets the worse assumption.
  */
+import { contactPhase, debuffPhases, deliveryPhases, primaryPhase, returnPhase, spawnPhases, summonPhase, swingPhase, textGates } from './phases.js';
 import { effectiveStats } from './stats.js';
 
 // ---- calibration knobs ------------------------------------------------------------------------
@@ -185,6 +186,24 @@ export const STEALTH_MAX_DEFAULT = 0.5;
 export const manaRegen = (progression) => 1.5 + 0.35 * Math.max(0, progression ?? 7) + 8;
 /** However short of mana a weapon runs, the player still fires it sometimes. */
 export const SUSTAIN_FLOOR = 0.35;
+/**
+ * What a debuff the miner could not price is worth, in DPS, at a progression value. 577 of the
+ * debuffs weapons apply have no record at all (a mod's own slow, mark or curse) — they are still
+ * something done to the target, so a flat allowance stands in, growing with the stage and kept
+ * under the median DoT the miner *could* read at that stage (10 pre-Hardmode, 15–20 through the
+ * mechs, 100 past Moon Lord). A phase carrying it says it is a guess.
+ */
+export const unknownDebuffDps = (progression) => 4 + 1.2 * Math.max(0, progression ?? 7);
+/**
+ * SOTS's void bar, as a mana-like pool: what comes back per second at a progression value. The
+ * bare meter refills `5 + gain` every 900 regen-ticks (`VoidPlayer.UpdateVoidRegen`), a third of a
+ * point a second, and the class lives off void gain from gear, souls and hits on top of that —
+ * none of which the miner reads. A calibration knob, set so that a mid-cost weapon (costs run
+ * 3–60, mostly 4–20) at an ordinary use rate sits between the floor and full sustain: the
+ * *differences* in cost are what the extraction is for, and a regen that floors the whole class
+ * would throw them away.
+ */
+export const voidRegen = (progression) => 5 + 1.5 * Math.max(0, progression ?? 7);
 /** Turn inertia of a homing projectile that does not say (`velocity = (velocity·(N−1) + …)/N`). */
 export const HOMING_INERTIA = 20;
 /**
@@ -348,7 +367,10 @@ export function bossOf(ds, stageIndex) {
     parts: Math.max(1, ids.length),
     worm,
     immune,
-    immuneAll: stats.length ? stats.every((s) => s.immuneAll || s.immuneUnknown) : true,
+    // an immunity table the miner could not walk is not an immunity: 102 of the 135 stage targets
+    // were "unknown", and reading that as "immune to everything" switched every debuff off against
+    // nearly every mod boss. Unread means unread; only a table that was read and says so counts.
+    immuneAll: stats.length ? stats.every((s) => s.immuneAll) : true,
   };
 }
 
@@ -441,15 +463,19 @@ export function flightOf(p, v, D) {
  * @param {object} o        { D, boss, spread, fan, count, velocity, vb }
  * @returns {{ f: number, parts: Array }}
  */
-export function landing(p, { D, boss: b, spread = 0, fan = false, count = 1, velocity = null, vb = 5, arch = null }) {
+export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, count = 1, velocity = null, vb = 5, arch = null, reach: reachIn = null }) {
   const parts = [];
+  // a scatter wider than a full circle is a full circle: rolls stacked on an angle add up past it
+  const spread = Math.min(spreadIn, Math.PI);
   let f = 1;
   const aimW = b.aimW ?? b.w;
   const theta = Math.atan(aimW / 2 / Math.max(1, D));
 
   // aim: a random spread only lands the share of its cone inside the silhouette; a fan puts its
   // shots at fixed angles, so a wide boss catches several of them and a narrow one catches one
-  if (spread > 0 && spread > theta) {
+  // a fixed angle off the cursor on a single shot is aimed with, not scattered: the player turns
+  // the cursor by that much. Only a roll (`fan` false) or a fan wider than the target loses shots.
+  if (spread > 0 && spread > theta && !(fan && count === 1)) {
     let s;
     if (fan && count > 1) {
       const step = (2 * spread) / (count - 1);
@@ -518,7 +544,8 @@ export function landing(p, { D, boss: b, spread = 0, fan = false, count = 1, vel
     // stop at the turn-around before it reverses, so a throw whose limit is 300 px is already
     // crawling at 220. Feeding the turn-around through the same band is what stops the model
     // charging a weapon a round trip to 300 px and then letting it land hits at 1470.
-    const reach = Math.min(turnsRoundAt(arch), reachOf(p, step, b.h / 2));
+    // a blade states its reach outright; anything thrown has it read off its flight
+    const reach = reachIn ?? Math.min(turnsRoundAt(arch), reachOf(p, step, b.h / 2));
     if (reach < D) carry = 0;
     else if (reach < 2 * D) carry = clamp((reach - D) / D, RANGE_EDGE, 1);
     if (carry < 1) { f *= carry; parts.push({ label: `reaches ${Math.round(reach)} px of ${Math.round(D)}`, mul: r2(carry) }); }
@@ -528,8 +555,19 @@ export function landing(p, { D, boss: b, spread = 0, fan = false, count = 1, vel
   // `aim` is the same answer without the range term: a projectile that has already arrived at the
   // first body is standing in the crowd, so what it costs to carry that far is paid once, on the
   // first hit, and must not be charged again against every body it pierces into.
-  return { f, parts, aim: carry > 0 ? f / carry : 0 };
+  // everything this function prices is "does the shot get there", so the whole list is one factor
+  return { f, parts: parts.map((x) => ({ fac: 'landing', ...x })), aim: carry > 0 ? f / carry : 0 };
 }
+
+/**
+ * The blade has to land like anything else does. It was the one phase credited with a full hit
+ * every animation — no lead on a moving boss, no reach — so on a sword that also fires, the blade
+ * took a third to a half of the score. It goes through the same landing model as every projectile:
+ * a hitbox that comes out to the blade's reach in half a swing, so it pays the boss's drift while
+ * the arc comes round and the same band a shot pays for only just reaching. What the split between
+ * blade and shot then is, is whatever those two terms say.
+ */
+export const bladeLanding = ({ D, boss: b, vb, reach, ticks }) => landing(null, { D, boss: b, velocity: (2 * reach) / Math.max(1, ticks), vb, reach });
 
 /** Parts of the boss one projectile can reach on a single pass. */
 /**
@@ -580,7 +618,7 @@ export function asTarget(b, mode = 'auto') {
  * a homing projectile manages and a dumb one fired across a room mostly does not.
  * @returns {{ hits: number, label: string|null }}
  */
-export function hitsPerProjectile(p, { boss: b, velocity, arch, D = 0, land = 1, aim = land }) {
+export function hitsPerProjectile(p, { boss: b, velocity, arch, D = 0, land = 1, aim = land, interval = null }) {
   // a negative hit cooldown means "once per NPC, ever" — it is not a rate. Without any local
   // immunity the projectile falls back to the player's own 10-tick window on that NPC.
   const local = localOf(p);
@@ -602,8 +640,11 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, D = 0, land = 1,
   if (p?.sticks) {
     if (!local) return { hits: 1, label: 'sticks in the first thing it hits' };
     const stuck = Math.min(p.life ?? 300, STUCK_TICKS);
-    const hits = Math.min(pen === -1 ? Infinity : Math.max(1, pen), 1 + stuck / imm);
-    return { hits, label: `sticks in the target: ${r1(hits)} hits over ${Math.round(stuck)} ticks` };
+    // A tick the tooltip states is a clock the miner could not follow — a `timer % 60` in the AI
+    // behind a one-tick immunity — and it can only be slower than the immunity, never faster.
+    const tick = Math.max(imm, interval ?? 0);
+    const hits = Math.min(pen === -1 ? Infinity : Math.max(1, pen), 1 + stuck / tick);
+    return { hits, ticks: hits - 1, stuck, tick, label: `sticks in the target: ${r1(hits)} hits over ${Math.round(stuck)} ticks${tick > imm ? ` (one every ${Math.round(tick)})` : ''}` };
   }
   // a contact weapon's hits come from its contact rate, not from a pass through the target, and a
   // whip lashes once through the arc rather than piercing along it
@@ -669,6 +710,12 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, D = 0, land = 1,
 /** Contact archetypes hit on the projectile's own clock, not the weapon's use time. */
 const CONTACT = new Set(Object.keys(ARCHETYPE).filter((a) => ARCHETYPE[a].cycle === 'contact'));
 /**
+ * Contact weapons whose projectile is *left behind* rather than held: they accumulate, so what is
+ * on the boss is a lifetime's worth of casting bounded by whatever cap the code states. A yoyo, a
+ * flail and a held beam are the opposite — the player has the one they are holding.
+ */
+const PERSIST = new Set(['placed', 'spikyball']);
+/**
  * Does what this weapon fires cross the gap to the boss, or is it an extension of the player?
  *
  * A whip's lash, a spear's thrust, a beam, a yoyo on its string, a cloud you place: all of them are
@@ -718,23 +765,14 @@ export function engagement(cls, arch, playstyle) {
  * @returns {{ perUse: number, parts: Array, primary: object|null, contact: object|null }}
  */
 function variantHits(item, ds, fire, variant, base, ctxIn) {
-  const { boss: b, D, vb, arch, alt = false } = ctxIn;
+  const { boss: b, D, vb, arch, alt = false, rate: useRate = 0, text = null } = ctxIn;
   const parts = [];
   const primaryId = variant === 'stealth' && fire?.stealthMods?.type ? fire.stealthMods.type : fire?.typeOverride ?? base.primaryId;
   const primary = asStrike(proj(ds, primaryId), variant);
-  // …and only the calls this click makes: a weapon with a right-click has two attacks, and an
-  // unguarded call belongs to both
-  const calls = (fire?.calls ?? []).filter((c) => (!c.variant || c.variant === variant) && (c.alt === undefined || c.alt === alt));
-  /**
-   * What the *other* click fires directly. A projectile this attack spawns on hit that the other
-   * one throws is ammunition it is stocking, not damage it is dealing — Sahara Slicers' daggers hand
-   * you two bolts per hit and the right click throws them, so counting the bolts here and again as
-   * the other attack pays for the same projectile twice.
-   */
-  const stocked = new Set((fire?.calls ?? [])
-    .filter((c) => c.alt !== undefined && c.alt !== alt)
-    .map((c) => (c.type === 'shoot' ? primaryId : c.type)));
-  const dflt = fire?.defaultShot ? fire.defaultShot[variant] : !fire?.calls?.length || fire?.returnsTrue === true;
+  // What this click, in this stealth state, puts in the air — as phase records rather than as a
+  // walk over `fire.calls`, so what the weapon *does* is inspectable apart from what it is worth.
+  // They come back in the order the arithmetic pays for them.
+  const { phases, stocked } = deliveryPhases(fire, { variant, alt, primaryId });
   const velMul = (variant === 'stealth' && fire?.stealthMods?.velMul) || fire?.velMul || 1;
   // a weapon that is held at the boss rather than thrown at it has no flight to model, whatever its
   // `shootSpeed` says; anything that does cross the gap is flown at the pessimistic default when the
@@ -742,51 +780,114 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
   const shotVelocity = flies(arch) ? flightSpeed((base.shootSpeed || SHOOT_SPEED_UNKNOWN) * velMul) : null;
 
   /** One `NewProjectile` group (or the default shot): landed hits, and the children it brings. */
-  const group = (p, { n, spread, fan, velocity, dmgMul, label }) => {
+  const group = (p, { n, spread, fan, velocity, dmgMul, label, id = null, interval = null, maxActive = null, threshold = null, cooldown = null }) => {
     const land = landing(p, { D, boss: b, spread, fan, count: n, velocity, vb, arch });
-    const hp = hitsPerProjectile(p, { boss: b, velocity, arch, D, land: land.f, aim: land.aim });
+    const hp = hitsPerProjectile(p, { boss: b, velocity, arch, D, land: land.f, aim: land.aim, interval });
     if (p?.local !== undefined) sharesIframes = false; // this group hits on its own clock
     // In a crowd, a projectile that cannot carry into a second body spends the whole throw on one
     // of the bodies in front of you — and on whichever one it happened to meet, often one already
     // dying. That unspent coverage is the real cost of a single-hit weapon here, and charging it
     // is what puts a reflecting boomerang or a one-hit dagger below a weapon that sweeps.
-    const waste = b.targets === 'multi' && !hp.spread ? CROWD_WASTE : 1;
-    if (waste !== 1) parts.push({ label: `${label ? `${label} ` : ''}reaches one body of the ${segmentsOf(b)} in front of you`, mul: waste });
-    const own = n * land.f * hp.hits * waste * (dmgMul ?? 1);
+    let hits = hp.hits;
+    let links = null;
+    // A link is maintained, not stacked. What ticks on the boss is what is *alive* — arrivals per
+    // second times how long each stays — capped by the weapon's own limit and by the bodies there
+    // are to link, so recasting keeps the links up rather than adding a lifetime of ticks per cast.
+    // Uncapped this is exactly `1 + stuck / tick` per projectile; the cap is the only new fact.
+    const landed = useRate * n * land.f;
+    if (p?.sticks && maxActive > 0 && hp.ticks > 0 && landed > 0) {
+      const bodies = segmentsOf(b);
+      const alive = Math.min(maxActive, bodies, (landed * hp.stuck) / 60);
+      const ticksPerSec = (alive * 60) / hp.tick;
+      hits = 1 + Math.min(hp.ticks, ticksPerSec / landed);
+      // the casts per second that keep this many links up, which is what the pool actually pays for
+      const needed = alive / (hp.stuck / 60) / Math.max(1e-6, n * land.f);
+      links = { alive, needed, label: `${r1(alive)} of up to ${maxActive} links maintained on ${bodies} ${bodies === 1 ? 'body' : 'bodies'}: ${r1(ticksPerSec)} ticks/s`, mul: r2(hits / hp.hits) };
+    }
+    // each cast links one body, but successive casts link different ones: links across more than
+    // one body are not a throw spent on one of them
+    const waste = b.targets === 'multi' && !hp.spread && !(links?.alive > 1) ? CROWD_WASTE : 1;
+    if (waste !== 1) parts.push({ fac: 'target', label: `${label ? `${label} ` : ''}reaches one body of the ${segmentsOf(b)} in front of you`, mul: waste });
+    const own = n * land.f * hits * waste * (dmgMul ?? 1);
     // Each projectile in the group spawns its own children, so the children are counted for *one*
     // of them and multiplied back up — which is also the unit `CHILD_CAP` is written in. Adding one
     // group's worth for the whole fan is why a four-knife stealth strike got the same allowance of
     // spawned projectiles as a single throw, and it is the strikes with several projectiles that
     // the guides pick a rogue weapon for. The step ratios are unchanged by this: base and total are
     // both per projectile, so the parts still multiply out.
-    const kids = childHits(ds, p, { boss: b, D, vb, arch, parentLand: land.f, variant, base: own / Math.max(1, n), stocked });
+    const kids = childHits(ds, p, { boss: b, D, vb, arch, parentLand: land.f, variant, base: own / Math.max(1, n), stocked, parentId: id, threshold, cooldown, parentRate: useRate * n });
     const pre = label ? `${label} ` : n > 1 ? `${n}× ` : '';
-    if (n > 1) parts.push({ label: `${pre}${n} projectiles per use`, mul: n });
+    if (n > 1) parts.push({ fac: 'hits', label: `${pre}${n} projectiles per use`, mul: n });
     for (const x of land.parts) parts.push({ ...x, label: `${pre}${x.label}` });
-    if (hp.label) parts.push({ label: `${pre}${hp.label}`, mul: r2(hp.hits) });
-    if (dmgMul !== undefined && dmgMul !== 1) parts.push({ label: `${pre}${Math.round(dmgMul * 100)}% damage`, mul: r2(dmgMul) });
+    if (hp.label) parts.push({ fac: 'hits', label: `${pre}${hp.label}`, mul: r2(hp.hits) });
+    if (links) parts.push({ fac: 'hits', label: `${pre}${links.label}`, mul: links.mul });
+    if (dmgMul !== undefined && dmgMul !== 1) parts.push({ fac: 'damage', label: `${pre}${Math.round(dmgMul * 100)}% damage`, mul: r2(dmgMul) });
     for (const x of kids.parts) parts.push({ ...x, label: `${pre}${x.label}` });
-    return own + n * kids.hits;
+    // the cascade's hits were counted for one projectile of the group; every projectile spawns its own
+    return {
+      own, kids: n * kids.hits, spawned: kids.phases.map((k) => ({ ...k, hitsPerUse: n * k.hitsPerUse })),
+      // no immunity of its own: it goes through the player's window on the target, with everything else that does
+      shared: p?.local === undefined,
+      needed: links?.needed ?? null,
+    };
   };
 
   // does every projectile this weapon fires share the player's immunity window on the target?
   let sharesIframes = true;
+  // What each delivery phase spawns, as phases of their own: the blast, the splinters, the field
+  // the blast leaves. They were evaluated inside the cascade all along but never surfaced, so a
+  // cascade collapsed into its parent's share and a graph could not show it.
+  const spawned = new Map();
+  // the cast rate each delivery needs: null where it is simply fired every use
+  const needs = [];
+  /** One delivery phase, evaluated against this target. */
+  const evaluate = (ph) => {
+    const p = ph.id === 'default' || ph.projId === primaryId ? primary : asStrike(proj(ds, ph.projId), variant);
+    // What the tooltip says where the code gave nothing: the tick and the link cap belong to a
+    // projectile that stays in the target, the hit counter to what its landing sets off. Read onto
+    // the record so the graph states the fact and where it came from.
+    if (text && p?.sticks) {
+      ph.duration = Math.min(p.life ?? 300, STUCK_TICKS);
+      if (text.interval && !(ph.interval > 0)) { ph.interval = text.interval; ph.evidence = { ...ph.evidence, interval: text.evidence.interval }; ph.confidence = 'text'; }
+      if (text.maxActive && !(ph.maxActive > 0)) { ph.maxActive = text.maxActive; ph.evidence = { ...ph.evidence, maxActive: text.evidence.maxActive }; ph.confidence = 'text'; }
+    }
+    const g = group(p, {
+      interval: ph.interval,
+      maxActive: ph.maxActive,
+      threshold: text?.threshold ?? null,
+      cooldown: text?.cooldown ?? null,
+      n: ph.count,
+      spread: ph.spread,
+      fan: ph.fan,
+      velocity: ph.absVelocity ?? (shotVelocity ? shotVelocity * ph.velMul : null),
+      // an unreadably large multiplier is evidence of a branch, not of damage: the record keeps what
+      // the miner read and the reading rule is applied here, where the model can be argued with
+      dmgMul: dmgShare(ph.dmgMul),
+      id: ph.id,
+    });
+    const hits = g.own + g.kids;
+    // a roll the miner read the odds of: the shot happens that often, rather than every time
+    const roll = ph.chance > 0 && ph.chance < 1 ? ph.chance : 1;
+    const rolled = hits * roll;
+    if (rolled !== hits) parts.push({ fac: 'hits', label: `fires on a 1-in-${r1(1 / ph.chance)} roll`, mul: r2(ph.chance) });
+    // what this phase alone puts on the target per use of the weapon. Kept on the record so the
+    // graph can say what each phase is worth instead of only what the weapon is worth: a phase with
+    // no share of the damage is a phase nobody can check. The cascade's share is on its own records.
+    ph.hitsPerUse = g.own * roll;
+    ph.shared = g.shared;
+    needs.push(g.needed);
+    spawned.set(ph.id, g.spawned.map((k) => ({ ...k, region: ph.region, hitsPerUse: k.hitsPerUse * roll })));
+    return rolled;
+  };
   // alternatives of one if/else do not add up
   const groups = new Map();
-  for (const c of calls) {
-    const key = c.region ?? 'top';
-    const g = groups.get(key) ?? { hits: 0, parts: [] };
+  for (const ph of phases) {
+    if (ph.region === 'default') continue;
+    const g = groups.get(ph.region) ?? { hits: 0, parts: [] };
     const before = parts.length;
-    const p = c.type === 'shoot' ? primary : asStrike(proj(ds, c.type), variant);
-    g.hits += group(p, {
-      n: c.count ?? 1,
-      spread: c.spread ?? 0,
-      fan: !!c.fan,
-      velocity: c.abs ?? (shotVelocity ? shotVelocity * (c.velMul ?? 1) : null),
-      dmgMul: dmgShare(c.dmgMul ?? 1),
-    });
+    g.hits += evaluate(ph);
     g.parts.push(...parts.splice(before));
-    groups.set(key, g);
+    groups.set(ph.region, g);
   }
   let perUse = 0;
   const top = groups.get('top');
@@ -796,11 +897,19 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
   const alts = [...groups.entries()].filter(([k]) => k !== 'top').map(([, g]) => g).sort((a, c) => c.hits - a.hits);
   if (alts.length) {
     perUse += alts.reduce((sum, g) => sum + g.hits, 0) / alts.length;
+    // the model cannot read which branch runs, so it fires their average — and each branch is
+    // therefore worth its share of one firing, not a whole one. Without this the graph claims more
+    // hits than the weapon was credited with, by exactly the number of branches.
+    for (const ph of [...phases, ...[...spawned.values()].flat()]) if (ph.region !== 'top' && ph.region !== 'default' && ph.hitsPerUse != null) ph.hitsPerUse /= alts.length;
     parts.push(...alts[0].parts);
-    if (alts.length > 1) parts.push({ label: `${alts.length} alternative shots, one of them fires`, mul: r2(alts.reduce((sum, g) => sum + g.hits, 0) / alts.length / Math.max(0.01, alts[0].hits)) });
+    if (alts.length > 1) parts.push({ fac: 'hits', label: `${alts.length} alternative shots, one of them fires`, mul: r2(alts.reduce((sum, g) => sum + g.hits, 0) / alts.length / Math.max(0.01, alts[0].hits)) });
   }
-  if (dflt || !calls.length) perUse += group(primary, { n: 1, spread: 0, fan: false, velocity: shotVelocity, dmgMul: 1 });
-  return { perUse, parts, primary, contact: CONTACT.has(arch) ? primary : null, sharesIframes };
+  for (const ph of phases) if (ph.region === 'default') perUse += evaluate(ph);
+  // each delivery followed by what it spawns, so the graph reads as the cascade it is
+  const graph = phases.flatMap((ph) => [ph, ...(spawned.get(ph.id) ?? [])]);
+  // only when every delivery is a maintained one is the weapon cast less often than it could be
+  const neededRate = needs.length && needs.every((x) => x != null) ? Math.max(...needs) : null;
+  return { perUse, parts, phases: graph, primary, contact: CONTACT.has(arch) ? primary : null, sharesIframes, neededRate };
 }
 
 /**
@@ -808,35 +917,35 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
  * what the parent did: an on-hit child only exists if the parent hit, an on-death child that was
  * meant to explode on the boss only helps when the parent missed if the blast is big enough.
  */
-function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, base = 0, stocked = null, depth = 0, scale = 1 }) {
+function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, base = 0, stocked = null, depth = 0, scale = 1, parentId = null, threshold = null, cooldown = null, parentRate = 0 }) {
   const parts = [];
-  if (!p?.children || depth > 1) return { hits: 0, parts };
+  // the spawn records, each carrying `hitsPerUse` — its hits per *parent projectile*, in hits of
+  // the weapon's damage, the same unit `total` and `CHILD_CAP` are in
+  const phases = [];
+  if (!p?.children || depth > 1) return { hits: 0, parts, phases };
   let total = 0;
   // children *add* hits, so each one's share of the weapon is what it adds on top of everything
   // before it — printing every child as `×(1 + its own hits)` made a projectile with five of them
   // read as ×593 on the item card when the five together are worth `CHILD_CAP`
   const step = (before, after) => r2((base + after) / Math.max(0.01, base + before));
-  for (const c of p.children) {
-    // a rogue projectile does different things on a stealth strike than on a normal throw, and the
-    // miner says which: Throwing Brick only shatters into its five fragments on the stealth strike,
-    // so counting them on every throw was most of why it outscored the weapons the guides pick
-    if (c.stealth !== undefined && c.stealth !== (variant === 'stealth')) continue;
+  for (const ph of spawnPhases(p, { variant, parentId })) {
+    const c = { type: ph.projId, where: ph.evidence.where };
     // it is what the weapon's other click throws: this attack is stocking it, not landing it
     if (stocked?.has(c.type)) { parts.push({ label: `${nameOf(c.type)} is stocked for the other click, not damage now`, mul: 1 }); continue; }
     const cp = asStrike(proj(ds, c.type), variant);
-    const n = Math.min(c.count ?? 1, 8);
+    const n = Math.min(ph.count, 8);
     // a child spawned with a *number* for its damage is not this weapon's DPS — and a child spawned
     // with 0 is not damage at all. A third of the children in the pool are that: blood splatters,
     // sparkles, the bell a Thorium accessory rings on hit. They were counting as a full extra hit of
     // the parent's damage, which more than doubled 205 weapons.
-    const dmg = c.dmgMul === undefined ? (c.dmgAbs === undefined ? CHILD_DMG_UNREAD : null) : dmgShare(c.dmgMul);
+    const dmg = ph.dmgMul === null ? (ph.dmgAbs === null ? CHILD_DMG_UNREAD : null) : dmgShare(ph.dmgMul);
     if (dmg === null) continue;
     // does it get to the boss?
     let reachShare;
     // an on-hit child only exists when the parent hit, and one spawned on death only lands where
     // the parent died — on the boss if it connected, and otherwise only if the blast reaches back
-    if (c.where === 'hit') reachShare = clamp(parentLand, 0, 1);
-    else if (c.where === 'kill') {
+    if (ph.trigger === 'hit') reachShare = clamp(parentLand, 0, 1);
+    else if (ph.trigger === 'death') {
       const blast = cp?.explode ?? cp?.width ?? 0;
       const stray = clamp(blast / Math.max(1, 2 * b.w), 0, 1);
       reachShare = clamp(parentLand, 0, 1) + (1 - clamp(parentLand, 0, 1)) * stray;
@@ -852,34 +961,56 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, base = 0,
     // pool says it keeps ticking — one hit per cooldown for as long as it lasts.
     const lingers = cp?.local > 0;
     let hits;
-    if (c.where === 'kill') {
+    if (ph.trigger === 'death') {
       const cap = cp?.pen === -1 ? Infinity : Math.max(1, cp?.pen ?? 1);
       hits = lingers ? Math.min(cap, 1 + Math.min(cp.life ?? 0, STUCK_TICKS) / cp.local) : 1;
     } else {
       hits = Math.min(hitsPerProjectile(cp, { boss: b, velocity: 8, arch: 'shot' }).hits, 2);
     }
-    const own = scale * n * reachShare * hits * dmg;
+    // a spawn behind a roll the miner priced happens that often, not on every parent event
+    const roll = ph.chance > 0 && ph.chance < 1 ? ph.chance : 1;
+    // …and one behind a hit counter happens once per that many landed hits. The tooltip's counter
+    // describes what the weapon's own shot sets off, so it is read on the first generation only.
+    // ponytail: a share is not a miss probability, so "in a row" is read as "N hits"; the
+    // run-completion form would need a per-shot landing chance the model does not have.
+    const every = depth === 0 && threshold > 1 && (ph.trigger === 'hit' || ph.trigger === 'death') ? threshold : 1;
+    if (every > 1) { ph.threshold = every; ph.confidence = 'text'; }
+    // …and one on a stated cooldown fires at most that often, however fast the parent lands:
+    // activations per parent projectile can be no more than `60 / cooldown` per second of them
+    let gate = roll / every;
+    if (depth === 0 && cooldown > 0 && parentRate > 0 && (ph.trigger === 'hit' || ph.trigger === 'death')) {
+      const most = 60 / (cooldown * parentRate);
+      if (most < gate) { gate = most; ph.cooldown = cooldown; ph.confidence = 'text'; }
+    }
+    const own = scale * n * reachShare * hits * dmg * gate;
     if (own <= 0.01) continue;
-    parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type)} ${CHILD_WHERE[c.where] ?? ''} (+${r1(own)} hits at ${Math.round(scale * dmg * 100)}%)`, mul: step(total, total + own) });
+    parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type)} ${CHILD_WHERE[c.where] ?? ''}${roll < 1 ? ` on a 1-in-${r1(1 / roll)} roll` : ''}${every > 1 ? `, once per ${every} landed hits` : ''}${ph.cooldown ? `, at most once per ${r1(ph.cooldown / 60)} s` : ''} (+${r1(own)} hits at ${Math.round(scale * dmg * 100)}%)`, mul: step(total, total + own) });
     total += own;
+    phases.push({ ...ph, hitsPerUse: own, shared: cp?.local === undefined });
     // What this child in turn spawns. `scale` carries down everything already paid to get here —
     // how many of the parent there are, how often it arrives, and what share of the weapon's damage
     // it does — because a grandchild is worth its own share *of that*, not of the whole weapon.
     // Without it the acid a Contaminated Bile's blast leaves behind was priced at half the weapon's
     // damage rather than a fifth, and its hits were added to the total with no part accounting for
     // them at all, so the stealth strike's factors stopped multiplying out to its own score.
-    const deeper = childHits(ds, cp, { boss: b, D, vb, arch, parentLand: reachShare, variant, base: base + total, stocked, depth: depth + 1, scale: scale * n * reachShare * dmg });
+    const deeper = childHits(ds, cp, { boss: b, D, vb, arch, parentLand: reachShare, variant, base: base + total, stocked, depth: depth + 1, scale: scale * n * reachShare * dmg, parentId: ph.id });
     parts.push(...deeper.parts);
+    phases.push(...deeper.phases);
     total += deeper.hits;
   }
   if (total > CHILD_CAP) {
     parts.push({ label: `spawned projectiles capped at +${CHILD_CAP} hits (spawn rate unread)`, mul: step(total, CHILD_CAP) });
+    // the cap is a ceiling on the cascade as a whole, so every phase in it keeps its share of it
+    for (const ph of phases) ph.hitsPerUse *= CHILD_CAP / total;
     total = CHILD_CAP;
   }
-  return { hits: total, parts };
+  // a child projectile is extra hits, whatever it is called
+  return { hits: total, parts: parts.map((x) => ({ fac: 'hits', ...x })), phases };
 }
 
 const nameOf = (id) => String(id).split(':').pop().replace(/([a-z])([A-Z])/g, '$1 $2').replace(/Proj(ectile)?$/, '').trim();
+/** A projectile id as the item card names it. */
+export const projName = nameOf;
 
 /** Calamity's stealth strike damage multiplier for a weapon at full stealth. */
 export function stealthMultiplier(useTime, stealthMax = STEALTH_MAX_DEFAULT, ds = null) {
@@ -916,7 +1047,7 @@ function gradeWeapon(item, ctx = {}) {
   if (listed > PLACEHOLDER_DAMAGE) {
     return {
       value: 0, kind: 'per hit', mode: null, dps: null, rate: null, critMult: 1, eff, hit: 0, boss: b, arch,
-      parts: [{ label: `${listed} damage is a placeholder, not a number the game balances around`, value: 0 }],
+      parts: [{ fac: 'damage', label: `${listed} damage is a placeholder, not a number the game balances around`, value: 0 }],
     };
   }
   // A boss's defense comes off every hit as a flat number, so *where* in the calculation it lands
@@ -927,57 +1058,82 @@ function gradeWeapon(item, ctx = {}) {
   // `ctx.loadout` is the gear the solver actually picked; the progression curve is the fallback for
   // a weapon graded on its own (the browser, a bare `weaponDps`).
   const stageLabel = ds?.stages?.[ctx.stage ?? 0]?.label ?? 'stage';
-  const buff = 1 + (ctx.loadout ? ctx.loadout.damage : playerDamage(ds?.stages?.[ctx.stage ?? 0]?.progression) - 1);
+  // A void weapon is its vanilla class underneath: SOTS's VoidMelee takes every melee modifier the
+  // gear carries on top of the void ones, so what the loadout gives that class counts too.
+  const sub = item.subclass && ctx.loadoutFor ? ctx.loadoutFor(item.subclass) : null;
+  const buff = 1 + (ctx.loadout ? ctx.loadout.damage + (sub?.damage ?? 0) : playerDamage(ds?.stages?.[ctx.stage ?? 0]?.progression) - 1);
   const raw = listed * buff;
-  parts.push({ label: ammo ? `${eff.damage} + ${ammo.damage} (${ammo.name})` : `${eff.damage} damage`, value: listed });
-  if (buff !== 1) parts.push({ label: `+${Math.round((buff - 1) * 100)}% ${cls} damage ${ctx.loadout ? 'from the loadout' : `a ${stageLabel} loadout carries`}`, mul: r2(buff) });
+  parts.push({ fac: 'damage', label: ammo ? `${eff.damage} + ${ammo.damage} (${ammo.name})` : `${eff.damage} damage`, value: listed });
+  if (buff !== 1) parts.push({ fac: 'damage', label: `+${Math.round((buff - 1) * 100)}% ${cls}${sub?.damage ? ` and ${item.subclass}` : ''} damage ${ctx.loadout ? 'from the loadout' : `a ${stageLabel} loadout carries`}`, mul: r2(buff) });
 
-  const primaryId = isAmmo ? ammo?.shoot ?? null : item.shoot ?? null;
+  // The ammo names the projectile for a gun or a bow — the arrow is what flies. A flamethrower is
+  // the other shape: `useAmmo` is Gel, which is consumed and fires nothing, and the flame is the
+  // weapon's own `shoot`. Reading the ammo's projectile as the only answer threw that away whenever
+  // the ammo did not resolve, and 35 weapons — most of the flamethrowers, a third of the launchers —
+  // were graded with no projectile at all: no pierce, no lifetime, no homing, nothing.
+  const primaryId = (isAmmo ? ammo?.shoot : null) ?? item.shoot ?? null;
   const primary = proj(ds, primaryId);
 
   // ---- debuffs the boss is not immune to: DoT on top, defense debuffs off its armour
-  const debuffs = [];
-  for (const src of [primary, ...(item.fire?.calls ?? []).map((c) => proj(ds, c.type === 'shoot' ? primaryId : c.type))]) {
-    for (const d of src?.debuffs ?? []) if (!debuffs.includes(d)) debuffs.push(d);
-  }
+  const debuffs = debuffPhases([primary, ...(item.fire?.calls ?? []).map((c) => proj(ds, c.type === 'shoot' ? primaryId : c.type))]);
   let dot = 0;
   let defenseDebuff = 0;
   const applied = [];
-  for (const d of debuffs) {
-    if (immuneTo(b, d)) continue;
-    const rec = ds?.debuffs?.[d];
-    if (!rec) continue;
-    dot += rec.dot ?? 0;
-    defenseDebuff += rec.defense ?? 0;
-    applied.push(rec.name ?? nameOf(d));
+  const prog = b.progression ?? ds?.stages?.[ctx.stage ?? 0]?.progression;
+  for (const ph of debuffs) {
+    if (immuneTo(b, ph.buffId)) continue;
+    const rec = ds?.debuffs?.[ph.buffId];
+    if (rec?.dot || rec?.defense) {
+      ph.dot = rec.dot ?? 0;
+      dot += ph.dot;
+      defenseDebuff += rec.defense ?? 0;
+      applied.push(rec.name ?? nameOf(ph.buffId));
+      continue;
+    }
+    // a debuff with no readable effect is still something done to the target: a flat allowance
+    // for the stage stands in, and the phase says so
+    ph.dot = unknownDebuffDps(prog);
+    ph.confidence = 'assumed';
+    ph.evidence = { ...ph.evidence, effect: 'unread' };
+    dot += ph.dot;
+    applied.push(`${rec?.name ?? nameOf(ph.buffId)} (effect unread: ${r1(ph.dot)}/s assumed)`);
   }
-  if (debuffs.length && !applied.length) parts.push({ label: `${debuffs.length} debuff${debuffs.length > 1 ? 's' : ''}, ${b.name ?? 'the boss'} is immune`, mul: 1 });
+  if (debuffs.length && !applied.length) parts.push({ fac: 'debuff', label: `${debuffs.length} debuff${debuffs.length > 1 ? 's' : ''}, ${b.name ?? 'the boss'} is immune`, mul: 1 });
 
   // ---- armour
   const armorPen = (item.armorPen ?? 0) + (primary?.armorPen ?? 0);
   const hit = hitDamage(raw, b, armorPen, defenseDebuff);
-  if (hit !== raw) parts.push({ label: `${b.name ?? 'boss'} defense ${b.defense}${defenseDebuff ? ` ${defenseDebuff}` : ''}${armorPen ? `, ${Math.round(armorPen)} armor pen` : ''}`, value: r1(hit) });
+  if (hit !== raw) parts.push({ fac: 'target', label: `${b.name ?? 'boss'} defense ${b.defense}${defenseDebuff ? ` ${defenseDebuff}` : ''}${armorPen ? `, ${Math.round(armorPen)} armor pen` : ''}`, value: r1(hit) });
 
   // ---- summons keep their slot model; their ranged children go through the landing model
   if (cls === 'summon' && (arch === 'minion' || arch === 'sentry') && primary) {
-    const local = primary.local;
+    const summon = summonPhase(primary, arch, { projId: primaryId });
+    // A negative hit cooldown is not a rate: it means the projectile hits a given NPC once and
+    // never again, and `60 / -1` is a *negative* hit rate — Terraprisma scored −8,829/s and the
+    // Sanguine Staff −2,619/s, both of them weapons the guides pick. Everywhere else in the model
+    // reads this through `localOf`, which maps anything at or below zero to "unread"; this branch
+    // was the one place taking it raw. The record keeps the mined value; the reading happens here.
+    const local = summon.cooldown > 0 ? summon.cooldown : null;
     const sentry = arch === 'sentry';
     let hps = local ? Math.min(60 / local, 3) : sentry ? 1.5 : 2;
-    const ranged = (primary.children ?? []).filter((c) => c.where === 'ai');
+    // what it shoots while it fights: the spawn phases that run on their own clock
+    const ranged = spawnPhases(primary, { variant: 'spam' }).filter((ph) => ph.trigger === 'timer');
     if (ranged.length) {
-      const land = landing(proj(ds, ranged[0].type), { D: 200, boss: b, velocity: 8, vb });
-      hps = 1.5 * Math.min(4, ranged.reduce((s, c) => s + (c.count ?? 1), 0)) * Math.max(0.3, land.f);
+      const land = landing(proj(ds, ranged[0].projId), { D: 200, boss: b, velocity: 8, vb });
+      hps = 1.5 * Math.min(4, ranged.reduce((s, ph) => s + ph.count, 0)) * Math.max(0.3, land.f);
     }
-    const slots = primary.slots || 1;
-    parts.push({ label: `${r1(hps)} hits/s per ${sentry ? 'sentry' : 'minion'}`, mul: r1(hps) });
-    if (slots !== 1) parts.push({ label: `${r2(slots)} minion slot${slots > 1 ? 's' : ''}`, mul: r2(1 / slots) });
+    const slots = summon.resource.cost;
+    parts.push({ fac: 'hits', label: `${r1(hps)} hits/s per ${sentry ? 'sentry' : 'minion'}`, mul: r1(hps) });
+    if (slots !== 1) parts.push({ fac: 'hits', label: `${r2(slots)} minion slot${slots > 1 ? 's' : ''}`, mul: r2(1 / slots) });
     let value = (hit * hps) / slots;
     // a minion has to keep up with the boss; a sentry stands where it was put and only connects
     // while the fight comes back to it
     const up = uptimeOf(arch);
-    if (up < 1) { value *= up; parts.push({ label: `${sentry ? 'stationary' : 'chasing the boss'}: ${Math.round(up * 100)}% of the time on it`, mul: r2(up) }); }
-    if (dot) { parts.push({ label: `${applied.join(', ')} (${r1(dot)} DPS)`, mul: r2((value + dot) / Math.max(0.01, value)) }); value += dot; }
-    return { value, kind: 'dps', mode: arch, dps: value, rate: null, critMult: 1, eff, parts, hit, boss: b, arch };
+    if (up < 1) { value *= up; parts.push({ fac: 'landing', label: `${sentry ? 'stationary' : 'chasing the boss'}: ${Math.round(up * 100)}% of the time on it`, mul: r2(up) }); }
+    const dotOn = Math.min(1, hps);
+    if (dot) { parts.push({ fac: 'debuff', label: `${applied.join(', ')} (${r1(dot)} DPS)`, mul: r2((value + dot * dotOn) / Math.max(0.01, value)) }); value += dot * dotOn; }
+    return { value, kind: 'dps', mode: arch, dps: value, rate: null, critMult: 1, eff, parts, hit, boss: b, arch,
+      phases: [{ ...summon, hitsSec: r2(hps), contribution: r1(value - dot * dotOn) }, ...debuffs.map((ph) => ({ ...ph, contribution: r1((ph.dot ?? 0) * dotOn) }))] };
   }
   if (cls === 'summon' && !primary && !item.shoot) return { value: hit, kind: 'per hit', mode: null, dps: null, rate: null, critMult: 1, eff, parts, hit, boss: b, arch };
 
@@ -987,6 +1143,8 @@ function gradeWeapon(item, ctx = {}) {
   const time = Math.max(ut, ua) + (item.reuseDelay ?? 0);
   if (!time) return { value: hit, kind: 'per hit', mode: null, dps: null, rate: null, critMult: 1, eff, parts, hit, boss: b, arch };
   const trueMelee = !item.noMelee && (arch === 'swing' || arch === 'shortsword');
+  // the root of the graph: the clock every other phase hangs off
+  const graph = [primaryPhase({ useTicks: time, maxActive: item.maxOut ?? null, projId: primaryId })];
   const perAnim = Math.min(item.useLimit ?? Infinity, !trueMelee && ut > 0 && ua > ut * 1.5 ? Math.max(1, Math.round(ua / ut)) : 1);
   const rate = (60 * perAnim) / time;
   /**
@@ -1000,19 +1158,20 @@ function gradeWeapon(item, ctx = {}) {
   const swingRate = 60 / (ua + (item.reuseDelay ?? 0));
   // …and the crit the loadout carries, which nothing used to add: a weapon was graded at its printed
   // crit, 4% where the player swinging it has 21.
-  const critChance = eff.crit + (cls === 'summon' ? 0 : ctx.loadout?.crit ?? 0);
+  const critChance = eff.crit + (cls === 'summon' ? 0 : (ctx.loadout?.crit ?? 0) + (sub?.crit ?? 0));
   const critMult = cls === 'summon' ? 1 : 1 + Math.min(100, critChance) / 100;
 
-  // ---- sustain
-  let sustain = 1;
-  if (item.mana > 0 && (cls === 'magic' || cls === 'healer' || cls === 'bard')) {
-    const mps = eff.mana * rate;
-    const available = manaRegen(ds?.stages?.[ctx.stage ?? 0]?.progression);
-    sustain = clamp(available / Math.max(0.01, mps), SUSTAIN_FLOOR, 1);
-  }
+  // ---- sustain: the pool the weapon spends against what comes back, at the rate it is actually
+  // cast. A maintained phase (a tether kept up) needs far fewer casts than the use time allows.
+  const pool = item.mana > 0 && (cls === 'magic' || cls === 'healer' || cls === 'bard') ? { name: 'mana', cost: eff.mana, regen: manaRegen(prog) }
+    : cls === 'void' && item.voidCost > 0 ? { name: 'void', cost: item.voidCost, regen: voidRegen(prog) }
+    : null;
+  const sustainAt = (castRate) => (pool ? clamp(pool.regen / Math.max(0.01, pool.cost * castRate), SUSTAIN_FLOOR, 1) : 1);
 
   const fire = item.fire ?? null;
   const base = { primaryId, shootSpeed: item.shootSpeed ?? null };
+  // the gates the tooltip states, for the clocks and counters the interpreter could not follow
+  const text = item.tooltip ? textGates(item.tooltip) : null;
   // How far in the weapon makes the player come: as far as its shot actually carries, no further.
   // The player then stands at that edge and pays the range band for it — walking in to half the
   // reach instead (which is what a player really does, and would cancel the band) was measured and
@@ -1025,9 +1184,18 @@ function gradeWeapon(item, ctx = {}) {
     ? Math.min(turnsRoundAt(arch), reachOf(primary, flightSpeed((item.shootSpeed || SHOOT_SPEED_UNKNOWN) * velMul), b.h / 2))
     : Infinity);
 
-  /** One grade of the weapon (spam / stealth) on one click, at its own engagement distance. */
-  const variant = (name, alt = false) => {
+  const shoots = !!primaryId || !!fire?.calls?.length || isAmmo;
+  // a blade walks the player in to where it reaches, like a short throw does: `REACH` is the
+  // archetype's reach, the item's `scale` is this blade's
+  const bladeReach = (REACH[arch] ?? REACH.swing) * (item.scale ?? 1);
+  /**
+   * One grade of the weapon (spam / stealth) on one click, at its own engagement distance. A sword
+   * that also fires has two stances — in close, where the blade connects, or back at the shot's
+   * range, where it does not and the risk is not paid either — and `best` takes the better.
+   */
+  const variant = (name, alt = false, stance = 'close') => {
     const vparts = [];
+    const vphases = [];
     // the two rogue grades are their own playstyle; every other class keeps the one it was given
     const rogue = cls === 'rogue' || cls === 'thrower';
     const style = rogue ? { ...ctx.playstyle, [cls]: name } : ctx.playstyle;
@@ -1038,13 +1206,20 @@ function gradeWeapon(item, ctx = {}) {
     // short-ranged weapon at zero. Half the reach, so the shot still arrives with life left for the
     // hits the pierce model counts on.
     const reach = closeIn((name === 'stealth' && fire?.stealthMods?.velMul) || fire?.velMul || 1);
-    const D = clamp(Math.min(want, reach), MIN_ENGAGE, want);
-    const shoots = !!primaryId || !!fire?.calls?.length || isAmmo;
-    const v = shoots ? variantHits(item, ds, fire, name, base, { boss: b, D, vb, arch, alt }) : null;
+    const D = clamp(Math.min(want, reach, trueMelee && stance === 'close' ? bladeReach : Infinity), MIN_ENGAGE, want);
+    const v = shoots ? variantHits(item, ds, fire, name, base, { boss: b, D, vb, arch, alt, rate, text }) : null;
+    // the casts the cycle actually needs: a maintained phase is recast only as its links lapse
+    const castRate = v?.neededRate != null ? Math.min(rate, v.neededRate) : rate;
+    const sustain = sustainAt(castRate);
+    if (v?.phases) vphases.push(...v.phases);
     let perUse = v ? v.perUse : 0;
     // the swing itself: one hit per animation, at the reach the item's size buys — on the
     // animation's clock, which is not always the clock what it fires comes off
-    const swingHps = trueMelee ? swingRate * clamp((item.scale ?? 1) * 0.85, 0.6, 1.2) : 0;
+    const swing = trueMelee ? swingPhase({ swingTicks: ua + (item.reuseDelay ?? 0), scale: item.scale ?? 1 }) : null;
+    if (swing) vphases.push(swing);
+    const blade = swing ? bladeLanding({ D, boss: b, vb, reach: bladeReach, ticks: ua }) : null;
+    if (blade) swing.evidence = { ...swing.evidence, reach: bladeReach };
+    let swingHps = swing ? swingRate * clamp((item.scale ?? 1) * 0.85, 0.6, 1.2) * blade.f : 0;
     if (v) vparts.push(...v.parts);
 
     // contact weapons hit on the projectile's clock: a yoyo out at the boss, a beam held on it
@@ -1063,7 +1238,9 @@ function gradeWeapon(item, ctx = {}) {
       // the projectile's own hit cooldown is the rate: how often it may hit the same target while
       // the player keeps it there. The pass-through pierce count does not apply to something
       // already in contact.
-      const own = localOf(v.contact);
+      const held = contactPhase(v.contact, arch, { projId: primaryId, maxActive: item.maxOut ?? null, channel: !!item.channel });
+      vphases.push(held);
+      const own = held.cooldown;
       const local = own ?? IMMUNITY;
       const yoyoRange = v.contact.yoyo?.range;
       const inRange = yoyoRange ? clamp(yoyoRange / Math.max(1, D), 0.3, 1) : 1;
@@ -1071,10 +1248,22 @@ function gradeWeapon(item, ctx = {}) {
       // but only if it *owns* one. A projectile that sets no immunity of its own goes through the
       // player's single window on that NPC, so a second one of those, and every child it spawns,
       // is queueing for the same clock rather than starting another.
-      const stacks = own ? clamp(perUse, 0, 4) : Math.min(clamp(perUse, 0, 4), segmentsOf(b));
+      // How many of it are on the boss at once. Four was a flat ceiling standing in for the game's
+      // own answer; where the code states a cap — the projectile refusing to let more of itself
+      // exist, or the weapon refusing to fire another — that is the number, and it can be lower or
+      // higher than four. Without one the flat ceiling stays, and says so in the arithmetic.
+      const capN = held.maxActive ?? 4;
+      // How many are on the boss at once. A weapon you *hold* has what it threw this use, and no
+      // more: the beam, the yoyo on its string, the blade in your hand. A weapon you *place* is the
+      // other shape — the cloud stays where it was dropped and the next one goes out before the
+      // last has expired, so what accumulates is a lifetime's worth of casting, not one use's.
+      // `perUse` answered that for both, which is why a cloud living ten seconds and one living one
+      // second were worth the same.
+      const stacks = own ? clamp(perUse, 0, capN) : Math.min(clamp(perUse, 0, capN), segmentsOf(b));
       hps = (60 / local) * inRange * stacks;
-      vparts.push({ label: `${r1(60 / local)} hits/s in contact (${local}-tick ${own ? 'immunity' : "player immunity: one clock, whatever it throws"})`, mul: r1(60 / local) });
-      if (inRange < 1) vparts.push({ label: `${Math.round(yoyoRange)} px of string against ${Math.round(D)} px`, mul: r2(inRange) });
+      vparts.push({ fac: 'hits', label: `${r1(60 / local)} hits/s in contact (${local}-tick ${own ? 'immunity' : "player immunity: one clock, whatever it throws"})`, mul: r1(60 / local) });
+      if (held.maxActive && perUse > held.maxActive) vparts.push({ fac: 'hits', label: `at most ${held.maxActive} out at once`, mul: 1 });
+      if (inRange < 1) vparts.push({ fac: 'landing', label: `${Math.round(yoyoRange)} px of string against ${Math.round(D)} px`, mul: r2(inRange) });
     } else {
       // a 'flight' weapon is gone until it comes home: the round trip is the clock it hits on, and
       // the use time is only a floor under it. This is the whole difference between a boomerang and
@@ -1087,13 +1276,15 @@ function gradeWeapon(item, ctx = {}) {
         const trip = Math.min(FLIGHT_CAP, (2 * out) / v0);
         // how many the weapon lets you have out at once, read off its `CanUseItem`
         const n = item.maxOut ?? 1;
+        const back = returnPhase({ tripTicks: trip, maxActive: n, projId: primaryId });
+        vphases.push(back);
         if (trip / n > time) {
-          useRate = (60 * n) / trip;
-          vparts.push({ label: `${n > 1 ? `${n} out at a time` : 'one out at a time'}: ${Math.round(trip)} ticks out to ${Math.round(out)} px and back`, mul: r2(useRate / rate) });
+          useRate = (60 * n) / back.cooldown;
+          vparts.push({ fac: 'hits', label: `${n > 1 ? `${n} out at a time` : 'one out at a time'}: ${Math.round(trip)} ticks out to ${Math.round(out)} px and back`, mul: r2(useRate / rate) });
         }
       }
       hps = useRate * perUse;
-      vparts.unshift({ label: perAnim > 1 ? `${perAnim} shots every ${r1(time)} ticks` : `every ${r1(time)} ticks`, mul: r2(rate), unit: '/s' });
+      vparts.unshift({ fac: 'hits', label: perAnim > 1 ? `${perAnim} shots every ${r1(time)} ticks` : `every ${r1(time)} ticks`, mul: r2(rate), unit: '/s' });
       if (swingHps > 0) {
         // The chain up to here is the hit times whatever clock the *shot* runs on, and for a weapon
         // that fires nothing that clock never entered it — only the use rate did. Dividing by a
@@ -1101,10 +1292,13 @@ function gradeWeapon(item, ctx = {}) {
         // 110 of the 217 grades whose factors did not multiply out were this one line. Where the
         // chain really is at zero (it shoots, and none of it lands) no multiplier can lift it, so
         // the swing restates the number rather than scaling it.
-        const label = `contact swing every ${r1(ua)} ticks${item.scale && item.scale !== 1 ? ` (size ×${r2(item.scale)})` : ''}`;
+        // the blade's landing is folded into this one factor: the swing is a share of the total,
+        // and a multiplier on the whole chain cannot scale only that share
+        const landed = blade.parts.map((x) => `${x.label} ×${x.mul}`).join(', ');
+        const label = `contact swing every ${r1(ua)} ticks${item.scale && item.scale !== 1 ? ` (size ×${r2(item.scale)})` : ''}${landed ? `; blade ${landed}` : ''}`;
         const before = v ? hps : rate;
-        if (before > 0) vparts.push({ label, mul: r2((hps + swingHps) / before) });
-        else vparts.push({ label, value: r1(r1(hit) * (hps + swingHps)) });
+        if (before > 0) vparts.push({ fac: 'hits', label, mul: r2((hps + swingHps) / before) });
+        else vparts.push({ fac: 'hits', label, value: r1(r1(hit) * (hps + swingHps)) });
         hps += swingHps;
       }
       // A projectile that sets no immunity of its own goes through the player's window on that NPC,
@@ -1112,7 +1306,12 @@ function gradeWeapon(item, ctx = {}) {
       // the whole thing cannot land more than six hits a second on one part, however many shots or
       // pierces it has. Local immunity is what buys a weapon out of that, which is why the weapons
       // that really do hit a lot have it.
-      if (!v || v.sharesIframes) {
+      // …per immunity group: the phases that share the player's window are capped on their sum,
+      // and a phase with a clock of its own keeps it. One flag for the whole weapon let a single
+      // projectile with local immunity free everything else the weapon throws from the window.
+      {
+        const shared = v ? v.phases.filter((ph) => ph.shared && ph.hitsPerUse > 0) : [];
+        const sharedHps = useRate * shared.reduce((s, ph) => s + ph.hitsPerUse, 0) + swingHps;
         // …but that is a *sustained* limit, and a stealth strike is not sustained: it lands its
         // whole burst at once and then waits out the recharge, so what the immunity window allows
         // it is the recharge's worth of ticks, not one use's. Reading it off the use rate capped a
@@ -1120,7 +1319,14 @@ function gradeWeapon(item, ctx = {}) {
         // ceiling on exactly the multi-projectile strikes the guides pick a weapon *for*.
         const window = name === 'stealth' ? stealthRecharge(ds) * rate : 1;
         const capHps = (60 / IMMUNITY) * segmentsOf(b) * window;
-        if (hps > capHps) { vparts.push({ label: `${r1(hps)} hits/s share the player's ${IMMUNITY}-tick immunity window`, mul: r2(capHps / hps) }); hps = capHps; }
+        if (sharedHps > capHps) {
+          const k = capHps / sharedHps;
+          for (const ph of shared) ph.hitsPerUse *= k;
+          swingHps *= k;
+          const after = hps - sharedHps + capHps;
+          vparts.push({ fac: 'target', label: `${r1(sharedHps)} hits/s share the player's ${IMMUNITY}-tick immunity window`, mul: r2(after / hps) });
+          hps = after;
+        }
       }
     }
 
@@ -1130,7 +1336,7 @@ function gradeWeapon(item, ctx = {}) {
     // a blade that hits a given NPC once, a cloud with no cooldown of its own — quietly got its
     // uptime back and scored *higher* than the same weapon with a hit cooldown.
     const up = uptimeOf(arch);
-    if (up < 1) { vparts.push({ label: `${Math.round(up * 100)}% of the time on the boss`, mul: r2(up) }); hps *= up; }
+    if (up < 1) { vparts.push({ fac: 'landing', label: `${Math.round(up * 100)}% of the time on the boss`, mul: r2(up) }); hps *= up; }
 
     // A whip tags the boss and the minions do the rest — and what the minions then add does not
     // depend on how many projectiles this particular lash throws. Scaling the tag by the whip's own
@@ -1139,16 +1345,16 @@ function gradeWeapon(item, ctx = {}) {
     const tag = ARCHETYPE[arch]?.tag;
     if (tag && perUse > 0) {
       const marked = tag * clamp(perUse, 0, 1);
-      vparts.push({ label: `summon tag: minions carry the mark (+${r1(marked)} hits/s)`, mul: r2((hps + marked) / Math.max(0.01, hps)) });
+      vparts.push({ fac: 'hits', label: `summon tag: minions carry the mark (+${r1(marked)} hits/s)`, mul: r2((hps + marked) / Math.max(0.01, hps)) });
       hps += marked;
     }
 
     // pierce falloff, averaged over the hits one projectile lands
     const fo = falloffAvg(v?.primary?.falloff ?? 1, Math.max(1, perUse));
-    if (fo < 1) { hps *= fo; vparts.push({ label: `${Math.round((v.primary.falloff ?? 1) * 100)}% damage per extra pierce`, mul: r2(fo) }); }
+    if (fo < 1) { hps *= fo; vparts.push({ fac: 'damage', label: `${Math.round((v.primary.falloff ?? 1) * 100)}% damage per extra pierce`, mul: r2(fo) }); }
 
-    if (critMult !== 1) vparts.push({ label: `${r1(critChance)}% crit${ctx.loadout?.crit ? ` (${eff.crit} on the weapon, +${Math.round(ctx.loadout.crit)} from the loadout)` : ''}`, mul: r2(critMult) });
-    if (sustain < 1) vparts.push({ label: `${r1(eff.mana * rate)} mana/s vs ${r1(manaRegen(ds?.stages?.[ctx.stage ?? 0]?.progression))} regen`, mul: r2(sustain) });
+    if (critMult !== 1) vparts.push({ fac: 'damage', label: `${r1(critChance)}% crit${ctx.loadout?.crit ? ` (${eff.crit} on the weapon, +${Math.round(ctx.loadout.crit)} from the loadout)` : ''}`, mul: r2(critMult) });
+    if (sustain < 1) vparts.push({ fac: 'resource', label: `${r1(pool.cost * castRate)} ${pool.name}/s vs ${r1(pool.regen)} regen${castRate < rate ? ` (casting ${r1(castRate)}/s keeps the links up)` : ''}`, mul: r2(sustain) });
 
     // The guides' `†`, priced: how far short of where the class would rather be this weapon drags
     // the player, whatever did the dragging — the weapon type's reach or its own shot's. A cliff at
@@ -1156,15 +1362,30 @@ function gradeWeapon(item, ctx = {}) {
     // difference between a yoyo and a pair of short daggers is *where along the way in* you end up.
     const exposure = clamp(1 - D / Math.max(1, prefer), 0, 1);
     const risk = 1 - (1 - (RISK[cls] ?? 0.85)) * exposure;
-    if (risk < 0.995) vparts.push({ label: `${arch} fights at ${Math.round(D)} px of the ${Math.round(prefer)} px ${cls} wants`, mul: r2(risk) });
+    if (risk < 0.995) vparts.push({ fac: 'cost', label: `${arch} fights at ${Math.round(D)} px of the ${Math.round(prefer)} px ${cls} wants`, mul: r2(risk) });
 
-    return { hps, parts: vparts, risk, D, rate: useRate };
+    // ---- what each phase is worth, as its share of the hits the weapon lands -------------------
+    // The weapon-level factors (uptime, the tag, pierce falloff, the shared immunity cap) act on
+    // everything at once, so the shares are taken raw and then scaled to the total. That makes the
+    // contributions add up to the score by construction rather than by hope — which is the one
+    // property that lets a phase graph be checked at all.
+    const rawOf = (ph) => (ph.id === 'swing' ? swingHps : ph.hitsPerUse != null ? useRate * ph.hitsPerUse : 0);
+    const rawSum = vphases.reduce((s, ph) => s + rawOf(ph), 0);
+    for (const ph of vphases) {
+      ph.hitsSec = rawSum > 0 ? (rawOf(ph) / rawSum) * hps : 0;
+      ph.rate = ph.id === 'swing' ? swingRate : useRate;
+    }
+    return { hps, parts: vparts, risk, D, rate: useRate, phases: vphases, sustain };
   };
 
+  // A debuff is only on the boss while the weapon keeps landing: one hit a second keeps any of
+  // them up, a weapon that lands nothing applies nothing. Aphelion landed 0 hits and was paid its
+  // whole DoT.
+  const dotUp = (hps) => clamp(hps, 0, 1);
   const withDebuff = (v) => {
-    const value = v.hps * hit * critMult * sustain * v.risk;
+    const value = v.hps * hit * critMult * v.sustain * v.risk;
     if (!dot) return value;
-    return value + dot;
+    return value + dot * dotUp(v.hps);
   };
 
   /**
@@ -1174,13 +1395,16 @@ function gradeWeapon(item, ctx = {}) {
    * averaging them as if a coin decided which fired.
    */
   const clicks = (fire?.calls ?? []).some((c) => c.alt !== undefined) ? [false, true] : [false];
+  // a sword that fires further than it reaches can be used from back there instead
+  const stances = trueMelee && shoots && closeIn(1) > bladeReach ? ['close', 'back'] : ['close'];
   const best = (name) => {
     let pick = null;
-    for (const alt of clicks) {
-      const r = { ...variant(name, alt), alt };
-      if (!pick || r.hps * r.risk > pick.hps * pick.risk) pick = r;
+    for (const alt of clicks) for (const stance of stances) {
+      const r = { ...variant(name, alt, stance), alt, stance };
+      if (!pick || r.hps * r.sustain * r.risk > pick.hps * pick.sustain * pick.risk) pick = r;
     }
-    if (clicks.length > 1) pick.parts = [...pick.parts, { label: `${pick.alt ? 'right' : 'left'} click: the better of the weapon's two attacks`, mul: 1 }];
+    if (clicks.length > 1) pick.parts = [...pick.parts, { fac: 'hits', label: `${pick.alt ? 'right' : 'left'} click: the better of the weapon's two attacks`, mul: 1 }];
+    if (pick.stance === 'back') pick.parts = [...pick.parts, { fac: 'landing', label: `stands back at ${Math.round(pick.D)} px, out of the blade's reach: the shot alone beats swinging in close`, mul: 1 }];
     return pick;
   };
 
@@ -1189,12 +1413,19 @@ function gradeWeapon(item, ctx = {}) {
   // The debuff *adds* its damage over time to what the weapon does, so the part that explains it is
   // the factor it adds. As a bare `value` it replaced the running number instead, which is why a
   // Spore Knife's factors multiplied out to the poison alone and none of the knife.
-  const dotPart = (v) => (dot ? [{ label: `${applied.join(', ')} (${r1(dot)} DPS)`, mul: r2((v + dot) / Math.max(0.01, v)) }] : []);
-  const dbg = dotPart(spamValue - (dot ?? 0));
+  const dotPart = (v, up = 1) => (dot ? [{ fac: 'debuff', label: `${applied.join(', ')} (${r1(dot)} DPS${up < 0.995 ? `, up ${Math.round(up * 100)}% of the time at ${r1(up)} hits/s` : ''})`, mul: r2((v + dot * up) / Math.max(0.01, v)) }] : []);
+  const dbg = dotPart(spamValue - dot * dotUp(spam.hps), dotUp(spam.hps));
   const out = {
     kind: 'dps', mode: null, rate: r2(rate), critMult, eff, hit, boss: b, arch, ammo, distance: spam.D,
     parts: [...parts, ...spam.parts, ...dbg],
     spam: spamValue, value: spamValue, dps: spamValue,
+    // every damaging phase priced in the same units as the score, so the graph can be read as an
+    // account of where the number came from: the shares sum to the weapon's own DPS
+    phases: [
+      ...graph,
+      ...spam.phases.map((ph) => ({ ...ph, contribution: r1(ph.hitsSec * hit * critMult * spam.sustain * spam.risk) })),
+      ...debuffs.map((ph) => ({ ...ph, contribution: r1((ph.dot ?? 0) * dotUp(spam.hps)) })),
+    ],
   };
 
   // ---- Calamity rogue: stealth strike as the alternative grade. Every rogue weapon strikes from
@@ -1215,11 +1446,11 @@ function gradeWeapon(item, ctx = {}) {
     const stealthValue = strike + dot;
     out.stealth = stealthValue;
     out.stealthParts = [
-      { label: `${eff.damage} damage`, value: hit },
-      { label: `stealth strike ×${r2(mult)} (max stealth ${Math.round(smax * 100)})`, mul: r2(mult) },
-      ...(dmgMul !== 1 ? [{ label: `${Math.round(dmgMul * 100)}% damage each on the strike's projectiles`, mul: r2(dmgMul) }] : []),
+      { fac: 'damage', label: `${eff.damage} damage`, value: hit },
+      { fac: 'damage', label: `stealth strike ×${r2(mult)} (max stealth ${Math.round(smax * 100)})`, mul: r2(mult) },
+      ...(dmgMul !== 1 ? [{ fac: 'damage', label: `${Math.round(dmgMul * 100)}% damage each on the strike's projectiles`, mul: r2(dmgMul) }] : []),
       ...st.parts.filter((p) => !/ticks$|\/s$/.test(p.label) || p.unit !== '/s'),
-      { label: `one strike per ${r1(recharge)} s (the bar fills in ${r1(recharge)} s of a fight)`, mul: r2(1 / recharge) },
+      { fac: 'hits', label: `one strike per ${r1(recharge)} s (the bar fills in ${r1(recharge)} s of a fight)`, mul: r2(1 / recharge) },
       ...dotPart(strike), // the strike is its own running total, so the DoT is its own factor here
     ];
     // Stealth is not an alternative to throwing, it is what happens *while* you throw: stealth
@@ -1266,7 +1497,7 @@ export function digsTiles(item, ctx = {}) {
 export function realDps(item, ctx = {}) {
   const out = gradeWeapon(item, ctx);
   if (!digsTiles(item, ctx)) return out;
-  const note = { label: 'destroys tiles: the blast takes the arena with it', mul: TERRAIN_PENALTY };
+  const note = { fac: 'cost', label: 'destroys tiles: the blast takes the arena with it', mul: TERRAIN_PENALTY };
   for (const k of ['value', 'dps', 'spam', 'stealth']) if (typeof out[k] === 'number') out[k] *= TERRAIN_PENALTY;
   out.parts = [...out.parts, note];
   if (out.stealthParts) out.stealthParts = [...out.stealthParts, note];

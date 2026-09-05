@@ -21,7 +21,7 @@ const VANILLA_GEN_TYPES = /^Terraria\.(WorldGen|GameContent\.Biomes|GameContent\
 export function extractVanillaChests(tml) {
   const out = [];
   const seen = new Set();
-  const add = (id, ctx, via, style, tile) => {
+  const add = (id, ctx, via, style, tile, filler) => {
     if (!isNum(id) || id <= 0) return;
     const st = style ?? ctx?.cases?.find((c) => c.slot === 'style' && isNum(c.value))?.value;
     const tt = tile ?? ctx?.cases?.find((c) => c.slot === 'tile' && isNum(c.value))?.value;
@@ -29,7 +29,9 @@ export function extractVanillaChests(tml) {
     if (seen.has(k)) return;
     seen.add(k);
     const gates = siteGates(ctx).filter((g) => !/^Zone/.test(g));
-    out.push({ item: `v:${id}`, style: st, tile: tt, via, cond: gates.length ? gates : undefined });
+    // a filler the case tracker could not key to a chest style is a last resort, not a source that
+    // beats real evidence: it waits until everything else has had its turn (see `estimated`)
+    out.push({ item: `v:${id}`, style: st, tile: tt, via, cond: gates.length ? gates : undefined, estimated: filler ? true : undefined });
   };
   const prog = progressionHooks();
   const wg = tml.typeByName.get('Terraria.WorldGen');
@@ -45,8 +47,10 @@ export function extractVanillaChests(tml) {
       onCall(callee, args, ctx) {
         const hooked = tmlStaticHook(callee, args, ctx);
         if (hooked !== undefined) return hooked;
-        // (the secondary `chest.item[k].SetDefaults(id)` fillers are potions, torches and the temple's
-        // tablets - the style keys are lost by then, so they are not taken as chest sources)
+        // `chest.item[k].SetDefaults(id)` fills the rest of the chest — mostly potions and torches,
+        // but the Spear, the Blowpipe and the Flare Gun are only ever placed this way. The style
+        // the block sits under is still on the case tracker, so a Shadow Chest weapon keeps its key.
+        if (callee.name === 'SetDefaults' && isNum(args[0])) { add(args[0], ctx, 'AddBuriedChest', undefined, undefined, true); return UNKNOWN; }
         if (/^(NextFromList|SelectRandom)$/.test(callee.name)) { const arr = args.find((a) => a?.k === 'arr'); return arr ? { k: 'oneof', items: arr.items.filter(isNum) } : UNKNOWN; }
         return prog.onCall(callee);
       },

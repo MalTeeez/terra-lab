@@ -241,28 +241,43 @@
     border-radius: var(--radius-chip);
   }
   .lab-part.neg { @apply border-bad/20 bg-bad-soft/60; }
-  /* a part's arithmetic, on hover: our own box, not the browser's title bubble */
-  .lab-part.has-tip, .has-tip { @apply relative cursor-help; }
+  /* a part's arithmetic, on hover: our own box, not the browser's title bubble.
+     `fixed` is what keeps it out of the panel's `overflow-hidden`/scroll clip — an absolute box is
+     always cut off at the border of a scrolling ancestor. A `::after` anchors to the element it
+     comes from without an `anchor-name`, so `position-area` places it and the flip fallbacks pick
+     the corner that fits, which is what the old `tip-right` class did by hand. */
+  .lab-part.has-tip, .has-tip { @apply relative cursor-help; anchor-name: --tip; anchor-scope: --tip; }
   .lab-part.has-tip::after, .has-tip::after {
     content: attr(data-tip);
-    @apply pointer-events-none absolute bottom-full left-0 z-30 mb-1.5 hidden w-72 whitespace-pre-line border border-line bg-panel px-2.5 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-ink2;
+    position-anchor: --tip; /* `anchor-scope` keeps the shared name resolving to this element */
+    @apply pointer-events-none fixed z-30 m-1.5 hidden w-72 whitespace-pre-line border border-line bg-panel px-2.5 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-ink2;
     border-radius: var(--radius-chip);
     box-shadow: var(--shadow-pop, 0 6px 18px rgba(0, 0, 0, 0.12));
+    position-area: block-start span-inline-end;
+    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+    position-visibility: anchors-visible; /* scrolled out of its panel → the box goes too */
   }
   .lab-part.has-tip:hover::after, .lab-part.has-tip:focus-visible::after, .has-tip:hover::after { display: block; }
-  /* near the right edge the box would hang off the table, so hang it off the other corner */
-  .has-tip.tip-right::after { @apply left-auto right-0; }
 
   /* ---------- item browser ---------- */
   /* a two-handle range: two native sliders on one track, only their thumbs take the pointer */
   .lab-range { @apply relative mb-1 mt-5 h-6; }
+  /* Optional stationary sprite for each end, anchored to the corners so it never chases the
+     handle (caps do that already). Sits above the caps' vertical band so a handle at the edge
+     doesn't stack under a label. */
+  .lab-range .cap-icon { @apply pointer-events-none absolute inline-flex leading-none; z-index: 4; }
+  /* left icon sits by the lower (hi) cap row; right icon by the upper (lo) cap row so the max
+     handle's own cap doesn't run into it */
+  .lab-range .cap-icon.left { left: 0; @apply -top-[18px]; }
+  .lab-range .cap-icon.right { right: 0; @apply -top-[32px]; }
+  .lab-range:has(.cap-icon) { @apply mt-6; }
+  .lab-range:has(.cap-icon).stacked { @apply mt-10; }
   /* the value each handle stands for, riding along above it. the box is centred on the handle but
      clamped to the track, so a long label at either end stays inside the column instead of
      spilling out of it */
   .lab-range .cap {
-    @apply absolute -top-[15px] w-24 truncate text-center text-[10.5px] font-semibold leading-none text-ink;
-    left: clamp(0px, calc(var(--pos) - 3rem), calc(100% - 6rem));
-    transition: left 0.12s ease;
+    @apply absolute -top-[15px] w-40 truncate text-center text-[10.5px] font-semibold leading-none text-ink;
+    left: clamp(0px, calc(var(--pos) - 5rem), calc(100% - 10rem));
   }
   /* handles close together would have their labels on top of each other, so the lower one moves up */
   .lab-range.stacked { @apply mt-8; }
@@ -270,21 +285,24 @@
   .lab-range .cap.off { @apply font-normal text-dim; }
   .lab-range .track { @apply absolute left-0 right-0 top-[10px] h-1 bg-line; }
   .lab-range .span { @apply absolute top-[10px] h-1; left: var(--lo); right: calc(100% - var(--hi)); background: var(--accent, var(--color-green)); }
-  .lab-range input[type='range'] { @apply pointer-events-none absolute inset-x-0 top-0 m-0 h-6 w-full bg-transparent; -webkit-appearance: none; appearance: none; }
+  .lab-range input[type='range'] { @apply pointer-events-none absolute inset-x-0 top-0 m-0 h-6 w-full bg-transparent; z-index: 1; -webkit-appearance: none; appearance: none; }
+  .lab-range input[type='range']:nth-of-type(2) { z-index: 2; }
+  .lab-range input[type='range']:focus { z-index: 3; }
   .lab-range input[type='range']::-webkit-slider-runnable-track { @apply h-6 bg-transparent; }
   /* the handles say which way they cut: the lower one keeps what is ≥ it, the upper one what is ≤ it.
      the chevrons come in as --chev-lo / --chev-hi, stroked in whatever accent the caller is using */
   .lab-range input[type='range']:nth-of-type(1) { --chev: var(--chev-lo); }
   .lab-range input[type='range']:nth-of-type(2) { --chev: var(--chev-hi); }
-  .lab-range input[type='range']::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; margin-top: 3px; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; box-shadow: var(--shadow-lift); }
-  .lab-range input[type='range']::-moz-range-thumb { pointer-events: auto; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; }
+  .lab-range input[type='range']::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; margin-top: 3px; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; box-shadow: var(--shadow-lift); transform: translateX(var(--thumb-shift, 0)); }
+  .lab-range input[type='range']::-moz-range-thumb { pointer-events: auto; @apply h-[18px] w-[18px] cursor-pointer rounded-full; border: 2px solid var(--accent, var(--color-green)); background: var(--color-panel) var(--chev) center / 9px 9px no-repeat; transform: translateX(var(--thumb-shift, 0)); }
   .lab-range input[type='range']::-moz-range-track { background: transparent; }
   .lab-range input[type='range']::-webkit-slider-thumb { transition: transform 0.12s ease, box-shadow 0.12s ease; }
-  .lab-range input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.12); }
-  .lab-range input[type='range']:active::-webkit-slider-thumb { transform: scale(1.2); }
+  .lab-range.crowded input[type='range']:nth-of-type(1) { --thumb-shift: -5px; }
+  .lab-range.crowded input[type='range']:nth-of-type(2) { --thumb-shift: 5px; }
+  .lab-range input[type='range']:hover::-webkit-slider-thumb { transform: translateX(var(--thumb-shift, 0)) scale(1.12); }
+  .lab-range input[type='range']:active::-webkit-slider-thumb { transform: translateX(var(--thumb-shift, 0)) scale(1.2); }
   .lab-range input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--color-green)) 30%, transparent); }
   .lab-range input[type='range'] { @apply outline-none; }
-  .lab-range .span { transition: left 0.12s ease, right 0.12s ease; }
   /* a vertical timeline: a marker column, the moment on top, the step, and a detail line */
   .lab-timeline { @apply m-0 list-none border-l-2 border-line p-0 pl-3; }
   .lab-timeline > li { @apply relative pb-2.5 last:pb-0; }
@@ -410,6 +428,68 @@
   }
   .lab-pop p { @apply m-0 mb-2 last:mb-0; }
   .lab-pop em { @apply not-italic font-semibold text-ink; }
+
+  /* ---------- header + tabs ---------- */
+  .lab-header::after {
+    content: '';
+    @apply pointer-events-none absolute inset-x-5 bottom-0 h-px;
+    background: linear-gradient(90deg, transparent, var(--color-line-strong) 18%, var(--color-line-strong) 82%, transparent);
+  }
+  .lab-flask .b { transform-box: fill-box; transform-origin: center; animation: lab-bubble 3.4s ease-in-out infinite; }
+  .lab-flask .b2 { animation-duration: 2.8s; animation-delay: -1.1s; }
+  .lab-flask .b3 { animation-duration: 4.1s; animation-delay: -2.3s; }
+  .lab-flask:hover .b { animation-duration: 1.4s; }
+  @keyframes lab-bubble {
+    0%, 100% { transform: translateY(0); opacity: var(--o, 0.7); }
+    50%      { transform: translateY(-2.4px); opacity: 0.25; }
+  }
+
+  /* segmented tabs: a sunk track, a raised indicator that slides between slots */
+  .lab-tabs {
+    @apply relative inline-flex items-center border border-line bg-panel2 p-[3px];
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-sunk);
+  }
+  .lab-tabs-indicator {
+    @apply pointer-events-none absolute top-[3px] bottom-[3px] left-[3px];
+    width: calc((100% - 6px) / var(--n));
+    transform: translateX(calc(var(--idx) * 100%));
+    background: var(--color-green);
+    background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-green) 82%, #fff) 0%, var(--color-green) 55%, var(--color-green-deep) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -1px 0 rgb(0 0 0 / 0.12), 0 2px 6px -3px rgb(22 40 26 / 0.5);
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 0;
+  }
+  .lab-tab {
+    @apply relative z-[1] cursor-pointer border-0 bg-transparent px-4 py-1.5 text-[12.5px] font-semibold text-ink2 transition-colors;
+    min-width: 92px;
+  }
+  .lab-tab:hover:not([aria-pressed='true']) { color: var(--color-green-deep); }
+  .lab-tab[aria-pressed='true'] {
+    color: #fff;
+    text-shadow: 0 1px 0 rgb(0 0 0 / 0.15);
+  }
+
+  /* sticky Controls panel: a soft glowing top edge painted in the active class accent */
+  .lab-controls { @apply relative isolate; }
+  .lab-controls::before {
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 -top-px h-[2px];
+    background: linear-gradient(90deg, transparent, var(--accent, var(--color-green)) 15%, var(--accent, var(--color-green)) 85%, transparent);
+    box-shadow: 0 0 12px -2px color-mix(in srgb, var(--accent, var(--color-green)) 55%, transparent);
+    transition: background 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  /* dataset stat chip in the header */
+  .lab-stat {
+    @apply inline-flex items-baseline gap-1 border border-line bg-panel/70 px-2.5 py-1 text-dim transition-all;
+    border-radius: var(--radius-chip);
+    box-shadow: var(--shadow-badge);
+  }
+  .lab-stat:hover {
+    @apply border-green-mid bg-green-soft/60 text-ink2;
+    box-shadow: var(--shadow-badge), 0 2px 4px -2px rgb(22 40 26 / 0.3);
+  }
 
   /* ---------- crafting tree graph ---------- */
   .craft-box {

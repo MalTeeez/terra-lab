@@ -92,5 +92,5 @@ export function applyRecipeEdit(r, e) {
   else if (e.kind === 'addIngredient') { if (!r.ingredients.some((i) => i.item === e.item)) r.ingredients.push({ item: e.item, n: e.n ?? 1 }); }
   else if (e.kind === 'removeIngredient') r.ingredients = r.ingredients.filter((i) => i.item !== e.item);
   else if (e.kind === 'addGroup') { if (!r.groups.includes(e.group)) r.groups.push(e.group); }
-  else if (e.kind === 'disable') r.disabled = true;
+  else if (e.kind === 'disable') { r.disabled = true; r.disabledBy = e.mod; }
 }

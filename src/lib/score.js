@@ -61,6 +61,9 @@ export const W = {
   // piece gives the bar is what it gives the class. Gain is the strongest of the three — it is how
   // fast the bar comes back — and the pool is worth about what the same mana is.
   voidGain: 2.5, voidMaxPool: 0.03, voidRegen: 12,
+  // Thorium bard starts with 10 inspiration. Extra capacity is a meaningful fraction of the bar,
+  // while regeneration changes how often instruments can be played across a long fight.
+  inspiration: 1.5, inspirationRegen: 20,
   runSpeed: 2, // boots (Hermes and up): a little, wings and dashes do the real moving in a boss fight
   velocity: 20, // rogue: +10% throwing velocity = 2 (a faster projectile lands more often, see dps.js)
   onHitCap: 15, // a proc never outranks a damage emblem
@@ -136,7 +139,7 @@ export const typicalDps = (progression) => 60 * 1.22 ** Math.max(0, progression 
  * aggro all pay less the more a single item piles on.
  */
 export const soft = (x, cap) => { const t = Math.min(1, Math.abs(x) / (3 * cap)); return Math.sign(x) * cap * (1 - (1 - t) ** 3); };
-export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 150 };
+export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 150, inspiration: 10, inspirationRegen: 0.5 };
 
 /** Hits one spawned projectile lands: its pierce (or life ÷ immunity frames when infinite), plus half its children. */
 export function onHitHits(s) {
@@ -233,6 +236,8 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'voidMaxPool': a = fx?.mod?.voidMeterMax2 ?? 0; b = st.maxVoid ?? 0; break;
     case 'voidCost': a = -(fx?.mod?.voidCost ?? 0); b = -(st.voidCost ?? 0); break;
     case 'voidRegen': a = fx?.mod?.voidRegenSpeed ?? 0; b = st.voidRegen ?? 0; break;
+    case 'inspiration': a = fx?.mod?.bardResourceMax2 ?? 0; b = st.inspiration ?? 0; break;
+    case 'inspirationRegen': a = fx?.mod?.inspirationRegenBonus ?? 0; b = st.inspirationRegen ?? 0; break;
     case 'armorPen': a = forClass(fx?.armorPen, cls, aliases); b = st.armorPen ?? 0; c = forClass(extraFx?.armorPen, cls, aliases); break;
     case 'defense': a = forClass(fx?.defense, cls, aliases); b = st.defense ?? 0; c = forClass(extraFx?.defense, cls, aliases); break;
     case 'aggro': a = fx?.aggro ?? 0; c = extraFx?.aggro ?? 0; break;
@@ -265,6 +270,10 @@ export const TYPICAL_MAX_LIFE = 500;
 // every class gets it
 const condStat = (st, suffix, cls, aliases) => (st[`${cls}${suffix}`] ?? 0) + (st[`all${suffix}`] ?? 0) + Object.entries(aliases ?? {}).reduce((s, [f, t]) => s + (t === cls ? st[`${f}${suffix}`] ?? 0 : 0), 0);
 const COND = 0.5; // a class mechanic only applies part of the time (stealth strikes, after a hit, …)
+// …and a *set bonus* mechanic less often still: the ability it hangs off (a dash, a bomb, a shield
+// proc) almost always comes with a long cooldown, so half is too generous for what the set's prose
+// promises. ponytail: one factor for every set; read the stated cooldown if that ever matters.
+const SET_COND = 0.25;
 
 /**
  * What a stat gated on a *state* is worth, against the same stat always on: "+15 defense while you
@@ -328,7 +337,7 @@ export function loadoutBonus(pieces, cls, aliases = {}) {
   return { damage, crit };
 }
 
-export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression } = {}) {
+export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression, cond = COND } = {}) {
   const parts = [];
   const add = (label, value, detail) => { if (Math.abs(value) >= 0.05) parts.push(detail ? { label, value: round1(value), detail } : { label, value: round1(value) }); };
   const extraFx = prefix?.effects ?? null;
@@ -351,7 +360,8 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   const notes = (...xs) => { const t = xs.filter(Boolean).join(' '); return t || undefined; };
   const condDetail = (key) => (!mergedStat(item, key, cls, aliases, null) ? undefined : isCond(key) ? `State-gated: the tooltip only grants this while something holds (a debuff on you, a buff you keep up, water you stand in) and the code's value was read without its guard — usually the biggest arm of an if/else chain. Something outside the loadout has to supply the condition and it does not hold through a fight, so points count for ${Math.round(COND_STATE * 100)}%.` : dyn < 1 ? 'Runtime formula: the tooltip uses placeholders and the effect is applied through a player flag, so the mined numbers are the formula\'s constants (usually its cap). Points are halved.' : undefined);
   const dynLabel = condLabel('');
-  const PART_TIME = 'Class mechanic read from the tooltip text; it applies part of the time (stealth strikes, after a hit, for a few seconds), so points are halved.';
+  const condMark = cond === COND ? ' ½' : ' ¼';
+  const PART_TIME = `Class mechanic read from the tooltip text; it applies part of the time (stealth strikes, after a hit, for a few seconds${cond < COND ? ', and the ability it hangs off is usually on a long cooldown' : ''}), so points count for ${Math.round(cond * 100)}%.`;
 
   const dmg = stat('damage');
   if (dmg) add(`${pct(dmg)} ${cls} damage${condLabel('damage')}`, scaled('damage') * W.damage, condDetail('damage'));
@@ -395,18 +405,24 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   }
   if (cls === 'magic' || cls === 'healer' || cls === 'bard') {
     const mc = stat('manaCost');
-    if (mc) add(`${pct(mc)} mana cost${dynLabel}`, mc * W.manaCost * dyn);
+    if (mc) add(`${pct(-mc)} mana cost${dynLabel}`, mc * W.manaCost * dyn);
     const mm = stat('maxMana');
     if (mm) add(`${sgn(mm)} max mana${condLabel('maxMana')}`, ease('maxMana', scaled('maxMana')) * W.maxMana, notes(condDetail('maxMana'), easeNote('maxMana', scaled('maxMana'))));
+  }
+  if (cls === 'bard') {
+    const ins = stat('inspiration');
+    if (ins) add(`${sgn(ins)} max inspiration`, ease('inspiration', ins) * W.inspiration, easeNote('inspiration', ins));
+    const regen = stat('inspirationRegen');
+    if (regen) add(`${pct(regen)} inspiration regeneration`, ease('inspirationRegen', regen) * W.inspirationRegen, easeNote('inspirationRegen', regen, pct));
   }
   const ap = stat('armorPen');
   if (ap) add(`${sgn(ap)} armor pen${dynLabel}`, ease('armorPen', ap * dyn) * W.armorPen, notes(dyn < 1 ? condDetail('') : undefined, easeNote('armorPen', ap * dyn)));
   const cd = stat('condDamage');
-  if (cd) add(`${pct(cd)} ${cls} damage ½`, cd * W.damage * COND, PART_TIME);
+  if (cd) add(`${pct(cd)} ${cls} damage${condMark}`, cd * W.damage * cond, PART_TIME);
   const cc = stat('condCrit');
-  if (cc && cls !== 'summon') add(`${sgn(cc)}% crit chance ½`, cc * W.crit * pref(cls, 'crit') * COND, PART_TIME);
+  if (cc && cls !== 'summon') add(`${sgn(cc)}% crit chance${condMark}`, cc * W.crit * pref(cls, 'crit') * cond, PART_TIME);
   const cap = stat('condArmorPen');
-  if (cap) add(`${sgn(cap)} armor pen ½`, cap * W.armorPen * COND, PART_TIME);
+  if (cap) add(`${sgn(cap)} armor pen${condMark}`, cap * W.armorPen * cond, PART_TIME);
   // projectiles the item spawns on hit, graded like a small weapon: damage × hits per spawn ÷ seconds
   // per trigger (a stealth strike every 8 s, a plain hit every 3 s — procs have immunity frames and
   // hidden cooldowns — or the cooldown the code or the tooltip states), as a share of a typical
@@ -524,7 +540,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     else if (has(item, 'debuffResist')) add('immunity to some debuffs', W.debuffResist);
     // vanilla keeps its dodge on the Black Belt / Brain of Confusion player flags; a mod's own is
     // read off the tooltip
-    if (has(item, 'dodge') || has(item, 'blackBelt') || has(item, 'brainOfConfusion')) add('dodges attacks', W.dodge * tank(cls), notes('A dodged hit now and then: about what immunity to every debuff is worth.', tankNote));
+    if (has(item, 'dodge') || has(item, 'onHitDodge') || has(item, 'blackBelt') || has(item, 'brainOfConfusion')) add('dodges attacks', W.dodge * tank(cls), notes('A dodged hit now and then: about what immunity to every debuff is worth.', tankNote));
     if (has(item, 'lava') || has(item, 'lavaRose') || has(item, 'fireWalk')) add('lava/fire protection', W.lava);
     if (has(item, 'mobility') || has(item, 'iceSkate') || has(item, 'waterWalk')) add('mobility', W.mobility);
   }
@@ -556,8 +572,8 @@ export function sprintFactor(drag) {
 /** Score of a head piece's set bonus (setEffects + set bonus text). */
 export function setBonusScore(head, cls, aliases = {}, { progression } = {}) {
   if (!head.setEffects && !head.setBonus) return { score: 0, parts: [] };
-  const pseudo = { effects: head.setEffects, stats: head.setStats, defense: 0, flags: [] };
-  const r = pieceScore(pseudo, cls, aliases, { utility: false, progression });
+  const pseudo = { effects: head.setEffects, stats: head.setStats, condStats: head.setCondStats, placeholders: head.setPlaceholders, defense: 0, flags: [] };
+  const r = pieceScore(pseudo, cls, aliases, { progression, cond: SET_COND });
   // Every set bonus does something beyond what the miner can read — a proc, an aura, a dodge — so
   // wearing a full set is worth a flat base on top of whatever came out numbered.
   const t = head.setBonus?.toLowerCase() ?? '';

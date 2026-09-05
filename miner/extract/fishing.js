@@ -56,6 +56,43 @@ export function extractVanillaFishing(tml) {
   return dedupe(out);
 }
 
+/**
+ * The Angler's quest rewards (`Player.GetAnglerReward_MainReward` / `_Decoration`): every
+ * `reward.type = X` in the branch tree. Those branches are quest counts rather than progression,
+ * so his accessories are pre-boss — which is what makes them fishing catches and not a rarity guess.
+ * @returns {Array<{ item: string, cond?: string[], via: string }>}
+ */
+export function extractAnglerRewards(tml) {
+  const out = [];
+  const td = tml.typeByName.get('Terraria.Player');
+  const prog = progressionHooks();
+  for (const name of ['GetAnglerReward_MainReward', 'GetAnglerReward_Decoration']) {
+    const m = td?.methods.find((x) => x.name === name && tml.methodBody(x));
+    if (!m) continue;
+    const machine = new Machine(tml, {
+      tml, linear: true, noDead: true, phi: true, maxDepth: 1, budget: 400_000,
+      onStaticLoad: (f) => prog.onStaticLoad(f) ?? tmlStaticLoadHook(f),
+      onLoad: (recv, field) => prog.onLoad(recv, field),
+      onStore(recv, field, val, ctx) {
+        if (field !== 'type' || recv?.k !== 'obj' || !/Terraria\.Item$/.test(recv.name ?? '')) return;
+        for (const e of expandValue(val, ctx)) for (const it of itemsOf(tml, e.v)) push(out, it, e.ctx, 'an Angler quest');
+      },
+      onCall(callee, args, ctx) {
+        const hooked = tmlStaticHook(callee, args, ctx);
+        if (hooked !== undefined) return hooked;
+        // `reward.SetDefaults(2428)` is the same statement written the other way
+        if (callee.name === 'SetDefaults' && ctx.recv?.k === 'obj' && /Terraria\.Item$/.test(ctx.recv.name ?? '')) {
+          for (const e of expandValue(args[0], ctx)) for (const it of itemsOf(tml, e.v)) push(out, it, e.ctx, 'an Angler quest');
+          return undefined;
+        }
+        return prog.onCall(callee);
+      },
+    });
+    try { machine.run(m, THIS, tml.methodSig(m).params.map(() => UNKNOWN), tml); } catch (e) { if (process.env.TL_STRICT) throw e; }
+  }
+  return dedupe(out);
+}
+
 /** Enemies that spawn from the bobber (`FishingCheck_RollEnemySpawns`: Zombie Merman on a blood moon …). */
 export function extractVanillaFishingEnemies(tml) {
   const out = [];

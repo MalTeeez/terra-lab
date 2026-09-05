@@ -57,7 +57,13 @@ export function extractNpcs(asm, { tml, loc, modId }) {
     const gates = spawnChance ? [...gateRefs(asm, spawnChance)] : [];
     const natural = !!spawnChance && !returnsZeroOnly(asm, spawnChance);
     // town NPCs: what must be down before they move in (their shop items inherit it)
-    const canTown = findInherited(asm, td, 'CanTownNPCSpawn');
+    // …and a seller with no move-in condition at all is still a seller: Calamity's Shady Salesman
+    // and SOTS's Archaeologist arrive the way the Traveling Merchant does, so `townNPC` in
+    // SetDefaults is what says they sell, and their own spawn method is what gates them.
+    const canTown = findInherited(asm, td, 'CanTownNPCSpawn') ?? findInherited(asm, td, 'SpawnTravelNPC');
+    // …and 1.4.4's way of saying it for one that is never housed: `NPCID.Sets.ActsLikeTownNPC[Type] = true`
+    const ssd = findInherited(asm, td, 'SetStaticDefaults');
+    const town = canTown || fields.townNPC === 1 || (ssd && readsField(asm, ssd, 'ActsLikeTownNPC')) ? true : undefined;
     const townGates = canTown ? [...gateRefs(asm, canTown)] : null;
     out.push({
       id: `${modId}:${td.name}`,
@@ -69,12 +75,22 @@ export function extractNpcs(asm, { tml, loc, modId }) {
       spawns: spawns.size ? [...spawns] : undefined,
       gates: gates.length ? gates : undefined,
       natural: natural || undefined,
-      town: canTown ? true : undefined,
+      town,
       townGates: townGates?.length ? townGates : undefined,
       stats: npcStats(fields, immune),
     });
   }
   return out;
+}
+
+/** Does this body load a static field of that name? */
+function readsField(asm, md, name) {
+  const body = asm.methodBody(md);
+  if (!body) return false;
+  let ins;
+  try { ins = decodeIL(body.il); } catch { return false; }
+  for (const x of ins) if (x.op === 'ldsfld' && asm.resolve(x.operand)?.name === name) return true;
+  return false;
 }
 
 /**

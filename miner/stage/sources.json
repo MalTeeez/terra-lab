@@ -8,21 +8,49 @@
     "after": "unobtainable",
     "via": "removed from the mod"
   },
-  "ThoriumMod:SoulofPlight": {
-    "after": "WallOfFlesh",
-    "via": "dropped in the hardmode Underworld"
+  "ThoriumMod:StonePurple": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
   },
-  "ThoriumMod:PharaohsBreath": {
-    "after": "WallOfFlesh",
-    "via": "the hardmode Underground Desert"
+  "ThoriumMod:ArcaneSpike": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:DestinyWeaver": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:BasicPickaxe": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:ArtificersExtractor": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:GodMode": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:KineticBattery": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:SpiritBand": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "ThoriumMod:TesterText": {
+    "after": "unobtainable",
+    "via": "a developer test item"
+  },
+  "ThoriumMod:TesterProjectile": {
+    "after": "unobtainable",
+    "via": "a developer test item"
   },
   "CalamityMod:Acidwood": {
     "after": "start",
     "via": "the Sulphurous Sea"
-  },
-  "CalamityMod:AcidwoodPlatform": {
-    "after": "start",
-    "via": "crafted from Acidwood"
   },
   "CalamityMod:Rock": {
     "after": "Calamitas",
@@ -36,17 +64,9 @@
     "after": "start",
     "via": "Draedon's laboratories"
   },
-  "CatalystMod:AstraJelly": {
-    "after": "WallOfFlesh",
-    "via": "dropped in the Astral Infection"
-  },
   "SOTS:DissolvingBrilliance": {
     "after": "Lux",
     "via": "dropped by Lux"
-  },
-  "SOTS:SkipShard": {
-    "after": "start",
-    "via": "a wormhole conversion"
   },
   "SOTS:RubyKeystone": {
     "after": "EaterOfWorlds",
@@ -56,41 +76,9 @@
     "after": "start",
     "via": "found from the start"
   },
-  "CalValEX:BrimmyBody": {
-    "after": "BrimstoneElemental",
-    "via": "dropped by the Brimstone Elemental"
-  },
-  "CalValEX:BrimmySpirit": {
-    "after": "BrimstoneElemental",
-    "via": "dropped by the Brimstone Elemental"
-  },
-  "CalValEX:SignusNether": {
-    "after": "Signus",
-    "via": "dropped by Signus"
-  },
   "InfernumMode:LunarCoin": {
     "after": "Providence",
     "via": "an Infernum dev wish"
-  },
-  "ThoriumMod:LegendaryHelmet": {
-    "after": "start",
-    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
-  },
-  "ThoriumMod:LegendaryChainmail": {
-    "after": "start",
-    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
-  },
-  "ThoriumMod:LegendaryGreaves": {
-    "after": "start",
-    "via": "Lasting Pliers (the Cobbler) thrown into Shimmer"
-  },
-  "SOTS:DissolvingNihility": {
-    "after": "start",
-    "via": "a Dissolving Element converted at a wormhole"
-  },
-  "XDContentMod:FusionModule": {
-    "after": "start",
-    "via": "sold by the Star Merchant"
   },
   "StarsAbove:EssenceOfNature": {
     "after": "EyeOfCthulhu",
@@ -112,136 +100,16 @@
     "after": "start",
     "via": "caught with a Bug Net"
   },
-  "StarsAbove:EssenceOfAbsoluteChaos": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfAdagium": {
-    "after": "MoonLord",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfASingularity": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfAuthority": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfBalance": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfBlasting": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfBlood": {
-    "after": "Golem",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfChemtech": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfChionicEnergy": {
-    "after": "SkeletronPrime",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfDancingSeas": {
     "after": "ThespianBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfDestiny": {
-    "after": "MoonLord",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfDreams": {
     "after": "Plantera",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfEternity": {
-    "after": "MoonLord",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfExplosions": {
-    "after": "Golem",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfFirepower": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfFoxfire": {
-    "after": "Plantera",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfGold": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfHydro": {
     "after": "ThespianBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfInk": {
-    "after": "PenthesileaBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfPiracy": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfQuantum": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfRadiance": {
-    "after": "NalhaunBossPhase2",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSakura": {
-    "after": "EmpressOfLight",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSilence": {
-    "after": "Golem",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfKinetics": {
-    "after": "DukeFishron",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfLifethirsting": {
-    "after": "PumpkinMoon",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfLightning": {
-    "after": "NalhaunBossPhase2",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfLuminance": {
-    "after": "TsukiyomiBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfMania": {
-    "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfCookies": {
-    "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfMisery": {
-    "after": "Skeletron",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfNecrosis": {
-    "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfOuterGods": {
-    "after": "EaterOfWorlds",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfSpinning": {
@@ -252,40 +120,12 @@
     "after": "TsukiyomiBoss",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTechnology": {
-    "after": "EmpressOfLight",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheAbyss": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSugar": {
-    "after": "ThespianBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheAerialAce": {
-    "after": "SkeletronPrime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheAscendant": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheBeginningAndEnd": {
     "after": "WarriorOfLightBoss",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTheBehemothTyphoon": {
-    "after": "MartianMadness",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheBionis": {
     "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheChimera": {
-    "after": "MoonLord",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfTheDragon": {
@@ -300,44 +140,8 @@
     "after": "SkeletronPrime",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTwinStars": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfVampirism": {
-    "after": "Deerclops",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfWolves": {
-    "after": "EaterOfWorlds",
-    "via": "essence unlock"
-  },
-  "StarsAbove:SpatialMemoriam": {
-    "after": "TsukiyomiBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheHuntress": {
-    "after": "MoonLord",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheObservatory": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheOcean": {
     "after": "Skeletron",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheOverwhelmingBlaze": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheDarkMaker": {
-    "after": "NalhaunBossPhase2",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfThePhoenix": {
-    "after": "Plantera",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfTheRenegade": {
@@ -348,200 +152,632 @@
     "after": "LunarEvents",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTheShield": {
-    "after": "Plantera",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheSoldier": {
-    "after": "EaterOfWorlds",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheStars": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheTimeless": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheWatch": {
     "after": "VagrantBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheWhiteNight": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfAsh": {
-    "after": "EaterOfWorlds",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfAzakana": {
-    "after": "NalhaunBossPhase2",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfDeathsApprentice": {
     "after": "TheTwins",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfDrivingThunder": {
-    "after": "LunaticCultist",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfFingers": {
-    "after": "QueenBee",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfIRyS": {
-    "after": "FrostMoon",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfLunarDominion": {
-    "after": "MoonLord",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSouls": {
-    "after": "MoonLord",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfStaticShock": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfStyle": {
-    "after": "KingSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSurpassingLimits": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfAlpha": {
-    "after": "DukeFishron",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheDragonslayer": {
     "after": "SkeletronPrime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheFallen": {
-    "after": "Plantera",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheGardener": {
-    "after": "EyeOfCthulhu",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheHarbinger": {
-    "after": "Golem",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheHawkmoon": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheHollowheart": {
-    "after": "PolluxBoss",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfThePegasus": {
     "after": "Skeletron",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTheSharpshooter": {
-    "after": "Skeletron",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheVoid": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTime": {
-    "after": "PenthesileaBoss",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfBitterfrost": {
-    "after": "QueenBee",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfButterflies": {
     "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfDuality": {
-    "after": "FrostMoon",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfEnergy": {
     "after": "ThespianBoss",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfIzanagi": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfKingslaying": {
-    "after": "NalhaunBossPhase2",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfLiberation": {
-    "after": "NalhaunBossPhase2",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSilverAsh": {
-    "after": "WallOfFlesh",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfSin": {
-    "after": "DukeFishron",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheAegis": {
-    "after": "KingSlime",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheAnomaly": {
-    "after": "EaterOfWorlds",
-    "via": "essence unlock"
-  },
   "StarsAbove:EssenceOfTheBull": {
     "after": "TheTwins",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheDarkMoon": {
-    "after": "EyeOfCthulhu",
-    "via": "essence unlock"
-  },
-  "StarsAbove:EssenceOfTheFreeshooter": {
-    "after": "Skeletron",
     "via": "essence unlock"
   },
   "StarsAbove:EssenceOfTheHallownest": {
     "after": "Skeletron",
     "via": "essence unlock"
   },
-  "StarsAbove:EssenceOfTheHunt": {
-    "after": "QueenSlime",
-    "via": "essence unlock"
+  "CalamityMod:SeaSpiritAmulet": {
+    "after": "DesertScourge",
+    "via": "fished in the Sunken Sea"
   },
-  "StarsAbove:EssenceOfTheMoonlitAdepti": {
-    "after": "Golem",
-    "via": "essence unlock"
+  "CalamityMod:SparklingEmpress": {
+    "after": "DesertScourge",
+    "via": "fished in the Sunken Sea"
   },
-  "StarsAbove:EssenceOfThePhantom": {
-    "after": "PolluxBoss",
-    "via": "essence unlock"
+  "CalamityMod:ShatteredCommunity": {
+    "after": "MoonLord",
+    "via": "exhumed from The Community"
   },
-  "StarsAbove:EssenceOfTheSwarm": {
-    "after": "Plantera",
-    "via": "essence unlock"
+  "CalamityMod:CindersOfLament": {
+    "after": "MoonLord",
+    "via": "exhumed from Entropy's Vigil"
   },
-  "StarsAbove:EssenceOfTheTreasury": {
-    "after": "WarriorOfLightBoss",
-    "via": "essence unlock"
+  "CalamityMod:Metastasis": {
+    "after": "MoonLord",
+    "via": "exhumed from the Void Eater Marionette"
   },
-  "StarsAbove:EssenceOfTheUnyieldingEarth": {
+  "CalamityMod:GruesomeEminence": {
+    "after": "MoonLord",
+    "via": "exhumed from the Ghastly Visage"
+  },
+  "CalamityMod:Rancor": {
+    "after": "MoonLord",
+    "via": "exhumed from the Burning Sea"
+  },
+  "CalamityMod:LiliesOfFinality": {
+    "after": "Yharon",
+    "via": "found in the Brimstone Crag after Yharon"
+  },
+  "CalamityMod:HapuFruit": {
+    "after": "start",
+    "via": "shaking trees"
+  },
+  "CalamityMod:LittleE": {
+    "after": "start",
+    "via": "an 'E' Statue thrown into Shimmer"
+  },
+  "CalamityMod:CinderBlossomStaff": {
+    "after": "start",
+    "via": "craftable pre-hardmode"
+  },
+  "CalamityMod:InfernalKris": {
+    "after": "EaterOfWorlds",
+    "via": "crafted from Hellstone Bars"
+  },
+  "CalamityMod:HellwingStaff": {
+    "after": "EaterOfWorlds",
+    "via": "crafted from Hellstone Bars"
+  },
+  "CalamityMod:OrthoceraShell": {
+    "after": "WallOfFlesh",
+    "via": "dropped by Orthoceras"
+  },
+  "CalamityMod:FlakToxicannon": {
+    "after": "WallOfFlesh",
+    "via": "dropped by Flak Crabs"
+  },
+  "CalamityMod:EvilSmasher": {
+    "after": "WallOfFlesh",
+    "via": "a Pwnhammer sacrificed at an altar"
+  },
+  "CalamityMod:Murasama": {
+    "after": "Yharon",
+    "via": "the Underworld lab's Security Chest, usable after Yharon"
+  },
+  "CalValEX:ScryllianWings": {
+    "after": "Providence",
+    "via": "dropped by Scryllar"
+  },
+  "CalValEX:DesertMedallion": {
+    "after": "DesertScourge",
+    "via": "dropped by Desert Scourge"
+  },
+  "CalValEX:Nyanthrop": {
     "after": "LunaticCultist",
+    "via": "dropped by Meldosaurus"
+  },
+  "CalValEX:ShadesBane": {
+    "after": "LunaticCultist",
+    "via": "dropped by Meldosaurus"
+  },
+  "CalValEX:TrilobiteShield": {
+    "after": "DesertScourge",
+    "via": "dropped in the Sunken Sea"
+  },
+  "StarsAbove:ManifestationCape": {
+    "after": "ArbitrationBoss",
+    "via": "worn with the Manifestation"
+  },
+  "StarsAbove:LegendaryShieldAccessory": {
+    "after": "Plantera",
+    "via": "worn with the Legendary Shield"
+  },
+  "StarsAbove:DreadmotherClaw": {
+    "after": "NalhaunBossPhase2",
+    "via": "worn with the Dreadmother's Dark Idol"
+  },
+  "StarsAbove:BrilliantSpectrum": {
+    "after": "DukeFishron",
     "via": "essence unlock"
+  },
+  "StarsAbove:Persephone": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "StarsAbove:EveryMomentMatters": {
+    "after": "unobtainable",
+    "via": "its essence is unobtainable"
+  },
+  "v:5215": {
+    "after": "start",
+    "via": "chopped from Ash Trees in the Underworld"
+  },
+  "v:4291": {
+    "after": "start",
+    "via": "a fruit from shaking trees"
+  },
+  "v:4023": {
+    "after": "start",
+    "via": "a fruit from shaking trees"
+  },
+  "SOTS:InfiniteVoid": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "SOTS:TesseractSword": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "SOTS:ContinuumCollapse": {
+    "after": "unobtainable",
+    "via": "the wiki lists it as unobtainable"
+  },
+  "SOTS:EnchantedPickaxe": {
+    "after": "EaterOfWorlds",
+    "via": "a pickaxe shrine in the Cursed Pyramid"
+  },
+  "SOTS:TheDarkEye": {
+    "after": "EaterOfWorlds",
+    "via": "dropped by Wall Mimics"
+  },
+  "SOTS:ObsidianEruption": {
+    "after": "EaterOfWorlds",
+    "via": "crafted from Meteorite Bars and Obsidian"
+  },
+  "SOTS:Colossus": {
+    "after": "WallOfFlesh",
+    "via": "the Vibrant Temple's Giant Crystal, opened with a Breaker Blade"
+  },
+  "SOTS:DuneSplicer": {
+    "after": "WallOfFlesh",
+    "via": "the Desert Sky Artifact's chest"
+  },
+  "SOTS:PathogenRegurgitator": {
+    "after": "WallOfFlesh",
+    "via": "the Corruption Sky Artifact's chest"
+  },
+  "SOTS:RebarRifle": {
+    "after": "WallOfFlesh",
+    "via": "the Crimson Sky Artifact's chest"
+  },
+  "SOTS:Sawflake": {
+    "after": "WallOfFlesh",
+    "via": "the Snow Sky Artifact's chest"
+  },
+  "SOTS:StarcallerStaff": {
+    "after": "WallOfFlesh",
+    "via": "the Hallow Sky Artifact's chest"
+  },
+  "SOTS:TangleStaff": {
+    "after": "WallOfFlesh",
+    "via": "the Jungle Sky Artifact's chest"
+  },
+  "ThoriumMod:Fishbone": {
+    "after": "WallOfFlesh",
+    "via": "the Dungeon's Aquatic Depths Chest, opened with a biome key"
+  },
+  "ThoriumMod:PharaohsSlab": {
+    "after": "WallOfFlesh",
+    "via": "the Dungeon's Desert Chest, opened with a biome key"
+  },
+  "ThoriumMod:CataclysmicsGarb": {
+    "after": "TheGrandThunderBird",
+    "via": "a Thorium boss treasure bag (developer item)"
+  },
+  "ThoriumMod:PhonicWings": {
+    "after": "TheGrandThunderBird",
+    "via": "a Thorium boss treasure bag (developer item)"
+  },
+  "ThoriumMod:HalcandranDeluxeApparel": {
+    "after": "TheGrandThunderBird",
+    "via": "a Thorium boss treasure bag (developer item)"
+  },
+  "ThoriumMod:EbonyTail": {
+    "after": "WallOfFlesh",
+    "via": "dropped by Sand Poachers"
+  },
+  "ThoriumMod:AloeLeaf": {
+    "after": "start",
+    "via": "shaking the Underground Jungle's leafy plants"
+  },
+  "ThoriumMod:CursedHammer": {
+    "after": "WallOfFlesh",
+    "via": "sold by the Tracker for the Enchanted Engagement contract"
+  },
+  "ThoriumMod:MagicThorHammer": {
+    "after": "EaterOfWorlds",
+    "via": "the same hammer as Thor's Hammer: Melee, switched with right click"
+  },
+  "ThoriumMod:RangedThorHammer": {
+    "after": "EaterOfWorlds",
+    "via": "the same hammer as Thor's Hammer: Melee, switched with right click"
+  },
+  "ThoriumMod:TheRing": {
+    "after": "start",
+    "via": "crafted from the nine gem rings at a Tinkerer's Workshop"
+  },
+  "v:165": {
+    "after": "Skeletron",
+    "via": "found on the Dungeon's shelves"
+  },
+  "v:889": {
+    "after": "WallOfFlesh",
+    "via": "dropped by Pixies and Mummies"
+  },
+  "v:890": {
+    "after": "start",
+    "via": "dropped by Green Jellyfish"
+  },
+  "v:1825": {
+    "after": "start",
+    "via": "a Halloween drop"
+  },
+  "v:1827": {
+    "after": "start",
+    "via": "a Halloween drop"
+  },
+  "v:3351": {
+    "after": "WallOfFlesh",
+    "via": "dropped by the Tax Collector"
+  },
+  "v:4722": {
+    "after": "unobtainable",
+    "via": "cut during development; the Zenith took its place"
+  },
+  "v:4818": {
+    "after": "Skeletron",
+    "via": "dropped by the Mechanic"
+  },
+  "v:5001": {
+    "after": "unobtainable",
+    "via": "only in a Drunk World's chests"
+  },
+  "v:5065": {
+    "after": "MoonLord",
+    "via": "dropped by the Princess"
+  },
+  "v:5077": {
+    "after": "MoonLord",
+    "via": "sold by the Princess"
+  },
+  "v:5080": {
+    "after": "MoonLord",
+    "via": "sold by the Princess"
+  },
+  "v:5114": {
+    "after": "start",
+    "via": "grows on grass near a placed Tombstone"
+  },
+  "v:5347": {
+    "after": "start",
+    "via": "a Shimmer transmutation"
+  },
+  "v:5355": {
+    "after": "WallOfFlesh",
+    "via": "a Shimmer transmutation"
+  },
+  "CalValEX:ExodiumMoon": {
+    "after": "MoonLord",
+    "via": "dropped by the post-Moon Lord Shockstorm Shuttle"
+  },
+  "CalValEX:TerminalWings": {
+    "after": "PrimordialWyrm",
+    "via": "crafted at Draedon's Forge"
+  },
+  "StarsAbove:RupturedHeaven": {
+    "after": "unobtainable",
+    "via": "the tooltip marks it a work-in-progress weapon"
+  },
+  "StarsAbove:IgnitionAstra": {
+    "after": "unobtainable",
+    "via": "the tooltip marks it a removed weapon"
+  },
+  "StarsAbove:AfterburnerWings": {
+    "after": "unobtainable",
+    "via": "an internal item (\"you shouldn't be able to read this\")"
+  },
+  "StarsAbove:MeleeWings": {
+    "after": "unobtainable",
+    "via": "an internal item (\"you shouldn't be able to read this\")"
+  },
+  "StarsAbove:ShieldWings": {
+    "after": "unobtainable",
+    "via": "an internal item (\"you shouldn't be able to read this\")"
+  },
+  "StarsAbove:SniperWings": {
+    "after": "unobtainable",
+    "via": "an internal item (\"you shouldn't be able to read this\")"
+  },
+  "StarsAbove:RedMistGloves": {
+    "after": "unobtainable",
+    "via": "vanity worn while using the Manifestation"
+  },
+  "StarsAbove:NeopursuantPlasteelCape": {
+    "after": "WallOfFlesh",
+    "via": "worn with the Neopursuant Plasteel"
+  },
+  "StarsAbove:NeopursuantRoguegarbCape": {
+    "after": "WallOfFlesh",
+    "via": "worn with the Neopursuant Roguegarb"
+  },
+  "ThoriumRework:RepurposedStarCaller": {
+    "after": "StarScouter",
+    "via": "the Star Scouter's treasure bag"
+  },
+  "ThoriumRework:PocketEnergyStorm": {
+    "after": "GraniteEnergyStorm",
+    "via": "the Granite Energy Storm's treasure bag"
+  },
+  "ThoriumRework:Oneirophobia": {
+    "after": "ThePrimordials",
+    "via": "the Dream Eater's treasure bag"
+  },
+  "ThoriumRework:WhistlersHat": {
+    "after": "WallOfFlesh",
+    "via": "dropped by biome Mimics"
+  },
+  "ThoriumRework:WhistlersTunic": {
+    "after": "WallOfFlesh",
+    "via": "dropped by biome Mimics"
+  },
+  "ThoriumRework:SpittingShroomStaff": {
+    "after": "WallOfFlesh",
+    "via": "dropped by the Mycelium Mimic"
+  },
+  "ThoriumRework:BeholderBlade": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "ThoriumRework:LichWhip": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "CalamityMod:SulphurousGrabber": {
+    "after": "SkeletronPrime",
+    "via": "dropped by Sulphurous Skaters in the Acid Rain"
+  },
+  "CalamityMod:XyksBlessingOrange": {
+    "after": "start",
+    "via": "the Starter Bag (developer vanity)"
+  },
+  "CalamityMod:WulfrumFusionCannon": {
+    "after": "WulfrumMothership",
+    "via": "dropped by the Wulfrum Mothership"
+  },
+  "CatalystMod:Catharsis": {
+    "after": "MoonLord",
+    "via": "exhumed from the Kaleidoscope"
+  },
+  "InfernumMode:FlowerOfTheOcean": {
+    "after": "Polterghast",
+    "via": "an Elysian Rose placed in the fourth Abyss layer"
+  },
+  "InfernumMode:SakuraBloom": {
+    "after": "start",
+    "via": "a Sakura Bud thrown into the Blossom Garden's pool"
+  },
+  "CalamityHunt:ReplicaGauntlets": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "CalamityHunt:ShogunWings": {
+    "after": "Goozma",
+    "via": "the Slippery Shogun set's wings"
+  },
+  "CalamityHunt:TrailblazerBackpack": {
+    "after": "unobtainable",
+    "via": "only its draw layer references it"
+  },
+  "CalamityHunt:TrailblazerGoggles": {
+    "after": "unobtainable",
+    "via": "only its draw layer references it"
+  },
+  "CalValEX:MoldyHoody": {
+    "after": "Crabulon",
+    "via": "dropped by Crabulon"
+  },
+  "CalValEX:Eidcape": {
+    "after": "Leviathan",
+    "via": "dropped by Eidolists"
+  },
+  "CalamitySimpleWhipAddon:AncientBonds": {
+    "after": "start",
+    "via": "dropped by Lava Slimes"
+  },
+  "CalamitySimpleWhipAddon:Loadout": {
+    "after": "Plantera",
+    "via": "dropped by the post-Plantera Burrower"
+  },
+  "CalamitySimpleWhipAddon:KusariGama": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "CalamitySimpleWhipAddon:ChorusofExecration": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "RagnarokMod:TrueSquirrelScarf": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "CalamityAddon:WulfrumJavelin": {
+    "after": "WulfrumMothership",
+    "via": "dropped by the Wulfrum Jumper in the Wulfrum Rush, which the Mothership's Unstable Battery starts"
+  },
+  "CalamityBardHealer:DesertedDrugDeal": {
+    "after": "BereftVassal",
+    "via": "added to Argus's weapon pool"
+  },
+  "InfernumMode:StormMaidensRetribution": {
+    "after": "Goozma",
+    "via": "found near spawn while it rains, after the Exo Mechs and Calamitas (goozma gate comes from InfernalEclipseAPI)"
+  },
+  "CalamityBardHealer:VoidFaquirBiretta": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "CalamityBardHealer:VoidFaquirChapeau": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "InfernalEclipseWeaponsDLC:BlightedBadge": {
+    "after": "StormWeaver",
+    "via": "crafted from an Armored Shell"
+  },
+  "InfernalEclipseWeaponsDLC:ObsidianSickle": {
+    "after": "start",
+    "via": "dropped when a Blazing Wheel touches water"
+  },
+  "InfernalEclipseWeaponsDLC:GarudaWings": {
+    "after": "SubspaceSerpentHead",
+    "via": "the Garuda Guard's wings"
+  },
+  "InfernalEclipseWeaponsDLC:Stick": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "InfernalEclipseWeaponsDLC:AllSeersGlass": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "InfernalEclipseAPI:CelestialIllumination": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "InfernalEclipseAPI:Streetsign": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "InfernalEclipseAPI:ShatteredSubcommunity": {
+    "after": "unobtainable",
+    "via": "no code path in this version gives it out"
+  },
+  "NoxusBoss:AutoloadableMusicBoxItem": {
+    "after": "unobtainable",
+    "via": "the base item the mod's music boxes are autoloaded from"
+  },
+  "FishingMinigame:SoothingLure": {
+    "after": "start",
+    "via": "a 1-in-20 drop from any enemy"
+  },
+  "ThoriumMod:SoulGem": {
+    "after": "unobtainable",
+    "via": "no code path gives it out and the wiki has no page for it"
+  },
+  "CalamityAddon:WDAS": {
+    "after": "start",
+    "via": "dropped by Wulfrum Jumpers"
+  },
+  "CalValEX:AldebaranCloak": {
+    "after": "DesertScourge",
+    "via": "dropped by the Desert Scourge"
+  },
+  "StarsAbove:OriginInfinity": {
+    "after": "unobtainable",
+    "via": "the Stellar Nova's own item; only its projectiles exist"
+  },
+  "NoxusBoss:StaffOfRejuvenation": {
+    "after": "unobtainable",
+    "via": "only its texture is registered; no code path gives it out"
+  },
+  "v:1307": {
+    "after": "Skeletron",
+    "via": "dropped by the Dungeon's Angry Bones and Dark Casters"
+  },
+  "v:3821": {
+    "after": "EaterOfWorlds",
+    "via": "dropped by the Tavernkeep"
+  },
+  "v:867": {
+    "after": "start",
+    "via": "dropped by the Guide when he is named Andrew"
+  },
+  "v:1809": {
+    "after": "start",
+    "via": "a Halloween drop"
+  },
+  "v:3095": {
+    "after": "start",
+    "via": "an Angler quest reward"
+  },
+  "v:3285": {
+    "after": "start",
+    "via": "a pre-hardmode yoyo from crates and the Skeleton Merchant"
+  },
+  "ThoriumMod:RedHourglass": {
+    "after": "start",
+    "via": "dropped by Baby Spiders"
+  },
+  "ThoriumMod:RosySlimeStaff": {
+    "after": "start",
+    "via": "sold by the Tracker for the Pinky, the World Ender contract"
+  },
+  "ThoriumMod:FamilyHeirloom": {
+    "after": "start",
+    "via": "given to every new player"
+  },
+  "ThoriumMod:HarpyStaff": {
+    "after": "start",
+    "via": "dropped by Harpies"
+  },
+  "ThoriumMod:GuidetoOvercomingGriefInactive": {
+    "after": "start",
+    "via": "sold by the Confused Zombie"
+  },
+  "SOTS:MinersSword": {
+    "after": "start",
+    "via": "a bonus drop from Golden Treasure Slimes"
+  },
+  "SOTS:SwallowedPenny": {
+    "after": "start",
+    "via": "dropped by breaking Pots"
+  },
+  "SOTS:RotHeart": {
+    "after": "start",
+    "via": "dropped by the Famished"
+  },
+  "ThoriumMod:TestNeedle": {
+    "after": "unobtainable",
+    "via": "only its own projectile references it"
+  },
+  "OrchidMineshaft:MineshaftPickaxe": {
+    "after": "start",
+    "via": "breaking a unique tile in the Mineshaft"
+  },
+  "OrchidMineshaft:MiniatureTools": {
+    "after": "start",
+    "via": "found in the Mineshaft"
+  },
+  "SOTS:ZombieHand": {
+    "after": "start",
+    "via": "dropped by any Zombie"
+  },
+  "CalValEX:SeaguardShield": {
+    "after": "start",
+    "via": "dropped by Sir Nautilus"
+  },
+  "SOTS:JumboSurpriseEgg": {
+    "after": "start",
+    "via": "a Jewel Egg thrown into Shimmer"
+  },
+  "SOTS:Dreamcatcher": {
+    "after": "start",
+    "via": "the Dream Sanctuary's chests"
+  },
+  "SOTS:EmptyNecklace": {
+    "after": "start",
+    "via": "the Dream Sanctuary's chests"
+  },
+  "CalamityMod:HeavenfallenStardisk": {
+    "after": "AstrumAureus",
+    "via": "an Astral Infection chest"
   }
 }

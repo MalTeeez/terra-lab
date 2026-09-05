@@ -71,6 +71,8 @@ const NE_BRANCH = /^bne/;
 const POP2_BRANCH = /^(beq|bge|bgt|ble|blt|bne)/;
 const RANGE_BRANCH = /^(bge|bgt|ble|blt)/;
 const POP1_BRANCH = /^(brtrue|brfalse)/;
+/** Values that stand for the key a hook was called about (see `keyChain`). */
+const KEYISH = new Set(['prop', 'key', 'keycmp', 'moditem', 'itemarg']);
 const TERMINATORS = new Set(['ret', 'br', 'br.s', 'throw', 'rethrow', 'leave', 'leave.s', 'switch', 'jmp']);
 
 /** Static fields / getters whose value depends on the world's difficulty or mode. */
@@ -142,6 +144,11 @@ export class Machine {
     /** linear mode: every backward conditional jump (a loop) with the two compared values */
     this.onBackJump = opts.onBackJump ?? null;
     this.enabledMods = opts.enabledMods ?? null;
+    this.loadFields = opts.loadFields ?? null; // "Type::Field" → value, from evalLoadStatics (load-time constants)
+    // walk calls into the assembly of a mod this one extends (see the call handler); off by default:
+    // a helper of that mod is opaque on purpose everywhere the extractor reads the *call* as the
+    // evidence (a drop helper is a drop rule, whatever it does inside)
+    this.crossAsm = opts.crossAsm ?? false;
     this.linear = opts.linear ?? false;
     this.maxDepth = opts.maxDepth ?? 5;
     this.budget = opts.budget ?? 60000;
@@ -166,7 +173,7 @@ export class Machine {
   }
 
   /** Run a MethodDef of `owner` with the given this/args. */
-  run(method, thisVal, args = [], owner = this.asm, depth = 0) {
+  run(method, thisVal, args = [], owner = this.asm, depth = 0, typeArgs = null) {
     const body = owner.methodBody(method);
     if (!body) return UNKNOWN;
     const sig = owner.methodSig(method);
@@ -197,7 +204,7 @@ export class Machine {
       for (const g of groups) for (const k of g) if (!flat.some((c) => sameKey(c, k))) flat.push(k);
       this.cases = flat;
     };
-    const ctxBase = { owner, method, depth, machine: this };
+    const ctxBase = { owner, method, depth, machine: this, typeArgs };
     let pc = 0;
     const ctx = () => ({ ...ctxBase, cases: this.cases, caseGroups: this.caseGroups, conditional: this.conditional, condTags: this.condTags, offset: ins[pc]?.offset, region: regions.length ? regions[regions.length - 1].end : null, untagged: regions.filter((r) => !r.dead && !r.tags.length).map((r) => r.end) });
     // linear mode: the stack a jump would arrive with, per target offset
@@ -334,6 +341,11 @@ export class Machine {
             const a = stack[stack.length - 1 - i]; const b = saved[saved.length - 1 - i];
             if (a?.k === 'flag' && (b === 0 || b === null)) continue;
             if (b?.k === 'flag' && (a === 0 || a === null)) { stack[stack.length - 1 - i] = b; continue; }
+            // `item.ModItem?.Name ?? ""`: the empty string is the arm where there is nothing to
+            // key on, so the key survives the merge — otherwise the chain of `name == "XBag"`
+            // comparisons after it has a constant on the left and keys nothing
+            if (KEYISH.has(a?.k) && (b === '' || b === null)) continue;
+            if (KEYISH.has(b?.k) && (a === '' || a === null)) { stack[stack.length - 1 - i] = b; continue; }
             const phiable = (v) => isNum(v) || v?.k === 'oneof' || v?.k === 'phi' || v?.k === 'type';
             if (this.phi && a !== b && phiable(a) && phiable(b) && !(a?.k === 'type' && b?.k === 'type' && a.id === b.id && a.name === b.name)) {
               const alts = [...(a?.k === 'phi' ? a.alts : [{ v: a, tags: [...closedTags] }]), ...(b?.k === 'phi' ? b.alts : [{ v: b, tags: [...savedTags] }])];
@@ -479,7 +491,7 @@ export class Machine {
         const a = pop();
         // a flag widened to a number still stands for the flag: `ai[0] = stealthStrike > 0` keeps
         // the fact alive for the branch further down that reads it back
-        if (!isNum(a)) { push(a?.k === 'key' || a?.k === 'adj' || a?.k === 'flag' ? a : UNKNOWN); continue; }
+        if (!isNum(a)) { push(a?.k === 'key' || a?.k === 'adj' || a?.k === 'flag' || a?.k === 'rand' || a?.k === 'trig' ? a : UNKNOWN); continue; }
         push(/conv\.(r4|r8|r\.un)/.test(op) ? a : Math.trunc(a));
         continue;
       }
@@ -505,19 +517,43 @@ export class Machine {
           if (op === 'add') r.add += b; else if (op === 'sub') r.add -= b; else if (op === 'mul') { r.mul *= b; r.add *= b; } else { r.mul /= b; r.add /= b; }
           push(r);
         }
+        // `2f * damage`: the constant on the left
+        else if (isNum(a) && b?.k === 'adj' && op === 'mul') push({ ...b, mul: b.mul * a, add: b.add * a });
+        // `NextFloat() * 0.2f + 0.95f`: a roll scaled and shifted is still a roll, over the new range
+        else if ((a?.k === 'rand' && isNum(b)) || (isNum(a) && b?.k === 'rand')) {
+          const r = a?.k === 'rand' ? a : b; const n = a?.k === 'rand' ? b : a;
+          if (op === 'mul') push({ k: 'rand', lo: Math.min(r.lo * n, r.hi * n), hi: Math.max(r.lo * n, r.hi * n) });
+          else if (op === 'add') push({ k: 'rand', lo: r.lo + n, hi: r.hi + n });
+          else if (op === 'sub') push(a === r ? { k: 'rand', lo: r.lo - n, hi: r.hi - n } : { k: 'rand', lo: n - r.hi, hi: n - r.lo });
+          else if (op === 'div' && a === r && n !== 0) push({ k: 'rand', lo: Math.min(r.lo / n, r.hi / n), hi: Math.max(r.lo / n, r.hi / n) });
+          else push(UNKNOWN);
+        }
+        // `len * rand(0.95, 1.15)`: scaled by a roll is scaled by its middle; `angle + rand(-d, d)`:
+        // an angle with a roll on it keeps the roll as jitter, which is a scatter rather than a fan
+        else if (a?.k === 'adj' && b?.k === 'rand' && op === 'mul') { const m = (b.lo + b.hi) / 2; push({ ...a, mul: a.mul * m, add: a.add * m }); }
+        else if (a?.k === 'adj' && b?.k === 'rand' && (op === 'add' || op === 'sub')) push({ ...a, add: a.add + (op === 'add' ? 1 : -1) * ((b.lo + b.hi) / 2), jitter: (a.jitter ?? 0) + Math.abs(b.hi - b.lo) / 2 });
+        // `len * Math.Sin(angle ± d)`: the length turned back into a component at an angle — the
+        // offset rides along so `new Vector2(x, y)` can read the fan it makes
+        else if (op === 'mul' && ((a?.k === 'adj' && b?.k === 'trig') || (a?.k === 'trig' && b?.k === 'adj'))) { const adj = a.k === 'adj' ? a : b; const t = a.k === 'trig' ? a : b; push({ ...adj, trig: t.off, jitter: (adj.jitter ?? 0) + (t.jitter ?? 0) }); }
         else push(UNKNOWN);
         continue;
       }
       if (op in CMP) {
         const b = pop(); const a = pop();
         if (isNum(a) && isNum(b)) push(CMP[op](a, b) ? 1 : 0);
-        else if (op === 'ceq' && (a?.k === 'keycmp' || b?.k === 'keycmp') && (a === 0 || b === 0)) {
-          const kc = a?.k === 'keycmp' ? a : b; // `x == false` negates
-          push({ ...kc, neg: !kc.neg });
+        else if ((op === 'ceq' || op === 'cgt.un') && (a?.k === 'keycmp' || b?.k === 'keycmp') && (a === 0 || b === 0 || a === null || b === null)) {
+          // `x == false` / `x == null` negates; `item.ModItem is IVoidHybrid` compiles to
+          // `isinst; ldnull; cgt.un` and is the test itself
+          const kc = a?.k === 'keycmp' ? a : b;
+          push(op === 'ceq' ? { ...kc, neg: !kc.neg } : kc);
         } else if (op === 'ceq' && a?.k === 'key' && (isNum(b) || b?.k === 'type')) {
           push({ k: 'keycmp', slot: a.slot, match: null, value: isNum(b) ? b + (a.offset ?? 0) : b.id ?? b.name });
         } else if (op === 'ceq' && b?.k === 'key' && (isNum(a) || a?.k === 'type')) {
           push({ k: 'keycmp', slot: b.slot, match: null, value: isNum(a) ? a + (b.offset ?? 0) : a.id ?? a.name });
+        } else if (op === 'ceq' && (a?.k === 'dcof' || b?.k === 'dcof')) {
+          const d = a?.k === 'dcof' ? a : b;
+          const v = d === a ? b : a;
+          push(v?.k === 'dc' ? { k: 'keycmp', slot: d.slot, match: { dcIs: v.name } } : UNKNOWN);
         } else if (op === 'ceq' && (a?.k === 'flag' || b?.k === 'flag')) {
           const fv = a?.k === 'flag' ? a : b;
           const n = fv === a ? b : a;
@@ -539,12 +575,21 @@ export class Machine {
         if (isNum(a) && isNum(b)) {
           // known outcome: take exactly one path (linear mode: the skipped block is dead instead)
           if (BR_CMP[base](a, b) && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear) { if (!this.noDead && !process.env.TL_NO_DEAD) openDead(x.operand); } else jumpTo(x.operand); }
+          else if (this.linear && x.operand > x.offset) noteJump(x.operand, true); // the block it skips is walked anyway: give it the stack it would have had
           continue;
         }
         noteJump(x.operand, true);
         if (caseMap) {
+          // `if (item.DamageType != DamageClass.Melee) return;` — the class is the key here
+          const dcof = a?.k === 'dcof' ? a : b?.k === 'dcof' ? b : null;
+          const dcv = dcof ? (dcof === a ? b : a) : null;
+          if (dcof && dcv?.k === 'dc' && x.operand > x.offset && (EQ_BRANCH.test(op) || NE_BRANCH.test(op))) {
+            applyKeyBranch({ slot: dcof.slot, match: { dcIs: dcv.name } }, x.operand, EQ_BRANCH.test(op));
+          }
           const key = a?.k === 'key' ? a : b?.k === 'key' ? b : null;
-          if (!key && x.operand > x.offset) {
+          // (a class test is a key, not a condition: leaving a region open here would mark the
+          // change "conditional" and hold it back from the items it plainly applies to)
+          if (!key && !dcof && x.operand > x.offset) {
             const fv = a?.k === 'flag' ? a : b?.k === 'flag' ? b : null;
             const n = fv === a ? b : a;
             // `flag == 0` / `flag != 1`: the fall-through runs when the flag is false
@@ -589,6 +634,11 @@ export class Machine {
         if (isNum(c) || c === null || c?.k === 'mod') {
           const truthy = isNum(c) ? c !== 0 : c?.k === 'mod';
           if (truthy === isTrue && x.operand > x.offset) { noteJump(x.operand, true); if (this.linear) { if (!this.noDead && !process.env.TL_NO_DEAD) openDead(x.operand); } else jumpTo(x.operand); }
+          // …and a jump the value says is *not* taken still has to leave the stack the block it
+          // skips over will be walked with. `IsCorruption ? 86 : 1329` ends the live arm with a
+          // `br` over the dead one, and a `br` clears the stack: without this the dead arm ran on
+          // an empty stack, ate the recipe off it and every call after it in the method was lost.
+          else if (this.linear && x.operand > x.offset) noteJump(x.operand, true);
           continue;
         }
         noteJump(x.operand, true);
@@ -671,7 +721,13 @@ export class Machine {
         const f = owner.resolve(x.operand);
         let recv = pop();
         if (recv?.k === 'ref') recv = recv.get();
-        push(this.loadField(recv, f, { ...ctx(), field: f }));
+        const fctx = { ...ctx(), field: f };
+        const v = this.loadField(recv, f, fctx);
+        // `TryGetMod("CalamityMod", out this.calamity)` writes its answer through a field address:
+        // an address the machine has no value for is a ref, or the out-parameter lands nowhere and
+        // the mod stays unknown. An address it *does* know (a hook's stat sentinel) stays itself.
+        if (op === 'ldflda' && v === UNKNOWN) push({ k: 'ref', get: () => this.loadField(recv, f, fctx), set: (x) => this.storeField(recv, f, x, fctx) });
+        else push(v);
         continue;
       }
       if (op === 'stfld') {
@@ -691,7 +747,10 @@ export class Machine {
         for (let i = 0; i < n; i++) args.unshift(pop());
         if (n === 2 && args[1]?.k === 'fn') { push({ k: 'delegate', method: args[1].method, asm: args[1].asm, target: args[0] }); continue; }
         const made = callee ? this.onNew(callee, args, ctx()) : undefined;
-        push(made !== undefined ? made : { k: 'obj', name: callee?.declaringType?.fullName ?? callee?.declaringType?.name ?? '?', args, props: {} });
+        // `new List<int>(pool)` keeps what it was handed: vanilla copies the Angler's reward pool
+        // before striking the accessories you already own off it
+        const copied = args.length === 1 && (args[0]?.list || args[0]?.items) ? [...(args[0].list ?? args[0].items)] : undefined;
+        push(made !== undefined ? made : { k: 'obj', name: callee?.declaringType?.fullName ?? callee?.declaringType?.name ?? '?', args, props: {}, ...(copied ? { list: copied } : {}) });
         continue;
       }
       if (op === 'call' || op === 'callvirt') {
@@ -720,6 +779,10 @@ export class Machine {
     if (!f) return UNKNOWN;
     const v = this.onLoad(recv, f.name, ctx);
     if (v !== undefined) return v;
+    // a field the mod fills in once at load time — whichever instance it is read off, that is what
+    // is in it (CalValEX reads `instance.calamity` through a singleton the miner never builds)
+    const lf = this.loadFields?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`);
+    if (lf !== undefined) return lf;
     if (recv?.k === 'itemarg') return f.name === 'type' ? { k: 'key', slot: recv.slot } : { k: 'prop', slot: recv.slot, path: [f.name] };
     if (recv?.k === 'obj') return recv.props[f.name] ?? UNKNOWN;
     if (recv === THIS) return this.thisField(f.name);
@@ -747,7 +810,10 @@ export class Machine {
         let cur = this.concreteType;
         for (let i = 0; i < 8 && cur; i++) {
           for (const m of cur.methods) {
-            if ((m.name === '.ctor' || m.name === 'Load' || m.name === 'OnModLoad') && this.asm.methodBody(m)?.il.length < 20000 && this.asm.methodSig(m).params.length === 0) {
+            // SetStaticDefaults counts as load-time setup: an addon's item looks the mods it
+            // bridges up there (`TryGetMod("CalamityBardHealer", out calBardHealer)`) and its
+            // AddRecipes then asks that mod for the ingredient
+            if ((m.name === '.ctor' || m.name === 'Load' || m.name === 'OnModLoad' || m.name === 'SetStaticDefaults') && this.asm.methodBody(m)?.il.length < 20000 && this.asm.methodSig(m).params.length === 0) {
               this.run(m, THIS, [], this.asm, this.maxDepth - 1);
             }
           }
@@ -812,6 +878,10 @@ export class Machine {
       const sv = stringOp(name, recv, args);
       if (sv !== undefined) return sv;
     }
+    if (NUMERIC.test(declName)) {
+      const nv = numberOp(name, recv, args);
+      if (nv !== undefined) return nv;
+    }
     if (this.dead && ctx.depth === 0) return UNKNOWN; // dead block of a keyed method: no hooks, no inlining
     const hooked = this.onCall(callee, args, ctx);
     if (hooked !== undefined) return hooked;
@@ -833,7 +903,7 @@ export class Machine {
     }
     if (recv?.k === 'mod' && (name === 'Find' || name === 'TryFind') && typeof args[0] === 'string') {
       // `cal.Find<ModNPC>("HiveMind")` is an NPC, not an item: what is asked for decides the kind
-      const kind = simpleName(callee.typeArgs?.[0] ?? '').replace(/^Mod/, '');
+      const kind = simpleName(this.typeArg(callee.typeArgs?.[0], ctx) ?? '').replace(/^Mod/, '');
       const t = { k: 'type', fn: /^(NPC|Tile|Projectile|Buff)$/.test(kind) ? `${kind}Type` : 'ItemType', name: args[0], id: `${recv.name}:${args[0]}` };
       if (name === 'TryFind') { if (args[1]?.k === 'ref') args[1].set(t); return 1; }
       return t;
@@ -843,6 +913,11 @@ export class Machine {
       if (this.enabledMods && !this.enabledMods.has(m)) return 0;
       if (args[1]?.k === 'ref') args[1].set({ k: 'type', fn: 'ItemType', name: c, id: `${m}:${c}` });
       return 1;
+    }
+    // a random pick out of a list is one of the things in it, wherever it is asked for
+    if (/^(NextFromList|SelectRandom)$/.test(name)) {
+      const arr = args.find((a) => a?.k === 'arr');
+      if (arr) return { k: 'oneof', items: arr.items.filter((v) => isNum(v)) };
     }
     if (recv?.k === 'type' && name === 'get_Type') return recv;
     if (recv?.k === 'mod' && name === 'get_Name') return recv.name;
@@ -859,6 +934,9 @@ export class Machine {
       if (name === 'get_Item' && args.length === 1 && (typeof args[0] === 'string' || isNum(args[0]))) {
         return recv.props[args[0]] ?? recv.list?.[args[0]] ?? UNKNOWN;
       }
+      // a list built in code and then indexed at random is one of the things in it — vanilla builds
+      // the Angler's accessory reward pool that way and picks a member for `reward.SetDefaults`
+      if (name === 'get_Item' && args.length === 1 && recv.list?.length) return { k: 'oneof', items: recv.list.filter((v) => isNum(v)) };
       if (name === 'TryGetValue' && args.length === 2 && args[1]?.k === 'ref') {
         const v = recv.props[args[0]];
         if (v !== undefined) { args[1].set(v); return 1; }
@@ -866,6 +944,7 @@ export class Machine {
       }
       if (name === 'ContainsKey' && args.length === 1) return recv.props[args[0]] !== undefined ? 1 : UNKNOWN;
       if (name === 'get_Count') return recv.list?.length ?? UNKNOWN;
+      if (name === 'ToArray' && recv.list) return { k: 'arr', items: [...recv.list] };
     }
     const isItem = declName === 'Terraria.Item';
 
@@ -885,6 +964,17 @@ export class Machine {
       if (recv?.k === 'itemarg') return { k: 'prop', slot: recv.slot, path: [name.slice(4)] };
       // a getter on `this` may be a real (virtual) method — fall through and inline it
       if (recv !== THIS) return UNKNOWN;
+    }
+
+    // a getter over a field the mod filled in at load time (`CalValEX.Calamity` is the `calamity`
+    // field `Load` looked up): answer it here rather than spending a frame inlining the getter,
+    // which is what the depth limit runs out on three helpers deep into a cross-mod lookup
+    // (a static one only: an instance getter is the type's own logic, and `JestersMask2` says which
+    // evil its recipe is for by overriding `IsCorruption`)
+    if (this.loadFields && !callee.sig.hasThis && args.length === 0 && /^get_[A-Z]/.test(name)) {
+      const p = name.slice(4);
+      const v = this.loadFields.get(`${declName}::${p}`) ?? this.loadFields.get(`${declName}::${p[0].toLowerCase()}${p.slice(1)}`);
+      if (v !== undefined) return v;
     }
 
     if (ctx.depth >= this.maxDepth) return UNKNOWN;
@@ -908,9 +998,30 @@ export class Machine {
         def = this.findOverride(this.concreteType, def) ?? def;
       }
       const body = this.asm.methodBody(def);
-      if (body && body.il.length < 30000) return this.runNested(def, recv, args, this.asm, ctx.depth + 1);
+      if (body && body.il.length < 30000) return this.runNested(def, recv, args, this.asm, ctx.depth + 1, (callee.typeArgs ?? []).map((t) => this.typeArg(t, ctx)));
+    }
+    // …and into the assembly of the mod an addon extends: Ragnarok's scythes are set up by
+    // `ThoriumMod.ScytheItem.SetDefaultsToScythe`, which is where their healer damage class, their
+    // use time and half their stats live. Without it they are weapons of no class at all.
+    if (!def && this.crossAsm && callee.declaringType?.kind === 'typeRef' && this.asm.siblings) {
+      const other = this.asm.siblings.get(callee.declaringType.assembly);
+      const td = other && other !== this.asm ? other.typeByName.get(callee.declaringType.fullName) : null;
+      const target = td ? this.findMethod(td, name, args.length, other) : null;
+      const body = target ? other.methodBody(target) : null;
+      // (a setup helper is short; a whole hook of the other mod is not what this is for)
+      if (body && body.il.length < 4000) return this.runNested(target, recv, args, other, ctx.depth + 1, (callee.typeArgs ?? []).map((t) => this.typeArg(t, ctx)));
     }
     return UNKNOWN;
+  }
+
+  /**
+   * A generic method's type argument, with `!!N` resolved against the call that got us here —
+   * CalValEX asks Calamity for an NPC through `CalamityContent<ModNPC>(name, out npc)`, and inside
+   * that helper the lookup reads `TryFind<!!0>`, which is only an NPC because the caller said so.
+   */
+  typeArg(t, ctx) {
+    const m = /^!!(\d+)$/.exec(String(t ?? ''));
+    return m ? ctx?.typeArgs?.[+m[1]] : t;
   }
 
   /** Property chains off a GlobalItem hook's Item argument, turned into case keys. */
@@ -920,6 +1031,10 @@ export class Machine {
       if (name === 'get_ModItem') return { k: 'moditem', slot: recv.slot };
       if (name === 'CountsAsClass' && callee.kind === 'methodSpec') return { k: 'keycmp', slot: recv.slot, match: { cls: simpleName(callee.typeArgs[0]) } };
       if (name === 'CountsAsClass' && args[0]?.k === 'dc') return { k: 'keycmp', slot: recv.slot, match: { cls: args[0].name } };
+      // `item.DamageType == DamageClass.Melee` keys as surely as `CountsAsClass<T>()` does: it is
+      // how Calamity picks out true melee (`shoot == 0 && DamageType == Melee`), and reading it as
+      // an unresolved guard put that reassignment on every item in the game that does not shoot
+      if (name === 'get_DamageType') return { k: 'dcof', slot: recv.slot };
       if (name === 'get_Name') return { k: 'prop', slot: recv.slot, path: ['displayName'] };
       if (name === 'get_type') return { k: 'key', slot: recv.slot };
       return undefined;
@@ -944,11 +1059,11 @@ export class Machine {
   }
 
   /** Nested runs never use linear mode: the callee is a helper, not a case-keyed method. */
-  runNested(method, recv, args, owner, depth) {
+  runNested(method, recv, args, owner, depth, typeArgs = null) {
     const savedLinear = this.linear;
     this.linear = false;
     try {
-      return this.run(method, recv, args, owner, depth);
+      return this.run(method, recv, args, owner, depth, typeArgs);
     } finally {
       this.linear = savedLinear;
     }
@@ -976,6 +1091,34 @@ export class Machine {
     }
     return null;
   }
+}
+
+const NUMERIC = /^System\.(Single|Double|Decimal|U?Int(16|32|64)|S?Byte)$/;
+
+/**
+ * A number turned into text and back: `x.ToString("N1")`, `float.Parse(s)`.
+ *
+ * Mods write their own "print this stat" helpers over exactly these two — Calamity's `Round` is
+ * `Single.Parse(x.ToString(fmt)).ToString()`, and `ToPercent`, `ToStealth` and `FramesToSeconds`
+ * are one multiply on top of it. Answering the two BCL calls lets all of them evaluate on their
+ * own IL, so a set bonus that states `+{0} maximum stealth` gets its number instead of a hook per
+ * helper — and gets the game's own rounding, which drops the trailing zero `N1` writes.
+ */
+function numberOp(name, recv, args) {
+  if (name === 'Parse' && typeof args[0] === 'string') {
+    const n = Number(args[0].replace(/,/g, ''));
+    return Number.isNaN(n) ? undefined : n;
+  }
+  if (name !== 'ToString' || !isNum(recv)) return undefined;
+  const fmt = typeof args[0] === 'string' ? args[0] : null;
+  if (!fmt) return String(recv); // C#'s default is the shortest round-tripping form, as JS prints
+  // "N" groups thousands, "F" does not; both default to 2 decimals with no digit count
+  const m = /^([NnFf])(\d*)$/.exec(fmt);
+  if (!m) return undefined;
+  const d = m[2] === '' ? 2 : +m[2];
+  return /[Nn]/.test(m[1])
+    ? recv.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
+    : recv.toFixed(d);
 }
 
 /** String operations on constants and on key property chains. */
@@ -1032,13 +1175,19 @@ export function evalLoadStatics(asm, { tml = null, enabledMods = null } = {}) {
       if (!body) continue;
       let il;
       try { il = decodeIL(body.il); } catch { continue; }
-      if (!il.some((x) => x.op === 'stsfld')) continue;
+      if (!il.some((x) => x.op === 'stsfld' || x.op === 'stfld' || x.op === 'ldflda')) continue;
+      const keep = (val) => val?.k === 'type' || val?.k === 'mod' || isNum(val);
+      // `Load` starts with `instance = this`, and every later read of the singleton goes through it
+      const self = asm.derivesFrom(td, (b) => b.name === 'Mod' && b.namespace === 'Terraria.ModLoader') ? { k: 'mod', name: asm.name } : null;
       const machine = new Machine(asm, {
         tml,
         enabledMods,
         budget: 100000,
         maxDepth: 3,
-        onStaticStore(f, val) { if (val?.k === 'type' || isNum(val)) out.set(`${f.declaringType?.fullName ?? ''}::${f.name}`, val); },
+        onStaticStore(f, val) { const v = val === THIS ? self : val; if (keep(v)) out.set(`${f.declaringType?.fullName ?? ''}::${f.name}`, v); },
+        // the same table on the mod's own singleton rather than a static: `Load` is the one place
+        // that writes them, so the field answers for every instance it is later read off
+        onStore(recv, name, val, sctx) { if (recv === THIS && sctx?.field && keep(val)) out.set(`${sctx.field.declaringType?.fullName ?? ''}::${name}`, val); },
       });
       // deliberately without an `onStaticLoad` off this same map: letting the pass answer its own
       // reads decides branches the extractors were reading both ways on purpose, and whole blocks

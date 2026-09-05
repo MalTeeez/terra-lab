@@ -15,6 +15,7 @@
  * to. They are what the DPS model needs to say how far a shot reaches and whether it lands.
  */
 import { decodeIL } from '../clr/il.js';
+import { chanceAt, chanceRanges, ownedCapOf } from './guards.js';
 import { Machine, NPC, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { TYPE_ABSTRACT, derivesFromTml, findInherited, refId } from './util.js';
 
@@ -405,6 +406,10 @@ export function evalProjectile(asm, td, { tml }) {
       const m = findInherited(asm, td, n);
       if (!m || seen.has(m)) continue;
       seen.add(m);
+      // a projectile that refuses to let more than N of itself exist says so in its own AI, the
+      // same way a weapon says it in CanUseItem — and for a cloud or a tether that cap *is* the
+      // sustained damage, because what it does per second is one instance's rate times how many live
+      if (ph === 'ai') rec.maxActive ??= ownedCapOf(asm, m);
       loops = [];
       AI.items.length = 0;
       LOCAL_AI.items.length = 0;
@@ -447,17 +452,27 @@ function homingRecord(rec, vanillaId) {
 export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
   const f = rec.fields;
   const children = new Map();
+  // a spawn behind a `NextBool` roll happens that often, not every time — read per method, since a
+  // projectile's children come from its AI, its OnHitNPC and its OnKill, each with its own offsets
+  const rolls = new Map();
+  const rollAt = (c) => {
+    if (!c.method) return undefined;
+    if (!rolls.has(c.method)) rolls.set(c.method, chanceRanges(asm, c.method));
+    return chanceAt(rolls.get(c.method), c.offset);
+  };
   for (const c of rec.children) {
     const t = projRef(asm, c.type);
     if (!t) continue;
     const key = `${t}|${c.where}|${c.stealth}`;
+    const chance = rollAt(c);
     const prev = children.get(key);
-    if (prev) { prev.count += c.count || 1; continue; }
+    // two spawns merged into one record only keep odds they agree on; disagreeing ones are unread
+    if (prev) { prev.count += c.count || 1; if (prev.chance !== chance) prev.chance = undefined; continue; }
     // Keep a share of exactly 1: "it is spawned with the parent's damage" and "the damage argument
     // could not be followed" are opposite facts, and normalising the first to `undefined` made them
     // the same field. The model has to be able to tell them apart — one deserves full damage, the
     // other is a gap, and a gap gets the pessimistic answer.
-    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs });
+    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs, chance });
   }
   const aiType = isNum(rec.aiType) ? rec.aiType : rec.aiType?.k === 'type' ? null : undefined;
   const ai = num(f.aiStyle);
@@ -470,6 +485,7 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     ai,
     aiType: aiType ?? undefined,
     life: num(f.timeLeft),
+    maxActive: rec.maxActive,
     local: bool(f.usesLocalNPCImmunity) ? num(f.localNPCHitCooldown) ?? 10 : bool(f.usesIDStaticNPCImmunity) ? num(f.idStaticNPCHitCooldown) ?? 10 : undefined,
     minion: bool(f.minion) || undefined,
     sentry: bool(f.sentry) || undefined,

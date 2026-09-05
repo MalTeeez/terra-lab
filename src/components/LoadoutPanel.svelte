@@ -2,6 +2,7 @@
   import { CLASS_LABELS, accentOf } from '../lib/dataset.js';
   import ScoreParts from './ScoreParts.svelte';
   import WikiIcon from './WikiIcon.svelte';
+  import BossIcon from './BossIcon.svelte';
   import Info from './Info.svelte';
   import { ui } from '../lib/state.svelte.js';
   import { SLOT_MODES } from '../lib/dps.js';
@@ -68,9 +69,10 @@
   <p class="px-4 py-8 text-center text-[12.5px] text-dim">No {what}{loadout.source === 'owned' ? ' among your gear' : ' at this stage'}.</p>
 {/snippet}
 
-<section class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]" style="--accent:{accent}">
-  <!-- armor -->
-  <div class="lab-panel overflow-hidden">
+<section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]" style="--accent:{accent}">
+  <!-- armor. Shared height with weapons so runner-ups fill exactly the room the weapons column
+       takes, no dead space either way. Kept compact so the accessories row below stays visible. -->
+  <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>Armor</h2>
       <TraitFilter entries={loadout.armorAlternatives} bind:query={armorQ} bind:selected={armorT} placeholder="Filter runner-up sets…" />
@@ -94,40 +96,65 @@
           {#each ['head', 'body', 'legs'] as slot}
             {@const p = loadout.armor[slot]}
             <tr class="row" onclick={() => onselect(p.item.id)}>
-              <td class="w-12 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-dim">{slot}</td>
-              <td>
-                <div class="flex items-center gap-2">
-                  <WikiIcon item={p.item} />
+              <td class="w-12 py-2.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-dim">{slot}</td>
+              <td class="py-2.5">
+                <div class="flex items-center gap-3">
+                  <WikiIcon item={p.item} size={44} />
                   <div class="min-w-0">
                     <div class="font-medium text-ink">{p.item.name}{@render tags(p)}</div>
-                    <div class="text-[11.5px] text-dim">{modName(p.item)} · {p.item.stageLabel}</div>
+                    <div class="text-[11.5px] text-dim">{modName(p.item)} · <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={p.item.stage} size={14} />{p.item.stageLabel}</span></div>
                   </div>
                 </div>
               </td>
-              <td class="num w-14 whitespace-nowrap text-right" title="How much defense this piece gives">{p.item.defense ?? 0}<span class="ml-0.5 text-[10px] text-dim">def</span></td>
-              <td class="w-[44%]"><ScoreParts parts={p.parts} score={p.score} max={3} /></td>
+              <td class="num w-14 whitespace-nowrap py-2.5 text-right" title="How much defense this piece gives">{p.item.defense ?? 0}<span class="ml-0.5 text-[10px] text-dim">def</span></td>
+              <td class="w-[44%] py-2.5"><ScoreParts parts={p.parts} score={p.score} max={3} /></td>
             </tr>
           {/each}
           {#if loadout.armor.isSet}
             <tr class="bg-green-soft/40">
-              <td colspan="2" class="align-middle">
-                <span class="lab-tag green mr-1.5">set bonus</span>
-                <span class="whitespace-pre-line text-[12.5px] text-ink2">{loadout.armor.head.item.setBonus || 'See effects'}</span>
+              <td colspan="4" class="align-middle">
+                <div class="flex items-baseline gap-1.5">
+                  <span class="lab-tag green shrink-0">set bonus</span>
+                  <span class="min-w-0 flex-1 whitespace-pre-line text-[12.5px] text-ink2">{loadout.armor.head.item.setBonus || 'See effects'}</span>
+                </div>
+                <div class="mt-1.5"><ScoreParts parts={loadout.armor.bonus.parts} score={loadout.armor.bonus.score} max={4} /></div>
               </td>
-              <td colspan="2"><ScoreParts parts={loadout.armor.bonus.parts} score={loadout.armor.bonus.score} max={3} /></td>
             </tr>
           {/if}
         </tbody>
       </table>
       {#if loadout.armorAlternatives.length}
-        <div class="px-4 py-2.5">
-          <div class="lab-rule start mb-1.5">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
+        <div class="flex min-h-0 flex-1 flex-col border-t border-line px-4 pb-3 pt-2.5">
+          <div class="lab-rule start mb-2">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
-          <div class="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+          <div class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-px overflow-y-auto bg-line md:grid-cols-2">
             {#each armorShown as s}
-              <button class="cursor-pointer text-ink2 transition-colors hover:text-green" title="Try this set on: the loadout is re-solved as if you wear it" onclick={() => onarmor(s.head.item.id)}>
-                {setName(s)}
-                <span class="num text-dim">{s.score}</span>
+              {@const on = loadout.armorPicked === s.head.item.id}
+              {@const def = (s.head.item.defense ?? 0) + (s.body.item.defense ?? 0) + (s.legs.item.defense ?? 0)}
+              <button
+                class="lab-cell flex items-center gap-2.5 p-2"
+                class:open={on}
+                title={on ? 'Currently trying this set on' : 'Try this set on: the loadout is re-solved as if you wear it'}
+                onclick={() => onarmor(on ? null : s.head.item.id)}
+              >
+                <div class="flex shrink-0 items-center gap-0.5 border border-line bg-panel2 p-0.5">
+                  <WikiIcon item={s.head.item} size={26} />
+                  <WikiIcon item={s.body.item} size={26} />
+                  <WikiIcon item={s.legs.item} size={26} />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="truncate text-[12.5px] font-medium text-ink">{setName(s)}</span>
+                    {#if on}<span class="lab-tag warn shrink-0">trying on</span>{/if}
+                  </div>
+                  {#if s.head.item.setBonus}
+                    <div class="truncate text-[11px] text-dim" title={s.head.item.setBonus}>{s.head.item.setBonus}</div>
+                  {/if}
+                </div>
+                <div class="shrink-0 text-right leading-tight">
+                  <div class="num text-[10.5px] text-dim">{def}<span class="ml-0.5">def</span></div>
+                  <div class="num text-[13px] font-semibold" style="color:{accent}">{s.score}</div>
+                </div>
               </button>
             {/each}
           </div>
@@ -136,8 +163,8 @@
     {/if}
   </div>
 
-  <!-- weapons -->
-  <div class="lab-panel overflow-hidden">
+  <!-- weapons. Same shared height as armor so nothing dangles at the bottom. -->
+  <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>{CLASS_LABELS[loadout.cls]} weapons</h2>
       <TraitFilter entries={loadout.weapons} bind:query={weaponQ} bind:selected={weaponT} placeholder="Filter weapons…" />
@@ -150,7 +177,7 @@
     {:else if !weaponsShown.length}
       <p class="px-4 py-8 text-center text-[12.5px] text-dim">No weapon matches the filter.</p>
     {:else}
-      <div class="max-h-[27rem] overflow-y-auto">
+      <div class="min-h-0 flex-1 overflow-y-auto">
       <table class="lab-table">
         <thead class="sticky top-0 z-10 bg-panel">
           <tr>
@@ -200,7 +227,7 @@
                   <WikiIcon item={w.item} />
                   <div class="min-w-0">
                     <div class="font-medium">{w.item.name}{@render tags(w)}{#if w.mode === 'stealth'}<span class="lab-tag plum ml-1" title="Graded by stealth strikes: {Math.round(w.stealth)}/s vs spam {Math.round(w.spam)}/s">stealth</span>{:else if w.mode === 'spam'}<span class="lab-tag ml-1" title="graded by normal attacks: {Math.round(w.spam)}/s vs stealth {Math.round(w.stealth)}/s">spam</span>{:else if w.mode}<span class="lab-tag ml-1 {MODE_TAG[w.mode]?.color ?? ''}" title={MODE_TAG[w.mode]?.tip ?? ''}>{w.mode}</span>{/if}{#if w.ammo}<span class="lab-tag ml-1" title="Graded firing the plain ammo of its kind — what better rounds add is the ammo list below">{w.ammo.name}</span>{/if}</div>
-                    <div class="text-[11.5px] text-dim">{modName(w.item)} · {w.item.stageLabel}{w.prefix ? ` · ${w.prefix.name}` : ''}</div>
+                    <div class="text-[11.5px] text-dim">{modName(w.item)} · <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={w.item.stage} size={14} />{w.item.stageLabel}</span>{w.prefix ? ` · ${w.prefix.name}` : ''}</div>
                   </div>
                 </div>
               </td>
@@ -222,7 +249,7 @@
       </div>
     {/if}
     {#if ammoShown.length}
-      <div class="max-h-[16rem] overflow-y-auto border-t border-line">
+      <div class="max-h-[16rem] shrink-0 overflow-y-auto border-t border-line">
       <table class="lab-table">
         <thead class="sticky top-0 z-10 bg-panel">
           <tr><th>Ammo</th><th class="text-right">Dmg</th><th class="w-[34%]">In its best gun</th></tr>
@@ -315,7 +342,7 @@
                   <span class="font-medium"><span class="num mr-1.5 text-[11px] text-dim">{i + 1}</span>{a.item.name}{@render tags(a)}{#if tab === 'accessories' && i < loadout.accessories.length}<span class="lab-tag solid ml-1" title="one of the {loadout.accessories.length} the solver equips">equip</span>{/if}</span>
                   <span class="num text-[12px] font-semibold" style="color:{accent}">{a.score}</span>
                 </div>
-                <div class="mb-1.5 text-[11px] text-dim">{modName(a.item)} · {a.item.stageLabel}{a.group && tab === 'accessories' ? ` · ${a.group}` : ''}{a.prefix ? ` · ${a.prefix.name}` : ''}</div>
+                <div class="mb-1.5 text-[11px] text-dim">{modName(a.item)} · <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={a.item.stage} size={14} />{a.item.stageLabel}</span>{a.group && tab === 'accessories' ? ` · ${a.group}` : ''}{a.prefix ? ` · ${a.prefix.name}` : ''}</div>
                 <ScoreParts parts={a.parts} max={4} />
               </div>
             </div>

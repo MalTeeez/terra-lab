@@ -6,6 +6,7 @@ import { deCamel } from './localization.js';
 import { ITEM, Machine, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, refId } from './util.js';
 import { extractItemEffects } from './effects.js';
+import { ownedCapOf } from './guards.js';
 import { analyzeShoot } from './shoot.js';
 import { projRef } from './projectiles.js';
 import { extractWingStats } from './wings.js';
@@ -24,10 +25,20 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
     tml,
     concreteType: td,
     budget: 30000,
+    // an addon's weapon is set up by the mod it extends (`ThoriumMod.ScytheItem.SetDefaultsToScythe`
+    // is where Ragnarok's scythes get their healer damage class and half their stats)
+    crossAsm: true,
     onStore(recv, name, value) {
       if (recv !== ITEM) return;
       if (name === 'DamageType') {
-        if (value?.k === 'dc') { rec.damageClass = value.name; rec.damageClassFull = value.full; }
+        if (value?.k === 'dc') {
+          // the first class written is the weapon's own: SOTS's `VoidItem.SetDefaults` runs the
+          // item's `SafeSetDefaults` (where it says Ranged) and then swaps in `VoidRanged`, and the
+          // swap's four branches all compare a class the machine cannot read, so the last write
+          // seen was whichever branch came first — `VoidMelee` for 84 of 86 void weapons
+          rec.baseDamageClass ??= value.name;
+          rec.damageClass = value.name; rec.damageClassFull = value.full;
+        }
         return;
       }
       if ((name === 'melee' || name === 'ranged' || name === 'magic' || name === 'summon') && value === 1) {
@@ -80,25 +91,7 @@ const num = (v) => (isNum(v) ? v : undefined);
  * @returns {number|undefined}
  */
 export function maxOutOf(asm, td) {
-  const m = findInherited(asm, td, 'CanUseItem');
-  const body = m && asm.methodBody(m);
-  if (!body) return undefined;
-  let ins;
-  try { ins = decodeIL(body.il); } catch { return undefined; }
-  for (let i = 0; i < ins.length; i++) {
-    const f = ins[i].op === 'ldfld' ? asm.resolve(ins[i].operand) : null;
-    if (f?.name !== 'ownedProjectileCounts') continue;
-    // …[index] then a compare against the cap: `< N` and `<= N-1` are the two spellings
-    for (let j = i + 1; j < Math.min(i + 12, ins.length); j++) {
-      const n = ldcValue(ins[j]);
-      if (!isNum(n)) continue;
-      const op = ins[j + 1]?.op ?? '';
-      if (/^(clt|blt|bge)/.test(op)) return Math.max(1, n);
-      if (/^(cgt|ble|bgt)/.test(op)) return Math.max(1, n + 1);
-      break;
-    }
-  }
-  return undefined;
+  return ownedCapOf(asm, findInherited(asm, td, 'CanUseItem'));
 }
 
 /** A format argument as text: 0.05 → "0.05", `ToPercent(0.05, "N1")` → "5.0"; unknown values keep their placeholder. */
@@ -127,7 +120,9 @@ function formatArgsOf(asm, td, { tml }) {
         const list = rest.length === 1 && rest[0]?.k === 'arr' ? rest[0].items : rest;
         return { ...loc, args: list.map(fmtArg) };
       }
-      if (name === 'ToPercent' && isNum(args[0])) { const d = /N(\d)/.exec(typeof args[1] === 'string' ? args[1] : 'N0'); return (args[0] * 100).toFixed(d ? +d[1] : 0); }
+      // `ToPercent`, `ToStealth`, `FramesToSeconds` and the rest are thin wrappers over
+      // `float.ToString(fmt)`, which the interpreter answers — so they inline and round the way the
+      // game does rather than needing a hook each.
       if (ctx.recv?.k === 'loc') return ctx.recv;
       return undefined;
     },
@@ -284,6 +279,11 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
     if (!isModItemType(asm, td)) continue;
 
     const rec = evalSetDefaults(asm, td, { tml, ammoIds });
+    // a void weapon is its vanilla class wearing the void family's coat: keep the class it set
+    // itself as the subclass, and name the void class it actually ends up with
+    const VOID_OF = { Melee: 'VoidMelee', Ranged: 'VoidRanged', Magic: 'VoidMagic', Summon: 'VoidSummon' };
+    const voidSub = /^Void(Melee|Ranged|Magic|Summon|Generic)$/.test(rec.damageClass ?? '') && VOID_OF[rec.baseDamageClass] ? rec.baseDamageClass : null;
+    if (voidSub) rec.damageClass = VOID_OF[voidSub];
     const attrs = asm.attributes(td.token);
     const equip = [];
     for (const a of attrs) {
@@ -303,6 +303,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       mod: modId,
       className: td.name,
       fullName: td.fullName,
+      ifaces: asm.interfacesOf(td), // `item.ModItem is IVoidHybrid` is how a global hook picks its items
+
       name: text.name ?? deCamel(td.name),
       tooltip: text.tooltip ?? '',
       setBonus: text.setBonus ?? '',
@@ -310,6 +312,7 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       equip,
       damageClass: rec.damageClass ?? null,
       damageClassFull: rec.damageClassFull ?? null,
+      subclass: voidSub ?? undefined,
       damage: num(f.damage),
       defense: num(f.defense),
       useTime: num(f.useTime),
@@ -354,6 +357,17 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
     if (f.wingSlot > 0 || equip.includes('Wings')) { item.wings = true; item.wingStats = extractWingStats(asm, td, { tml }) ?? undefined; }
     if (slot === 'weapon') {
       try { item.fire = analyzeShoot(asm, td, { tml, projRef: (v) => projRef(asm, v) }) ?? undefined; } catch { /* keep the item */ }
+      // what a void weapon spends per use: `VoidItem.GetVoid(player)`, which 78 SOTS weapons override
+      // with a constant and the base returns 1 for (a minion's cost is per summon, left unread)
+      if (/^Void/.test(rec.damageClass ?? '')) {
+        const gv = findInherited(asm, td, 'GetVoid');
+        if (gv) {
+          try {
+            const v = new Machine(asm, { tml, concreteType: td, budget: 4000, onCall: tmlStaticHook, onStaticLoad: tmlStaticLoadHook }).run(gv, THIS, [PLAYER]);
+            if (isNum(v) && v > 0) item.voidCost = v;
+          } catch { /* unread */ }
+        }
+      }
     }
     if (isArmor || slot === 'accessory' || slot === 'weapon') Object.assign(item, formatArgsOf(asm, td, { tml }));
     if (effects && (isArmor || slot === 'accessory')) {

@@ -13,10 +13,12 @@ const GEAR_RULES = [
   [/set bonus/, 'set bonus'],
   [/stealth strike/, 'stealth strike bonus'],
 ];
+// plain substrings, not regexes: this runs over every part of every weapon in the table on every
+// rescore, and `includes` is several times cheaper than `RegExp.test` for a literal
 const WEAPON_RULES = [
-  [/pierce/, 'pierce'], [/homing/, 'homing'], [/gravity/, 'gravity arc'], [/spread/, 'spread'], [/velocity/, 'slow projectile'],
-  [/destroys tiles/, 'destroys tiles'], [/walls/, 'through walls'], [/debuff/, 'inflicts debuffs'], [/child/, 'child projectiles'], [/projectiles per use/, 'multi-shot'],
-  [/contact range/, 'true melee'], [/mana\/s/, 'mana hungry'], [/minion/, 'minion'], [/sentry/, 'sentry'], [/stealth/, 'stealth'],
+  ['pierce', 'pierce'], ['homing', 'homing'], ['gravity', 'gravity arc'], ['spread', 'spread'], ['velocity', 'slow projectile'],
+  ['destroys tiles', 'destroys tiles'], ['walls', 'through walls'], ['debuff', 'inflicts debuffs'], ['child', 'child projectiles'], ['projectiles per use', 'multi-shot'],
+  ['contact range', 'true melee'], ['mana/s', 'mana hungry'], ['minion', 'minion'], ['sentry', 'sentry'], ['stealth', 'stealth'],
 ];
 const FLAG_TRAITS = { noKnockback: 'knockback immunity', knockbackImmune: 'knockback immunity', dash: 'dash', dashType: 'dash', jump: 'extra jump', debuffImmune: 'debuff immunity', lava: 'lava protection', lavaRose: 'lava protection', fireWalk: 'lava protection', iceSkate: 'mobility', waterWalk: 'mobility', mobility: 'mobility' };
 
@@ -47,7 +49,7 @@ export function traitsOf(e) {
   const weapon = it?.slot === 'weapon';
   const partsOf = (parts) => {
     for (const p of parts ?? []) {
-      if (weapon) { for (const [re, t] of WEAPON_RULES) if (re.test(p.label)) out.add(t); continue; }
+      if (weapon) { for (const [str, t] of WEAPON_RULES) if (!out.has(t) && p.label.includes(str)) out.add(t); continue; }
       const t = traitOfLabel(p.label);
       if (t) out.add(t);
     }

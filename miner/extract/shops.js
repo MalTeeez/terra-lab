@@ -23,6 +23,10 @@ export function extractShops(asm, { tml, modId, enabledMods = null, statics = nu
     } else if (derivesFromTml(asm, td, 'GlobalNPC')) {
       const m = td.methods.find((x) => x.name === 'ModifyShop' && asm.methodBody(x));
       if (m) runShopMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [{ k: 'obj', name: 'shopArg', props: {} }], out, selfNpc: null });
+      // `SetupTravelShop(int[] shop, ref int nextSlot)`: a mod's additions to the Traveling
+      // Merchant's rotating stock, written straight into the array rather than through a shop
+      const ts = td.methods.find((x) => x.name === 'SetupTravelShop' && asm.methodBody(x));
+      if (ts) runTravelHook(asm, ts, { tml, enabledMods, statics, out });
     }
   }
   return dedupe(out);
@@ -38,6 +42,29 @@ export function extractVanillaShops(tml) {
     runShopMethod(tml, m, { tml, thisVal: THIS, args: [], out, selfNpc: null });
   }
   return dedupe(out);
+}
+
+/** A mod's `GlobalNPC.SetupTravelShop`: every item type it writes into the shop array. */
+function runTravelHook(asm, md, { tml, enabledMods, statics, out }) {
+  const prog = progressionHooks();
+  const shop = { k: 'arr', tag: 'travel', items: [] };
+  const machine = new Machine(asm, {
+    tml, enabledMods, loadFields: statics, concreteType: md.declaringType,
+    linear: true, noDead: true, maxDepth: 1, budget: 200_000,
+    onStaticLoad: (f) => conditionField(f) ?? prog.onStaticLoad(f) ?? statics?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`) ?? tmlStaticLoadHook(f),
+    onLoad: (recv, name) => prog.onLoad(recv, name),
+    onCall: (callee, args, ctx) => tmlStaticHook(callee, args, ctx) ?? prog.onCall(callee),
+    onArrayStore(arr, idx, val, ctx) {
+      if (arr.tag !== 'travel') return;
+      const item = isNum(val) && val > 0 ? `v:${val}` : val?.k === 'type' ? refId(asm, val) : null;
+      if (!item) return;
+      const cond = siteGates(ctx).filter((g) => !g.startsWith('!'));
+      out.push(cond.length ? { npc: 'v:368', item, cond } : { npc: 'v:368', item });
+    },
+  });
+  const sig = asm.methodSig(md);
+  const args = sig.params.map((p) => (p.et === ET.SZARRAY ? shop : p.et === ET.BYREF ? { k: 'ref', get: () => 0, set: () => {} } : UNKNOWN));
+  try { machine.run(md, THIS, args, asm); } catch { /* keep going */ }
 }
 
 function dedupe(list) {
@@ -81,6 +108,7 @@ function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc, enabledMods 
   const machine = new Machine(asm, {
     tml,
     enabledMods,
+    loadFields: statics,
     concreteType: md.declaringType,
     linear: true,
     maxDepth: 2,
@@ -131,6 +159,18 @@ function runShopMethod(asm, md, { tml, thisVal, args, out, selfNpc, enabledMods 
         return shop;
       }
       if (shop && (name === 'Register' || name === 'AllowFillingLastSlot')) return shop;
+      // a mod's own shop class instead of tModLoader's — XDContentMod's Star Merchant sells out of
+      // `StarMerchantShop.AddPool("Melee Weapons").Add<T>()`. Inside `AddShops` an `Add` naming an
+      // item is a sale by the NPC whose hook this is; anything sold on another NPC's behalf goes
+      // through `new NPCShop(thatNpc)` and is handled above.
+      if (selfNpc && /^Add/.test(name) && recv !== undefined) {
+        const item = itemOf(cargs.find((a) => isNum(a) || a?.k === 'type' || a?.k === 'obj'), callee);
+        if (item) {
+          const cond = cargs.flatMap((a) => condFlags(asm, a));
+          out.push(cond.length ? { npc: selfNpc, item, cond } : { npc: selfNpc, item });
+        }
+        return recv;
+      }
       return undefined;
     },
   });

@@ -11,9 +11,12 @@
   import { fitCalibration } from './lib/calibration.js';
   import { applySeeds, loadDataset } from './lib/dataset.js';
   import { solveLoadout, solveTimeline, unpackTimeline } from './lib/solver.js';
+  import { setEnabled, startSound } from './lib/sound.js';
   import { persist, ui } from './lib/state.svelte.js';
 
-  let ds = $state(null);
+  // the dataset is 4.5k items deep and never mutated field-by-field: `$state.raw` keeps Svelte from
+  // wrapping every item in a reactive proxy, which made every read in the solver ~4× dearer
+  let ds = $state.raw(null);
   let error = $state(null);
   let dsRaw = null; // the indexed dataset itself; `ds` is a shallow copy so seed changes re-render
 
@@ -50,9 +53,12 @@
   });
 
   $effect(() => {
-    void [ui.cls, ui.stage, ui.mode, ui.excludedMods, ui.slots, ui.requireSet, ui.unknownStage, ui.conds, ui.seeds, ui.uncertain, ui.reforge, ui.source, ui.owned, ui.pinned, ui.excluded, ui.samples, ui.calibrate, ui.query, ui.browse, ui.target, ui.targets, ui.playstyle];
+    void [ui.cls, ui.stage, ui.mode, ui.excludedMods, ui.slots, ui.requireSet, ui.unknownStage, ui.conds, ui.seeds, ui.uncertain, ui.reforge, ui.source, ui.owned, ui.pinned, ui.excluded, ui.samples, ui.calibrate, ui.query, ui.browse, ui.target, ui.targets, ui.playstyle, ui.sound];
     persist();
   });
+
+  startSound();
+  $effect(() => setEnabled(ui.sound));
 
   const excluded = $derived(new Set(ui.excludedMods));
   const conds = $derived(new Set(ui.conds));
@@ -61,8 +67,17 @@
   // trying on a runner-up armor set: not persisted, and dropped when the class or stage moves
   let armorPick = $state(null);
   $effect(() => { void [ui.cls, ui.stage, ui.source]; armorPick = null; });
+  // Scored pieces and picked reforges survive a stage or class change: the solver keys them on what
+  // they actually depend on (item, class, progression), so only a change to the scoring context
+  // itself has to drop them. Reforging alone is ~90% of a solve, and it is stage-independent.
+  const solveCache = $derived.by(() => {
+    // `calibration`, not `statCtx`: statCtx is rebuilt on every stage change, which would empty
+    // the cache exactly when it is worth most
+    void [ui.reforge, ui.owned, ui.conds, ui.uncertain, ui.playstyle, ui.target, ui.targets, ui.seeds, ui.calibrate, calibration];
+    return { piece: new Map(), acc: new Map(), prefix: new Map() };
+  });
   const opts = $derived({
-    armorPick,
+    armorPick, cache: solveCache,
     cls: ui.cls, stage: ui.stage, excludedMods: excluded, slots: ui.slots, requireSet: ui.requireSet, unknownStage: ui.unknownStage,
     conds, uncertain: ui.uncertain, reforge: ui.reforge, owned: ui.owned, source: ui.source,
     pinned: new Set(ui.pinned), excluded: new Set(ui.excluded), calibration: statCtx.calibration, playstyle: ui.playstyle, target: ui.target, targets: ui.targets,
@@ -70,7 +85,7 @@
   const loadout = $derived(ds && ui.mode !== 'timeline' ? solveLoadout(ds, opts) : null);
 
   // "All stages" is seconds of CPU: solved in a worker so the page never freezes, with progress
-  let timeline = $state(null);
+  let timeline = $state.raw(null); // rows of solved loadouts full of dataset items: not proxy material either
   let solving = $state(null); // { done, total } while the worker is working
   let worker = null;
   let solveToken = 0;
@@ -140,14 +155,15 @@
           <Timeline {ds} {timeline} onselect={select} />
         {:else if solving}
           <div class="lab-panel p-6 text-center text-dim">
-            Solving every gamestage… <span class="num text-ink">{solving.done}</span>/{solving.total}
+            Solving for every gamestage… <span class="num text-ink">{solving.done}</span>/{solving.total}
             <div class="mx-auto mt-2 h-1 w-64 overflow-hidden rounded bg-panel2">
               <div class="h-full bg-green transition-[width]" style="width:{Math.round((solving.done / solving.total) * 100)}%"></div>
             </div>
           </div>
         {/if}
+      {:else if ui.mode === 'items'}
+        <ItemBrowser {ds} statCtx={viewCtx} onselect={select} />
       {/if}
-      <ItemBrowser {ds} statCtx={viewCtx} onselect={select} />
     </main>
 
     {#if selectedItem}

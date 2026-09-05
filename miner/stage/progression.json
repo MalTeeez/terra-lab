@@ -327,7 +327,7 @@
       "Demonite": 55,
       "Crimtane": 55,
       "Meteorite": 50,
-      "Obsidian": 65,
+      "Obsidian": 55,
       "Ebonstone": 65,
       "Crimstone": 65,
       "Hellstone": 65,
@@ -363,6 +363,7 @@
   "downedFlags": {
     "$comment": "Vanilla downed flags / Main.hardMode / event and invasion flags -> boss key (an event flag gates on the boss that makes the event possible). Mod flags resolve by name (downedHiveMind -> Hive Mind); add the ones that do not here. Calamity's DropHelper abbreviations (PostEoC, PostSG, PostAS ...) and the Exo Mech parts are listed by name. A mod event's state (event:CherryMoonEvent) needs the boss that makes the event possible; unresolved ones are listed by the miner and in data/unknown-sources.md. dd2:N is an Old One's Army wave tier (the Tavernkeep arrives after the evil boss; tiers 2 and 3 need a mechanical boss and Golem).",
     "downedSlimeKing": "KingSlime",
+    "downedDioskouroi": "PolluxBoss",
     "downedBoss1": "EyeOfCthulhu",
     "downedBoss2": "EaterOfWorlds",
     "downedQueenBee": "QueenBee",

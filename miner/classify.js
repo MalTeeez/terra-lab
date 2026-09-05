@@ -32,9 +32,11 @@ export function classOf(dcName) {
 export function cleanText(s) {
   if (!s) return '';
   return s
-    .replace(/\[c\/[0-9a-f]{6}:([^\]]*)\]/gi, '$1')
+    // the colour is a hex, but also a `{1}` format argument the item never filled in; `ceffect/name`
+    // is Calamity's own coloured tag — both keep their text
+    .replace(/\[c(?:effect)?\/[^:\]]*:([^\]]*)\]/gi, '$1')
     .replace(/\[cbuff:[^\]\/]*\/([^\]]*)\]/gi, (_, n) => deCamelWords(n))
-    .replace(/\[i(?:\/s\d+)?:[^\]]*\]/gi, '')
+    .replace(/\[i(?:\/[^:\]]*)?:[^\]]*\]\s*/gi, '')
     .replace(/\[[a-z]+:([^\]]*)\]/gi, '$1')
     .replace(/\[DAMAGELINE\]|\[STEALTHLINE\]|\[PARRYLINE\]|\[BONUSLINE\]/g, '')
     // a plural marker whose argument never resolved (`{^0:second;seconds}`) — keep the plural arm

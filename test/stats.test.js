@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { fitCalibration } from '../src/lib/calibration.js';
 import { indexDataset } from '../src/lib/dataset.js';
-import { weaponDps } from '../src/lib/score.js';
+import { W, pieceScore, setBonusScore, weaponDps } from '../src/lib/score.js';
 import { solveLoadout } from '../src/lib/solver.js';
 import { bestPrefix, effectiveStats, prefixesFor } from '../src/lib/stats.js';
 
@@ -46,6 +46,16 @@ describe('effectiveStats', () => {
     const it = ds.byId.get('M:sword');
     expect(effectiveStats(it, { ...base, conds: new Set(['revenge']) }).damage).toBe(150);
     expect(effectiveStats(it, { ...base, uncertain: true }).damage).toBe(156);
+  });
+  test('a narrowed balance context replays only the mods it allows', () => {
+    const it = ds.byId.get('M:sword');
+    // nothing external: the item as its own mod ships it, not the mined final values
+    const own = effectiveStats(it, { ...base, balanceMods: new Set(), uncertain: true });
+    expect(own).toMatchObject({ damage: 52, crit: 6, useTime: 16 });
+    expect(effectiveStats(it, { ...base, balanceMods: new Set(), conds: new Set(['revenge']) }).damage).toBe(52); // C's variant is out too
+    // A rebalances the damage, B the use time and crit: allowing only A keeps B's out
+    expect(effectiveStats(it, { ...base, balanceMods: new Set(['A']) })).toMatchObject({ damage: 104, crit: 6, useTime: 16 });
+    expect(effectiveStats(it, { ...base, balanceMods: new Set(['A', 'E']) }).useTime).toBe(8);
   });
   test('prefix and calibration apply last', () => {
     const it = ds.byId.get('M:sword');
@@ -98,5 +108,34 @@ describe('calibration', () => {
     expect(fit.rows[0].err).toBeCloseTo(9.6, 0);
     const naked = fitCalibration([{ id: 'M:sword', damage: 125, bonusDamage: 0.2 }], ds, { conds: new Set(), uncertain: false });
     expect(naked.factors.melee).toBeCloseTo(125 / (104 * 1.2), 3);
+  });
+});
+
+describe('set bonus', () => {
+  test('parsed set bonus text scores, and the set code wins where it has the key', () => {
+    const text = { slot: 'head', setBonus: '10% increased melee damage\n+8 defense while submerged', setStats: { meleeDamage: 0.1, defense: 8 }, setCondStats: ['defense'] };
+    const r = setBonusScore(text, 'melee');
+    expect(r.parts.some((p) => /melee damage/.test(p.label))).toBe(true);
+    expect(r.parts.find((p) => /defense/.test(p.label)).label).toContain('⅙'); // state-gated, discounted
+    const coded = setBonusScore({ ...text, setEffects: { damage: { melee: 0.25 } } }, 'melee');
+    expect(coded.parts.find((p) => /melee damage/.test(p.label)).label).toContain('25%'); // not 35%
+  });
+  test('a class mechanic in the set bonus prose counts a quarter, not the half a piece gets', () => {
+    const gated = { slot: 'head', setBonus: 'Stealth strikes deal 20% more melee damage', setStats: { meleeCondDamage: 0.2 } };
+    const set = setBonusScore(gated, 'melee').parts.find((p) => /melee damage/.test(p.label));
+    const piece = pieceScore({ slot: 'head', stats: gated.setStats }, 'melee').parts.find((p) => /melee damage/.test(p.label));
+    expect(set.label).toContain('¼');
+    expect(piece.label).toContain('½');
+    expect(set.value).toBeCloseTo(piece.value / 2, 5);
+  });
+
+  test('set-bonus utility and defensive effects count like the same effects on gear', () => {
+    const head = {
+      id: 'M:utility-set', slot: 'head', setBonus: 'Become immune after striking an enemy',
+      setEffects: { flags: ['onHitDodge'], moveSpeed: 0.1 },
+    };
+    const score = setBonusScore(head, 'ranged');
+    expect(score.parts.find((p) => p.label === 'dodges attacks')?.value).toBe(W.dodge);
+    expect(score.parts.find((p) => /movement speed/.test(p.label))?.value).toBeGreaterThan(0);
   });
 });

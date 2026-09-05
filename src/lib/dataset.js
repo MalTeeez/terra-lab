@@ -60,7 +60,7 @@ export const accentOf = (cls) => CLASS_COLORS[cls] ?? 'var(--color-green)';
 
 /** How sure we are about an item's gamestage — the tag colour says it. */
 export const SOURCE_TONE = {
-  drop: 'green', bag: 'green', enemy: 'green', ore: 'green', chest: 'info', shop: 'info', craft: 'info',
+  drop: 'green', bag: 'green', enemy: 'green', ore: 'green', quest: 'green', reward: 'green', decraft: 'info', companion: 'info', chest: 'info', shop: 'info', craft: 'info',
   spawn: 'info', anchor: 'plum', manual: 'plum', override: 'plum', structure: 'plum', start: '', rarity: 'warn', unknown: 'warn', unobtainable: 'warn',
 };
 export const SOURCE_HINT = {
@@ -73,6 +73,10 @@ export const SOURCE_HINT = {
   chest: 'This is the stage the chest it is found in can be reached.',
   shop: 'This is the stage the NPC starts selling it.',
   enemy: 'This is the stage the enemy that drops it starts to spawn.',
+  quest: 'This is the stage the monster the quest asks for starts to spawn.',
+  reward: 'This is the stage the flag that unlocks the reward is set.',
+  companion: 'Nothing gives you this on its own — it appears while the item it belongs to is equipped.',
+  decraft: 'Nothing makes this — it only comes back out of something else thrown into Shimmer.',
   ore: 'This is the stage the ore can be mined.',
   spawn: 'This is the stage the NPC appears.',
   anchor: 'This stage is pinned by a known progression anchor.',

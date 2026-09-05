@@ -10,6 +10,8 @@ const WIKIS = {
   CalamityMod: { base: 'https://calamitymod.wiki.gg/' },
   ThoriumMod: { base: 'https://thoriummod.wiki.gg/' },
   StarsAbove: { base: 'https://starsabovemod.wiki.gg/' },
+  InfernumMode: { base: 'https://infernummod.wiki.gg/' }, // 16/16 articles, 12/16 sprites
+
   SOTS: { base: 'https://terrariamods.wiki.gg/', page: 'Secrets_Of_The_Shadows/', file: ' (Secrets Of The Shadows)' },
   // the mod's in-game name is not its wiki's: CalamityHunt is "Hunt of the Old God", NoxusBoss is
   // "Wrath of the Gods". Article hit rate over this pack's items: 20/23, 31/31, 3/5.
@@ -39,17 +41,32 @@ export function wikiUrl(it) {
  * wiki's bracketed names hash right). Going through `Special:Redirect/file/` also works but it is
  * a special page, and wiki.gg answers a page full of those with 429s. A wrong guess 404s and the
  * <img> hides itself.
+ *
+ * `img` beats both: the file the wiki actually stores, with its real extension, looked up from the
+ * article by `tools/wiki-icons.mjs`. Bosses need it — plenty are filed under a phase or animation
+ * name (`Nameless Deity of Light 1 …gif`) that no rule derives from "Nameless Deity".
  */
 export function wikiImg(it) {
   const file = wikiFile(it);
   if (!file) return null;
-  return it.icon ? `${WIKIS[it.mod].base}images/${it.icon}/${enc(file)}.png` : wikiImgByName(it);
+  const { base } = WIKIS[it.mod];
+  if (it.img) return `${base}images/${encodeURIComponent(it.img)}`;
+  return it.icon ? `${base}images/${it.icon}/${enc(file)}.png` : wikiImgByName(it);
 }
 
 /**
- * The same sprite asked for by name instead of by hash. Slower (a special page), but it resolves
- * to whatever the wiki actually stores — animated sprites are `.gif`, and the precomputed hash is
- * of a `.png` that does not exist. Used only after the direct URL 404s.
+ * The same sprite as a `.gif`. An animated sprite (`Storm Maiden's Retribution`, `Soul of Fright`)
+ * is filed under that extension, so the `.png` the name rule builds 404s. Tried second — it is a
+ * plain file URL, unlike the special page below.
+ */
+export function wikiImgGif(it) {
+  const file = wikiFile(it);
+  return file ? `${WIKIS[it.mod].base}images/${enc(file)}.gif` : null;
+}
+
+/**
+ * The same sprite asked for by name instead of by hash. Slower (a special page), and only some
+ * wikis answer it for a `.png` name that is really a `.gif`, so it is the last thing tried.
  */
 export function wikiImgByName(it) {
   const file = wikiFile(it);

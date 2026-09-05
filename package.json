@@ -18,6 +18,7 @@
     "@lucide/svelte": "^1.40.0",
     "@sveltejs/vite-plugin-svelte": "7.3.0",
     "@tailwindcss/vite": "4.3.3",
+    "cuelume": "^0.2.2",
     "hjson": "3.2.2",
     "svelte": "5.56.9",
     "tailwindcss": "4.3.3",

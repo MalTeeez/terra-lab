@@ -24,10 +24,13 @@ import { archetypeOf, extractItems } from './extract/items.js';
 import { extractProjectiles } from './extract/projectiles.js';
 import { evalLoadStatics, evalStatics } from './extract/interp.js';
 import { loadLocalization } from './extract/localization.js';
-import { extractModDrops } from './extract/loot.js';
+import { extractDevArmor, extractModDrops } from './extract/loot.js';
+import { extractQuestRewards } from './extract/quests.js';
+import { extractIdRewards } from './extract/rewards.js';
+import { extractCompanions } from './extract/companions.js';
 import { extractBossLog, extractNpcs, vanillaNpcStats } from './extract/npcs.js';
 import { extractModPrefixes, VANILLA_PREFIXES } from './extract/prefixes.js';
-import { extractRecipes } from './extract/recipes.js';
+import { extractPairRecipes, extractRecipes, extractShimmerRecipes } from './extract/recipes.js';
 import { applyRecipeEdit, extractRecipeEdits } from './extract/recipeedits.js';
 import { extractRecipeGroups, vanillaRecipeGroups } from './extract/groups.js';
 import { extractPackBuilder } from './extract/packbuilder.js';
@@ -36,7 +39,7 @@ import { extractShops, extractTravelShop, extractVanillaShops } from './extract/
 import { extractFlagEffects } from './extract/flageffects.js';
 import { extractOnHitSpawns } from './extract/onhit.js';
 import { extractSpawnPools, extractVanillaSpawns } from './extract/spawns.js';
-import { extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
+import { extractAnglerRewards, extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
 import { extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
 import { extractVanilla, constMap } from './extract/vanilla.js';
 import { extractDebuffs } from './extract/effects.js';
@@ -109,11 +112,18 @@ for (const m of modsIn) {
   }
 }
 const ordered = loadOrder(loaded);
+// an addon's content class derives from the mod it extends, whose base class lives in that mod's
+// assembly: let the base walk cross over into it
+{
+  const byName = new Map(loaded.map((m) => [m.asm.name, m.asm]));
+  for (const m of loaded) m.asm.siblings = byName;
+}
 
 // ---- extract ------------------------------------------------------------------------------
 const allItems = [];
 const allRecipes = [];
 const allRecipeEdits = []; // PostAddRecipes passes that edit recipes other mods registered
+const disabledRecipes = new Map(); // result → the mod whose balancing pass switched its recipe off
 const allPackItems = []; // tPackBuilder `.itemmod.json` stat changes — data, not code
 // A mod's `BalancingConstants` static class: the numbers its own mechanics are built on, which the
 // model would otherwise have to invent. Calamity's stealth strike lives here — the 0.42 damage
@@ -133,6 +143,8 @@ const allTiles = [];
 const allShops = [];
 const allPools = [];      // GlobalNPC.EditSpawnPool entries
 const allFish = [];       // fishing catches
+const allGrants = [];     // items an id-keyed reward table hands over under a gate
+const allCompanions = []; // vanity pieces that appear only while another item is equipped
 const allWorldgen = [];   // chest contents placed at world generation
 const worldgenTiles = new Set();
 const groupFields = new Map(); // static field → recipe group name (RecipeGroupID.Wood, a mod's AnyGoldBar)
@@ -162,7 +174,7 @@ for (const m of ordered) {
     const groups = extractRecipeGroups(asm, { tml, fields: groupFields });
     // ids another mod's content fills in at load time, so what is keyed on them can be read
     const statics = evalLoadStatics(asm, { tml, enabledMods });
-    const recipes = extractRecipes(asm, { tml, modId, groupFields, enabledMods, statics });
+    const recipes = [...extractRecipes(asm, { tml, modId, groupFields, enabledMods, statics }), ...extractPairRecipes(asm, { modId, enabledMods }), ...extractShimmerRecipes(asm, { tml })];
     const tiles = extractTiles(asm, { tml, modId });
     // `from`: which mod registered the entry — it is the one whose code holds the condition
     const shops = extractShops(asm, { tml, modId, enabledMods, statics }).map((s) => ({ ...s, from: modId }));
@@ -173,7 +185,9 @@ for (const m of ordered) {
       fx.onHit = spawns;
       flagEffects.get(modId).set(flag, fx);
     }
-    const drops = extractModDrops(asm, { tml, modId, enabledMods, statics });
+    const drops = [...extractModDrops(asm, { tml, modId, enabledMods, statics }), ...extractQuestRewards(asm, { modId })];
+    allGrants.push(...extractIdRewards(asm, { tml, modId }));
+    allCompanions.push(...extractCompanions(asm, { modId }));
     allPools.push(...extractSpawnPools(asm, { tml, modId }));
     allFish.push(...extractModFishing(asm, { tml, modId }));
     const wg = extractModWorldgen(asm, { modId });
@@ -214,16 +228,19 @@ if (!flag('--no-vanilla')) {
   vanilla = extractVanilla(tml);
   allItems.push(...vanilla.items);
   allRecipes.push(...vanilla.recipes);
+  allRecipes.push(...extractShimmerRecipes(tml, { tml })); // vanilla's own Shimmer transmutations
   allDrops.push(...vanilla.drops);
   allProjectiles.push(...vanilla.projectiles);
   allGroups.push(...vanillaGroups);
   allShops.push(...[...extractVanillaShops(tml), ...extractTravelShop(tml)].map((s) => ({ ...s, from: 'v' })));
-  allFish.push(...extractVanillaFishing(tml));
+  allFish.push(...extractVanillaFishing(tml), ...extractAnglerRewards(tml));
+  // developer sets: rolled when a hardmode treasure bag is opened, named by no drop rule
+  allDrops.push(...extractDevArmor(tml, new Set(vanilla.items.filter((i) => /^Treasure Bag/.test(i.name ?? '')).map((i) => i.id))));
   allPools.push(...extractVanillaFishingEnemies(tml));
   // chests placed by vanilla world generation; locked ones (dungeon, temple, biome chests) gate on the config
   for (const c of extractVanillaChests(tml)) {
     const after = config.worldgenGates?.[`${c.via}@${c.style}`] ?? config.worldgenGates?.[c.via];
-    allWorldgen.push(compact({ item: c.item, via: `${c.via}${c.style !== undefined ? ` (style ${c.style})` : ''}`, cond: c.cond, after }));
+    allWorldgen.push(compact({ item: c.item, via: `${c.via}${c.style !== undefined ? ` (style ${c.style})` : ''}`, cond: c.cond, after, estimated: c.estimated }));
   }
   const npcNames = new Map();
   for (const [name, id] of vanilla.ids.npc) if (typeof id === 'number' && id > 0 && !npcNames.has(id)) npcNames.set(id, name);
@@ -252,6 +269,7 @@ printTable(['mod', 'version', 'items', 'equip', 'npcs', 'bosses', 'recipes', 'dr
     for (const r of list) { applyRecipeEdit(r, e); applied++; }
   }
   const disabled = allRecipes.filter((r) => r.disabled).length;
+  for (const r of allRecipes) if (r.disabled) disabledRecipes.set(r.result, r.disabledBy ?? 'a balancing mod');
   for (let i = allRecipes.length - 1; i >= 0; i--) if (allRecipes[i].disabled) allRecipes.splice(i, 1);
   console.log(`recipe edits: ${allRecipeEdits.length} records, ${applied} applications, ${disabled} recipes disabled, ${phantom} naming an item the pack does not have`);
 }
@@ -343,7 +361,7 @@ for (let pass = 0; pass < 4; pass++) {
     it.effects = fold(it.effects, it) ?? undefined;
     if (it.setEffects) it.setEffects = fold(it.setEffects, it);
     if (it.effects?.cond) { it.effectsCond = it.effects.cond; delete it.effects.cond; }
-    if (it.setEffects?.cond) delete it.setEffects.cond;
+    if (it.setEffects?.cond) { it.setEffectsCond = it.setEffects.cond; delete it.setEffects.cond; }
     // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
     for (const s of it.effects?.onHit ?? []) {
       const p = projById.get(s.type);
@@ -378,8 +396,10 @@ const conds = new Set();
     if (m.modName) return it.mod === m.modName;
     if (m.nsPrefix) return (it.fullName ?? '').startsWith(m.nsPrefix);
     if (m.typeName) return it.fullName === m.typeName;
-    if (m.is) return it.fullName === m.is || m.is.split('.').pop() === it.className;
+    if (m.is) { const n = m.is.split('.').pop(); return it.fullName === m.is || n === it.className || !!it.ifaces?.includes(n); }
     if (m.cls) return classOf(it.damageClass) === classOf(m.cls);
+    // `item.DamageType == DamageClass.Melee`: the same class object, not the same class of damage
+    if (m.dcIs) return (it.damageClass ?? (it.slot === 'weapon' ? 'Default' : null)) === m.dcIs;
     if (m.prop) return !!it[m.prop] === !!m.value;
     if (m.range) return it.mod === 'v' && it.typeId >= m.range[0] && it.typeId <= m.range[1];
     if (m.displayName) return it.name === m.displayName;
@@ -476,7 +496,8 @@ for (const ref of (process.env.TL_DEBUG_ITEM ?? '').split(',').filter(Boolean)) 
 // ---- stages ------------------------------------------------------------------------------
 {
   const manualPath = new URL('./stage/sources.json', import.meta.url);
-  if (existsSync(manualPath)) { config.manual = JSON.parse(readFileSync(manualPath, 'utf8')); delete config.manual.$comment; }
+  // TL_NO_MANUAL builds without the researched pins, to see what the extractors find on their own
+  if (existsSync(manualPath) && !process.env.TL_NO_MANUAL) { config.manual = JSON.parse(readFileSync(manualPath, 'utf8')); delete config.manual.$comment; }
 }
 // vanilla Zone* players fields / properties: a biome the config does not gate is reachable from the start
 const vanillaZones = new Set();
@@ -491,9 +512,20 @@ const vanillaZones = new Set();
   const npcByClass = new Map(allNpcs.map((n) => [n.id.split(':').pop(), n.id]));
   const itemByClass = new Map(allItems.map((i) => [i.id.split(':').pop(), i.id]));
   let w = 0;
+  const known = new Set([...allNpcs.map((n) => n.id), ...allItems.map((i) => i.id)]);
   for (const d of allDrops) {
     const m = /^(npc|bag):class:(.+)$/.exec(d.source);
-    if (!m) { allDrops[w++] = d; continue; }
+    if (!m) {
+      // …and a cross-mod class the extractor stamped with its own mod as well
+      // (`npc:InfernalEclipseWeaponsDLC:ThoriumMod:TheGrandThunderBird`): the class name is the key
+      const p = /^(npc|bag):(.+)$/.exec(d.source);
+      if (p && !known.has(p[2]) && p[2].split(':').length > 2) {
+        const id = (p[1] === 'npc' ? npcByClass : itemByClass).get(p[2].split(':').pop());
+        if (id) { allDrops[w++] = { ...d, source: `${p[1]}:${id}` }; continue; }
+      }
+      allDrops[w++] = d;
+      continue;
+    }
     const id = (m[1] === 'npc' ? npcByClass : itemByClass).get(m[2]);
     if (id) allDrops[w++] = { ...d, source: `${m[1]}:${id}` };
   }
@@ -502,6 +534,7 @@ const vanillaZones = new Set();
 const stageArgs = {
   items: allItems,
   recipes: allRecipes,
+  disabledRecipes,
   drops: allDrops,
   bossLogs: allBossLogs,
   npcs: allNpcs,
@@ -511,6 +544,8 @@ const stageArgs = {
   spawns: vanilla ? extractVanillaSpawns(tml) : new Map(),
   pools: allPools,
   fish: allFish,
+  grants: allGrants,
+  companions: allCompanions,
   worldgen: allWorldgen,
   worldgenTiles,
   vanillaZones,
@@ -595,6 +630,9 @@ for (const it of allItems) {
   const st = stageResult.byItem.get(it.id);
   const tooltip = cleanText(formatText(resolveRefs(it.tooltip, it.mod), it.tooltipArgs));
   const parsed = parseTooltipStats(tooltip); // the formatted text: `{0}` filled in is a real magnitude, not a guess
+  // a set bonus is a tooltip too: the same parse fills in what the set's code did not say
+  const setBonus = cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs));
+  const setParsed = setBonus ? parseTooltipStats(setBonus) : {};
   const cls = it.slot === 'weapon' ? (classOf(it.damageClass) ?? 'other') : null;
   const sources = [...(dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []), ...(fishSources.get(it.id) ?? []), ...(worldgenSources.get(it.id) ?? [])];
   for (const r of (recipesByResult.get(it.id) ?? []).slice(0, 3)) {
@@ -617,6 +655,10 @@ for (const it of allItems) {
     crit: it.crit,
     knockback: it.knockback,
     mana: it.mana,
+    // SOTS void: the vanilla class the weapon is underneath (its gear bonuses stack with void's)
+    // and what one use costs off the void bar
+    subclass: it.subclass ? classOf(it.subclass) : undefined,
+    voidCost: it.voidCost,
     shoot: it.shoot,
     shootSpeed: it.shootSpeed,
     useAmmo: it.useAmmo,
@@ -640,7 +682,10 @@ for (const it of allItems) {
     rarityName: rarityName(it),
     value: it.value,
     tooltip,
-    setBonus: cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs)),
+    setBonus,
+    setStats: Object.keys(setParsed.stats ?? {}).length ? setParsed.stats : undefined,
+    setCondStats: condKeys(setParsed, { effectsCond: it.setEffectsCond }),
+    setPlaceholders: setParsed.placeholders || undefined,
     set: it.set?.length ? it.set : undefined,
     effects: foldSelfDebuffs(it.effects),
     setEffects: foldSelfDebuffs(it.setEffects),
@@ -711,7 +756,9 @@ const npcsOut = {};
       if (npcsOut[id]) continue;
       const st = id.startsWith('v:') ? vanillaStats.get(id) : modStats.get(id);
       if (!st) continue;
-      npcsOut[id] = compact({ ...st, name: npcNameOf.get(id), immuneUnknown: !id.startsWith('v:') && !st.immune ? true : undefined });
+      const name = npcNameOf.get(id);
+      const mod = id.split(':')[0];
+      npcsOut[id] = compact({ ...st, name, mod, icon: name ? iconHash(mod, name) : undefined, immuneUnknown: !id.startsWith('v:') && !st.immune ? true : undefined });
     }
   }
   console.log(`boss NPCs: ${Object.keys(npcsOut).length} of ${stageResult.stages.reduce((n, s) => n + (s.npcs?.length ?? 0), 0)} stage NPCs have stats (${vanillaStats.size} vanilla read)`);
@@ -761,6 +808,20 @@ const groupsOut = {};
 {
   const known = new Set([...items.map((i) => i.id), ...Object.keys(materials)]);
   for (const s of seedStages) for (const id of Object.keys(s.items)) if (!known.has(id)) delete s.items[id];
+}
+
+// Sprites the `<name>.png` rule does not find: animated ones the wiki files as `.gif`, and bosses
+// filed under a phase name. Looked up by tools/wiki-icons.mjs, keyed by `<mod>:<name>` because the
+// sprite follows the name, not the id.
+{
+  const file = new URL('../data/wiki-icons.json', import.meta.url);
+  const img = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
+  let n = 0;
+  for (const r of [...items, ...ammo, ...Object.values(materials), ...Object.values(npcsOut)]) {
+    const f = img[`${r.mod}:${r.name}`];
+    if (f) { r.img = f; n++; }
+  }
+  console.log(`wiki sprites: ${n} of ${Object.keys(img).length} looked-up files matched (run tools/wiki-icons.mjs to refresh)`);
 }
 
 const dataset = {
@@ -817,7 +878,7 @@ function isNumber(v) { return typeof v === 'number' && Number.isFinite(v); }
 function fireRecord(f) {
   if (!f) return undefined;
   const r3 = (v) => (isNumber(v) ? Math.round(v * 1000) / 1000 : v ?? undefined);
-  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, fan: c.fan, variant: c.variant !== 'both' ? c.variant : undefined, alt: c.alt, region: c.region }));
+  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, fan: c.fan, variant: c.variant !== 'both' ? c.variant : undefined, alt: c.alt, chance: r3(c.chance), region: c.region }));
   const out = compact({
     calls: calls.length ? calls : undefined,
     defaultShot: f.defaultShot && (!f.defaultShot.spam || !f.defaultShot.stealth) ? f.defaultShot : undefined,

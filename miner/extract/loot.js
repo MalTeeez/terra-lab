@@ -149,7 +149,8 @@ function keyedSources(asm, prefix) {
       else if (c.value !== undefined) { const r = refId(asm, c.value); if (r) out.push(`${prefix}${r}`); }
       // a class-name key: which mod owns the class is only known once every mod is read, so the
       // name travels and `mine.js` resolves it
-      else if (c.match) { const n = c.match.className ?? c.match.classNameContains ?? c.match.classNameStartsWith; if (n) out.push(`${prefix}class:${n}`); }
+      // `npc.ModNPC is HellBringerMimic` keys as surely as a name comparison does
+      else if (c.match) { const n = c.match.className ?? c.match.classNameContains ?? c.match.classNameStartsWith ?? c.match.is?.split('.').pop(); if (n) out.push(`${prefix}class:${n}`); }
       else if (c.lo !== undefined && c.hi !== undefined && Number.isFinite(c.lo) && Number.isFinite(c.hi) && c.hi - c.lo < 64) for (let i = c.lo; i <= c.hi; i++) out.push(`${prefix}v:${i}`);
     }
     return out;
@@ -214,6 +215,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
   const machine = new Machine(asm, {
     tml,
     enabledMods,
+    loadFields: statics,
     concreteType: md.declaringType,
     linear: true,
     noDead: true,
@@ -221,6 +223,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
     maxDepth: 3,
     budget: 400000,
     onStoreLocal(i, val, ctx) {
+      if (process.env.TL_TRACE_LOOT && md.declaringType.name === process.env.TL_TRACE_LOOT) console.log('  stloc', i, val?.k, val?.fn, 'cases', JSON.stringify(ctx.cases));
       if (val?.k !== 'type' || val.fn !== 'ItemType' || !ctx.cases?.length) return;
       let l = keyedStores.get(i);
       if (!l) keyedStores.set(i, (l = []));
@@ -244,7 +247,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
         // a condition whose name does not give it away (`Conditions.YoyosYelets`): what its own
         // `CanDrop` reads is the gate — hardMode, ZoneJungle and downedMechBossAny for that one
         const canDrop = condValue(short) ? null : callee.declaringType?.def?.methods?.find((x) => x.name === 'CanDrop');
-        return condValue(short) ?? { k: 'cond', flags: canDrop ? [...gateRefs(asm, canDrop)] : [] };
+        return condValue(short) ?? { k: 'cond', flags: canDrop ? [...gateRefs(asm, canDrop, { tml })] : [] };
       }
       return undefined;
     },
@@ -271,6 +274,27 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
           else if (isNum(n) && n > 0) direct(`v:${n}`, ctx);
         }
         return UNKNOWN;
+      }
+      // A builder of the mod's own instead of the loot object: `Drops.Add<AstralLash>(ref drops, …)`,
+      // `AddBossBag<AstrageldonBag>`, `AddRelic<…>`. Catalyst writes every boss table this way and
+      // the item is the generic argument, so none of it reads as a rule. The bag lands as a drop
+      // like any other, which is what chains its contents to the boss.
+      if (callee.kind === 'methodSpec' && callee.typeArgs?.length === 1 && /^Add[A-Z]?/.test(name) && !isRuleName(name)) {
+        const it = refId(asm, callee.typeArgs[0]);
+        if (it) { for (const src of sourcesOf(sourceOf, ctx.cases)) emit({ source: src, item: it }); return recv ?? UNKNOWN; }
+      }
+      // Splicing into a table another mod already built: `npcLoot.RemoveWhere(rule => { …
+      // stacks[n] = ItemType<Trinity>(); … })` grows Calamity's boss weapon pool by two and puts
+      // its own weapons in the new slots. Nothing in there reads as a rule. A predicate like this
+      // is also how rules get removed, so only the mod's own items count — those it can only be
+      // adding, since they were never in someone else's table to begin with.
+      if (/^(RemoveWhere|Find|FindWhere)$/.test(name)) {
+        const d = cargs.find((a) => a?.k === 'delegate' && a.method);
+        const srcs = d ? sourcesOf(sourceOf, ctx.cases) : [];
+        if (srcs.length) for (const t of contentRefs(d.asm ?? asm, d.method)) {
+          const it = refId(d.asm ?? asm, t);
+          if (it?.startsWith(`${asm.name}:`)) for (const src of srcs) emit({ source: src, item: it }, true);
+        }
       }
       if (tileSpawns && !newItemDrops) return undefined;
       const flag = prog.onCall(callee);
@@ -423,7 +447,12 @@ export function extractModDrops(asm, { tml, modId, enabledMods = null, statics =
       // registers a lambda with its SharedBossLootSystem from SetStaticDefaults, so `ModifyNPCLoot`
       // shows only the trophy and the bag. The rules are still written on the NPC's own type, so
       // any other method of it (its compiler closures included) that builds drop rules is its loot.
-      for (const cand of [...td.methods, ...(nested.get(td.fullName) ?? []).flatMap((n) => n.methods)]) {
+      // …and on a base class it shares with its variants, keyed to whichever type registers it:
+      // Thorium's Borean Strider hands `SharedBossLootSystem.ByType[NPC.type]` a lambda that lives
+      // in a closure nested under `BoreanStriderBase`, and none of its six drops are anywhere else.
+      const own = [td];
+      for (let base = asm.baseOf(td); base?.kind === 'typeDef' && own.length < 8; base = asm.baseOf(base.def)) own.push(base.def);
+      for (const cand of own.flatMap((t) => [...t.methods, ...(nested.get(t.fullName) ?? []).flatMap((n) => n.methods)])) {
         if (cand === m || cand === kill || !asm.methodBody(cand) || !buildsRules(cand)) continue;
         runLootMethod(asm, cand, { tml, thisVal: THIS, args: new Array(asm.methodSig(cand).params.length).fill(UNKNOWN), emit, sourceOf: () => src });
       }
@@ -433,6 +462,10 @@ export function extractModDrops(asm, { tml, modId, enabledMods = null, statics =
       if (kill) runLootMethod(asm, kill, { tml, thisVal: THIS, args: [npcArg], emit, sourceOf: npcSources, anySource: 'npc:*', tileSpawns: true, newItemDrops: true });
       const m = td.methods.find((x) => x.name === 'ModifyNPCLoot' && asm.methodBody(x));
       if (m) runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: npcSources, anySource: 'npc:*' });
+      // `ModifyGlobalLoot`: a rule every NPC rolls, gated by its own condition class. Thorium's
+      // Soul of Plight and Pharaoh's Breath are registered here and nowhere else.
+      const gl = td.methods.find((x) => x.name === 'ModifyGlobalLoot' && asm.methodBody(x));
+      if (gl) runLootMethod(asm, gl, { tml, enabledMods, statics, thisVal: THIS, args: [lootArg], emit, sourceOf: () => 'npc:*', anySource: 'npc:*' });
       // Vanilla-boss tables handed to a registry of the mod's own instead of the loot hook —
       // Thorium's `SharedBossLootSystem.ByType[NPCID.BrainofCthulhu] = new Provider(() => rules)`.
       // The rules live in the lambda; the constant pushed before the delegate names the NPC.
@@ -464,6 +497,42 @@ export function extractModDrops(asm, { tml, modId, enabledMods = null, statics =
       if (m) runLootMethod(asm, m, { tml, enabledMods, statics, thisVal: THIS, args: [npcArg, lootArg], emit, sourceOf: bagSources });
     }
   }
+  return out;
+}
+
+/**
+ * Developer sets. `Player.OpenBossBag` rolls `TryGettingDevArmor` for every treasure bag the game
+ * does not flag `PreHardmodeLikeBossBag`, so they are hardmode boss bag loot and nothing else —
+ * no drop rule names them, which left every dev wing on its rarity guess.
+ * @param {Set<string>} bagIds  every vanilla treasure bag item id
+ * @returns {Array<{ source: string, item: string }>}
+ */
+export function extractDevArmor(tml, bagIds) {
+  const td = tml.typeByName.get('Terraria.Player');
+  const m = td?.methods.find((x) => x.name === 'TryGettingDevArmor' && tml.methodBody(x));
+  if (!m) return [];
+  const items = new Set();
+  runLootMethod(tml, m, {
+    tml, thisVal: THIS, args: [UNKNOWN], newItemDrops: true,
+    emit: (d) => items.add(d.item), sourceOf: () => 'dev', anySource: 'dev',
+  });
+  const preHardmode = boolSetIds(tml, 'PreHardmodeLikeBossBag');
+  const bags = [...bagIds].filter((id) => !preHardmode.has(id));
+  return bags.flatMap((bag) => [...items].map((item) => ({ source: `bag:${bag}`, item })));
+}
+
+/** The item ids in one `ItemID.Sets.<name>` bool set (`Factory.CreateBoolSet(ids…)`). */
+function boolSetIds(tml, name) {
+  const out = new Set();
+  const sets = tml.typeByName.get('Terraria.ID.ItemID/Sets');
+  const cctor = sets?.methods.find((m) => m.name === '.cctor' && tml.methodBody(m));
+  if (!cctor) return out;
+  const machine = new Machine(tml, {
+    tml, budget: 2_000_000, maxDepth: 1,
+    onCall: (callee, args) => (/^Create(Bool|Int)Set$/.test(callee.name) ? args.find((a) => a?.k === 'arr') ?? UNKNOWN : undefined),
+    onStaticStore(f, val) { if (f.name === name && val?.k === 'arr') for (const v of val.items) if (isNum(v) && v > 0) out.add(`v:${v}`); },
+  });
+  try { machine.run(cctor, undefined, []); } catch { /* partial */ }
   return out;
 }
 

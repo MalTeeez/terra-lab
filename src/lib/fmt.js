@@ -14,4 +14,10 @@ export const fmtFull = (v) => (v === null || v === undefined || Number.isNaN(v) 
  * straight out of floating-point arithmetic, so `8.879999971389768` is what a raw one prints.
  * Multipliers keep two decimals — the difference between x1.05 and x1.1 is a real one.
  */
+/**
+ * A stat as the game states it. The miner reads C# `float`s, so a `6.6f` velocity arrives as
+ * 6.599999904632568 and a stat cell printed the whole thing. Strings ("18 / 20", "12%") pass through.
+ */
+export const fmtStat = (v) => (typeof v === 'number' ? Math.round(v * 100) / 100 : v);
+
 export const fmtPart = (p) => (p.value !== undefined ? fmtNum(p.value) : p.mul === undefined ? '' : `×${Math.round(p.mul * 100) / 100}${p.unit ?? ''}`);

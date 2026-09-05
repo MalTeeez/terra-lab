@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { wikiImg, wikiImgByName, wikiUrl } from '../src/lib/wiki.js';
+import { wikiImg, wikiImgByName, wikiImgGif, wikiUrl } from '../src/lib/wiki.js';
 
 test('wiki links', () => {
   expect(wikiUrl({ mod: 'v', name: 'Zenith' })).toBe('https://terraria.wiki.gg/wiki/Zenith');
@@ -19,8 +19,28 @@ test('wiki links', () => {
   expect(wikiImg({ mod: 'CatalystMod', name: 'Catharsis', icon: '4/45' })).toBe('https://terrariamods.wiki.gg/images/4/45/Catharsis_(Catalyst).png');
   // an apostrophe in the mod title survives: encodeURIComponent leaves it alone, and so does the wiki
   expect(wikiImg({ mod: 'CalValEX', name: 'Exodium Orbiter', icon: 'f/f2' })).toBe("https://terrariamods.wiki.gg/images/f/f2/Exodium_Orbiter_(Calamity's_Vanities).png");
+  expect(wikiUrl({ mod: 'InfernumMode', name: 'Arid Battlecry' })).toBe('https://infernummod.wiki.gg/wiki/Arid_Battlecry');
   expect(wikiUrl({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
   expect(wikiImg({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
+});
+
+test('looked-up sprite file wins over the guessed one', () => {
+  // the boss article files its sprite under a phase name, so no rule over "Nameless Deity" finds it;
+  // tools/wiki-icons.mjs looks it up and the hashed guess is skipped (see data/wiki-icons.json)
+  expect(wikiImg({ mod: 'NoxusBoss', name: 'Nameless Deity', icon: '1/11', img: 'Nameless_Deity_of_Light_4_(Wrath_of_the_Gods).gif' }))
+    .toBe('https://terrariamods.wiki.gg/images/Nameless_Deity_of_Light_4_(Wrath_of_the_Gods).gif');
+  // a comma survives the round trip; wiki.gg serves /images/<file> unhashed
+  expect(wikiImg({ mod: 'StarsAbove', name: 'Thespian, the Act of Alchemy', img: 'Thespian,_the_Act_of_Alchemy_Delight.png' }))
+    .toBe('https://starsabovemod.wiki.gg/images/Thespian%2C_the_Act_of_Alchemy_Delight.png');
+});
+
+test('gif sprite fallback', () => {
+  // Infernum files this one as a .gif, so the .png the name rule builds 404s and this is tried next
+  expect(wikiImgGif({ mod: 'InfernumMode', name: "Storm Maiden's Retribution" }))
+    .toBe("https://infernummod.wiki.gg/images/Storm_Maiden's_Retribution.gif");
+  expect(wikiImgGif({ mod: 'SOTS', name: 'Elemental Helmet' }))
+    .toBe('https://terrariamods.wiki.gg/images/Elemental_Helmet_(Secrets_Of_The_Shadows).gif');
+  expect(wikiImgGif({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
 });
 
 test('by-name sprite fallback', () => {

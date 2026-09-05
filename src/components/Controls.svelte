@@ -4,11 +4,21 @@
   import { setPlaystyle, toggleIn, ui } from '../lib/state.svelte.js';
   import { ENGAGE, PLAYSTYLE, bossOf, targetStages } from '../lib/dps.js';
   import Info from './Info.svelte';
+  import BossIcon from './BossIcon.svelte';
 
   let { ds, calibration } = $props();
   const eras = $derived(stageEras(ds.stages));
   const contentMods = $derived(ds.mods.filter((m) => m.equipment > 0));
-  const stage = $derived(ds.stages[ui.stage]);
+  // Dragging fires an input event per stage and each one is a whole solve, so a drag across the run
+  // spent seconds solving stages the cursor had long passed. Same deal as RangeFilter: the drag
+  // moves a draft, everything that names the stage follows it live, and the solve happens on release.
+  let draft = $state(null);
+  function slide(e) {
+    const v = +e.currentTarget.value;
+    if (e.type === 'change') { draft = null; ui.stage = v; } else draft = v;
+  }
+  const shown = $derived(draft ?? ui.stage); // what the slider row names while a drag is in flight
+  const stage = $derived(ds.stages[shown]);
   const era = $derived(eraOf(stage));
 
   function toggleMod(id) {
@@ -20,6 +30,8 @@
     ui.stage = Math.max(0, Math.min(ds.stages.length - 1, ui.stage + d));
   }
   const MODES = [['loadout', 'Loadout'], ['timeline', 'All stages'], ['items', 'Items only']];
+  // where the sliding tab indicator sits; clamped so a stale ui.mode doesn't send it off-track
+  const modeIdx = $derived(Math.max(0, MODES.findIndex(([m]) => m === ui.mode)));
   const COND_LABELS = { expert: 'Expert', master: 'Master', revenge: 'Revengeance', death: 'Death', malice: 'Malice', eternity: 'Eternity', infernum: 'Infernum', bossrush: 'Boss Rush' };
   const ownedCount = $derived(Object.keys(ui.owned).length);
   const STYLE_LABELS = { sniper: 'Sniper', rapid: 'Rapid', nuke: 'Nuke', spray: 'Spray', spam: 'Spam', stealth: 'Stealth' };
@@ -34,8 +46,8 @@
   // how many bodies the fight puts in front of you: what pierce is worth hangs off this
   const TARGET_MODES = [
     ['auto', 'Auto', 'Score against the fight as it is: a worm gives its segments, a single boss does not.'],
-    ['single', '1', 'Single target: one body, whatever the boss really is. What a pure boss-killer is worth.'],
-    ['multi', 'Many', 'Multi-target: a worm, an event wave, a boss with adds. Pierce and lingering shots pay off here.'],
+    ['single', 'Single', 'Single-target: one body, whatever the boss really is. What a pure boss-killer is worth.'],
+    ['multi', 'Multi', 'Multi-target: a worm, an event wave, a boss with adds. Pierce and lingering shots pay off here.'],
   ];
   const accent = $derived(accentOf(ui.cls));
   const nextTarget = $derived(ds.stages[ui.stage + 1] ?? null);
@@ -64,24 +76,26 @@
 </script>
 
 <div class="sticky top-0 z-30 bg-paper/60 px-5 pb-2.5 pt-2 backdrop-blur-sm">
-  <section class="lab-panel px-4 py-2.5 backdrop-blur" style="--accent:{accentOf(ui.cls)}; background-color:rgb(255 255 255 / 0.92); box-shadow:var(--shadow-panel), 0 6px 12px -8px rgb(22 40 26 / 0.45)">
-    <!-- who the loadout is for, and what you are looking at -->
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <span class="lab-label shrink-0">Class</span>
-      <div class="flex flex-wrap gap-1">
-        {#each ds.classList as c}
-          <button class="lab-chip" style="--accent:{accentOf(c)}" aria-pressed={ui.cls === c} onclick={() => (ui.cls = c)}>{CLASS_LABELS[c] ?? c}</button>
-        {/each}
+  <section class="lab-panel lab-controls px-4 py-2.5 backdrop-blur" style="--accent:{accentOf(ui.cls)}; background-color:rgb(255 255 255 / 0.92); box-shadow:var(--shadow-panel), 0 6px 12px -8px rgb(22 40 26 / 0.45)">
+    <!-- who the loadout is for (left) · what you're looking at (center tabs) · extra panels (right) -->
+    <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="lab-label shrink-0">Class</span>
+        <div class="flex flex-wrap gap-1">
+          {#each ds.classList as c}
+            <button class="lab-chip" style="--accent:{accentOf(c)}" aria-pressed={ui.cls === c} onclick={() => (ui.cls = c)}>{CLASS_LABELS[c] ?? c}</button>
+          {/each}
+        </div>
       </div>
 
-      <span class="lab-label ml-auto shrink-0">View</span>
-      <div class="flex gap-1">
+      <nav class="lab-tabs justify-self-center" style="--idx:{modeIdx}; --n:{MODES.length}" aria-label="View">
+        <span class="lab-tabs-indicator" aria-hidden="true"></span>
         {#each MODES as [m, label]}
-          <button class="lab-chip" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>{label}</button>
+          <button class="lab-tab" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>{label}</button>
         {/each}
-      </div>
+      </nav>
 
-      <div class="flex gap-1">
+      <div class="flex gap-1 justify-self-end">
         <button class="lab-btn" aria-pressed={ui.panel === 'gear'} onclick={() => (ui.panel = ui.panel === 'gear' ? null : 'gear')} title="Items you own, pins and exclusions">
           My gear {#if ownedCount}<span class="num text-green-deep">{ownedCount}</span>{/if}
         </button>
@@ -94,7 +108,9 @@
 
     <!-- when in the run you are, and which boss the weapons are scored against -->
     <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <div class="flex min-w-[380px] flex-[3] items-center gap-2" style="--accent:{era.color}">
+      <!-- min-w has to cover this row's own fixed parts (buttons, slider, era label) plus a readable
+           select, or the select — the thing you actually read — is what gets squeezed to nothing -->
+      <div class="flex min-w-[620px] flex-[3] items-center gap-2" style="--accent:{era.color}">
         <span class="lab-label inline-flex shrink-0 items-center gap-1">
           Stage
           <Info label="Gamestage" w={340}>
@@ -103,7 +119,8 @@
           </Info>
         </span>
         <button class="lab-btn shrink-0 px-2" onclick={() => stepStage(-1)} title="Go back one gamestage" aria-label="Previous stage">‹</button>
-        <select class="lab-input min-w-0 flex-1" bind:value={ui.stage} title="{ui.stage === 0 ? stage.label : `Post ${stage.label}`} — everything obtainable by this point">
+        <BossIcon {ds} stage={shown} size={20} />
+        <select class="lab-input min-w-[190px] flex-1" value={shown} onchange={(e) => { draft = null; ui.stage = +e.currentTarget.value; }} title="{shown === 0 ? stage.label : `Post ${stage.label}`} — everything obtainable by this point">
           {#each eras as e}
             <optgroup label={e.label}>
               {#each e.stages as s}
@@ -113,13 +130,15 @@
           {/each}
         </select>
         <button class="lab-btn shrink-0 px-2" onclick={() => stepStage(1)} title="Go on to the next gamestage" aria-label="Next stage">›</button>
-        <input type="range" min="0" max={ds.stages.length - 1} bind:value={ui.stage} class="w-[130px] shrink-0" aria-label="Gamestage" />
-        <span class="shrink-0 whitespace-nowrap text-[11.5px]" style="color:{era.color}" title="{era.label}">
-          {era.label} <span class="num text-dim/70">{ui.stage}/{ds.stages.length - 1}</span>
+        <input type="range" min="0" max={ds.stages.length - 1} value={shown} oninput={slide} onchange={slide} onblur={slide} class="w-[130px] shrink-0" aria-label="Gamestage" />
+        <!-- fixed width: the era name and the stage number change length, and the select next to it
+             is flex-1, so letting this box resize slid the slider out from under a held cursor -->
+        <span class="w-[140px] shrink-0 truncate text-[11.5px]" style="color:{era.color}" title="{era.label}">
+          {era.label} <span class="num text-dim/70">{shown}/{ds.stages.length - 1}</span>
         </span>
       </div>
 
-      <div class="flex min-w-[260px] flex-[2] items-center gap-2">
+      <div class="flex min-w-[420px] flex-[2] items-center gap-2">
         <span class="lab-label inline-flex shrink-0 items-center gap-1">
           Scored vs
           <Info label="Target boss" w={360}>
@@ -127,7 +146,7 @@
             <p>By default that is the boss you fight next at this gamestage. Pick another one to see how a weapon holds up against it — a wide, slow, many-segment worm rewards very different weapons from a small, fast, armoured one.</p>
           </Info>
         </span>
-        <select class="lab-input min-w-0 flex-1" bind:value={ui.target}>
+        <select class="lab-input min-w-[160px] flex-1" bind:value={ui.target}>
           <option value={null}>Assume next boss{nextTarget ? ` · ${nextTarget.label}` : ''}</option>
           {#each targets as s}
             <option value={s.index}>{s.label}{s.mod !== 'v' ? ` · ${ds.modById.get(s.mod)?.name ?? s.mod}` : ''}{s.bodies ? ` · ${s.bodies}` : ''}</option>
@@ -147,7 +166,9 @@
       {#each active as a (a.label)}
         <button class="lab-active" onclick={a.clear} title="Turn this setting off" transition:fly={{ y: -4, duration: 130 }}>{a.label}</button>
       {:else}
-        <span class="text-[11.5px] text-dim/70">nothing changed from the defaults</span>
+        <!-- same box as a chip (border + padding), or the row grows by 8px the moment the first one
+             appears and shoves the page down -->
+        <span class="border border-transparent px-2 py-[3px] text-[11.5px] text-dim/70">nothing changed from the defaults</span>
       {/each}
     </div>
   </section>

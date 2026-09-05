@@ -30,7 +30,7 @@ export function solveLoadout(ds, opts) {
   const { cls, stage, slots = 6, requireSet = false, reforge = 'none', owned = {}, pinned = new Set() } = opts;
   const aliases = ds.aliases ?? {};
   const prefixes = ds.prefixes ?? [];
-  const statCtx = { conds: opts.conds ?? new Set(), uncertain: !!opts.uncertain, calibration: opts.calibration ?? null, aliases, playstyle: opts.playstyle ?? null, target: opts.target ?? null, targets: opts.targets ?? 'auto' };
+  const statCtx = { conds: opts.conds ?? new Set(), uncertain: !!opts.uncertain, calibration: opts.calibration ?? null, aliases, playstyle: opts.playstyle ?? null, target: opts.target ?? null, targets: opts.targets ?? 'auto', balanceMods: opts.balanceMods ?? null };
   const pool = candidates(ds, opts);
   const poolIds = new Set(pool.map((i) => i.id));
   const isOwned = (it) => it.id in owned;
@@ -58,10 +58,13 @@ export function solveLoadout(ds, opts) {
   // choice does not, so the timeline shares it across stages (solveTimeline owns the cache)
   const progression = ds.stages[stage]?.progression;
   const cache = opts.cache ?? { piece: new Map(), acc: new Map(), prefix: new Map() };
-  const key = (it) => `${it.id}|${progression}`;
+  const key = (it) => `${it.id}|${cls}|${progression}`;
+  // a weapon's best reforge is picked on DPS alone, so it is the same whatever class is in view;
+  // an accessory's is picked on its class score, so that one is keyed per class
   const reforgeOf = (it) => {
-    if (!cache.prefix.has(it.id)) cache.prefix.set(it.id, prefixFor(it));
-    return cache.prefix.get(it.id);
+    const k = it.slot === 'weapon' ? it.id : `${it.id}|${cls}`;
+    if (!cache.prefix.has(k)) cache.prefix.set(k, prefixFor(it));
+    return cache.prefix.get(k);
   };
 
   // ---- armor ------------------------------------------------------------------------------
@@ -100,19 +103,27 @@ export function solveLoadout(ds, opts) {
     sets.push({ isSet: true, head: pieces[0], body: pieces[1], legs: pieces[2], bonus, score: Math.round(score * 10) / 10, defense: pieces.reduce((s, p) => s + (p.item.defense ?? 0), 0) });
   }
   sets.sort((a, b) => b.score - a.score);
+  // A Calamity rogue without maximum stealth cannot use the class's defining stealth strikes.
+  // Treat that as a loadout requirement, rather than letting three individually strong pieces (or
+  // a generic full set) beat functional rogue armor on their raw stat total. Keep the ordinary
+  // fallback when no complete stealth-granting set is obtainable, which matters for partial owned
+  // inventories and pinned pieces.
+  const stealthSets = (cls === 'rogue' || cls === 'thrower') ? sets.filter((s) => armorStealth(s) > 0) : sets;
+  const viableSets = stealthSets.length ? stealthSets : sets;
   let mixed = null;
   if (bestBySlot.head && bestBySlot.body && bestBySlot.legs) {
     const score = bestBySlot.head.score + bestBySlot.body.score + bestBySlot.legs.score;
     mixed = { isSet: false, head: bestBySlot.head, body: bestBySlot.body, legs: bestBySlot.legs, bonus: { score: 0, parts: [] }, score: Math.round(score * 10) / 10, defense: ARMOR.reduce((s, k) => s + (bestBySlot[k].item.defense ?? 0), 0) };
   }
   let best = null;
-  if (requireSet && sets.length) best = sets[0];
-  else if (sets.length && (!mixed || sets[0].score >= mixed.score)) best = sets[0];
+  if (requireSet && viableSets.length) best = viableSets[0];
+  else if (stealthSets.length && (cls === 'rogue' || cls === 'thrower')) best = stealthSets[0];
+  else if (viableSets.length && (!mixed || viableSets[0].score >= mixed.score)) best = viableSets[0];
   else best = mixed;
   // `armorPick` (a head item id) wears a runner-up set instead: everything downstream — the set
   // bonus, max stealth, the weapon ranking — is solved as if that set were the pick
-  const armor = (opts.armorPick && sets.find((s) => s.head.item.id === opts.armorPick)) || best;
-  const armorAlternatives = sets.filter((s) => s !== armor).slice(0, 12);
+  const armor = (opts.armorPick && viableSets.find((s) => s.head.item.id === opts.armorPick)) || best;
+  const armorAlternatives = viableSets.filter((s) => s !== armor).slice(0, 12);
 
   // ---- accessories ------------------------------------------------------------------------
   const accOf = (it) => {
@@ -144,13 +155,19 @@ export function solveLoadout(ds, opts) {
 
   // ---- weapons (after the gear: stealth strikes scale with the set's max stealth, and what the
   // loadout carries in class damage and crit is what the weapon is actually swung with) ----------
-  const stealthMax = armor ? ARMOR.reduce((s, k) => s + stealthOf(armor[k].item), 0) || undefined : undefined;
   const worn = [armor?.head, armor?.body, armor?.legs, ...picks, wings[0], boots[0]];
   if (armor?.isSet) worn.push({ item: { effects: armor.head.item.setEffects, stats: armor.head.item.setStats } });
-  const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases) };
+  // Calamity zeroes `rogueStealthMax` every frame, so what is worn is all of it: a full rogue set
+  // (the piece pushed above carries its bonus) and the few accessories that add to it. Three pieces
+  // that do not make a set never fire the head's bonus, and gear that grants none means no stealth
+  // bar at all — not the default a weapon is graded with when there is no loadout to ask.
+  const stealthMax = armor ? worn.reduce((s, w) => s + stealthOf(w?.item), 0) : undefined;
+  // …and what it carries for another class, for a void weapon that is a melee or ranged weapon
+  // underneath (SOTS's VoidMelee inherits every melee modifier along with the void ones)
+  const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases), loadoutFor: (c) => loadoutBonus(worn, c, aliases) };
   const weapons = pool
     .filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0)
-    .map((it) => { const prefix = prefixFor(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
+    .map((it) => { const prefix = reforgeOf(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
     .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.value - a.value);
   // A summoner's whip, minions and sentry are worn together, and the pool holds far more whips than
   // the list has rows: sorted by value alone, 30 of the 40 came back whips and the minions fell off
@@ -192,6 +209,20 @@ export function solveLoadout(ds, opts) {
   for (const a of ammo) bestOf.set(a.kind, Math.max(bestOf.get(a.kind) ?? 0, a.value));
   ammo.sort((a, b) => bestOf.get(b.kind) - bestOf.get(a.kind) || a.kind - b.kind || b.value - a.value);
 
+  // Best pick if the fight were pure single-body / pure crowd, from the top of the current ranking.
+  // ponytail: rescoring the top 25 catches the real winner in almost every case; a niche weapon that
+  // never makes the top-25 under the user's `targets` will be missed. Widen the window if reports say.
+  const bestByTarget = (t) => {
+    let best = null;
+    for (const w of topWeapons.slice(0, 25)) {
+      const v = weaponDps(w.item, { ...weaponCtx, prefix: w.prefix, targets: t });
+      if (!best || v.value > best.value) best = { ...w, value: v.value, parts: v.parts, targets: t };
+    }
+    return best;
+  };
+  const weaponSingle = bestByTarget('single');
+  const weaponMulti = bestByTarget('multi');
+
   return {
     cls,
     stage,
@@ -199,6 +230,8 @@ export function solveLoadout(ds, opts) {
     poolSize: pool.length,
     source: opts.source ?? 'all',
     weapons: topWeapons,
+    weaponSingle,
+    weaponMulti,
     weaponCount: weapons.length,
     bonus: weaponCtx.loadout,
     ammo,
@@ -215,10 +248,19 @@ export function solveLoadout(ds, opts) {
   };
 }
 
-/** Max stealth a piece grants (Calamity `rogueStealthMax`, in units of 100). */
+/** Max stealth one worn piece grants (Calamity `rogueStealthMax`, in units of 100). */
 function stealthOf(it) {
-  const s = (it.setEffects?.mod?.rogueStealthMax ?? 0) + (it.effects?.mod?.rogueStealthMax ?? 0);
-  return s;
+  const s = it?.effects?.mod?.rogueStealthMax ?? 0;
+  // the text where the code was silent, same rule as `mergedStat`: "+60 maximum stealth" is 0.6 here
+  return s || (it?.stats?.stealthFlat ?? 0) / 100;
+}
+
+/** Maximum stealth supplied by an armor choice, including a full set's bonus. */
+function armorStealth(armor) {
+  if (!armor) return 0;
+  const pieces = [armor.head?.item, armor.body?.item, armor.legs?.item];
+  if (armor.isSet) pieces.push({ effects: armor.head?.item.setEffects, stats: armor.head?.item.setStats });
+  return pieces.reduce((sum, item) => sum + stealthOf(item), 0);
 }
 
 /** One loadout per stage, with what changed since the previous stage. */
@@ -261,6 +303,8 @@ export function packTimeline(rows) {
       armor: packArmor(r.loadout.armor),
       armorAlternatives: r.loadout.armorAlternatives.map(packArmor),
       weapons: r.loadout.weapons.map(packPiece),
+      weaponSingle: packPiece(r.loadout.weaponSingle),
+      weaponMulti: packPiece(r.loadout.weaponMulti),
       accessories: r.loadout.accessories.map(packPiece),
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(packPiece),
       wings: r.loadout.wings.map(packPiece),
@@ -280,6 +324,8 @@ export function unpackTimeline(ds, packed) {
       armor: armor(r.loadout.armor),
       armorAlternatives: r.loadout.armorAlternatives.map(armor),
       weapons: r.loadout.weapons.map(piece),
+      weaponSingle: piece(r.loadout.weaponSingle),
+      weaponMulti: piece(r.loadout.weaponMulti),
       accessories: r.loadout.accessories.map(piece),
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(piece),
       wings: r.loadout.wings.map(piece),

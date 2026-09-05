@@ -10,11 +10,19 @@
  * Every step is reported in `chain` so the item card can show the arithmetic.
  */
 
-/** @typedef {{ conds: Set<string>, uncertain: boolean, prefix?: object|null, calibration?: { factor: (cls) => number } }} StatCtx */
+/** @typedef {{ conds: Set<string>, uncertain: boolean, prefix?: object|null, calibration?: { factor: (cls) => number }, balanceMods?: Set<string>|null }} StatCtx */
 
-export function activeVariants(item, conds) {
+/**
+ * Which mods are allowed to rebalance this item. `ctx.balanceMods` unset (the app's default) means
+ * the full installed context; a set narrows it to those mods, and an item's own mod always counts —
+ * that is what lets a guide be judged against the balance its own content set actually ships with.
+ */
+const balanceAllowed = (item, ctx, mod) => !ctx?.balanceMods || mod === undefined || mod === item.mod || ctx.balanceMods.has(mod);
+
+export function activeVariants(item, ctx) {
   if (!item.variants) return [];
-  return item.variants.filter((v) => !v.cond || v.cond.every((c) => conds.has(c)));
+  const conds = ctx instanceof Set ? ctx : ctx.conds;
+  return item.variants.filter((v) => (!v.cond || v.cond.every((c) => conds.has(c))) && balanceAllowed(item, ctx instanceof Set ? null : ctx, v.mod));
 }
 
 /** Modifiers that apply under the current conditions. */
@@ -23,7 +31,7 @@ export function activeMods(item, ctx) {
   return item.mods.filter((m) => {
     if (m.conditional && !ctx.uncertain) return false;
     if (m.cond && !m.cond.every((c) => ctx.conds.has(c))) return false;
-    return true;
+    return balanceAllowed(item, ctx, m.mod);
   });
 }
 
@@ -46,19 +54,24 @@ export function effectiveStats(item, ctx) {
   push(item.base ? 'mined from the item\'s own mod' : 'mined');
   // replay the balancing overlays the miner applied, so each row shows the value at that step
   for (const c of item.changes ?? []) {
+    if (!balanceAllowed(item, ctx, c.mod)) continue;
     if (c.field === 'damage') damage = c.to;
     else if (c.field === 'crit') crit = c.to;
     else if (c.field === 'useTime') useTime = c.to;
     else if (c.field === 'useAnimation') useAnimation = c.to;
     push(`${c.mod} ${c.hook}${c.field ? `: ${c.field} ${c.from} → ${c.to}` : ' (effects)'}`);
   }
-  // whatever the replay did not cover (fields not tracked above), end on the miner's final values
-  damage = item.damage ?? damage;
-  crit = item.crit ?? crit;
-  useTime = item.useTime ?? useTime;
-  useAnimation = item.useAnimation ?? useAnimation;
+  // whatever the replay did not cover (fields not tracked above), end on the miner's final values —
+  // but only when every overlay was replayed: the point of a narrowed balance context is that the
+  // mined final value, which has all of them baked in, is exactly what must not be restored
+  if (!ctx.balanceMods) {
+    damage = item.damage ?? damage;
+    crit = item.crit ?? crit;
+    useTime = item.useTime ?? useTime;
+    useAnimation = item.useAnimation ?? useAnimation;
+  }
 
-  for (const v of activeVariants(item, ctx.conds)) {
+  for (const v of activeVariants(item, ctx)) {
     if (v.field === 'damage') damage = v.to;
     else if (v.field === 'crit') crit = v.to;
     else if (v.field === 'useTime') useTime = v.to;

@@ -45,6 +45,8 @@ const DROP_KINDS = new Set(['drop', 'enemy', 'bag']);
  * @param {Map} [input.spawns]          vanilla npc id → alternative gate lists (NPC.SpawnNPC)
  * @param {object[]} [input.pools]      { npc, gates } from GlobalNPC.EditSpawnPool
  * @param {object[]} [input.fish]       { item, cond?, via } fishing catches
+ * @param {object[]} [input.grants]     { item, cond, via } items an id-keyed reward table hands over
+ * @param {object[]} [input.companions] { item, follows } a vanity piece worn with another item
  * @param {object[]} [input.worldgen]   { item, via, cond?, after?, estimated? } chest contents at world generation
  * @param {Set<string>} [input.worldgenTiles]  tiles a mod's world generation places
  * @param {Set<string>} [input.vanillaZones]   Terraria.Player Zone* names (a zone not in config is reachable from the start)
@@ -55,7 +57,7 @@ const DROP_KINDS = new Set(['drop', 'enemy', 'bag']);
  * @param {Set<string>} [input.seeds]   special world seeds that are on (SEED_GROUPS keys); their
  *                                      `seed:` gates then cost nothing instead of killing the evidence
  */
-export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = [], tiles = [], shops = [], spawns = new Map(), pools = [], fish = [], worldgen = [], worldgenTiles = new Set(), vanillaZones = new Set(), config, itemIds, tileIds, npcIds = new Map(), mods, seeds = new Set() }) {
+export function inferStages({ items, recipes, disabledRecipes = new Map(), drops, bossLogs, npcs, groups = [], tiles = [], shops = [], spawns = new Map(), pools = [], fish = [], grants = [], companions = [], worldgen = [], worldgenTiles = new Set(), vanillaZones = new Set(), config, itemIds, tileIds, npcIds = new Map(), mods, seeds = new Set() }) {
   // ---- bosses & stages -------------------------------------------------------------
   const npcName = new Map(npcs.map((n) => [n.id, n.name]));
   const bosses = [];
@@ -63,9 +65,14 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     bosses.push({ key: b.key, label: b.label, progression: b.progression, npcs: b.npcs.map((n) => `v:${n}`), mod: 'v', kind: b.kind ?? 'boss' });
   }
   const npcByModClass = new Map(npcs.map((n) => [`${n.mod}:${norm(n.className)}`, n.id]));
+  const npcByClass = new Map();
+  for (const n of npcs) if (n.className && !npcByClass.has(norm(n.className))) npcByClass.set(norm(n.className), n.id);
   for (const b of bossLogs) {
     if (!b.npcs.length && b.mod) {
-      const guess = npcByModClass.get(`${b.mod}:${norm(b.key)}`);
+      // …and one mod may log another's boss (Infernum registers Calamity's Primordial Wyrm), whose
+      // worm head carries the class name with `Head` on the end and does all the dropping
+      const k = norm(b.key);
+      const guess = npcByModClass.get(`${b.mod}:${k}`) ?? npcByClass.get(k) ?? npcByClass.get(`${k}head`);
       if (guess) b.npcs = [guess];
     }
     const npcsU = [...new Set(b.npcs)];
@@ -264,7 +271,9 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     if (enemyGate.has(id)) return enemyGate.get(id);
     let g = null;
     const n = npcById.get(id);
-    if (n?.town && !spawnAlts.has(id)) g = townGate(id) ?? null;
+    // a town NPC drops what it drops once it has moved in — vanilla ones too, which are town NPCs
+    // by the config rather than by a `CanTownNPCSpawn` the miner read (Calamity's Clothier's Wrath)
+    if ((n?.town || id.startsWith('v:')) && !spawnAlts.has(id)) g = townGate(id) ?? null;
     else if (spawnAlts.has(id)) {
       const label = npcName.get(id) ?? id;
       const resolved = spawnAlts.get(id).map((a) => usableGate(a, label)).filter(Boolean);
@@ -353,7 +362,15 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
   // — says nothing about where either side comes from, and staging one on the other only walks in
   // circles.
   const craftedFrom = new Map(); // result → the ids its recipes consume
-  for (const [result, list] of recipesByResult) craftedFrom.set(result, new Set(list.flatMap((r) => r.ingredients.map((i) => i.item).filter(Boolean))));
+  const ingredientOf = new Map(); // …and the other way round, for what Shimmer hands back
+  for (const [result, list] of recipesByResult) {
+    craftedFrom.set(result, new Set(list.flatMap((r) => r.ingredients.map((i) => i.item).filter(Boolean))));
+    for (const ing of craftedFrom.get(result)) {
+      let s = ingredientOf.get(ing);
+      if (!s) ingredientOf.set(ing, (s = new Set()));
+      s.add(result);
+    }
+  }
   /**
    * A loop says nothing only while both sides know nothing but each other. Once the ingredient's
    * stage comes from somewhere else — vanilla Ebonwood is simply there from the start — the recipe
@@ -399,7 +416,7 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
         const cond = d.cond ? usableGate(d.cond, `${nameOf(d.item)} from ${boss.label}`) : null;
         if (d.cond && !cond) continue;
         const p = Math.max(boss.progression, cond?.p ?? 0);
-        bossDrops.push({ item: d.item, boss, p, gate: cond && cond.p > boss.progression ? cond : null });
+        bossDrops.push({ item: d.item, boss, p, gate: cond && cond.p > boss.progression ? cond : null, quest: d.quest });
         continue;
       }
       if (d.item.startsWith('tile:')) continue;
@@ -430,7 +447,7 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
       const guessed = !spawns.has(src) && !g.cfg;
       const rp = guessed && g.p === 0 && !g.flag?.startsWith('seed:') && byId.has(d.item) ? rarityProg(byId.get(d.item)) : null;
       if (rp !== null && rp > g.p) g = { p: rp, label: labelOfProg(rp), flag: null };
-      enemyDrops.push({ item: d.item, npc: src, gate: g });
+      enemyDrops.push({ item: d.item, npc: src, gate: g, quest: d.quest });
     } else if (kind === 'bag') {
       const cond = d.cond ? usableGate(d.cond, `${nameOf(d.item)} from ${nameOf(src)}`) : null;
       if (d.cond && !cond) continue;
@@ -492,6 +509,12 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     if (rp !== null && rp > g.p) g = { p: rp, label: labelOfProg(rp), flag: null };
     shopDrops.push({ item: sh.item, npc: sh.npc, gate: g });
   }
+  // an id-keyed reward table: a dialogue or quest that hands the item over once a flag is set
+  const grantDrops = []; // { item, gate, via }
+  for (const g of grants) {
+    const gate = usableGate(g.cond, `${nameOf(g.item)} from ${g.via}`);
+    if (gate) grantDrops.push({ item: g.item, gate, via: g.via });
+  }
   // fishing catches and crates
   const fishDrops = []; // { item, gate, via }
   for (const f of fish) {
@@ -512,14 +535,17 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     let boss = g.label;
     const after = w.after ? progOfKey(w.after) : null;
     if (after !== null && after !== undefined && after > p) { p = after; boss = labelOfKey(w.after); }
-    let estimated = false;
+    // a chest the extractor could not place waits for everything else to have its say, whether or
+    // not the rarity has anything to add — but only a stage the rarity actually decided is a guess
+    const defer = !!w.estimated;
+    let guessed = false;
     // a mod's chest may be locked (a chest tile with UnlockChest) or sit in a structure that is not
     // meant to be reached early, which the code does not say: locked chests and hardmode-tier items
     // keep their rarity guess as a floor
     const rp = byId.has(w.item) ? rarityProg(byId.get(w.item)) : null;
     const lateTier = w.mod && w.mod !== 'v' && rp !== null && rp >= (progOfKey('WallOfFlesh') ?? 7);
-    if ((w.estimated || lateTier) && rp !== null && rp > p) { p = rp; boss = labelOfProg(p); estimated = true; }
-    worldgenDrops.push({ item: w.item, p, via: w.via, boss: p > 0 ? boss : undefined, estimated });
+    if ((w.estimated || lateTier) && rp !== null && rp > p) { p = rp; boss = labelOfProg(p); guessed = true; }
+    worldgenDrops.push({ item: w.item, p, via: w.via, boss: p > 0 ? boss : undefined, defer: defer || guessed, guessed });
   }
   // manual sources (miner/stage/sources.json): the user's own research, applied like overrides
   const manual = [];
@@ -583,19 +609,20 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     }
     // the ore round's answer (pickaxe + world gates) goes first: at an equal stage it explains an ore better than a bare spawn or an enemy drop
     for (const [id, seed] of oreSeed) better(id, seed.p, seed.src);
-    for (const { item, boss, p, gate } of bossDrops) better(item, p, gate ? { kind: 'drop', boss: boss.label, gate: gate.flag ?? undefined, until: gate.label ?? undefined } : { kind: 'drop', boss: boss.label });
-    for (const { item, npc, gate } of enemyDrops) better(item, gate.p, { kind: 'enemy', via: npc === '*' ? 'any enemy' : npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { item, boss, p, gate, quest } of bossDrops) better(item, p, quest ? { kind: 'quest', via: boss.label } : gate ? { kind: 'drop', boss: boss.label, gate: gate.flag ?? undefined, until: gate.label ?? undefined } : { kind: 'drop', boss: boss.label });
+    for (const { item, npc, gate, quest } of enemyDrops) better(item, gate.p, { kind: quest ? 'quest' : 'enemy', via: npc === '*' ? 'any enemy' : npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
     for (const { boss, tile } of tileSpawns) for (const id of placedBy.get(tile) ?? []) if (!oreSeed.has(id)) better(id, boss.progression, { kind: 'spawn', boss: boss.label });
     for (const c of chests) better(c.item, c.p, { kind: 'chest', via: c.chest, boss: c.boss });
     for (const { item, npc, gate } of shopDrops) better(item, gate.p, { kind: 'shop', via: npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
     for (const { item, gate, via } of fishDrops) better(item, gate.p, { kind: 'fish', via, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
+    for (const { item, gate, via } of grantDrops) better(item, gate.p, { kind: 'reward', via, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
     for (const { item, npc, gate } of critters) better(item, gate.p, { kind: 'critter', via: npcName.get(npc) ?? vanillaNpcName.get(npc) ?? npc, boss: gate.label ?? undefined, gate: gate.flag ?? undefined });
     // A chest whose reach the code does not spell out is a guess dressed as evidence, and the
     // earliest evidence wins: Thorium fills every chest style in the world from one method, so its
     // Aquaite Bar looked like pre-boss chest loot and the recipe that actually makes it — Aquaite,
     // which wants a 65% pickaxe — never got a say. Estimated chests wait until the fixpoint has had
     // its turn (below), the way rarity does.
-    for (const { item, p, via, boss, estimated } of worldgenDrops) if (!estimated) better(item, p, { kind: 'worldgen', via, boss });
+    for (const { item, p, via, boss, defer } of worldgenDrops) if (!defer) better(item, p, { kind: 'worldgen', via, boss });
     // The bottom layer, seeded before the recipes rather than after them: a vanilla material no code
     // path produces is simply there from the start — wood, stone, sand, moss, herbs. Chopping a tree
     // leaves no IL behind, and the mod block made of that wood needs the answer while the recipes are
@@ -693,6 +720,10 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
           }
           if (!ok) return;
           if (modRecipe && vanillaCap !== null && p > vanillaCap) return;
+          // a conversion table says what turns into what, not what lets you do it: Calamity's
+          // exhume list is only usable at Calamitas's enchantment table, and the table itself does
+          // not say so. The rarity stands as a floor there, the way an unplaceable chest's does.
+          if (r.soft) { const rp = byId.has(result) ? rarityProg(byId.get(result)) : null; if (rp !== null && rp > p) p = rp; }
           if (better(result, p, { kind: 'craft', from: chain.slice(0, 3), recipe: index })) changed = true;
         });
       }
@@ -700,8 +731,40 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
     }
     }
 
+    // Shimmer decrafting: an item that is only ever an *ingredient* comes back out of whatever is
+    // made of it, thrown into Shimmer. Thorium registers its Legendary set as the ingredients of a
+    // Lasting Pliers recipe nobody can craft (a dummy condition switches it off) for exactly that —
+    // buy the Pliers from the Cobbler, shimmer them, and the set is the only thing you get.
+    // (chains are real — Calamity's Acidwood only ever comes back out of a chest made of it, and the
+    // platform only out of the Acidwood — so this repeats until it stops finding anything. A result
+    // the miner only assumed was lying around from the start vouches for nothing.)
+    for (let pass = 0; pass < 4; pass++) {
+      let found = false;
+      for (const [id, results] of ingredientOf) {
+        if (prog.has(id)) continue;
+        let best = null;
+        for (const r of results) {
+          const rp = prog.get(r);
+          if (!rp || !byId.has(r) || rp.src.kind === 'start') continue;
+          // …and only something you can get without the item you are decrafting for. Calamity's
+          // Ancient Treasure Chest is made of Acidwood, so it says nothing about where Acidwood
+          // comes from — that is the same circle the craft evidence refuses to walk.
+          if (rp.src.kind === 'craft' && craftedFrom.get(r)?.has(id)) continue;
+          if (!best || rp.p < best.p) best = { p: rp.p, from: r };
+        }
+        if (best) { prog.set(id, { p: best.p, src: { kind: 'decraft', via: nameOf(best.from), boss: labelOfProg(best.p) } }); found = true; }
+      }
+      if (!found) break;
+    }
+
+    // a vanity piece that only shows up while its owner is equipped comes with the owner
+    for (const { item, follows } of companions) {
+      const src = prog.get(follows);
+      if (src && !prog.has(item)) prog.set(item, { p: src.p, src: { kind: 'companion', via: nameOf(follows), boss: src.p > 0 ? labelOfProg(src.p) : undefined } });
+    }
+
     // the estimated chests, now that everything with a real source has one
-    for (const { item, p, via, boss, estimated } of worldgenDrops) if (estimated && !prog.has(item)) prog.set(item, { p, src: { kind: 'worldgen', via, boss, estimated: true } });
+    for (const { item, p, via, boss, defer, guessed } of worldgenDrops) if (defer && !prog.has(item)) prog.set(item, { p, src: { kind: 'worldgen', via, boss, estimated: guessed || undefined } });
 
     // overrides win
     applyOverrides();
@@ -800,6 +863,61 @@ export function inferStages({ items, recipes, drops, bossLogs, npcs, groups = []
   // no stage at all, on purpose: the mod removed it or left it unreachable, and saying so is an
   // answer — it keeps the item out of every pool without it coming back as an open question
   for (const [id, via] of unobtainable) byItem.set(id, { progression: null, stage: null, source: { kind: 'unobtainable', via } });
+  // …and a recipe the pack's own balancing mod switched off says the same thing in code: the item
+  // is still in the game and nothing makes it any more. Only where that recipe was the whole story —
+  // an item that also drops or is sold keeps the source it has.
+  // an addon written against another version of the mod it extends: `Find<ModItem>("BloodstoneCore")`
+  // names an item this Calamity does not have, so the recipe throws at load and never exists. Same
+  // answer as a disabled one — the item is in the game and nothing makes it.
+  // …a vanilla id the miner failed to read the defaults of is not that: the item is in the game
+  const vanillaIds = new Set([...itemIds.values()]);
+  const unreal = (ref) => ref && !byId.has(ref) && !(ref.startsWith('v:') && vanillaIds.has(+ref.slice(2)));
+  // it carries down the chain: the Auric Tesla Bard set is made of a Bloodflare Siren Skull, which
+  // asks for a Bloodstone Core that no longer exists, so neither of them can be had. Repeated until
+  // it stops finding anything.
+  for (let pass = 0; pass < 4; pass++) {
+    let found = false;
+    for (const [id, list] of recipesByResult) {
+      const cur = byItem.get(id);
+      if (cur && cur.source.kind !== 'rarity' && cur.source.kind !== 'unknown') continue;
+      if (!EQUIP_SLOTS.has(byId.get(id)?.slot)) continue;
+      const blocked = (i) => unreal(i.item) || byItem.get(i.item)?.source.kind === 'unobtainable';
+      const missing = list.map((r) => r.ingredients.find(blocked)?.item).filter(Boolean);
+      if (missing.length !== list.length) continue; // some recipe is buildable
+      const gone = unreal(missing[0]);
+      byItem.set(id, { progression: null, stage: null, source: { kind: 'unobtainable', via: `its recipe needs ${gone ? missing[0] : nameOf(missing[0])}, which ${gone ? 'this pack does not have' : 'nothing in this pack makes'}` } });
+      found = true;
+    }
+    if (!found) break;
+  }
+  // …and the drop side of the same story: an addon hangs its loot off another mod's NPC by class
+  // name (CalValEX drops the Earth Shield from Calamity's "Horse"), the class has since been
+  // renamed, and the rule is registered against an NPC that is not in the game.
+  {
+    const knownNpc = new Set(npcs.map((n) => n.id));
+    const phantom = new Map(); // item → the class asked for
+    const real = new Set();
+    for (const d of drops) {
+      const m = /^(npc|bag):(.+)$/.exec(d.source ?? '');
+      if (!m) continue;
+      const ref = m[2];
+      const gone = m[1] === 'npc' ? !knownNpc.has(ref) && !/^(v:\d+|\*)$/.test(ref) : !byId.has(ref) && !/^v:\d+$/.test(ref);
+      if (gone) { if (!phantom.has(d.item)) phantom.set(d.item, ref); } else real.add(d.item);
+    }
+    for (const [id, ref] of phantom) {
+      const cur = byItem.get(id);
+      if (real.has(id) || (cur && cur.source.kind !== 'rarity' && cur.source.kind !== 'unknown')) continue;
+      if (recipesByResult.get(id)?.length || !EQUIP_SLOTS.has(byId.get(id)?.slot)) continue;
+      const [mod, cls] = ref.split(':').slice(-2);
+      byItem.set(id, { progression: null, stage: null, source: { kind: 'unobtainable', via: `it drops from ${mod}'s ${cls}, which this pack does not have` } });
+    }
+  }
+  for (const [id, by] of disabledRecipes) {
+    const cur = byItem.get(id);
+    if (cur && cur.source.kind !== 'rarity' && cur.source.kind !== 'unknown') continue;
+    if (recipesByResult.get(id)?.length) continue; // a second recipe survived
+    byItem.set(id, { progression: null, stage: null, source: { kind: 'unobtainable', via: `its recipe is disabled by ${by}` } });
+  }
 
   // class aliases for the mods present
   const classAliases = {};

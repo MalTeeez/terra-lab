@@ -8,6 +8,10 @@
  */
 import { nodeOf } from './dataset.js';
 
+const squash = (t) => String(t ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+/** Does a hand-written note already say which boss it is behind? */
+const namesBoss = (via, boss) => !!boss && squash(via).includes(squash(boss));
+
 /** Human sentence for why a node is obtainable when it is. */
 export function gateText(node, ds) {
   const s = node.src ?? {};
@@ -19,9 +23,14 @@ export function gateText(node, ds) {
     case 'worldgen': return s.via && !/^mined/.test(s.via) ? `in a chest placed at world generation (${s.via})${s.estimated ? ` — the code does not say if the chest is locked, so the rarity guess${s.boss ? ` (${s.boss})` : ''} stands` : s.boss ? ` (after ${s.boss})` : ''}` : 'generated in the world, any pickaxe';
     case 'bag': return `${s.via ?? 'treasure bag'} (${s.boss})`;
     case 'enemy': return `dropped by ${s.via}${s.boss ? `, which needs ${s.boss}` : ''}${s.gate && !s.boss ? ` (${s.gate})` : ''}`;
+    case 'decraft': return `shimmer-decrafted from ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
+    case 'companion': return `worn with ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
+    case 'reward': return `handed over by ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
+    case 'quest': return `a quest reward for killing ${s.via}${s.boss ? `, which needs ${s.boss}` : ''}`;
     case 'chest': return `${s.via}${after}`;
     case 'shop': return `sold by ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
-    case 'manual': return `${s.via ? s.via + ' — ' : ''}after ${s.boss} (your sources.json)`;
+    // a pin whose note already names the boss ("dropped by Crabulon") does not need it twice
+    case 'manual': return s.via && namesBoss(s.via, s.boss) ? `${s.via} (your sources.json)` : `${s.via ? s.via + ' — ' : ''}after ${s.boss} (your sources.json)`;
     case 'unobtainable': return `not obtainable${s.via ? ` — ${s.via}` : ''} (your sources.json)`;
     case 'spawn': return `ore spawned by ${s.boss}`;
     case 'ore': {

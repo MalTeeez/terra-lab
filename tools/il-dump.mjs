@@ -26,6 +26,10 @@ else {
 const opName = (x) => {
   if (x.operand === undefined) return '';
   if (x.op === 'ldstr') return JSON.stringify(asm.userString(x.operand));
+  // a float constant in decimal: `ldcValue` leaves floats alone (the extractors only want ints),
+  // and the fallback below printed them in *hex* — `tok 0.4` was 0.25, and read as 0.4 it sent a
+  // whole investigation after a damage share the miner had right all along
+  if (x.op === 'ldc.r4' || x.op === 'ldc.r8') return String(Math.round(x.operand * 1e6) / 1e6);
   const v = ldcValue(x);
   if (v !== undefined) return String(v);
   if (/^(br|b[a-z]{2}|leave)/.test(x.op)) return `→${x.operand}`;

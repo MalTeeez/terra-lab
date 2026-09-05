@@ -1,24 +1,57 @@
 <script>
   /** The chosen recipe drawn as a tree: root on the left, ingredients branching right. */
   import { elbow, layout, toDisplay } from '../lib/treelayout.js';
+  import { craftTree } from '../lib/sources.js';
   import WikiIcon from './WikiIcon.svelte';
 
   let { ds, tree, onselect = null, scale = 1, zoomable = false } = $props();
   // `scale` is the size the caller wants; when the graph carries its own controls that is only the
   // starting point, and the buttons take it from there
   const clamp = (z) => Math.round(Math.min(1.6, Math.max(0.3, z)) * 100) / 100;
+  // A fit is rounded to whole percents, and rounding it *up* is what put a sliver of scrollbar under
+  // half of them (the box is ceil(width × zoom), so half a percent of a 1000px tree is 5px over).
+  // Always take the percent below the exact fit: then ceil(width × zoom) ≤ the room measured.
+  const fitTo = (w, h) => Math.floor(Math.min(w / g.width, h / g.height) * 100) / 100;
   let step = $state(0);
-  const zoom = $derived(zoomable ? clamp(scale + step * 0.15) : scale);
-  const g = $derived(layout(toDisplay(tree)));
+  // Walking into an ingredient from inside the big window: the window is in the top layer, so the
+  // item card that `onselect` opens lands *behind* it and the click reads as doing nothing. Follow
+  // the node here instead — the window shows that item's tree, and `trail` is the way back. Dropped
+  // when the window closes, so the small graph in the row behind it is always the row's own item.
+  let trail = $state([]); // [{ id, name }], deepest last
+  const walked = $derived(trail.length ? craftTree(ds, trail.at(-1).id) : null);
+  const g = $derived(layout(toDisplay(walked ?? tree)));
+  const backTo = $derived(trail.length > 1 ? trail.at(-2).name : tree?.name ?? 'the tree');
+  let popOpen = $state(false);
+  function follow(id, name) {
+    if (popOpen) {
+      if (craftTree(ds, id)?.recipes?.length) { trail = [...trail, { id, name }]; return; }
+      document.getElementById(popId)?.hidePopover(); // nothing to walk into: get out of the card's way
+    }
+    onselect(id);
+  }
+  // The viewport is a fixed box, so a two-ingredient tree sat in the middle of it at the caller's
+  // scale while there was room for twice that. The start zoom grows a small tree into the box (up to
+  // clamp's 1.6) and leaves a big one at the caller's scale to be scrolled — shrinking one into
+  // 340px would only make its labels unreadable. `scrollbar-gutter` keeps the measured width free of
+  // the scrollbar the zoom itself can bring in, so the fit cannot chase its own tail.
+  const VIEW_H = 340; // the max-h below
+  const PAD = 8; // the p-1 around the graph
+  let viewW = $state(0);
+  const fitted = $derived(viewW ? clamp(Math.max(scale, fitTo(viewW - PAD, VIEW_H - PAD))) : scale);
+  const zoom = $derived(zoomable ? clamp(fitted + step * 0.15) : scale);
   // the roomy view, in the popover every other big view in the app uses
   const popId = $props.id();
   let fullEl = $state(null);
   let fullZoom = $state(1);
   const fit = () => {
-    if (!fullEl) return;
+    if (!fullEl?.clientWidth) return; // closed: it has no size to fit to yet
     const pad = 32; // the p-4 around the graph
-    fullZoom = clamp(Math.min(1, Math.min((fullEl.clientWidth - pad) / g.width, (fullEl.clientHeight - pad) / g.height)));
+    // fits both ways: a small tree grows into the window (up to clamp's 1.6) instead of sitting at
+    // 100% in the middle of it, a big one shrinks until it is all on screen
+    fullZoom = clamp(fitTo(fullEl.clientWidth - pad, fullEl.clientHeight - pad));
   };
+  // following a node into another item swaps the tree out from under an open window: fit the new one
+  $effect(() => { void g; fit(); });
   const others = $derived(tree.recipes?.filter((r) => !r.chosen) ?? []);
   let showOthers = $state(false);
 
@@ -48,7 +81,7 @@
       <svelte:element this={clickable ? 'button' : 'div'} role={clickable ? 'button' : undefined}
         class="craft-box" class:gating={n.gating} class:root={n.depth === 0} class:station={n.kind === 'station'}
         style="left:{n.x}px; top:{n.y}px; width:{n.w}px; height:{n.h}px"
-        onclick={clickable ? () => onselect(n.id) : undefined}
+        onclick={clickable ? () => follow(n.id, n.name) : undefined}
         title="{n.name}{n.via ? ` — ${n.via}` : ''}{n.gate ? ` — ${n.gate}` : ''}{n.alt?.length ? `\nor ${n.alt.join(', ')}` : ''}">
         {#if icon(n)}
           <WikiIcon item={icon(n)} size={22} />
@@ -73,20 +106,25 @@
 {#if zoomable}
   <!-- with controls the graph owns its viewport, so the buttons can float over a scrolled tree -->
   <div class="relative border border-line bg-panel2/40">
-    <div class="absolute right-1.5 top-1.5 z-10 flex items-center gap-1">
+    <!-- top left: the root sits centred on the left edge, so the corner above it is the one reliably
+         empty spot — the top right is where the deepest ingredients stack up -->
+    <div class="absolute left-1.5 top-1.5 z-10 flex items-center gap-1">
       <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (step -= 1)} disabled={zoom <= 0.3} aria-label="Zoom out" title="Draw the tree smaller">−</button>
       <button type="button" class="lab-btn num px-2 py-0.5" onclick={() => (step = 0)} title="Go back to the starting zoom">{Math.round(zoom * 100)}%</button>
       <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (step += 1)} disabled={zoom >= 1.6} aria-label="Zoom in" title="Draw the tree bigger">+</button>
       <button type="button" class="lab-btn px-2 py-0.5" popovertarget={popId} title="Open the whole tree in a bigger view">⤢</button>
     </div>
-    <div class="max-h-[340px] overflow-auto p-1" style="display:grid; place-content:safe center">{@render graph(zoom)}</div>
+    <div class="max-h-[340px] overflow-auto p-1" style="display:grid; place-content:safe center; scrollbar-gutter:stable" bind:clientWidth={viewW}>{@render graph(zoom)}</div>
   </div>
 
   <div id={popId} popover="auto" class="lab-pop col p-0" style="--w:85vw; height:85vh; overflow:hidden"
-       ontoggle={(ev) => ev.newState === 'open' && fit()}>
+       ontoggle={(ev) => { popOpen = ev.newState === 'open'; if (popOpen) fit(); else trail = []; }}>
     <div class="lab-head shrink-0">
       <h2>How to get {g.root?.name ?? 'it'}</h2>
       <span class="lab-meta">
+        {#if trail.length}
+          <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (trail = trail.slice(0, -1))} title="Back to how you get {backTo}">← {backTo}</button>
+        {/if}
         <span class="flex items-center gap-1">
           <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (fullZoom = clamp(fullZoom - 0.15))} aria-label="Zoom out" title="Draw the tree smaller">−</button>
           <button type="button" class="lab-btn num px-2 py-0.5" onclick={fit} title="Fit the whole tree into the window">{Math.round(fullZoom * 100)}%</button>

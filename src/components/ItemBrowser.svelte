@@ -10,20 +10,53 @@
   import { craftTree, gateText, gatingChain } from '../lib/sources.js';
   import { MODE_TAG, traitsOf } from '../lib/traits.js';
   import { wikiHost, wikiUrl } from '../lib/wiki.js';
-  import { fmtFull, fmtNum, fmtPart } from '../lib/fmt.js';
+  import { fmtFull, fmtNum, fmtPart, fmtStat } from '../lib/fmt.js';
   import { FACTORS, SIGN_COLOR, factorOf, factorTip, signOf } from '../lib/factors.js';
   import { slide } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import WikiIcon from './WikiIcon.svelte';
+  import BossIcon from './BossIcon.svelte';
   import FeatureIcon, { FEATURES, FEATURE_ICONS } from './FeatureIcon.svelte';
+  import {
+    HardHat, Shirt, Footprints, Gem, Swords, Sword, Target, Wand2, Bug, VenetianMask,
+    Hammer, Coins, Package, Skull, ShoppingBag, TreePine, HelpCircle,
+    Music, HeartPulse, Ghost, Send, Heart, ShieldCheck, Gauge, Wind, Zap, Fish, ArrowUp, Droplet,
+    Shield, Boxes,
+  } from '@lucide/svelte';
+
+  // icon per filter key. Skipped when nothing clean maps (weapon types, mods, and any effect
+  // label not in the map below).
+  const SLOT_ICONS = { head: HardHat, body: Shirt, legs: Footprints, accessory: Gem, weapon: Swords };
+  const CLASS_ICONS = {
+    melee: Sword, ranged: Target, magic: Wand2, summon: Bug, rogue: VenetianMask,
+    thrower: Send, bard: Music, healer: HeartPulse, void: Ghost,
+    classless: HelpCircle, other: Boxes, none: Shield,
+  };
+  const SOURCE_ICONS = { craft: Hammer, shop: Coins, drop: Skull, bag: Package, chest: Package, purchase: ShoppingBag, world: TreePine, unknown: HelpCircle };
+  // effect labels from traitOfLabel — only the ones with an obvious glyph. The odd ones ("spawns
+  // …", "aggro", vendor-specific text) get no icon and just render as plain text.
+  const EFFECT_ICONS = {
+    damage: Sword, 'melee damage': Sword, 'ranged damage': Target, 'magic damage': Wand2,
+    'summon damage': Bug, 'minion damage': Bug, 'minion capacity': Bug, 'rogue damage': VenetianMask,
+    'throwing damage': Send, 'bard damage': Music, 'healing': HeartPulse,
+    'crit chance': Target, 'melee crit chance': Target, 'ranged crit chance': Target, 'magic crit chance': Target,
+    defense: ShieldCheck, 'life regen': Heart, 'max life': Heart, life: Heart,
+    'max mana': Droplet, mana: Droplet, 'mana regen': Droplet,
+    'movement speed': Gauge, 'melee speed': Zap, 'attack speed': Zap,
+    knockback: Wind, mobility: Wind, dash: Wind,
+    'extra jump': ArrowUp, flight: ArrowUp, 'flight boost': ArrowUp,
+    fishing: Fish,
+  };
   import ItemTooltip from './ItemTooltip.svelte';
   import CraftGraph from './CraftGraph.svelte';
+  import PhaseGraph from './PhaseGraph.svelte';
+  import RangeFilter from './RangeFilter.svelte';
 
   let { ds, statCtx, onselect } = $props();
 
   // ---- the filter model lives in ui.browse (persisted); null ranges mean "unset"
   const B = () => ui.browse;
-  const DEFAULTS = { slots: [], classes: [], mods: [], stage: null, score: null, features: [], sources: [], sort: 'value' };
+  const DEFAULTS = { slots: [], classes: [], mods: [], stage: null, score: null, features: [], sources: [], types: [], sort: 'value' };
   const reset = () => { ui.browse = { ...DEFAULTS, hidden: B().hidden ?? [] }; ui.query = ''; };
   const toggle = (key, v) => { const cur = B()[key]; ui.browse = { ...B(), [key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] }; };
   // mod and source are long lists nobody starts with: they open on demand
@@ -47,7 +80,12 @@
         out.push({ item: it, value: s.score, kind: 'score', parts: s.parts, stealth: s.stealth });
       }
     }
-    for (const e of out) e.traits = traitsOf(e);
+    // the haystack the text filter reads, built once: every filter group re-runs `pass` over the
+    // whole list, so joining and lowercasing per item per pass was most of a keystroke's cost
+    for (const e of out) {
+      e.traits = traitsOf(e);
+      e.hay = [e.item.name, e.item.tooltip ?? '', e.item.setBonus ?? '', e.item.modName ?? '', ...e.traits].join(' | ').toLowerCase();
+    }
     return out;
   });
 
@@ -66,13 +104,8 @@
     return fits ? [lo, hi] : [0, scoreTop];
   });
   const passStage = (it) => (it.stage === null || it.stage === undefined ? ui.unknownStage : it.stage >= stageRange[0] && it.stage <= stageRange[1]);
-  const passText = (e) => {
-    const terms = ui.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (!terms.length) return true;
-    const it = e.item;
-    const hay = [it.name, it.tooltip ?? '', it.setBonus ?? '', it.modName ?? '', ...e.traits].join(' | ').toLowerCase();
-    return terms.every((t) => (t.startsWith('-') ? t.length === 1 || !hay.includes(t.slice(1)) : hay.includes(t)));
-  };
+  const terms = $derived(ui.query.trim().toLowerCase().split(/\s+/).filter(Boolean));
+  const passText = (e) => !terms.length || terms.every((t) => (t.startsWith('-') ? t.length === 1 || !e.hay.includes(t.slice(1)) : e.hay.includes(t)));
   // each group's pass, so a group's counts can ignore its own selection
   const pass = {
     slots: (e) => !B().slots.length || B().slots.includes(e.item.slot),
@@ -84,6 +117,9 @@
     score: (e) => e.kind !== 'score' || (e.value >= scoreRange[0] && e.value <= scoreRange[1]),
     features: (e) => B().features.every((f) => e.traits.includes(f)),
     sources: (e) => !B().sources.length || B().sources.includes(e.item.stageSource?.kind ?? 'unknown'),
+    // weapon-only: how the weapon is graded (whip/minion/sentry/stealth/spam/arch). Non-weapons
+    // pass through — a type filter is meaningless for armor and accessories.
+    types: (e) => !B().types.length || (e.item.slot === 'weapon' && B().types.includes(e.mode ?? e.dps?.arch ?? 'other')),
     text: passText,
   };
   const passAllBut = (e, skip) => Object.entries(pass).every(([k, f]) => k === skip || f(e));
@@ -104,14 +140,25 @@
   const classCounts = $derived(countsFor('classes', (e) => e.item.cls ?? 'none'));
   const modCounts = $derived(countsFor('mods', (e) => e.item.mod));
   const sourceCounts = $derived(countsFor('sources', (e) => e.item.stageSource?.kind ?? 'unknown'));
+  // weapons only: bucket by grading mode (or the arch when there is no mode). Non-weapons don't
+  // land in the map so the group is naturally empty when the slot filter picks armor.
+  const typeCounts = $derived.by(() => {
+    const m = new Map();
+    for (const e of scored) if (e.item.slot === 'weapon' && passAllBut(e, 'types')) {
+      const k = e.mode ?? e.dps?.arch ?? 'other';
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  });
   const traitCounts = $derived.by(() => { const m = new Map(); for (const e of scored) if (passAllBut(e, 'features')) for (const t of e.traits) m.set(t, (m.get(t) ?? 0) + 1); return m; });
   const featureCounts = $derived(traitCounts);
   // what a piece actually gives the player ("crit chance", "life regen", "minion slot"), read off
   // the scored parts: the same `features` filter, minus the icon list and what the class filter covers
   const notEffects = $derived(new Set([...ds.classList, 'classless', 'other', 'none', 'spam', 'full set', 'mixed pieces']));
   const effectCounts = $derived([...traitCounts].filter(([t]) => !ICON[t] && !notEffects.has(t)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])));
-  const bestIn = (key, of, k) => { let best = -Infinity; for (const e of scored) if (passAllBut(e, key) && of(e) === k) best = Math.max(best, e.value); return best; };
-  const active = $derived(B().slots.length || B().classes.length || B().mods.length || B().stage || B().score || B().features.length || B().sources.length || ui.query);
+  // best value per class, in one pass: called from the template, it was a full scan per class row
+  const classBest = $derived.by(() => { const m = new Map(); for (const e of scored) if (passAllBut(e, 'classes')) { const k = e.item.cls ?? 'none'; m.set(k, Math.max(m.get(k) ?? -Infinity, e.value)); } return m; });
+  const active = $derived(B().slots.length || B().classes.length || B().mods.length || B().stage || B().score || B().features.length || B().sources.length || B().types.length || ui.query);
 
   let shown = $state(30);
   $effect(() => { void [results]; shown = 30; });
@@ -131,7 +178,7 @@
   const defaultTab = () => 'about';
   // the item as the game states it: whatever of these the item actually has
   const statCells = (it, eff) => {
-    const cell = (label, value, hint = '') => (value === undefined || value === null || value === '' ? null : { label, value, hint });
+    const cell = (label, value, hint = '') => (value === undefined || value === null || value === '' ? null : { label, value: fmtStat(value), hint });
     return [
       cell('Damage', eff?.damage ?? it.damage, it.dc ? `Counts as ${it.dc.replace(/(Damage)?(Class)?$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()} damage.` : ''),
       it.useTime === undefined && it.useAnimation === undefined ? null
@@ -183,24 +230,13 @@
   </div>
 {/snippet}
 
-{#snippet check(on, label, meta, onclick, icon)}
+{#snippet check(on, label, meta, onclick, Icon)}
   <label class="flex cursor-pointer items-center gap-2 py-[3px] text-[12.5px]">
     <input type="checkbox" checked={on} onchange={onclick} style="accent-color:{accent}" />
+    {#if Icon}<span class="flex w-5 shrink-0 justify-center text-dim" title={label}><Icon size={15} strokeWidth={1.75} absoluteStrokeWidth aria-hidden="true" /></span>{/if}
     <span class="min-w-0 flex-1 truncate text-ink2">{label}</span>
-    {#if icon}<span class="flex w-5 justify-center text-dim" title={label}><FeatureIcon name={icon} /></span>{:else}<span class="num text-[11px] text-dim">{meta}</span>{/if}
+    <span class="num text-[11px] text-dim">{meta}</span>
   </label>
-{/snippet}
-
-{#snippet range(lo, hi, min, max, fmtV, onlo, onhi)}
-  <!-- each handle carries its own value, and says with ≥ / ≤ whether it is cutting anything off -->
-{@const close = (hi - lo) / Math.max(1, max - min) < 0.45}
-  <div class="lab-range" class:stacked={close} style="--lo:{((lo - min) / Math.max(1, max - min)) * 100}%; --hi:{((hi - min) / Math.max(1, max - min)) * 100}%; --accent:{accent}; {chevrons}">
-    <span class="cap" class:off={lo <= min} class:up={close} style="--pos:var(--lo)" title={fmtV(lo)}>{lo > min ? '≥ ' : ''}{fmtV(lo)}</span>
-    <span class="cap" class:off={hi >= max} style="--pos:var(--hi)" title={fmtV(hi)}>{hi < max ? '≤ ' : ''}{fmtV(hi)}</span>
-    <div class="track"></div><div class="span"></div>
-    <input type="range" {min} {max} value={lo} oninput={(e) => onlo(Math.min(Number(e.currentTarget.value), hi))} aria-label="minimum" />
-    <input type="range" {min} {max} value={hi} oninput={(e) => onhi(Math.max(Number(e.currentTarget.value), lo))} aria-label="maximum" />
-  </div>
 {/snippet}
 
 <section class="lab-panel overflow-hidden" style="--accent:{accent}">
@@ -248,7 +284,7 @@
 
       {#snippet slotsBody()}
         {#each Object.entries(SLOT_LABELS) as [k, v]}
-          {@render check(B().slots.includes(k), v, slotCounts.get(k) ?? 0, () => toggle('slots', k))}
+          {@render check(B().slots.includes(k), v, slotCounts.get(k) ?? 0, () => toggle('slots', k), SLOT_ICONS[k])}
         {/each}
       {/snippet}
       {@render group('slots', 'Slot', slotsBody)}
@@ -256,20 +292,29 @@
       {#snippet classBody()}
         {#each [...ds.classList, 'classless', 'other', 'none'] as c}
           {#if classCounts.get(c)}
-            {@render check(B().classes.includes(c), c === 'none' ? 'no class (gear)' : CLASS_LABELS[c] ?? c, `best ${fmtNum(bestIn('classes', (e) => e.item.cls ?? 'none', c))}`, () => toggle('classes', c))}
+            {@render check(B().classes.includes(c), c === 'none' ? 'no class (gear)' : CLASS_LABELS[c] ?? c, `best ${fmtNum(classBest.get(c) ?? 0)}`, () => toggle('classes', c), CLASS_ICONS[c])}
           {/if}
         {/each}
       {/snippet}
       {@render group('classes', 'Class', classBody)}
 
+      {#snippet typeBody()}
+        {#each [...typeCounts.entries()].sort((a, b) => b[1] - a[1]) as [k, n] (k)}
+          {@render check(B().types.includes(k), k, n, () => toggle('types', k))}
+        {/each}
+        {#if !typeCounts.size}<p class="m-0 text-[11px] text-dim">No weapons pass the current filters.</p>{/if}
+      {/snippet}
+      {@render group('types', 'Weapon type', typeBody)}
+
       {#snippet stageBody()}
-        {@render range(stageRange[0], stageRange[1], 0, stageMax, (i) => short(ds.stages[i]?.label ?? String(i)), (v) => (ui.browse = { ...B(), stage: [v, stageRange[1]] }), (v) => (ui.browse = { ...B(), stage: [stageRange[0], v] }))}
+        {#snippet stageBossIcon(i)}<BossIcon {ds} stage={i} size={12} />{/snippet}
+        <RangeFilter lo={stageRange[0]} hi={stageRange[1]} min={0} max={stageMax} format={(i) => short(ds.stages[i]?.label ?? String(i))} icon={stageBossIcon} {accent} {chevrons} oncommit={(lo, hi) => (ui.browse = { ...B(), stage: [lo, hi] })} />
         <p class="m-0 mt-1 text-[11px] text-dim">{B().stage ? 'A window of gamestages.' : 'Everything up to the stage in view.'}{#if B().stage} <button type="button" class="cursor-pointer underline hover:text-green" onclick={() => (ui.browse = { ...B(), stage: null })}>follow the view</button>{/if}</p>
       {/snippet}
       {@render group('stage', 'Gamestage', stageBody)}
 
       {#snippet scoreBody()}
-        {@render range(scoreRange[0], scoreRange[1], 0, scoreTop, fmtNum,(v) => (ui.browse = { ...B(), score: [v, scoreRange[1]] }), (v) => (ui.browse = { ...B(), score: [scoreRange[0], v] }))}
+        <RangeFilter lo={scoreRange[0]} hi={scoreRange[1]} min={0} max={scoreTop} format={fmtNum} {accent} {chevrons} oncommit={(lo, hi) => (ui.browse = { ...B(), score: [lo, hi] })} />
         <p class="m-0 mt-1 text-[11px] text-dim">Armor and accessories; weapons rank by DPS.</p>
       {/snippet}
       {@render group('score', 'Score', scoreBody)}
@@ -277,7 +322,7 @@
       {#snippet featureBody()}
         {#each FEATURES as t}
           {#if featureCounts.get(t)}
-            {@render check(B().features.includes(t), `${t} · ${featureCounts.get(t)}`, '', () => toggle('features', t), t)}
+            {@render check(B().features.includes(t), t, featureCounts.get(t), () => toggle('features', t), ICON[t])}
           {/if}
         {/each}
       {/snippet}
@@ -285,7 +330,7 @@
 
       {#snippet effectBody()}
         {#each effectCounts as [t, n] (t)}
-          {@render check(B().features.includes(t), t, n, () => toggle('features', t))}
+          {@render check(B().features.includes(t), t, n, () => toggle('features', t), EFFECT_ICONS[t])}
         {/each}
         {#if !effectCounts.length}<p class="m-0 text-[11px] text-dim">Nothing left to narrow by.</p>{/if}
       {/snippet}
@@ -293,7 +338,7 @@
 
       {#snippet sourceBody()}
         {#each [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]) as [k, n]}
-          {@render check(B().sources.includes(k), SOURCE_HINT[k] ? k : k, n, () => toggle('sources', k))}
+          {@render check(B().sources.includes(k), SOURCE_HINT[k] ? k : k, n, () => toggle('sources', k), SOURCE_ICONS[k])}
         {/each}
       {/snippet}
       {@render group('sources', 'Source', sourceBody)}
@@ -313,11 +358,18 @@
       <!-- quick compare: neighbouring gamestages -->
       <div class="flex items-center gap-1 border-b border-line px-3 py-2">
         <button type="button" class="lab-btn px-2 py-0.5" onclick={() => (strip -= 3)} disabled={ui.stage + strip <= 3} aria-label="Earlier stages">‹</button>
-        <div class="flex min-w-0 flex-1 gap-1 overflow-hidden">
-          {#each stripStages as s (s.index)}
-            <button type="button" class="min-w-0 flex-1 cursor-pointer border border-line px-2 py-1 text-left transition-colors hover:border-line-strong" class:bg-panel={s.index !== ui.stage} style={s.index === ui.stage ? `background:color-mix(in srgb, ${accent} 12%, #fff); border-color:${accent}` : ''} onclick={() => setStage(s.index)} title={s.label}>
-              <span class="block truncate text-[11.5px] font-medium text-ink">{short(s.label)}</span>
-              <span class="num block text-[10.5px] text-dim">+{newAt.get(s.index) ?? 0} items</span>
+        <!-- container query so the tiers respond to the strip's own width, not the viewport
+             (the filter aside changes how much room this actually has). -->
+        <div class="@container flex min-w-0 flex-1 gap-1 overflow-hidden">
+          {#each stripStages as s, i (s.index)}
+            <!-- 2 by default (current stage + next). 3 once the row can hold it, 5 when it can, 7 when it can. -->
+            {@const vis = i === 3 || i === 4 ? 'flex' : i === 2 ? 'hidden @lg:flex' : i === 1 || i === 5 ? 'hidden @3xl:flex' : 'hidden @5xl:flex'}
+            <button type="button" class="{vis} min-w-0 flex-1 cursor-pointer items-center gap-1.5 border border-line px-2 py-1 text-left transition-colors hover:border-line-strong" class:bg-panel={s.index !== ui.stage} style={s.index === ui.stage ? `background:color-mix(in srgb, ${accent} 12%, #fff); border-color:${accent}` : ''} onclick={() => setStage(s.index)} title={s.label}>
+              <BossIcon {ds} stage={s.index} size={20} />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-[11.5px] font-medium text-ink">{short(s.label)}</span>
+                <span class="num block text-[10.5px] text-dim">+{newAt.get(s.index) ?? 0} items</span>
+              </span>
             </button>
           {/each}
         </div>
@@ -387,7 +439,8 @@
               {#if show('class')}<td class="whitespace-nowrap text-[12px] font-medium" style={it.cls ? `color:${accentOf(it.cls)}` : ''}>{it.cls ? CLASS_LABELS[it.cls] ?? it.cls : '–'}</td>{/if}
               {#if show('type')}<td class="whitespace-nowrap text-[12px] text-dim">{#if it.arch}<span class="has-tip cursor-help" data-tip={ARCH_HINT[it.arch] ?? ''}>{ARCH_LABELS[it.arch] ?? it.arch}</span>{:else}–{/if}</td>{/if}
               {#if show('stage')}<td class="max-w-[160px] whitespace-nowrap text-[12px]">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <BossIcon {ds} stage={it.stage} size={16} />
                   <span class="min-w-0 flex-1 truncate" style="color:{era.color}" title="Obtainable at {it.stageLabel}, which is {era.label}">{short(it.stageLabel)}</span>
                   <span class="lab-tag shrink-0 {SOURCE_TONE[it.stageSource?.kind] ?? ''}" title={SOURCE_HINT[it.stageSource?.kind] ?? it.stageSource?.kind}>{it.stageSource?.kind ?? '?'}</span>
                 </div>
@@ -397,7 +450,7 @@
               {#if show('crit')}<td class="num text-right text-dim">{it.slot === 'weapon' ? `${e.eff?.crit ?? it.crit ?? 0}%` : '–'}</td>{/if}
               {#if show('defense')}<td class="num text-right" class:font-semibold={it.slot !== 'weapon'}>{it.defense ?? '–'}</td>{/if}
               {#if show('features')}<td class="w-[74px] whitespace-nowrap text-[12.5px] text-dim">
-                {#each e.traits.filter((t) => ICON[t]).slice(0, 4) as t}<span class="has-tip tip-right mr-1 inline-block align-middle" data-tip={t}><FeatureIcon name={t} /></span>{/each}
+                {#each e.traits.filter((t) => ICON[t]).slice(0, 4) as t}<span class="has-tip mr-1 inline-block align-middle" data-tip={t}><FeatureIcon name={t} /></span>{/each}
               </td>{/if}
               <td>
                 <div class="flex items-center justify-end gap-2">
@@ -466,7 +519,7 @@
                     <div class="lab-rule start mb-2">Breakdown</div>
                     <ol class="lab-timeline">
                       {#each e.parts as p}
-                        <li><span class="when num" class:text-bad={p.value < 0}>{p.value > 0 ? '+' : ''}{fmtNum(p.value)}</span><span class="what has-tip" data-tip={factorTip(p)} style="color:{FACTORS[factorOf(p.label)].color}">{p.label}</span>{#if p.detail}<span class="how">{p.detail}</span>{/if}</li>
+                        <li><span class="when num" class:text-bad={p.value < 0}>{p.value > 0 ? '+' : ''}{fmtNum(p.value)}</span><span class="what has-tip" data-tip={factorTip(p)} style="color:{FACTORS[factorOf(p)].color}">{p.label}</span>{#if p.detail}<span class="how">{p.detail}</span>{/if}</li>
                       {/each}
                       {#if !e.parts.length}<li><span class="when">0</span><span class="what text-dim">Nothing {CLASS_LABELS[ui.cls]} benefits from.</span></li>{/if}
                     </ol>
@@ -475,7 +528,7 @@
                     <div class="lab-rule start mb-2">Score</div>
                     <div class="flex flex-col gap-1">
                       {#each e.parts as p}
-                        <div class="grid grid-cols-[minmax(0,1fr)_120px_40px] items-center gap-2 text-[11.5px]"><span class="truncate has-tip" data-tip={factorTip(p)} style="color:{FACTORS[factorOf(p.label)].color}">{p.label}</span><div class="bar"><i style="width:{Math.min(100, Math.round((Math.abs(p.value) / Math.max(1, ...e.parts.map((q) => Math.abs(q.value)))) * 100))}%" class:opacity-40={p.value < 0}></i></div><span class="num text-right" class:text-bad={p.value < 0}>{fmtNum(p.value)}</span></div>
+                        <div class="grid grid-cols-[minmax(0,1fr)_120px_40px] items-center gap-2 text-[11.5px]"><span class="truncate has-tip" data-tip={factorTip(p)} style="color:{FACTORS[factorOf(p)].color}">{p.label}</span><div class="bar"><i style="width:{Math.min(100, Math.round((Math.abs(p.value) / Math.max(1, ...e.parts.map((q) => Math.abs(q.value)))) * 100))}%" class:opacity-40={p.value < 0}></i></div><span class="num text-right" class:text-bad={p.value < 0}>{fmtNum(p.value)}</span></div>
                       {/each}
                     </div>
                     <div class="mt-2 text-[12px]"><span class="text-dim">total</span> <span class="num font-semibold" style="color:{accent}" title={fmtFull(e.value)}>{fmtNum(e.value)}</span></div>
@@ -498,20 +551,21 @@
                         {#if it.useAmmo}<li><span class="when">ammo</span><span class="what">{ds.ammoKinds[it.useAmmo] ?? it.useAmmo}</span></li>{/if}
                         {#if it.shoot}
                           {@const p = ds.projectiles[it.shoot]}
-                          <li><span class="when num">{it.shoot.split(':').pop()}</span><span class="what">projectile</span>{#if p}<span class="how">{p.pen === -1 ? 'infinite pierce' : p.pen > 1 ? `pierces ${p.pen}` : 'no pierce'}{p.homing ? ', homing' : ''}{p.gravity ? ', gravity' : ''}{p.walls ? ', through walls' : ''}{p.children?.length ? `, spawns ${p.children.map((c) => `${c.count > 1 ? c.count + '× ' : ''}${c.type.split(':').pop()} (${c.where})`).join(', ')}` : ''}{p.debuffs?.length ? `, inflicts ${p.debuffs.length} debuff${p.debuffs.length > 1 ? 's' : ''}` : ''}</span>{/if}</li>
+                          <li><span class="when num">{it.shoot.split(':').pop()}</span><span class="what">projectile</span>{#if p}<span class="how">{p.pen === -1 ? 'infinite pierce' : p.pen > 1 ? `pierces ${p.pen}` : 'no pierce'}{p.homing ? ', homing' : ''}{p.gravity ? ', gravity' : ''}{p.walls ? ', through walls' : ''}{p.debuffs?.length ? `, inflicts ${p.debuffs.length} debuff${p.debuffs.length > 1 ? 's' : ''}` : ''}</span>{/if}</li>
                         {/if}
-                        {#each it.fire?.calls ?? [] as c}
-                          <li><span class="when num">{c.count ?? 1}×</span><span class="what">{c.type === 'shoot' ? 'the shot' : c.type.split(':').pop()}{c.variant ? ` [${c.variant}]` : ''}</span>{#if c.spread}<span class="how">±{Math.round((c.spread * 180) / Math.PI)}° spread</span>{/if}</li>
-                        {/each}
                         {#if !it.shoot && !it.fire?.calls?.length && !it.useAmmo}<li><span class="when">–</span><span class="what text-dim">Contact only.</span></li>{/if}
                       </ol>
                     </div>
                   </div>
                   <div>
                     <div class="lab-rule start mb-2">DPS{e.mode === 'stealth' ? ' — stealth' : e.mode === 'spam' ? ' — spam' : ''}</div>
+                    <!-- the phases that produce the number below, each with its own rate, gates and share -->
+                    {#if e.dps?.phases?.length}
+                      <div class="mb-2 overflow-x-auto border border-line bg-panel2/40 p-2"><PhaseGraph {ds} phases={e.dps.phases} total={e.dps.spam ?? e.dps.value} /></div>
+                    {/if}
                     <div class="lab-calc">
                       {#each e.parts as p}
-                        <div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p.label, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>
+                        <div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>
                       {/each}
                       <div class="row total"><span class="lbl">per second</span><i class="lead"></i><span class="val num" style="color:{accent}" title={fmtFull(e.value)}>{fmtNum(e.value)}</span></div>
                     </div>
@@ -595,7 +649,7 @@
       </div>
       {#if results.length > shown}
         <div class="border-t border-line p-3 text-center">
-          <button type="button" class="lab-btn px-4 py-1" onclick={() => (shown += 30)}>Show 30 more <span class="num text-dim">({results.length - shown} left)</span></button>
+          <button type="button" class="lab-btn px-4 py-1" data-sound="tick" onclick={() => (shown += 30)}>Show 30 more <span class="num text-dim">({results.length - shown} left)</span></button>
         </div>
       {/if}
     </div>

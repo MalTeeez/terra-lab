@@ -1,15 +1,11 @@
 <script>
-  import { wikiImg, wikiImgByName } from '../lib/wiki.js';
+  import { wikiImg, wikiImgByName, wikiImgGif } from '../lib/wiki.js';
 
   let { item, size = 32 } = $props();
   // keyed by URL, so switching to another item starts clean without an effect
   let bad = $state({});
-  const src = $derived.by(() => {
-    const direct = wikiImg(item);
-    if (direct && !bad[direct]) return direct;
-    const byName = wikiImgByName(item);
-    return byName && !bad[byName] ? byName : null;
-  });
+  // each candidate is tried in turn as the one before it 404s; ~3% of sprites need the second
+  const src = $derived([wikiImg(item), wikiImgGif(item), wikiImgByName(item)].find((u) => u && !bad[u]) ?? null);
 </script>
 
 <!--

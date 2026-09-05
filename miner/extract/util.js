@@ -95,7 +95,7 @@ const SPAWN_CONDITIONS = {
  * 0.1f`) is not a gate. Lambdas reached through `ldftn` and helpers on the same type are
  * followed one level.
  */
-export function gateRefs(asm, method, { depth = 1, seen = new Set() } = {}) {
+export function gateRefs(asm, method, { depth = 1, seen = new Set(), tml = null } = {}) {
   const out = new Set();
   if (!method || seen.has(method)) return out;
   seen.add(method);
@@ -175,7 +175,14 @@ export function gateRefs(asm, method, { depth = 1, seen = new Set() } = {}) {
     }
     if ((x.op === 'call' || x.op === 'callvirt') && depth > 0) {
       const d = asm.resolve(x.operand);
-      if (d?.def && d.def.declaringType && d.def.declaringType === method.declaringType) for (const g of gateRefs(asm, d.def, { depth: depth - 1, seen })) out.add(g);
+      if (d?.def && d.def.declaringType && d.def.declaringType === method.declaringType) { for (const g of gateRefs(asm, d.def, { depth: depth - 1, seen, tml })) out.add(g); continue; }
+      // a mod's drop condition that defers to a vanilla one — Thorium's SoulofPlightCondition ends
+      // in `Conditions.SoulOfWhateverConditionCanDrop(info)`, and the hardmode requirement is in
+      // there, not in the mod. Only the vanilla drop-condition helpers are followed.
+      if (tml && !d?.def && /ItemDropRules/.test(d?.declaringType?.fullName ?? '')) {
+        const vm = tml.typeByName.get(d.declaringType.fullName)?.methods.find((x) => x.name === d.name && tml.methodBody(x));
+        if (vm) for (const g of gateRefs(tml, vm, { depth: depth - 1, seen, tml })) out.add(g);
+      }
       continue;
     }
     if (x.op === 'ldftn' && depth > 0) {

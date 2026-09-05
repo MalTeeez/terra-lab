@@ -11,6 +11,7 @@
  */
 import { decodeIL, ldcValue } from '../clr/il.js';
 import { Machine, PLAYER, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
+import { chanceAt as chanceOf, chanceRanges, guardRanges } from './guards.js';
 import { findInherited } from './util.js';
 import { loopTracker, projTypeArg } from './projectiles.js';
 
@@ -37,6 +38,17 @@ export function vectorHook(callee, args, ctx) {
     if (name === 'Clamp' && isNum(args[0]) && isNum(args[1]) && isNum(args[2])) return Math.min(Math.max(args[0], args[1]), args[2]);
     return UNKNOWN;
   }
+  // The polar form: `len = velocity.Length(); θ = Atan2(velocity.Y, velocity.X); new Vector2(len·k·Sin(θ±d), len·k·Cos(θ±d))`.
+  // The aim comes back as an angle, an offset rides on it, and the trig call turns it into a
+  // component that `new Vector2` can read the fan off. 22 Thorium `Shoot`s are written this way
+  // (Midas' Gavel: three stars at ±0.16 rad, ×1.45 speed) and read as "unknown velocity" — the
+  // weapon's own speed and no spread at all.
+  if (short === 'Math' || short === 'MathF') {
+    if (name === 'Atan2') { const [y, x] = args; return (y?.k === 'adj' && y.slot === 'vel') || (x?.k === 'adj' && x.slot === 'vel') ? { k: 'adj', slot: 'angle', field: 'rot', add: 0, mul: 1 } : UNKNOWN; }
+    if (name === 'Sin' || name === 'Cos') { const a = args[0]; if (isNum(a)) return Math[name.toLowerCase()](a); return a?.k === 'adj' && a.slot === 'angle' ? { k: 'trig', off: a.add, jitter: a.jitter ?? 0 } : UNKNOWN; }
+    if (name === 'Abs' && isNum(args[0])) return Math.abs(args[0]);
+    return UNKNOWN;
+  }
   if (short === 'UnifiedRandom' || (short === 'Utils' && /^Next/.test(name))) {
     const a = short === 'Utils' ? args.slice(1) : args; // extension methods carry the random as arg 0
     if (name === 'NextFloat' || name === 'NextDouble') { if (a.length === 0) return rand(0, 1); if (a.length === 1) return rand(0, a[0]); return isNum(a[0]) && isNum(a[1]) ? rand(a[0], a[1]) : rand(-1, 1); }
@@ -55,13 +67,19 @@ export function vectorHook(callee, args, ctx) {
     if (name === 'op_Division') { if (isVec(a) && isNum(b) && b !== 0) return { ...a, mul: a.mul / Math.abs(b) }; return isVec(a) ? a : undefined; }
     if (name === 'op_Addition' || name === 'op_Subtraction') {
       if (isVec(a) && isVec(b)) return a;
+      // `target - spawnPosition`: a direction *to* somewhere, not the vector on the right nudged —
+      // Supernova Storm's stars spawn 160 px out at a random angle and then fly at the cursor, and
+      // the spawn offset was being read as their velocity (160 px/tick, scattered over 2π)
+      if (name === 'op_Subtraction' && !isVec(a) && isVec(b)) return { ...VEC, unknown: true };
       const v = isVec(a) ? a : isVec(b) ? b : null;
       if (v) return { ...v, perturbed: true };
       return undefined;
     }
     if (name === 'op_UnaryNegation') return isVec(a) ? a : undefined;
     if (name === 'Normalize' && isVec(a)) return { ...a, unit: true, mul: 1 };
-    if (name === 'get_Length' && isVec(ctx.recv)) return UNKNOWN;
+    // the vector's length is the launch speed with whatever it has been scaled by, and it keeps
+    // the vector so a component rebuilt from it still knows what it was aimed along
+    if ((name === 'get_Length' || name === 'Length') && isVec(ctx.recv)) return { k: 'adj', slot: 'vel', field: 'len', add: 0, mul: ctx.recv.mul, vec: ctx.recv };
     return undefined;
   }
   if (short === 'Utils' || short === 'CalamityUtils' || short === 'ThoriumUtils' || /Utils$/.test(short)) {
@@ -73,52 +91,15 @@ export function vectorHook(callee, args, ctx) {
     if (name === 'RotatedByRandom' && isVec(v)) { const m = mag(args[1]); return { ...v, spread: Math.max(v.spread, m ?? 0.2), fan: false }; }
     if (name === 'SafeNormalize' && isVec(v)) return { ...v, unit: true, mul: 1 };
     if (name === 'ToRotation' && isVec(v)) return { k: 'adj', slot: 'angle', field: 'rot', add: 0, mul: 1 };
-    if (name === 'ToRotationVector2') return { ...VEC, unit: true };
+    // `(aim.ToRotation() + d).ToRotationVector2() * speed` — Calamity's polar form: a unit vector
+    // at the aim plus an offset, a fixed one being a fan and a rolled one a scatter
+    if (name === 'ToRotationVector2') {
+      if (v?.k === 'adj' && v.slot === 'angle' && (v.add !== 0 || v.jitter > 0)) return { ...VEC, unit: true, spread: Math.abs(v.add) + (v.jitter ?? 0), fan: !(v.jitter > 0) };
+      return { ...VEC, unit: true };
+    }
     if (name === 'NextVector2Circular' || name === 'NextVector2Unit' || name === 'NextVector2CircularEdge') return { ...VEC, unit: true, spread: Math.PI };
   }
   return undefined;
-}
-
-/**
- * Ranges of a method guarded by a condition the miner can name, as `[{ lo, hi, on }]` — `on` marks
- * the side of the branch the condition holds on. `scan(ins, branchAt)` walks the IL and calls
- * `branchAt(i)` at each branch that consumes the condition, which is what differs between one guard
- * and the next; the region arithmetic below is the same for all of them.
- */
-function guardRanges(asm, m, scan) {
-  const body = asm.methodBody(m);
-  if (!body) return [];
-  let ins;
-  try { ins = decodeIL(body.il); } catch { return []; }
-  const out = [];
-  const byOffset = new Map(ins.map((x, i) => [x.offset, i]));
-  const branchAt = (i) => {
-    const x = ins[i];
-    if (!x) return;
-    // `brfalse` and `bne.un` both jump away when the condition fails, so the fall-through is the
-    // side it holds on; `brtrue` and `beq` jump *to* that side.
-    const isFalse = /^brfalse/.test(x.op) || /^bne\.un/.test(x.op);
-    if (!isFalse && !/^brtrue/.test(x.op) && !/^beq/.test(x.op)) return;
-    const target = x.operand;
-    const next = ins[i + 1]?.offset ?? x.offset;
-    const ti = byOffset.get(target);
-    const before = ti !== undefined ? ins[ti - 1] : null;
-    const elseEnd = before && /^br(\.s)?$/.test(before.op) && before.operand > target ? before.operand : null;
-    if (isFalse) {
-      out.push({ lo: next, hi: target, on: true });
-      if (elseEnd) out.push({ lo: target, hi: elseEnd, on: false });
-    } else {
-      out.push({ lo: next, hi: target, on: false });
-      if (elseEnd) out.push({ lo: target, hi: elseEnd, on: true });
-      else {
-        // `if (cond) { ... return; }` - the block ends at its first terminator
-        const end = ins.slice(ti).find((y) => /^(ret|br|br\.s|throw)$/.test(y.op));
-        out.push({ lo: target, hi: end ? end.offset + 1 : Infinity, on: true });
-      }
-    }
-  };
-  scan(ins, branchAt);
-  return out;
 }
 
 /** Which side of a set of guard ranges an offset sits on: true, false, or neither. */
@@ -204,8 +185,9 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         const dmg = n >= 12 ? args[6] : args[4];
         let vel = n >= 12 ? args[3] : args[2];
         if (!isVec(vel)) {
-          // float variant: velocity.X * k
-          if (vel?.k === 'adj' && vel.slot === 'vel') vel = { ...(vel.vec ?? VEC), mul: vel.mul, perturbed: (vel.vec?.perturbed ?? false) || vel.add !== 0 };
+          // float variant: velocity.X * k — or a component rebuilt from the length at an angle
+          if (vel?.k === 'adj' && vel.slot === 'vel' && vel.trig !== undefined) vel = { ...VEC, mul: vel.mul, spread: Math.abs(vel.trig) + (vel.jitter ?? 0), fan: !(vel.jitter > 0) };
+          else if (vel?.k === 'adj' && vel.slot === 'vel') vel = { ...(vel.vec ?? VEC), mul: vel.mul, perturbed: (vel.vec?.perturbed ?? false) || vel.add !== 0 };
           else if (isNum(vel) && vel !== 0) vel = { ...VEC, abs: Math.abs(vel) };
           else vel = { ...VEC, unknown: true };
         }
@@ -224,6 +206,9 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
       if (decl.endsWith('Vector2') && args.length === 2) {
         const [x, y] = args;
         if (isNum(x) && isNum(y)) return { ...VEC, abs: Math.hypot(x, y) };
+        // a component rebuilt from the length and an angle: the offset from the aim is the spread,
+        // fixed (a fan) unless a roll was added to the angle
+        if (x?.k === 'adj' && x.slot === 'vel' && x.trig !== undefined) return { ...VEC, mul: x.mul, spread: Math.abs(x.trig) + (x.jitter ?? 0), fan: !(x.jitter > 0) };
         if (x?.k === 'adj' && x.slot === 'vel') return { ...VEC, mul: x.mul, perturbed: x.add !== 0 || (y?.k === 'adj' && y.add !== 0) };
         return { ...VEC, unknown: true };
       }
@@ -281,9 +266,11 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     try { machine.run(shoot, THIS, [PLAYER, UNKNOWN, { k: 'obj', name: 'position', props: {} }, VEC, SHOOT_TYPE, DMG, UNKNOWN]); } catch { /* partial */ }
     const ranges = stealthRanges(asm, shoot);
     const alts = altRanges(asm, shoot);
+    const chances = chanceRanges(asm, shoot);
     const variantAt = (o) => { const s = sideAt(ranges, o); return s === true ? 'stealth' : s === false ? 'spam' : 'both'; };
     // which click fires it: true = only the right one does, false = only the left, undefined = both
     const altAt = (o) => sideAt(alts, o);
+    const chanceAt = (o) => chanceOf(chances, o);
     for (const c of calls) {
       if (c.depth !== 0) continue; // helpers called from Shoot are counted through their own calls
       const n = loops.filter((l) => l.method === shoot && c.offset >= l.lo && c.offset <= l.hi).reduce((p, l) => p * l.n, 1);
@@ -297,6 +284,7 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         fan: c.vel.fan === true && !c.vel.perturbed ? true : undefined,
         variant: variantAt(c.offset),
         alt: altAt(c.offset),
+        chance: chanceAt(c.offset),
         region: c.region ?? undefined,
       });
     }

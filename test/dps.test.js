@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import {
   ARCHETYPE, BOSS_DEFAULT, CHILD_CAP, CROWD, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, PIERCE_KEEP, REACH, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
-  asTarget,
-  boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages,
+  asTarget, bladeLanding,
+  boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages, unknownDebuffDps,
 } from '../src/lib/dps.js';
 import { indexDataset } from '../src/lib/dataset.js';
 
@@ -74,6 +74,21 @@ const raw = {
     'M:whipProj': { whip: true },
     'M:lash': { pen: -1, life: 600 },
     'M:bigMul': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 15 }] },
+    // a tether: sticks in the target with a one-tick immunity, and the AI's once-a-second timer
+    // and three-link counter are things the miner did not read
+    'M:chain': { pen: -1, life: 900, local: 1, sticks: true, walls: true },
+    // a shell whose burst the tooltip gates on a hit counter; the miner sees only "on death"
+    'M:counterShell': { pen: 1, life: 300, local: 10, gravity: true, gravityK: 1, children: [{ type: 'M:boom', count: 1, where: 'kill', dmgMul: 1 }, { type: 'M:pebble', count: 8, where: 'kill', dmgMul: 0.3 }] },
+    // a cascade: the bomb explodes, and the explosion leaves a field that keeps ticking
+    'M:fieldBomb': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:fieldBoom', count: 1, where: 'kill', dmgMul: 1 }] },
+    'M:fieldBoom': { pen: -1, explode: 200, life: 5, children: [{ type: 'M:acid', count: 1, where: 'kill', dmgMul: 0.5 }] },
+    // a debuff the miner has no record for, and one it priced
+    'M:curse': { pen: 1, life: 600, debuffs: ['M:Curse'] },
+    'M:shortFire': { pen: 1, life: 4, debuffs: ['v:24'] }, // dies before it arrives, fire and all
+    // a bolt with its own hit cooldown that spawns splinters without one: two immunity groups
+    'M:ownClock': { pen: 3, local: 6, life: 600, children: [{ type: 'M:pebble', count: 4, where: 'hit', dmgMul: 1 }] },
+    // an on-hit proc the tooltip puts on a cooldown
+    'M:procShot': { pen: 1, life: 600, children: [{ type: 'M:boom', count: 1, where: 'hit', dmgMul: 2 }] },
   },
   items: [
     { id: 'v:sword', mod: 'v', name: 'Sword', slot: 'weapon', class: 'melee', arch: 'swing', damage: 20, useTime: 20, useAnimation: 20, crit: 4, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
@@ -121,6 +136,19 @@ const raw = {
       fire: { calls: [{ type: 'M:lash', count: 8 }], defaultShot: { spam: false, stealth: false } } },
     { id: 'M:crawler', mod: 'M', name: 'Crawler', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:fan', shootSpeed: 1, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:mulGun', mod: 'M', name: 'Mul Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:bigMul', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:tether', mod: 'M', name: 'Tether', slot: 'weapon', class: 'magic', arch: 'shot', damage: 100, useTime: 30, useAnimation: 30, crit: 0, shoot: 'M:chain', shootSpeed: 1, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      tooltip: 'Clicking an enemy links it to a player\nThe chains deal damage once every second\nUp to 3 enemies can be chained to you' },
+    { id: 'M:counterGun', mod: 'M', name: 'Counter Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 65, useTime: 40, useAnimation: 40, crit: 0, shoot: 'M:counterShell', shootSpeed: 20, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      tooltip: 'Fire a series of bullets after hit enemy 8 times in a row' },
+    { id: 'M:fieldThrower', mod: 'M', name: 'Field Thrower', slot: 'weapon', class: 'thrower', arch: 'shot', damage: 30, useTime: 30, useAnimation: 30, crit: 0, shoot: 'M:fieldBomb', shootSpeed: 8, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:curseGun', mod: 'M', name: 'Curse Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:curse', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:twoClocks', mod: 'M', name: 'Two Clocks', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 5, useAnimation: 5, crit: 0, shoot: 'M:ownClock', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:procGun', mod: 'M', name: 'Proc Gun', slot: 'weapon', class: 'ranged', arch: 'shot', damage: 10, useTime: 10, useAnimation: 10, crit: 0, shoot: 'M:procShot', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      tooltip: 'Hits set off an explosion, 5 second cooldown' },
+    // a void weapon: a ranged bow underneath, spending void per shot
+    { id: 'M:voidBow', mod: 'M', name: 'Void Bow', slot: 'weapon', class: 'void', subclass: 'ranged', voidCost: 10, arch: 'shot', damage: 40, useTime: 10, useAnimation: 10, crit: 4, shoot: 'M:fan', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
+    // a sword whose star flies further than the blade reaches
+    { id: 'M:starBlade', mod: 'M', name: 'Star Blade', slot: 'weapon', class: 'melee', arch: 'swing', damage: 20, useTime: 20, useAnimation: 20, crit: 4, shoot: 'M:fan', shootSpeed: 12, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
   ],
 };
 const ds = indexDataset(structuredClone(raw));
@@ -429,7 +457,24 @@ describe('realDps', () => {
     // (20 damage as the loadout swings it, − 10/2 defense), 3 uses/s, crit, reach, and what
     // fighting closer than the class would like costs
     const risk = part(r, /fights at .* px of the/)?.mul ?? 1;
-    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * 0.85 * risk, 0); // `risk` is the rounded part
+    // …and the blade has to land: the boss drifts while the arc comes round, and a blade only just
+    // reaching is a tip touching — the same two terms every projectile pays
+    const blade = bladeLanding({ D: r.distance, boss: r.boss, vb: bossSpeed(r.boss.progression), reach: REACH.swing, ticks: 20 });
+    expect(blade.f).toBeLessThan(1);
+    expect(blade.f).toBeGreaterThan(0);
+    expect(part(r, /contact swing/).label).toMatch(/blade .*reaches 100 px of 100/);
+    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * 0.85 * blade.f * risk, 0); // `risk` is the rounded part
+  });
+  test('a sword that also fires splits its score between blade and shot by what each lands', () => {
+    // a sword with a projectile: the blade is a phase like the shot, and the split is not a share
+    const r = realDps({ ...ds.byId.get('v:sword'), shoot: 'M:fan', shootSpeed: 12 }, ctx());
+    const swing = r.phases.find((p) => p.id === 'swing');
+    const shot = r.phases.find((p) => p.id === 'default');
+    expect(swing.contribution).toBeGreaterThan(0);
+    expect(shot.contribution).toBeGreaterThan(0);
+    expect(swing.contribution + shot.contribution).toBeCloseTo(r.value, 0);
+    // the blade lands less than a full hit per swing: it is not the guaranteed phase any more
+    expect(swing.hitsSec).toBeLessThan(3);
   });
   test('a gun is graded on the standard ammo of its kind, not the best one it could hold', () => {
     // AmmoID.Bullet is 97, the Musket Ball's item id — so the plain bullet needs no table, and the
@@ -490,6 +535,119 @@ describe('realDps', () => {
     // three children worth the same each: the third adds proportionally less than the first
     expect(kids[0].mul).toBeGreaterThan(kids[2].mul);
     expect(kids.reduce((n, p) => n * p.mul, 1)).toBeLessThan(4);
+  });
+  // ---- the phase compiler: a phase with its own clock, cap, counter, and a cascade that shows ----
+  test('a tether ticks on the interval the tooltip states and keeps at most its stated links', () => {
+    const single = dps('M:tether', { targets: 'single' });
+    const multi = dps('M:tether', { targets: 'multi' });
+    const mute = realDps({ ...ds.byId.get('M:tether'), tooltip: undefined }, ctx({ targets: 'single' }));
+    const link = (r) => r.phases.find((p) => p.kind === 'travel');
+    // the record states the gates and where they came from
+    expect(link(single)).toMatchObject({ interval: 60, maxActive: 3, duration: STUCK_TICKS, confidence: 'text' });
+    expect(link(single).evidence).toMatchObject({ interval: 'damage once every second', maxActive: 'Up to 3 enemies' });
+    expect(link(mute)).toMatchObject({ interval: null, maxActive: null });
+    // one link on one body ticks once a second; what is left is the cast that put it there
+    expect(part(single, /1 of up to 3 links maintained on 1 body: 1 ticks\/s/)).toBeTruthy();
+    expect(link(single).hitsSec).toBeLessThan(2.5);
+    expect(link(single).hitsSec).toBeGreaterThan(1);
+    // a crowd carries more links, and never more than the tooltip allows
+    expect(part(multi, /of up to 3 links maintained on 6 bodies/)).toBeTruthy();
+    expect(multi.value).toBeGreaterThan(single.value);
+    expect(link(multi).hitsSec).toBeLessThan(3 + 2.5);
+    // …against a lifetime of one-tick hits per cast, which is what the unread clock was worth
+    expect(mute.value).toBeGreaterThan(single.value * 20);
+    expect(single.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(single.value, 0);
+  });
+  test('a burst behind a hit counter is paid once per that many landed hits, not once per shot', () => {
+    const r = dps('M:counterGun');
+    const every = realDps({ ...ds.byId.get('M:counterGun'), tooltip: undefined }, ctx());
+    expect(part(r, /pebble on death, once per 8 landed hits/)).toBeTruthy();
+    expect(part(r, /boom on death, once per 8 landed hits/)).toBeTruthy();
+    const kids = r.phases.filter((p) => p.kind === 'split');
+    expect(kids).toHaveLength(2);
+    for (const k of kids) expect(k).toMatchObject({ threshold: 8, confidence: 'text', parent: 'default' });
+    // the counter does the scoring, so the blanket cap no longer has to: it was hiding the 8× error
+    expect(part(every, /capped at/)).toBeTruthy();
+    expect(part(r, /capped at/)).toBeUndefined();
+    expect(r.value).toBeLessThan(every.value);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
+  });
+  test('a cascade surfaces as its own phases: the bomb, its blast, and the field the blast leaves', () => {
+    const r = dps('M:fieldThrower');
+    const ids = r.phases.map((p) => p.id);
+    expect(ids).toEqual(expect.arrayContaining(['default', 'default:child:0', 'default:child:0:child:0']));
+    const blast = r.phases.find((p) => p.id === 'default:child:0');
+    const field = r.phases.find((p) => p.id === 'default:child:0:child:0');
+    expect(blast).toMatchObject({ kind: 'split', trigger: 'death', parent: 'default', projId: 'M:fieldBoom' });
+    expect(field).toMatchObject({ kind: 'split', trigger: 'death', parent: 'default:child:0', projId: 'M:acid' });
+    // each with its own rate and share of the score, the three adding up to it — the spam grade,
+    // which is the graph a rogue weapon carries; the stealth strike sits on top of `value`
+    for (const id of ['default', 'default:child:0', 'default:child:0:child:0']) expect(r.phases.find((p) => p.id === id).contribution).toBeGreaterThan(0);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.spam, 0);
+  });
+  // ---- debuffs: unread is not immune, unread is not nothing, and nothing lands nothing --------
+  test('an immunity table the miner could not walk is not an immunity', () => {
+    const unread = structuredClone(raw);
+    unread.npcs['v:4'].immuneUnknown = true;
+    const b = bossOf(indexDataset(unread), 1);
+    expect(b.immuneAll).toBe(false);
+    // …but one it read and that says so still is
+    unread.npcs['v:4'].immuneAll = true;
+    expect(bossOf(indexDataset(unread), 1).immuneAll).toBe(true);
+  });
+  test('a debuff with no readable effect is worth a flat allowance for the stage, marked as a guess', () => {
+    const r = dps('M:curseGun');
+    expect(part(r, /effect unread/)).toBeTruthy();
+    const ph = r.phases.find((p) => p.kind === 'debuff');
+    expect(ph).toMatchObject({ confidence: 'assumed', buffId: 'M:Curse' });
+    expect(ph.contribution).toBeCloseTo(unknownDebuffDps(r.boss.progression), 0); // the boss fought next sets the stage
+    expect(unknownDebuffDps(20)).toBeGreaterThan(unknownDebuffDps(0));
+    // the allowance stays under a real early DoT
+    expect(unknownDebuffDps(0)).toBeLessThan(ds.debuffs['v:24'].dot * 2);
+  });
+  test('a DoT is only on the boss while the weapon keeps landing', () => {
+    // the popgun lands nothing at all: its poison must not be paid either
+    const nothing = realDps({ ...ds.byId.get('M:popgun'), shoot: 'M:shortFire' }, ctx());
+    expect(nothing.value).toBe(0);
+    const some = dps('M:torch'); // ~6 hits/s: the fire is simply on
+    expect(part(some, /On Fire!/).label).not.toMatch(/of the time/);
+  });
+  // ---- the compiler: cooldowns, immunity groups, stances, resources -----------------------------
+  test('a proc on a stated cooldown fires at most that often, however fast the shots land', () => {
+    const r = dps('M:procGun');
+    const every = realDps({ ...ds.byId.get('M:procGun'), tooltip: undefined }, ctx());
+    expect(part(r, /boom on hit, at most once per 5 s/)).toBeTruthy();
+    expect(r.phases.find((p) => p.kind === 'impact')).toMatchObject({ cooldown: 300, confidence: 'text' });
+    expect(r.value).toBeLessThan(every.value);
+    // 6 shots a second, all landing, cannot set it off more than once in 5 s
+    expect(r.phases.find((p) => p.kind === 'impact').hitsSec).toBeLessThanOrEqual(0.2 * 2 + 1e-6);
+  });
+  test('the immunity window caps the phases that share it, and leaves a phase with its own clock alone', () => {
+    const r = dps('M:twoClocks'); // 12 bolts/s on a 6-tick clock of their own, splinters on the player's window
+    const bolt = r.phases.find((p) => p.id === 'default');
+    const splinters = r.phases.find((p) => p.kind === 'impact');
+    expect(bolt.shared).toBe(false);
+    expect(splinters.shared).toBe(true);
+    expect(part(r, /share the player's/)).toBeTruthy();
+    // the splinters are held to six a second; the bolts are not touched by it
+    expect(splinters.hitsSec).toBeLessThanOrEqual(6 + 1e-6);
+    expect(bolt.hitsSec).toBeGreaterThan(6);
+  });
+  test('a sword that fires can also be used from where its shot reaches, and takes the better stance', () => {
+    const r = dps('M:starBlade');
+    // both stances were graded: in close the blade lands, back at range it does not
+    expect(r.parts.some((p) => /stands back/.test(p.label)) || r.phases.find((p) => p.id === 'swing').contribution > 0).toBe(true);
+    const inClose = r.distance <= engagement('melee', 'swing');
+    if (!inClose) expect(r.phases.find((p) => p.id === 'swing').contribution).toBe(0);
+  });
+  test('a void weapon spends void the way a mage spends mana, and is its vanilla class underneath', () => {
+    const r = dps('M:voidBow');
+    expect(part(r, /void\/s vs .* regen/)).toBeTruthy();
+    expect(part(r, /void\/s/).mul).toBeLessThan(1);
+    // a loadout carrying ranged damage counts for it as well as void damage
+    const gear = realDps(ds.byId.get('M:voidBow'), ctx({ loadout: { damage: 0.1, crit: 0 }, loadoutFor: (c) => (c === 'ranged' ? { damage: 0.2, crit: 5 } : { damage: 0, crit: 0 }) }));
+    expect(part(gear, /void and ranged damage/)).toBeTruthy();
+    expect(part(gear, /damage from the loadout/).mul).toBeCloseTo(1.3, 2);
   });
   test('a zero-damage child is a sparkle, not a hit', () => {
     const fx = structuredClone(raw);

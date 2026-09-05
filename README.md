@@ -259,7 +259,8 @@ Scores are sums of labelled parts so the UI can always say why:
 | +1% crit | 0.7 (rogue 1.0, the same as damage; ranged ×1.2, magic ×1.1; summoner 0) |
 | +1% attack speed | 0.6 (all-class attack speed only swings melee; class-keyed applies to its class) |
 | +1 defense | 0.5 × `defenseScale` (×2.1 pre-boss, ×1 at Wall of Flesh, ×0.67 at the end; melee ×1.25) |
-| +1 minion / sentry slot (summoner) | 100 / 30 × `minionSlotScale` (a slot is 1/N of DPS: 100 pre-boss, 30 at WoF, 15 at Moon Lord) |
+| +1 minion / sentry slot (summoner) | 100 / 30 × `minionSlotScale` (a minion slot is 1/N of DPS: about 33 pre-boss, 19 at WoF, 11 at Moon Lord) |
+| +1 max inspiration (bard) | 1.5 before diminishing returns; inspiration regeneration is worth up to 10 points |
 | aggro | 0.8 per √unit (80 → 7, 400 → 16) × class sign: melee +0.3, rogue −1.5, summoner −1.3, others −1 |
 | class mechanic in text ("Stealth strikes deal 8% more damage", "15% of your throwing damage is duplicated") | the damage / crit / armor pen at half, only what the mined effects do not already cover |
 | wings | 10 + flight time (ticks) × 0.04 + (top speed − 6) × 2, from the mined `WingStats`; a flight booster (Soaring Insignia) is a flat 5 |
@@ -273,7 +274,8 @@ Scores are sums of labelled parts so the UI can always say why:
 Stats that stop helping past a point run through `soft(x, cap)` — slope 1 near zero, an
 ease-out cubic that flattens to the cap by three times it: crit (cap 25%), attack speed 25%,
 movement speed 30%, damage reduction 20%, life regen 8, max life / mana 100, armor pen 25,
-defense 12 (accessories only; armor is linear), throwing velocity 30%, √aggro 10, flight time 200 ticks. Damage stays linear.
+defense 12 (accessories only; armor is linear), throwing velocity 30%, inspiration 10,
+inspiration regeneration 50%, √aggro 10, flight time 200 ticks. Damage stays linear.
 A pill's hover box says when the curve took something off.
 
 `CLASS_PREF` in `src/lib/score.js` holds the per-class multipliers. The IL-mined effects are the
@@ -438,7 +440,8 @@ armor), the weapon's use time and its own `StealthDamageMultiplier`, on the proj
 stealth path. Stealth builds back on its own, so the strike lands on top of the throwing rather
 than instead of it; the bigger of the two names the grade the way the guides do, and the item card
 shows both halves. Armor compares the best full set (pieces + set bonus) against the best loose
-pieces. Accessories fill the slot count greedily, one per exclusive group (wings, boots, shield,
+pieces; for rogue, an obtainable full set that supplies maximum stealth is a prerequisite, since
+loose pieces cannot enable the class's stealth strikes. Accessories fill the slot count greedily, one per exclusive group (wings, boots, shield,
 dash), skipping anything whose bonuses target another class. Where a mod applies its numbers
 through flags on its own `ModPlayer`, the tooltip is parsed as a fallback (`15% increased rogue
 damage`), conditional lines excluded.
@@ -577,8 +580,9 @@ them for what they add to the main weapon, so the model *should* rank them below
 - Real DPS is still a ranking, not a measurement. The boss's size and defense are mined but its
   movement is a stage-scaled constant (`bossSpeed`), not its AI; spawned projectiles are read for
   what they do but not for how often they may spawn, so they are capped; minion AI timers, Thorium
-  inspiration and bard empowerments are not modelled; a charged shot's multiplier is counted as if
-  every shot were charged, minus that cap.
+  inspiration spending and bard empowerments are not modelled (equipment's maximum inspiration and
+  regeneration are scored); a charged shot's multiplier is counted as if every shot were charged,
+  minus that cap.
 - A mod boss whose debuff immunities live in a data table (Calamity's `NPCDebuffImmunityData`)
   counts as immune to everything, so debuff DPS only ever shows up against vanilla bosses.
 - The engagement distance is a class constant with a playstyle toggle, not something a weapon

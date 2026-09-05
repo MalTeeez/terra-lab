@@ -6,6 +6,7 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { applySeeds, indexDataset } from '../src/lib/dataset.js';
+import { weaponDps } from '../src/lib/score.js';
 import { craftTree, gatingChain } from '../src/lib/sources.js';
 import { ARCHETYPE } from '../src/lib/dps.js';
 
@@ -163,8 +164,10 @@ describe('dataset.json', () => {
     expect(husk.src).toMatchObject({ kind: 'drop', boss: 'Giant Clam', gate: 'Hardmode' });
     expect(ds.stages[husk.stage].key).toBe('WallOfFlesh');
     expect(ds.stages[byName('Mollusk Shellmet').stage].key).toBe('WallOfFlesh');
-    expect(byName('Mollusk Shellmet').setBonus).toMatch(/^10\.0% increased damage reduction/); // {0} filled from UpdateArmorSet
-    expect(byName('Mollusk Shellmet').tooltip).toMatch(/^5\.0% increased damage and 4% increased critical strike chance/);
+    // `{0}` filled from UpdateArmorSet — and rounded the way `CalamityUtils.Round` does, which
+    // drops the zero `N1` writes, so this reads exactly as the game prints it
+    expect(byName('Mollusk Shellmet').setBonus).toMatch(/^10% increased damage reduction/);
+    expect(byName('Mollusk Shellmet').tooltip).toMatch(/^5% increased damage and 4% increased critical strike chance/);
     // `{^N:second;seconds}` picks its arm from format argument N — 10 seconds, but 1 minute
     expect(byName("Beholder's Gaze").tooltip).toMatch(/for 10 seconds\nFor 1 minute afterwards/);
     // Thorium registers a boss's table with a registry of its own from SetStaticDefaults; the rules
@@ -279,5 +282,32 @@ describe('dataset.json', () => {
     expect(titan.stageLabel).toBe('Pre-boss');
     expect(applySeeds(indexed, [])).toBe(true); // and back off again
     expect(indexed.stages[titan.stage].key).toBe('WallOfFlesh');
+  });
+});
+
+// ---- phase coverage: every kind of weapon has to be described, not just the ones that shoot -----
+describe('attack phases cover every weapon type', () => {
+  const it_ = has ? test : test.skip;
+  it_('no archetype is left with nothing describing how it deals damage', () => {
+    const indexed = indexDataset(JSON.parse(readFileSync(path, 'utf8'))); // indexing mutates: keep `ds` clean
+    const ctx = (w) => ({ conds: new Set(), uncertain: false, prefix: null, calibration: null, ds: indexed, stage: w.stage ?? 0, targets: 'auto' });
+    const byArch = new Map();
+    for (const w of indexed.items) {
+      if (w.slot !== 'weapon' || !(w.damage > 0)) continue;
+      const a = byArch.get(w.arch ?? '?') ?? { n: 0, bare: 0 };
+      a.n++;
+      // the root `primary` phase is the use clock and every weapon has one — it says nothing about
+      // what the weapon *does*, so a weapon with only that is one the phase model cannot explain
+      const phases = weaponDps(w, ctx(w)).phases ?? [];
+      if (!phases.some((p) => p.kind !== 'primary' && (p.projId || p.kind === 'contact' || p.kind === 'minion'))) a.bare++;
+      byArch.set(w.arch ?? '?', a);
+    }
+    // A broadsword deals its damage by touching the target, not by firing: before the swing phase
+    // existed, 294 of 395 `swing` weapons had no phase at all and the model could not say a word
+    // about the single largest archetype in the pool.
+    for (const [arch, a] of byArch) expect({ arch, described: a.n - a.bare > 0 }).toEqual({ arch, described: true });
+    const bare = [...byArch.values()].reduce((n, a) => n + a.bare, 0);
+    // a pin, not a target: it may only be lowered deliberately
+    expect(bare).toBeLessThanOrEqual(30);
   });
 });

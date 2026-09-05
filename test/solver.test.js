@@ -3,7 +3,7 @@ import { indexDataset } from '../src/lib/dataset.js';
 import { CLASS_PREF, SOFT, loadoutBonus, STEALTH_SHARE, TYPICAL_CRIT, W, accessoryGroup, defenseScale, foreignClass, minionSlotScale, pieceScore, round1, soft, typicalDps, weaponDps } from '../src/lib/score.js';
 
 const MELEE_TANK = CLASS_PREF.melee.tank; // melee counts survivability higher than everyone else
-import { STEALTH_RECHARGE, playerDamage } from '../src/lib/dps.js';
+import { REACH, STEALTH_RECHARGE, bladeLanding, bossSpeed, playerDamage } from '../src/lib/dps.js';
 import { solveLoadout, solveTimeline } from '../src/lib/solver.js';
 
 const raw = {
@@ -30,6 +30,10 @@ const raw = {
     { id: 'v:b4', mod: 'v', name: 'Weak Plate', slot: 'body', defense: 1, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'v:l4', mod: 'v', name: 'Weak Greaves', slot: 'legs', defense: 1, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'v:h2', mod: 'v', name: 'Tank Helmet', slot: 'head', defense: 12, stage: 0, stageSource: { kind: 'rarity' } },
+    // a rogue set whose stealth is a set bonus, with the other two pieces a stage further on
+    { id: 'M:rhead', mod: 'M', name: 'Stealth Hood', slot: 'head', defense: 3, effects: { damage: { thrower: 0.25 } }, set: ['M:rbody', 'M:rlegs'], setEffects: { mod: { rogueStealthMax: 0.9 }, damage: { thrower: 0.3 } }, setBonus: '90 max stealth', stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:rbody', mod: 'M', name: 'Stealth Coat', slot: 'body', defense: 10, stage: 2, stageSource: { kind: 'rarity' } },
+    { id: 'M:rlegs', mod: 'M', name: 'Stealth Greaves', slot: 'legs', defense: 8, stage: 2, stageSource: { kind: 'rarity' } },
     { id: 'v:h3', mod: 'v', name: 'Mage Hat', slot: 'head', defense: 3, effects: { damage: { magic: 0.3 } }, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'v:b2', mod: 'v', name: 'Late Plate', slot: 'body', defense: 40, stage: 2, stageSource: { kind: 'drop' } },
     // accessories
@@ -41,6 +45,7 @@ const raw = {
     { id: 'v:vanity', mod: 'v', name: 'Vanity Thing', slot: 'accessory', stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'v:unknown', mod: 'v', name: 'Mystery Emblem', slot: 'accessory', effects: { damage: { all: 0.5 } }, stage: null, stageSource: { kind: 'unknown' } },
     { id: 'M:rogueacc', mod: 'M', name: 'Throwing Charm', slot: 'accessory', effects: { damage: { thrower: 0.2 } }, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:sheath', mod: 'M', name: 'Sheath', slot: 'accessory', effects: { mod: { rogueStealthMax: 0.1 } }, stage: 0, stageSource: { kind: 'rarity' } },
     // damage for aggro, a runtime formula behind a ModPlayer flag, a summoner slot, a tooltip-only stat
     { id: 'M:taunt', mod: 'M', name: 'Taunt Charm', slot: 'accessory', effects: { damage: { all: 0.15 }, aggro: 400 }, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:ring', mod: 'M', name: 'Formula Ring', slot: 'accessory', placeholders: true, effects: { damage: { classless: 0.3 }, defense: { all: -10 }, via: ['ring'], flags: ['ring'] }, stats: { allDamage: 0.08 }, stage: 0, stageSource: { kind: 'rarity' } },
@@ -77,9 +82,11 @@ describe('score', () => {
     // a swing at contact range, against the default boss (8 defense eats half a point per point)
     expect(r.arch).toBe('swing');
     expect(r.hit).toBeCloseTo(20 * playerDamage(undefined) - 4, 5); // no dataset: the knob's own fallback
-    // …times the swing's reach and what fighting at that reach costs a melee player
+    // …times the swing's reach, what fighting at that reach costs a melee player, and the blade's
+    // own landing (the boss drifts while the arc comes round; a blade only just reaching is a tip)
     const risk = r.parts.find((p) => /fights at .* px of the/.test(p.label))?.mul ?? 1;
-    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * 0.85 * risk, 0); // `risk` is the rounded part
+    const blade = bladeLanding({ D: r.distance, boss: r.boss, vb: bossSpeed(r.boss.progression), reach: REACH.swing, ticks: 20 });
+    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * 0.85 * blade.f * risk, 0); // `risk` is the rounded part
     expect(weaponDps(ds.byId.get('M:staff')).kind).toBe('per hit');
   });
   test('piece score reads effects for the class and ignores other classes', () => {
@@ -109,6 +116,13 @@ describe('score', () => {
     // expending 90% of the bar means 1/0.9 as many strikes
     expect(s.parts[0].value).toBeCloseTo((1 / 0.9 - 1) * W.damage * STEALTH_SHARE, 1);
     expect(pieceScore(ds.byId.get('M:deceit'), 'melee').score).toBe(0);
+  });
+  test('bard armor values its inspiration pool and regeneration', () => {
+    const item = { id: 'M:bard-head', slot: 'head', effects: { mod: { bardResourceMax2: 5, inspirationRegenBonus: 0.25 } } };
+    const bard = pieceScore(item, 'bard');
+    expect(bard.parts.find((p) => /max inspiration/.test(p.label))?.value).toBeGreaterThan(0);
+    expect(bard.parts.find((p) => /inspiration regeneration/.test(p.label))?.value).toBeGreaterThan(0);
+    expect(pieceScore(item, 'magic').score).toBe(0);
   });
   test('a dodge and an unreadable on-hit spawn still count for something', () => {
     const s = pieceScore(ds.byId.get('M:belt'), 'melee');
@@ -236,6 +250,33 @@ describe('solveLoadout', () => {
     expect(magic.armor.head.item.id).toBe('v:h3');
     expect(magic.armor.isSet).toBe(false);
   });
+  test('max stealth comes from what is worn: a set bonus only in a full set', () => {
+    // stage 0: the hood is worn but its coat and greaves are a stage away, so the set bonus that
+    // carries the stealth never fires — only the accessory's own 10 counts
+    const mixed = solveLoadout(ds, { cls: 'rogue', stage: 0, slots: 6 });
+    expect(mixed.armor.head.item.id).toBe('M:rhead');
+    expect(mixed.armor.isSet).toBe(false);
+    expect(mixed.stealthMax).toBeCloseTo(mixed.accessories.some((a) => a.item.id === 'M:sheath') ? 0.1 : 0, 5);
+    // stage 2: all three pieces, so the bonus applies
+    const full = solveLoadout(ds, { cls: 'rogue', stage: 2, slots: 6 });
+    expect(full.armor.isSet).toBe(true);
+    expect(full.stealthMax).toBeGreaterThanOrEqual(0.9);
+  });
+
+  test('a rogue prefers functional stealth armor over stronger mixed pieces or a generic set', () => {
+    const fixture = structuredClone(raw);
+    fixture.items.push(
+      { id: 'M:powerhead', mod: 'M', name: 'Power Helm', slot: 'head', defense: 20, effects: { damage: { rogue: 0.8 } }, set: ['M:powerbody', 'M:powerlegs'], setEffects: { damage: { rogue: 0.8 } }, setBonus: '80% rogue damage', stage: 2, stageSource: { kind: 'drop' } },
+      { id: 'M:powerbody', mod: 'M', name: 'Power Plate', slot: 'body', defense: 30, effects: { damage: { rogue: 0.8 } }, stage: 2, stageSource: { kind: 'drop' } },
+      { id: 'M:powerlegs', mod: 'M', name: 'Power Greaves', slot: 'legs', defense: 25, effects: { damage: { rogue: 0.8 } }, stage: 2, stageSource: { kind: 'drop' } },
+    );
+    const lo = solveLoadout(indexDataset(fixture), { cls: 'rogue', stage: 2, slots: 6 });
+    expect(lo.armor.isSet).toBe(true);
+    expect(lo.armor.head.item.id).toBe('M:rhead');
+    expect(lo.stealthMax).toBeGreaterThanOrEqual(0.9);
+    expect(lo.armorAlternatives.map((a) => a.head.item.id)).not.toContain('M:powerhead');
+  });
+
   test('armorPick wears a runner-up set, and the best one takes its place in the list', () => {
     const lo = solveLoadout(ds, { cls: 'melee', stage: 0, slots: 6 });
     const alt = lo.armorAlternatives[0].head.item.id;

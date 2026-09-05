@@ -40,8 +40,17 @@ const GEAR_RULES = [
   [/aggro|quality of life|fishing|luck|light/, 'utility'],
 ];
 
-/** The factor a part belongs to. `weapon` picks the rule set — the two never share a list. */
-export function factorOf(label, weapon = false) {
+/**
+ * The factor a part belongs to. `weapon` picks the rule set — the two never share a list.
+ *
+ * A part that says what it is (`fac`) is taken at its word: dps.js knows whether a line is a hit
+ * count or a property of the boss, and its labels are prose that reads a dozen ways — "infinite
+ * pierce: 2.6 hits (…, 6 targets, 52% stay on target)" is a hits multiplier that mentions the
+ * target three times. The regexes stay for gear (score.js), whose labels are stat names.
+ */
+export function factorOf(part, weapon = false) {
+  if (typeof part !== 'string' && FACTORS[part?.fac]) return part.fac;
+  const label = typeof part === 'string' ? part : part?.label ?? '';
   const rules = weapon ? WEAPON_RULES : GEAR_RULES;
   for (const [re, key] of rules) if (re.test(label)) return key;
   return 'utility';
@@ -60,6 +69,6 @@ export const SIGN_COLOR = { '-1': 'var(--color-bad)', 1: 'var(--color-green-deep
 
 /** Category name and description for a part's `data-tip`, with its own arithmetic kept underneath. */
 export function factorTip(p, weapon = false) {
-  const f = FACTORS[factorOf(p.label, weapon)];
+  const f = FACTORS[factorOf(p, weapon)];
   return p.detail ? `${f.label}\n${f.hint}\n\n${p.detail}` : `${f.label}\n${f.hint}`;
 }

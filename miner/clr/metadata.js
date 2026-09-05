@@ -389,6 +389,25 @@ export class Assembly {
     return md._sig;
   }
 
+  /**
+   * Parameter names of a method def, by position. The Param rows of a method run from its own
+   * `paramList` to the next method's; sequence 0 is the return value, so it is skipped.
+   */
+  paramNames(md) {
+    if (md._params) return md._params;
+    const t = this.tables;
+    const n = t.count(T.MethodDef);
+    const start = t.row(T.MethodDef, md.rid).paramList;
+    const end = md.rid < n ? t.row(T.MethodDef, md.rid + 1).paramList : t.count(T.Param) + 1;
+    const out = [];
+    for (let p = start; p < end && p <= t.count(T.Param); p++) {
+      const r = t.row(T.Param, p);
+      if (r.sequence > 0) out[r.sequence - 1] = this.string(r.name);
+    }
+    md._params = out;
+    return out;
+  }
+
   fieldType(fd) {
     if (!fd._type) fd._type = readFieldSig(new BlobReader(this.blob(fd.sig)));
     return fd._type;
@@ -439,15 +458,50 @@ export class Assembly {
     return td.extends ? this.resolve(td.extends) : null;
   }
 
-  /** Walk the base chain (within this assembly) and report whether any base matches. */
+  /** Simple names of the interfaces a TypeDef declares (`item.ModItem is IVoidHybrid`). */
+  interfacesOf(td) {
+    if (!this._ifaces) {
+      this._ifaces = new Map();
+      for (let rid = 1; ; rid++) {
+        const r = this.tables.row(T.InterfaceImpl, rid);
+        if (!r) break;
+        const owner = this.types[tokenRid(r.class) - 1];
+        let name = null;
+        try { name = this.resolve(r.interface)?.name ?? null; } catch { /* unreadable ref */ }
+        if (!owner || !name) continue;
+        const l = this._ifaces.get(owner.fullName);
+        if (l) l.push(name); else this._ifaces.set(owner.fullName, [name]);
+      }
+    }
+    return this._ifaces.get(td.fullName) ?? [];
+  }
+
+  /**
+   * Walk the base chain and report whether any base matches. An addon's weapons derive from the
+   * mod they extend — Infernum's rogue weapons from `CalamityMod.Items.Weapons.Rogue.RogueWeapon`,
+   * which is a TypeRef here — so the walk crosses into the other assembly when `siblings` has it.
+   */
   derivesFrom(td, predicate, maxDepth = 32) {
+    let asm = this;
     let cur = td;
     for (let i = 0; i < maxDepth && cur; i++) {
-      const base = this.baseOf(cur);
+      const base = asm.baseOf(cur);
       if (!base) return false;
       if (predicate(base)) return true;
-      if (base.kind !== 'typeDef') return false;
-      cur = base.def;
+      if (base.kind === 'typeDef') { cur = base.def; continue; }
+      // `class HardlightChairTile : Chair<HardlightChair>`: a generic base stands for the generic
+      // type itself, which is where the ModTile is (SOTS builds all its furniture this way)
+      let ref = base;
+      if (base.kind === 'typeSpec') {
+        try { ref = asm.resolve(base.type?.token); } catch { return false; }
+        if (!ref || predicate(ref)) return !!ref;
+        if (ref.kind === 'typeDef') { cur = ref.def; continue; }
+      }
+      const other = ref?.kind === 'typeRef' ? asm.siblings?.get(ref.assembly) : null;
+      const def = other?.typeByName.get(ref.fullName);
+      if (!def) return false;
+      asm = other;
+      cur = def;
     }
     return false;
   }

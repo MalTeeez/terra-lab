@@ -37,6 +37,10 @@ export function keysToMatchers(asm, keys) {
       else if (m.fullName) { const [mod, cls] = m.fullName.split('/'); out.push(cls ? { id: `${mod}:${cls}` } : { className: m.fullName }); }
       else if (m.is) out.push({ is: m.is });
       else if (m.cls) out.push({ cls: m.cls });
+      // `item.DamageType == DamageClass.Throwing` is reference equality, not a class bucket: the
+      // hybrid patch that turns vanilla throwing into void throwing must not also catch the rogue
+      // items another mod has already moved to a class of its own
+      else if (m.dcIs) out.push({ dcIs: m.dcIs });
       else if (m.prop) out.push({ prop: m.prop, value: m.value });
       else if (m.classNameEndsWith) out.push({ classEndsWith: m.classNameEndsWith });
       else if (m.displayName) out.push({ displayName: m.displayName });
