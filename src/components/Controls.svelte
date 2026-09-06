@@ -29,9 +29,6 @@
   function stepStage(d) {
     ui.stage = Math.max(0, Math.min(ds.stages.length - 1, ui.stage + d));
   }
-  const MODES = [['loadout', 'Loadout'], ['timeline', 'All stages'], ['items', 'Items only']];
-  // where the sliding tab indicator sits; clamped so a stale ui.mode doesn't send it off-track
-  const modeIdx = $derived(Math.max(0, MODES.findIndex(([m]) => m === ui.mode)));
   const COND_LABELS = { expert: 'Expert', master: 'Master', revenge: 'Revengeance', death: 'Death', malice: 'Malice', eternity: 'Eternity', infernum: 'Infernum', bossrush: 'Boss Rush' };
   const ownedCount = $derived(Object.keys(ui.owned).length);
   const STYLE_LABELS = { sniper: 'Sniper', rapid: 'Rapid', nuke: 'Nuke', spray: 'Spray', spam: 'Spam', stealth: 'Stealth' };
@@ -50,7 +47,8 @@
     ['multi', 'Multi', 'Multi-target: a worm, an event wave, a boss with adds. Pierce and lingering shots pay off here.'],
   ];
   const accent = $derived(accentOf(ui.cls));
-  const nextTarget = $derived(ds.stages[ui.stage + 1] ?? null);
+  // at the last stage there is no next boss: the default target stays the last one (see dps.boss)
+  const nextTarget = $derived(ds.stages[Math.min(ui.stage + 1, ds.stages.length - 1)] ?? null);
 
   /** Everything currently bending the result, as chips you can click off. */
   const active = $derived.by(() => {
@@ -75,10 +73,12 @@
   });
 </script>
 
-<div class="sticky top-0 z-30 bg-paper/60 px-5 pb-2.5 pt-2 backdrop-blur-sm">
+<!-- no wash on the sticky wrapper: over the backdrop its 60% paper drew a hard-edged frame around
+     the panel. The panel below frosts itself, which is all the separation a floating bar needs. -->
+<div class="sticky top-0 z-30 px-5 pb-2.5 pt-2">
   <section class="lab-panel lab-controls px-4 py-2.5 backdrop-blur" style="--accent:{accentOf(ui.cls)}; background-color:rgb(255 255 255 / 0.92); box-shadow:var(--shadow-panel), 0 6px 12px -8px rgb(22 40 26 / 0.45)">
-    <!-- who the loadout is for (left) · what you're looking at (center tabs) · extra panels (right) -->
-    <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2">
+    <!-- who the loadout is for (left) · extra panels (right); the view tabs live in the header -->
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div class="flex flex-wrap items-center gap-2">
         <span class="lab-label shrink-0">Class</span>
         <div class="flex flex-wrap gap-1">
@@ -88,14 +88,7 @@
         </div>
       </div>
 
-      <nav class="lab-tabs justify-self-center" style="--idx:{modeIdx}; --n:{MODES.length}" aria-label="View">
-        <span class="lab-tabs-indicator" aria-hidden="true"></span>
-        {#each MODES as [m, label]}
-          <button class="lab-tab" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>{label}</button>
-        {/each}
-      </nav>
-
-      <div class="flex gap-1 justify-self-end">
+      <div class="flex gap-1">
         <button class="lab-btn" aria-pressed={ui.panel === 'gear'} onclick={() => (ui.panel = ui.panel === 'gear' ? null : 'gear')} title="Items you own, pins and exclusions">
           My gear {#if ownedCount}<span class="num text-green-deep">{ownedCount}</span>{/if}
         </button>

@@ -13,9 +13,11 @@
  */
 import { classOf } from '../classify.js';
 import { ITEM, Machine, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { findInherited } from './util.js';
+import { derivesFromTml, findInherited, TYPE_ABSTRACT } from './util.js';
+import { deCamel } from './localization.js';
 import { decodeIL, ldcValue } from '../clr/il.js';
 import { ET } from '../clr/sig.js';
+import { projRef } from './projectiles.js';
 
 /**
  * `Main.debuff` means "cannot be right-clicked away", which is also how the station, transformation
@@ -95,13 +97,20 @@ export function playerHooks(emit) {
       if (recv?.k === 'obj' && (recv.name === 'itemArg' || recv.name === 'armorSlot')) return recv.props[name] ?? UNKNOWN;
       if (recv?.k === 'stat' && recv.kind === 'velocity' && name === 'X') return { k: 'stat', kind: 'velocityX', cls: 'all' };
       if (recv?.k === 'stat' && recv.kind === 'velocityX' && name === '@ind') return 1; // current value: a multiplier survives as itself
+      // `player.GetDamage(Generic).Flat += 2` — a flat bonus, added after every multiplier — is
+      // written through the *address* of the field (`ldflda`, `ldind`, `add`, `stind`), not through
+      // a property. Answering the address with a plain 0 threw the reference away and the whole
+      // write landed nowhere: Thorium's rings, which are all `.Flat`, carried no damage at all.
+      // Keeping which part of the StatModifier is addressed is what tells the store below that this
+      // is `damageFlat` and not the multiplier.
+      if (recv?.k === 'stat' && (name === 'Base' || name === 'Flat')) return { ...recv, part: 'Flat' };
       if (recv?.k === 'stat') return 0;
       return undefined;
     },
     onStore(recv, name, value, ctx) {
       if (recv?.k === 'stat') {
         if (recv.kind === 'velocityX') { if (name === '@ind' && isNum(value) && value > 0 && value < 1) emit({ stat: 'velocityDrag', value }, ctx); return; }
-        if (name === '@ind' && isNum(value) && value !== 0) emit({ stat: recv.kind, cls: recv.cls, value }, ctx);
+        if (name === '@ind' && isNum(value) && value !== 0) emit({ stat: recv.part ? `${recv.kind}${recv.part}` : recv.kind, cls: recv.cls, value }, ctx);
         else if ((name === 'Base' || name === 'Flat') && isNum(value) && value !== 0) emit({ stat: `${recv.kind}Flat`, cls: recv.cls, value }, ctx);
         else if (name === 'Additive' && isNum(value) && value !== 0) emit({ stat: recv.kind, cls: recv.cls, value: value - 1 }, ctx);
         else if (name === 'Multiplicative' && isNum(value) && value !== 0) emit({ stat: `${recv.kind}Mult`, cls: recv.cls, value: value - 1 }, ctx);
@@ -157,15 +166,41 @@ export function playerHooks(emit) {
       // (which of these are debuffs rather than blessings is decided later, by `extractDebuffs`)
       if (ctx.recv === PLAYER && name === 'AddBuff') {
         const b = args[0];
-        const ref = isNum(b) ? `v:${b}` : b?.k === 'type' ? simpleName(b.name) : null;
-        if (ref) emit({ stat: `selfBuff:${ref}`, value: 1 }, ctx);
+        const nameOf = (v) => (isNum(v) ? `v:${v}` : v?.k === 'type' ? simpleName(v.name) : null);
+        // `AddBuff(Utils.SelectRandom(power, regen, defense), 120)` — the Spirit Glyph's minion hit
+        // grants one of three at random, so each is a buff you have part of the time
+        if (b?.k === 'oneof') for (const v of b.items) { const r = nameOf(v); if (r) emit({ stat: `selfBuff:${r}`, value: 1, cond: true }, ctx); }
+        else { const ref = nameOf(b); if (ref) emit({ stat: `selfBuff:${ref}`, value: 1 }, ctx); }
         return UNKNOWN;
       }
-      // Modded stat accessors: player.GetModPlayer<X>().something(...) → unknown
+      // A mod reaches its own ModPlayer through a helper as often as through `GetModPlayer<T>()`
+      // — `player.Calamity()`, `PlayerHelper.GetThoriumPlayer(player)`. The second returns a cached
+      // static on one of its paths, so inlining it answers UNKNOWN and every field set through it
+      // is lost: Conflagration Potion's `conflagrate` (its damage-over-time) was one of them.
+      // Anything taking a Player and handing back a `…Player` of the mod's own is that ModPlayer.
+      if (ctx.recv === PLAYER || args.some((a) => a === PLAYER)) {
+        const t = modPlayerReturn(callee, ctx);
+        if (t) return { k: 'modplayer', name: t };
+      }
       return undefined;
     },
     onStaticLoad: (f) => (f.name === 'player' && /Terraria\.Main$/.test(f.declaringType?.fullName ?? '') ? PLAYERS : tmlStaticLoadHook(f)),
   };
+}
+
+/**
+ * The ModPlayer type a call hands back, by its return type: a mod's own `…Player` (never
+ * `Terraria.Player` itself, which is the player and not a place to keep fields).
+ * @returns {string|null}
+ */
+function modPlayerReturn(callee, ctx) {
+  const ret = callee.sig?.ret;
+  if (!ret || ret.et !== ET.CLASS || !ret.token) return null;
+  try {
+    const td = ctx.owner?.resolve(ret.token);
+    const name = simpleName(td?.fullName ?? td?.name ?? '');
+    return /Player$/.test(name) && name !== 'Player' ? name : null;
+  } catch { return null; }
 }
 
 /** `Main.player` / `Main.ActivePlayers`: any element is the player. */
@@ -207,6 +242,8 @@ export function extractItemEffects(asm, td, { tml }) {
     const m = findInherited(asm, td, methodName);
     if (!m) return null;
     const deltas = [];
+    const spawns = [];
+    let statCls = null;
     const hooks = playerHooks((d) => deltas.push(d));
     const machine = new Machine(asm, {
       tml,
@@ -215,7 +252,24 @@ export function extractItemEffects(asm, td, { tml }) {
       budget: 20000,
       onLoad: (recv, name, ctx) => (recv === ITEM || recv === THIS ? UNKNOWN : hooks.onLoad(recv, name, ctx)),
       onStore: hooks.onStore,
-      onCall: hooks.onCall,
+      onCall: (callee, args, ctx) => {
+        // `GetBestClassDamage(player).ApplyTo(10f)`: the base damage of what this hook puts out
+        if (callee.name === 'ApplyTo' && isNum(args[0])) { statCls = ctx.recv?.k === 'stat' ? ctx.recv.cls : null; return args[0]; }
+        // An equip hook runs every tick, so a projectile it spawns is one it keeps out: the Fungal
+        // Clump's minion, a summoner set bonus's free minion, an aura. Guarded by
+        // `ownedProjectileCounts[type] < N` in every case that matters, which is why one record per
+        // call is right — the hook is not firing it again while it is alive.
+        if (/^NewProjectile(?:Direct)?$/.test(callee.name)) {
+          const i = args.findIndex((a) => a?.k === 'type' && a.fn === 'ProjectileType');
+          const type = i >= 0 ? projRef(asm, args[i]) : null;
+          const d = i >= 0 && isNum(args[i + 1]) ? Math.round(args[i + 1]) : 0;
+          // damage 0 is a visual (a dust trail, a healing orb): nothing to grade
+          if (type && d > 0 && !spawns.some((s) => s.type === type)) spawns.push({ type, damage: d, cls: statCls && statCls !== 'all' && statCls !== 'classless' ? statCls : undefined });
+          statCls = null;
+          return UNKNOWN;
+        }
+        return hooks.onCall(callee, args, ctx);
+      },
       onStaticLoad: hooks.onStaticLoad,
     });
     machine.run(m, THIS, [PLAYER, ...extraArgs]);
@@ -237,12 +291,49 @@ export function extractItemEffects(asm, td, { tml }) {
       });
       try { linear.run(m, THIS, [PLAYER, ...extraArgs]); } catch { /* the first pass is the record */ }
     }
-    return normalizeEffects(dedupe(deltas));
+    const out = normalizeEffects(dedupe(deltas));
+    if (!spawns.length) return out;
+    return { ...(out ?? {}), spawns };
   };
   return {
     equip: run('UpdateEquip', []) ?? run('UpdateAccessory', [0]),
     set: run('UpdateArmorSet', []),
   };
+}
+
+/**
+ * Every ModBuff in an assembly: its name, its description and what it does to the player while it
+ * is up (`Update(Player, ref int)`, read with the same hooks an accessory's is). A potion is worth
+ * exactly what its buff does — the item itself only names one.
+ */
+export function extractModBuffs(asm, { tml, loc, modId }) {
+  const out = [];
+  for (const td of asm.types) {
+    if (td.flags & TYPE_ABSTRACT) continue;
+    if (td.name.includes('`') || td.name.startsWith('<')) continue;
+    if (!derivesFromTml(asm, td, 'ModBuff')) continue;
+    const text = loc.buff(td.name);
+    const m = findInherited(asm, td, 'Update');
+    let effects = null;
+    if (m) {
+      const deltas = [];
+      const hooks = playerHooks((d) => deltas.push(d));
+      const machine = new Machine(asm, {
+        tml,
+        concreteType: td,
+        maxDepth: 4,
+        budget: 20000,
+        onLoad: (recv, name, ctx) => (recv === ITEM || recv === THIS ? UNKNOWN : hooks.onLoad(recv, name, ctx)),
+        onStore: hooks.onStore,
+        onCall: hooks.onCall,
+        onStaticLoad: hooks.onStaticLoad,
+      });
+      try { machine.run(m, THIS, [PLAYER, 0]); } catch { /* keep what it read */ }
+      effects = normalizeEffects(dedupe(deltas));
+    }
+    out.push({ id: `${modId}:${td.name}`, name: text.name ?? deCamel(td.name), desc: text.desc ?? '', effects });
+  }
+  return out;
 }
 
 /** Does this method call `Player.AddBuff` anywhere, reachable or not? */

@@ -17,6 +17,8 @@
   import { layout, toDisplay } from '../lib/treelayout.js';
   import ScoreParts from './ScoreParts.svelte';
   import PhaseGraph, { CONF } from './PhaseGraph.svelte';
+  import PhaseWindow from './PhaseWindow.svelte';
+  import { loopPhases } from '../lib/dps.js';
   import Info from './Info.svelte';
 
   let { ds, item, statCtx, onclose, onselect } = $props();
@@ -86,32 +88,36 @@
   // clicking a node opens that item in this same card, swapping the tree under an open window
   $effect(() => { void graph; openFullTree(); });
   // the attack graph folds out to the left of the card, where there is room for the full form
-  let phasesOut = $state(false);
   const phases = $derived(dps?.phases ?? []);
-  // …lined up with the compact strip it came from: a little above it, growing downwards, and
-  // pushed up only when the window has no room below
-  let strip = $state(null);
-  let stripTop = $state(0);
-  let foldH = $state(0);
+  // The loop the weapon is *not* scored in, as a graph of its own: the same tree with the pricing
+  // inverted. Its phases are zeroed in the main graph — they must be, or the shares would not add
+  // up to the card's number — so here they are priced by `own`, what each is worth inside that
+  // loop, and the loop that *is* taken is the one showing nothing.
+  const other = $derived(dps?.mode === 'stealth' ? 'spam' : dps?.mode === 'spam' ? 'stealth' : null);
+  const otherPhases = $derived(other ? loopPhases(phases, other) : []);
+  const otherTotal = $derived(other === 'spam' ? dps?.spam : dps?.stealth);
+  /** one of the two graphs the card shows, by the strip it belongs to */
+  const viewOf = (k) => (k === 'other'
+    ? { phases: otherPhases, total: otherTotal, mode: other, label: `the ${other} loop, the one it is not scored in` }
+    : { phases, total: dps?.value, mode: dps?.mode, label: other ? `both loops, scored in the ${dps.mode} one` : '' });
+  let popKey = $state('main'); // which of them the full window draws
+  const view = $derived(viewOf(popKey === 'other' && other ? 'other' : 'main'));
+  // Each strip folds its own graph out beside itself — the bottom one down where it sits, not up
+  // at the top one — and both may be out at once, so every measurement here is per strip.
+  let out = $state({ main: false, other: false });
+  let strips = $state({ main: null, other: null });
+  let tops = $state({ main: 0, other: 0 });
+  let foldH = $state({ main: 0, other: 0 });
   let vh = $state(800);
-  const placeFold = () => { stripTop = strip?.getBoundingClientRect().top ?? 0; };
-  const foldTop = $derived(Math.max(8, Math.min(stripTop - 24, vh - foldH - 8)));
-  // the full window: the graph is measured at 100% and zoomed to fit, the way the tree is
-  let pfull = $state(null);
-  let pinner = $state(null);
-  let pzoom = $state(1);
-  let pw = $state(0);
-  let ph = $state(0);
-  async function openFullPhases() {
-    await tick();
-    // measured by hand: a size binding only catches up a frame after the popover gets laid out,
-    // and `offset*` is the graph's own size whatever it is scaled to
-    pw = pinner?.offsetWidth ?? 0;
-    ph = pinner?.offsetHeight ?? 0;
-    if (!pfull?.clientWidth || !pw || !ph) return;
-    const pad = 32;
-    pzoom = Math.min(MAX_FIT, Math.max(MIN_FIT, Math.floor(Math.min((pfull.clientWidth - pad) / pw, (pfull.clientHeight - pad) / ph) * 100) / 100));
-  }
+  const placeFold = () => { for (const k of ['main', 'other']) if (out[k]) tops[k] = strips[k]?.getBoundingClientRect().top ?? 0; };
+  const toggleFold = (k) => { tops[k] = strips[k]?.getBoundingClientRect().top ?? 0; out[k] = !out[k]; };
+  $effect(() => { void item; out = { main: false, other: false }; popKey = 'main'; }); // another weapon starts folded in
+  // lined up with the strip it came from: a little above it, growing downwards, pushed up only when
+  // the window has no room below — and the lower panel gets out of the upper one's way
+  const foldTop = (k) => {
+    const own = Math.max(8, Math.min(tops[k] - 24, vh - foldH[k] - 8));
+    return k === 'other' && out.main ? Math.max(own, foldTop('main') + foldH.main + 8) : own;
+  };
   // A gamestage is named after a boss and so is most gate text, so the pair reads as a stutter:
   // "Purified Gel (The Slime God: dropped by The Slime God)". Keep the detail when it already says it.
   const where = (label, detail) => (detail && label && detail.includes(label) ? detail : [label, detail].filter(Boolean).join(': '));
@@ -151,7 +157,10 @@
     <div class="flex items-start gap-3">
       <WikiIcon {item} size={44} />
       <div class="min-w-0 flex-1">
-        <h2 class="text-[17px] leading-tight">{item.name}</h2>
+        <!-- the name, the tooltip, the set bonus and the id are the four things people copy out of
+             this card (a wiki search, a note); everything else here is a click target, and the body
+             turns selection off so a double click lands on the row and not on a word -->
+        <h2 class="selectable text-[17px] leading-tight">{item.name}</h2>
         <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-dim">
           <span>{item.modName}</span>
           <span class="lab-tag">{item.slot}</span>
@@ -247,16 +256,16 @@
     {#if item.tooltip}
       <section>
         <div class="lab-rule start mb-1.5">In-game tooltip</div>
-        <p class="m-0 whitespace-pre-line border-l-2 border-line pl-3 text-ink2">{item.tooltip}</p>
+        <p class="selectable m-0 whitespace-pre-line border-l-2 border-line pl-3 text-ink2">{item.tooltip}</p>
         {#if item.placeholders}<p class="m-0 mt-1 text-[11.5px] text-warn">Numbers shown as {'{0}'} are filled in at runtime; the score uses the values read from the mod's code where available.</p>{/if}
       </section>
     {/if}
 
     {#if dps && dps.kind === 'dps'}
-      <section>
+      <section class="pb-5">
         <!-- not "Real DPS" again: that is the big number at the top of the card, and this is the
              arithmetic behind it -->
-        <div class="lab-rule start mb-1.5">How the DPS is made{dps.mode === 'stealth' ? ' — stealth strikes' : dps.mode === 'spam' ? ' — spam' : ''}</div>
+        <div class="lab-rule start mb-1.5">Damage Calculation{dps.mode === 'stealth' ? ' — stealth strikes' : dps.mode === 'spam' ? ' — spam' : ''}</div>
         <!-- what it throws out, then what the arithmetic below was measured against -->
         {#if item.shoot || item.useAmmo}
           <div class="mb-0.5 text-[12px]">{@render projLine(item)}</div>
@@ -267,15 +276,12 @@
         </div>
         <!-- the attack as phases: what happens, how often, and its share of the number below -->
         {#if phases.length}
-          <div class="mb-2 flex items-start gap-2 border border-line bg-panel2/40 p-2" bind:this={strip}>
-            <div class="min-w-0 flex-1 overflow-x-auto"><PhaseGraph {ds} {phases} total={dps.spam ?? dps.value} compact /></div>
-            <span class="flex shrink-0 gap-1">
-              <button class="lab-btn hidden px-2 py-0.5 text-[11.5px] md:inline-block" aria-pressed={phasesOut} onclick={() => { placeFold(); phasesOut = !phasesOut; }} title="Fold out the full attack graph beside this panel">{phasesOut ? '⇥' : '⇤'} attack phases</button>
-              <button class="lab-btn px-2 py-0.5 text-[11.5px]" popovertarget="phasegraph" title="Open the attack graph in a bigger view">⤢</button>
-            </span>
+          <div class="relative mb-2 border border-line bg-panel2/40 p-2" bind:this={strips.main}>
+            <div class="overflow-x-auto"><PhaseGraph {ds} {phases} total={dps.value} mode={dps.mode} compact /></div>
+            {@render graphButtons('main')}
           </div>
         {/if}
-        <div class="lab-calc">
+        <div class="lab-calc pb-2">
           {#each (dps.mode === 'stealth' ? dps.stealthParts : dps.parts) as p}
             <div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>
           {/each}
@@ -283,7 +289,13 @@
         </div>
         {#if dps.mode === 'stealth' || dps.mode === 'spam'}
           <details class="mt-1.5 text-[12px] text-dim">
-            <summary class="cursor-pointer hover:text-green">the other half: {dps.mode === 'stealth' ? 'spam' : 'stealth'} {fmtNum(dps.mode === 'stealth' ? dps.spam : dps.stealth)}/s</summary>
+            <summary class="cursor-pointer hover:text-green">the other half: {other} {fmtNum(other === 'spam' ? dps.spam : dps.stealth)}/s</summary>
+            {#if otherPhases.length}
+              <div class="relative mt-1 border border-line bg-panel2/40 p-2" bind:this={strips.other}>
+                <div class="overflow-x-auto"><PhaseGraph {ds} phases={otherPhases} total={otherTotal} mode={other} compact /></div>
+                {@render graphButtons('other')}
+              </div>
+            {/if}
             <div class="lab-calc mt-1">{#each (dps.mode === 'stealth' ? dps.parts : dps.stealthParts) as p}<div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>{/each}</div>
           </details>
         {/if}
@@ -295,7 +307,7 @@
         <div class="lab-rule start mb-1.5">Score for {CLASS_LABELS[ui.cls]}{prefix ? ` with ${prefix.name}` : ''}</div>
         {#if score.parts.length}<ScoreParts parts={score.parts} score={score.score} max={12} />{:else}<span class="text-[12.5px] text-dim">Nothing this class benefits from.</span>{/if}
         {#if item.slot === 'accessory' && accessoryGroup(item)}
-          <p class="m-0 mt-1.5 text-[12px] text-dim">Exclusive group <span class="lab-tag">{accessoryGroup(item)}</span> — the solver equips only the best of these.</p>
+          <p class="m-0 mt-1.5 text-[12px] text-dim">Exclusive group <span class="lab-tag">{accessoryGroup(item).replace(/^nostack:/, '')}</span> — the solver equips only the best of these.</p>
         {/if}
       </section>
     {/if}
@@ -303,7 +315,7 @@
     {#if item.slot === 'head' && (item.setBonus || item.setEffects)}
       <section>
         <div class="lab-rule start mb-1.5">Set bonus</div>
-        {#if item.setBonus}<p class="m-0 whitespace-pre-line border-l-2 border-green-mid pl-3 text-ink2">{item.setBonus}</p>{/if}
+        {#if item.setBonus}<p class="selectable m-0 whitespace-pre-line border-l-2 border-green-mid pl-3 text-ink2">{item.setBonus}</p>{/if}
         {#if setScore?.parts.length}<div class="mt-1.5"><ScoreParts parts={setScore.parts} score={setScore.score} /></div>{/if}
         {#if item.setEffects}
           <details class="mt-1.5 text-[12px] text-dim"><summary class="cursor-pointer hover:text-green">effects read from code</summary>
@@ -367,7 +379,7 @@
         <div class="mt-2 flex flex-col gap-3">
           {#if eff && eff.chain.length > 1}
             <div>
-              <span class="lab-label mb-1">How the damage is derived</span>
+              <span class="lab-label mb-1">Damage Calculation</span>
               <div class="lab-calc">
                 {#each eff.chain as step}
                   <div class="row"><span class="lbl">{step.label}</span><i class="lead"></i><span class="val num">{step.damage ?? ''}</span><span class="val num w-12 text-dim">{step.crit !== undefined ? `${step.crit}%` : ''}</span><span class="val num w-10 text-dim">{step.useTime !== undefined ? `${step.useTime}t` : ''}</span></div>
@@ -379,8 +391,8 @@
             <div>
               <span class="lab-label mb-1">Changed by other mods</span>
               <ul class="m-0 list-none p-0 text-[12.5px] text-ink2">
-                {#each item.changes ?? [] as c}<li>{c.mod} {c.hook}: {c.field ? `${c.field} ${c.from} → ${c.to}` : fmtEffects(c.effects).join(', ')}</li>{/each}
-                {#each item.variants ?? [] as v}<li class="text-dim">{v.mod} on {v.cond.join('+')}: {v.field ? `${v.field} → ${v.to}` : fmtEffects(v.effects).join(', ')}</li>{/each}
+                {#each item.changes ?? [] as c}<li>{c.mod} {c.hook}: {c.text ? `${c.mode === 'all' ? 'rewrote' : c.mode === 'sub' ? 'reworded' : '+'} “${c.text.replace(/\n/g, ' · ')}”` : c.field ? `${c.field} ${c.from} → ${c.to}` : `${c.source ? c.source + ': ' : ''}${fmtEffects(c.effects).join(', ')}`}</li>{/each}
+                {#each item.variants ?? [] as v}<li class="text-dim">{v.mod} on {v.cond.join('+')}: {v.text ? `+ “${v.text.replace(/\n/g, ' · ')}”` : v.field ? `${v.field} → ${v.to}` : fmtEffects(v.effects).join(', ')}</li>{/each}
                 {#if item.maybe}<li class="text-warn">{item.maybe} conditional change{item.maybe > 1 ? 's' : ''} whose guard could not be resolved</li>{/if}
               </ul>
             </div>
@@ -396,9 +408,19 @@
         </div>
       </details>
     {/if}
-    <p class="m-0 text-[11px] text-dim">id <span class="num">{item.id}</span></p>
+    <p class="selectable m-0 text-[11px] text-dim">id <span class="num">{item.id}</span></p>
   </div>
 </aside>
+
+<!-- the two ways out of an inline graph, for whichever loop the strip they sit in draws. They sit
+     over the graph's top right rather than beside it: taking a column of their own cut the tree
+     short, and the buttons bring their own background, so nothing else needs one. -->
+{#snippet graphButtons(k)}
+  <span class="absolute right-1.5 top-1.5 z-10 flex gap-1">
+    <button class="lab-btn hidden px-2 py-0.5 text-[11.5px] md:inline-block" aria-pressed={out[k]} onclick={() => toggleFold(k)} title="Fold out the full attack graph beside this panel">{out[k] ? '⇥' : '⇤'} attack phases</button>
+    <button class="lab-btn px-2 py-0.5 text-[11.5px]" popovertarget="phasegraph" onclick={() => (popKey = k)} title="Open the attack graph in a bigger view">⤢</button>
+  </span>
+{/snippet}
 
 <!-- the attack graph, folded out to the left of the card: a sibling rather than a child, because
      the card scrolls and would clip anything hanging outside it -->
@@ -408,57 +430,43 @@
   {@const tags = [...new Set(phases.map((p) => CONF[p.confidence]).filter(Boolean))]}
   <p class="m-0 text-[11.5px] leading-snug text-dim">
     The use clock is the root. Each phase shows its trigger, its gates, its hit rate on this target and its share of the Real DPS; the shares add up to the card's number.
+    {#if other}A branch that starts one of the weapon's two loops is tagged with it, and the shares are of the loop being drawn — the branch outside it counts for nothing. The weapon is scored in the <span class="lab-tag">{dps.mode}</span> loop.{/if}
     {#each tags as [label, hint]}<span class="lab-tag plum">{label}</span> — {hint} {/each}
   </p>
 {/snippet}
 
 <!-- as tall as the graph and as wide as it needs, up to 5% short of the left edge -->
-{#if phasesOut && phases.length}
+{#snippet foldPanel(k)}
+  {@const v = viewOf(k)}
+  {@const t = foldTop(k)}
   <div class="fixed z-50 hidden w-max max-w-[calc(95vw-520px)] flex-col overflow-auto border border-line bg-panel md:flex"
-       style="top:{foldTop}px; right:520px; max-height:calc(100vh - 16px); --accent:{accent}; box-shadow:var(--shadow-pop)"
-       bind:clientHeight={foldH}
+       style="top:{t}px; right:520px; max-height:calc(100vh - {t + 8}px); --accent:{accent}; box-shadow:var(--shadow-pop)"
+       bind:clientHeight={foldH[k]}
        transition:fly={{ x: 24, duration: 200, easing: cubicOut, opacity: 0 }}>
     <div class="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-panel/95 px-4 py-2.5 backdrop-blur">
       <div class="min-w-0 flex-1">
         <div class="lab-label">Attack phases</div>
-        <div class="truncate text-[12px] text-dim">{item.name}{dps?.mode === 'stealth' || dps?.mode === 'spam' ? ' — the spam attack; the stealth strike sits on top' : ''}</div>
+        <div class="truncate text-[12px] text-dim">{item.name}{v.label ? ` — ${v.label}` : ''}</div>
       </div>
-      <button class="lab-btn px-2 py-1" popovertarget="phasegraph" title="Open the attack graph in a bigger view">⤢</button>
-      <button class="lab-btn px-2 py-1" onclick={() => (phasesOut = false)} aria-label="Fold the phases back in">⇥</button>
+      <button class="lab-btn px-2 py-1" popovertarget="phasegraph" onclick={() => (popKey = k)} title="Open the attack graph in a bigger view">⤢</button>
+      <button class="lab-btn px-2 py-1" onclick={() => (out[k] = false)} aria-label="Fold the phases back in">⇥</button>
     </div>
     <div class="p-4">
-      <PhaseGraph {ds} {phases} total={dps?.spam ?? dps?.value} />
+      <PhaseGraph {ds} phases={v.phases} total={v.total} mode={v.mode} />
       <div class="mt-3 max-w-[420px]">{@render phaseLegend()}</div>
     </div>
   </div>
+{/snippet}
+
+{#if phases.length}
+  {#if out.main}{@render foldPanel('main')}{/if}
+  {#if out.other && other}{@render foldPanel('other')}{/if}
 {/if}
 
 <!-- the roomy viewer for the attack graph, like the crafting tree's: fitted on open, zoomable -->
 {#if phases.length}
-  <div id="phasegraph" popover="auto" class="lab-pop col p-0" style="--w:85vw; --accent:{accent}; height:85vh; overflow:hidden"
-       ontoggle={(e) => e.newState === 'open' && openFullPhases()}>
-    <div class="lab-head shrink-0">
-      <h2>How {item.name} attacks</h2>
-      <Info label="Reading the attack graph" w={360}>{@render phaseLegend()}</Info>
-      <span class="lab-meta">
-        <span class="flex items-center gap-1">
-          <button class="lab-btn px-2 py-0.5" onclick={() => (pzoom = Math.max(MIN_FIT, r2(pzoom - 0.15)))} aria-label="Zoom out">−</button>
-          <button class="lab-btn px-2 py-0.5 tabular-nums" onclick={openFullPhases} title="Fit the whole graph into the window">{Math.round(pzoom * 100)}%</button>
-          <button class="lab-btn px-2 py-0.5" onclick={() => (pzoom = Math.min(MAX_FIT, r2(pzoom + 0.15)))} aria-label="Zoom in">+</button>
-        </span>
-        <button class="lab-btn py-0.5" popovertarget="phasegraph" popovertargetaction="hide">Done</button>
-      </span>
-    </div>
-    <div bind:this={pfull} class="min-h-0 flex-1 overflow-auto p-4" style="display:grid; place-content:safe center">
-      <!-- the outer box takes the scaled size so the window scrolls and centres on it; the inner
-           one is the graph at 100%, which is what gets measured for the fit -->
-      <div style="width:{Math.ceil(pw * pzoom)}px; height:{Math.ceil(ph * pzoom)}px">
-        <div bind:this={pinner} style="width:max-content; transform:scale({pzoom}); transform-origin:top left">
-          <PhaseGraph {ds} {phases} total={dps?.spam ?? dps?.value} />
-        </div>
-      </div>
-    </div>
-  </div>
+  <PhaseWindow {ds} id="phasegraph" {accent} phases={view.phases} total={view.total} mode={view.mode}
+               title={`How ${item.name} attacks${popKey === 'other' && view.label ? ` — ${view.label}` : ''}`} legend={phaseLegend} />
 {/if}
 
 <!-- the roomy viewer for deep trees: outside the aside, whose fly transform would otherwise

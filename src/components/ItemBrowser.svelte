@@ -5,6 +5,7 @@
    */
   import { ARCH_HINT, ARCH_LABELS, CLASS_LABELS, SLOT_LABELS, SOURCE_HINT, SOURCE_TONE, accentOf, eraOf } from '../lib/dataset.js';
   import { pieceScore, weaponDps } from '../lib/score.js';
+  import { loopPhases } from '../lib/dps.js';
   import { effectiveStats } from '../lib/stats.js';
   import { setOwned, toggleIn, ui } from '../lib/state.svelte.js';
   import { craftTree, gateText, gatingChain } from '../lib/sources.js';
@@ -21,12 +22,12 @@
     HardHat, Shirt, Footprints, Gem, Swords, Sword, Target, Wand2, Bug, VenetianMask,
     Hammer, Coins, Package, Skull, ShoppingBag, TreePine, HelpCircle,
     Music, HeartPulse, Ghost, Send, Heart, ShieldCheck, Gauge, Wind, Zap, Fish, ArrowUp, Droplet,
-    Shield, Boxes,
+    Shield, Boxes, FlaskConical,
   } from '@lucide/svelte';
 
   // icon per filter key. Skipped when nothing clean maps (weapon types, mods, and any effect
   // label not in the map below).
-  const SLOT_ICONS = { head: HardHat, body: Shirt, legs: Footprints, accessory: Gem, weapon: Swords };
+  const SLOT_ICONS = { head: HardHat, body: Shirt, legs: Footprints, accessory: Gem, weapon: Swords, potion: FlaskConical };
   const CLASS_ICONS = {
     melee: Sword, ranged: Target, magic: Wand2, summon: Bug, rogue: VenetianMask,
     thrower: Send, bard: Music, healer: HeartPulse, void: Ghost,
@@ -50,6 +51,7 @@
   import ItemTooltip from './ItemTooltip.svelte';
   import CraftGraph from './CraftGraph.svelte';
   import PhaseGraph from './PhaseGraph.svelte';
+  import PhaseWindow from './PhaseWindow.svelte';
   import RangeFilter from './RangeFilter.svelte';
 
   let { ds, statCtx, onselect } = $props();
@@ -118,8 +120,9 @@
     features: (e) => B().features.every((f) => e.traits.includes(f)),
     sources: (e) => !B().sources.length || B().sources.includes(e.item.stageSource?.kind ?? 'unknown'),
     // weapon-only: how the weapon is graded (whip/minion/sentry/stealth/spam/arch). Non-weapons
-    // pass through — a type filter is meaningless for armor and accessories.
-    types: (e) => !B().types.length || (e.item.slot === 'weapon' && B().types.includes(e.mode ?? e.dps?.arch ?? 'other')),
+    // pass through — a type filter is meaningless for armor, accessories and potions, and dropping
+    // them instead put a `0` next to every other slot for as long as one type stayed ticked.
+    types: (e) => !B().types.length || e.item.slot !== 'weapon' || B().types.includes(e.mode ?? e.dps?.arch ?? 'other'),
     text: passText,
   };
   const passAllBut = (e, skip) => Object.entries(pass).every(([k, f]) => k === skip || f(e));
@@ -193,6 +196,29 @@
     ].filter(Boolean);
   };
   const setTab = (id, t) => { open = { ...open, [id]: open[id] === t ? null : t }; };
+
+  // ---- attack graphs: which of a rogue weapon's two loops each open row draws, and what the
+  // roomy window is showing. A loop the weapon is not scored in is priced by `loopPhases`.
+  let loops = $state({}); // id → 'spam' | 'stealth'
+  let win = $state({ phases: [], total: null, mode: null, title: '' });
+  const altLoop = (dps) => (dps?.mode === 'stealth' ? 'spam' : dps?.mode === 'spam' ? 'stealth' : null);
+  /**
+   * What an open row's Real DPS panel shows: the loop the weapon is scored in unless the row was
+   * switched over. `parts` travels with the graph — a stealth picture over spam arithmetic is two
+   * different weapons on one screen, so the switch has to move the whole panel or none of it.
+   */
+  const loopView = (it, dps) => {
+    const alt = altLoop(dps);
+    const loop = alt ? loops[it.id] ?? dps.mode : null;
+    const mode = loop ?? dps?.mode;
+    return {
+      alt, loop, mode,
+      phases: loop && loop !== dps.mode ? loopPhases(dps.phases, loop) : dps?.phases ?? [],
+      total: loop === 'spam' ? dps.spam : loop === 'stealth' ? dps.stealth : dps?.value,
+      parts: (mode === 'stealth' ? dps?.stealthParts : dps?.parts) ?? [],
+      title: `How ${it.name} attacks${loop ? ` — the ${loop} loop${loop === dps.mode ? ', the one it is scored in' : ', the one it is not scored in'}` : ''}`,
+    };
+  };
 
   const r1 = (v) => Math.round(v * 10) / 10;
   const short = (label) => label.replace(/^(?:The |Post )/, '').replace(/ \/ .*/, '');
@@ -292,7 +318,7 @@
       {#snippet classBody()}
         {#each [...ds.classList, 'classless', 'other', 'none'] as c}
           {#if classCounts.get(c)}
-            {@render check(B().classes.includes(c), c === 'none' ? 'no class (gear)' : CLASS_LABELS[c] ?? c, `best ${fmtNum(classBest.get(c) ?? 0)}`, () => toggle('classes', c), CLASS_ICONS[c])}
+            {@render check(B().classes.includes(c), c === 'none' ? 'no class (gear)' : CLASS_LABELS[c] ?? c, `${classCounts.get(c)} · best ${fmtNum(classBest.get(c) ?? 0)}`, () => toggle('classes', c), CLASS_ICONS[c])}
           {/if}
         {/each}
       {/snippet}
@@ -535,6 +561,7 @@
                     {#if it.condStats?.length}<p class="m-0 mt-2 text-[11.5px] text-dim">Conditional in the text: {it.condStats.join(', ')}, so counted at half.</p>{/if}
                   </div>
                 {:else if tab === 'stats'}
+                  {@const v = loopView(it, e.dps)}
                   <div>
                     <div class="lab-rule start mb-2">Damage chain</div>
                     <ol class="lab-timeline">
@@ -558,18 +585,34 @@
                     </div>
                   </div>
                   <div>
-                    <div class="lab-rule start mb-2">DPS{e.mode === 'stealth' ? ' — stealth' : e.mode === 'spam' ? ' — spam' : ''}</div>
+                    <div class="mb-2 flex items-baseline gap-2">
+                      <div class="lab-rule start grow">DPS{v.mode === 'stealth' ? ' — stealth' : v.mode === 'spam' ? ' — spam' : ''}</div>
+                      <!-- the two loops are one switch on the whole panel: the graph, the arithmetic
+                           and the total. Drawing a stealth picture over spam numbers is two weapons
+                           on one screen, which is what it used to be when this only moved the graph. -->
+                      {#if v.alt}
+                        {@const to = v.loop === e.dps.mode ? v.alt : e.dps.mode}
+                        <button type="button" class="lab-btn shrink-0 px-2 py-0.5 text-[11.5px]" aria-pressed={v.loop !== e.dps.mode}
+                                onclick={() => (loops = { ...loops, [it.id]: to })}
+                                title="Read the whole panel in the weapon's other attack loop">⇄ {to} {fmtNum(to === 'spam' ? e.dps.spam : e.dps.stealth)}/s</button>
+                      {/if}
+                    </div>
                     <!-- the phases that produce the number below, each with its own rate, gates and share -->
-                    {#if e.dps?.phases?.length}
-                      <div class="mb-2 overflow-x-auto border border-line bg-panel2/40 p-2"><PhaseGraph {ds} phases={e.dps.phases} total={e.dps.spam ?? e.dps.value} /></div>
+                    {#if v.phases.length}
+                      <div class="mb-2 flex items-start gap-2 border border-line bg-panel2/40 p-2">
+                        <div class="min-w-0 flex-1 overflow-x-auto"><PhaseGraph {ds} phases={v.phases} total={v.total} mode={v.mode} /></div>
+                        <span class="flex shrink-0 flex-col gap-1">
+                          <button type="button" class="lab-btn px-2 py-0.5 text-[11.5px]" popovertarget="browserphases" onclick={() => (win = v)} title="Open the attack graph in a bigger view">⤢</button>
+                        </span>
+                      </div>
                     {/if}
                     <div class="lab-calc">
-                      {#each e.parts as p}
+                      {#each v.parts as p}
                         <div class="row"><span class="lbl has-tip" data-tip={factorTip(p, true)} style="color:{FACTORS[factorOf(p, true)].color}">{p.label}</span><i class="lead"></i><span class="val num" style="color:{SIGN_COLOR[signOf(p, true)]}">{fmtPart(p)}</span></div>
                       {/each}
-                      <div class="row total"><span class="lbl">per second</span><i class="lead"></i><span class="val num" style="color:{accent}" title={fmtFull(e.value)}>{fmtNum(e.value)}</span></div>
+                      <div class="row total"><span class="lbl">per second</span><i class="lead"></i><span class="val num" style="color:{accent}" title={fmtFull(v.total)}>{fmtNum(v.total)}</span></div>
                     </div>
-                    {#if e.mode}<p class="m-0 mt-1 text-[11.5px] text-dim">Spamming it gives {r1(e.dps.spam)}/s and the stealth strike adds {r1(e.dps.stealth)}/s on top; the bigger half names the grade.</p>{/if}
+                    {#if v.alt}<p class="m-0 mt-1 text-[11.5px] text-dim">Spamming it gives {r1(e.dps.spam)}/s, striking from stealth {r1(e.dps.stealth)}/s: the weapon is worth the better of the two loops, not their sum, and that loop names the grade{v.loop !== e.dps.mode ? `, so the row still ranks on ${e.dps.mode}` : ''}.</p>{/if}
                   </div>
                 {:else if tab === 'obtain'}
                   {@const o = obtain(it)}
@@ -647,6 +690,8 @@
         {/each}
       </table>
       </div>
+      <!-- one roomy viewer for whichever row's graph was expanded last -->
+      <PhaseWindow {ds} id="browserphases" {accent} phases={win.phases} total={win.total} mode={win.mode} title={win.title} />
       {#if results.length > shown}
         <div class="border-t border-line p-3 text-center">
           <button type="button" class="lab-btn px-4 py-1" data-sound="tick" onclick={() => (shown += 30)}>Show 30 more <span class="num text-dim">({results.length - shown} left)</span></button>

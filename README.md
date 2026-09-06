@@ -290,6 +290,24 @@ Wings are ranked in their own tab (everyone wears one pair, so they never compet
 the accessory grid lists every scoring accessory, the solver's picks first, and scrolls past the
 number of rows set under *Options → Accessory rows*.
 
+**Potions** are graded the same way, and by the same `pieceScore` — a buff is a stat bonus that
+happens to run out. A potion sets nothing but a buff id, so its stats are the buff's: vanilla's
+come out of the `Player.UpdateBuffs` if-chain (walked with the case tracker keyed on
+`buffType[i]`, so every store lands under the buff it is guarded by), a mod's out of
+`ModBuff.Update` — and where that only sets a ModPlayer flag, what the flag does is folded in like
+it is for gear. Two potions granting the same buff are one pick, so the panel keeps the earliest.
+A buff nothing in the score model reads (a spelunker, a fishing potion) scores 0 and is listed as
+*utility*.
+
+A potion is often a **trade**, and the drawback is mined the same way the bonus is: Conflagration
+Potion's +15% damage costs 5 life regen (`if (Destabilized || conflagrate) lifeRegen -= 5` in
+Thorium's player code), so it nets 10 for a rogue and 3 for melee, which counts survivability
+higher. Where only the text says it, the tooltip parser reads the clause after the turn — `but`,
+`at the cost of` — as what the item takes back rather than as a second bonus, so Purple Haze's
+"−25% stealth strike damage" lands on a rogue and the item drops off the list it used to lead.
+A trade that no longer pays is not a recommendation, so the panel shows what scores and the pure
+utility ones, and nothing in between.
+
 Weapons rank by **Real DPS** (`src/lib/dps.js`), damage per second against the boss fought next,
 swung by the loadout the solver just picked — its class damage and its crit, summed from the armour,
 the set bonus, the accessories, the wings and the boots (`loadoutBonus`). Graded outside a loadout
@@ -424,9 +442,19 @@ A gun and its ammo are two picks a ranged player makes separately, so they are r
 weapon takes the *plain* round of its kind and is tagged with it — an `AmmoID` constant is the item
 id of the ammo it is named for (`Bullet` is 97, the Musket Ball; `Arrow` is 40, the Wooden Arrow), so
 that needs no table — and each ammo is graded by handing the best gun of its kind that round, listed
-inside its own kind because a rocket and a musket ball are not alternatives. Magic pays for mana
-against the stage's regen plus potions, with a floor. A close-range archetype costs a class that
-would rather not stand there (`RISK`) — the guides' `†` mark, as a rule rather than a list.
+inside its own kind because a rocket and a musket ball are not alternatives. A close-range
+archetype costs a class that would rather not stand there (`RISK`) — the guides' † mark, as a rule
+rather than a list.
+
+A weapon paid for out of a bar spends it against what comes back, at the rate it is actually fired,
+and the *tightest* pool governs: mana against the stage's regen plus potions, SOTS's void bar,
+health for the weapons that cost it, and Thorium's thrower exhaustion — `useTime × 2` a shot against
+a bar of 1200 that refills at 1/tick, which works out to a flat half duty cycle for every one of
+the 41 non-consumable Thorium throwers however fast they swing.
+
+A charge weapon's clock is not its use time. Where a projectile switches its own `friendly` on
+partway through its life (`projectile.windup`) it is out and harmless while the button is held, so
+the wind-up is added in front of every shot rather than being invisible.
 
 A summoner wears a whip *and* minions *and* a sentry, so a summon weapon is tagged with the slot it
 fills rather than ranked against the other two — whips out-DPS the minions they exist to buff. What
@@ -524,6 +552,13 @@ Scale or Tissue Sample).
 
 ## Checking against the class-setup guides
 
+When a weapon's number looks wrong, `docs/debugging-the-scoring-model.md` is the method: how to
+reproduce a score from its own parts list, the bug classes that actually turn up (units, a
+time-varying field folded to its spawn value, a renamed hook, a guard dropped from a conditional
+read), how to narrow a rule on facts the record already carries instead of a skip-list, and which of
+the four instruments — tests, the guide gate, the in-game trials, the sweep — settles what.
+`docs/rework-weapon-scoring.md` is the design record and its progress log the changelog.
+
 ```sh
 node tools/guides.mjs                       # parse the guides → data/guides.json + data/guides.md
 node tools/guides.mjs --refresh             # re-download the wikitext first (cached in data/guides/)
@@ -531,6 +566,9 @@ node tools/guide-check.mjs                  # every tier and class, full report
 node tools/guide-check.mjs --pre --summary  # pre-hardmode metrics only (the tuning set)
 node tools/guide-check.mjs --cls rogue      # one class
 node tools/guide-check.mjs --why "Ashen Stalactite"   # the pick's DPS parts next to the lab's #1
+node tools/guide-check.mjs --pre --summary --json data/guide-baseline.json --vs data/guide-baseline.json   # the gate: exits 1 on any class/family regression, --waive "reason" records why
+node tools/unresolved-phases.mjs            # what the model still guesses, ranked by the DPS riding on it
+node tools/observed.mjs                     # the in-game trials in data/observed.json, term by term
 node tools/il-dump.mjs CalamityMod Viperfish SpawnChance   # the IL the miner sees, operands resolved
 node tools/il-dump.mjs ThoriumMod --grep MusicPlayerNotActivated   # every method mentioning a member
 ```

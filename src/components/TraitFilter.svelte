@@ -19,7 +19,7 @@
 </span>
 <div {id} popover="auto" class="lab-pop col" style="--w:520px">
   <div class="lab-rule start mb-2">Traits in this list <span class="num text-dim">({counts.length})</span></div>
-  <p class="m-0 mb-2 text-[11.5px] text-dim">Pick any number; an entry must have all of them. Counts are how many entries carry the trait.</p>
+  <p class="m-0 mb-2 text-[11.5px] text-dim">Pick any number, an entry must have all of them. Counts are how many entries carry the trait.</p>
   {#if !counts.length}
     <p class="m-0 text-dim">Nothing to filter.</p>
   {:else}

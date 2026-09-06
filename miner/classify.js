@@ -35,10 +35,10 @@ export function cleanText(s) {
     // the colour is a hex, but also a `{1}` format argument the item never filled in; `ceffect/name`
     // is Calamity's own coloured tag — both keep their text
     .replace(/\[c(?:effect)?\/[^:\]]*:([^\]]*)\]/gi, '$1')
-    .replace(/\[cbuff:[^\]\/]*\/([^\]]*)\]/gi, (_, n) => deCamelWords(n))
-    .replace(/\[i(?:\/[^:\]]*)?:[^\]]*\]\s*/gi, '')
+    .replace(/\[\w*buff\w*:[^\]\/]*\/([^\]]*)\]/gi, (_, n) => deCamelWords(n))
+    .replace(/\[[is](?:\/[^:\]]*)?:[^\]]*\]\s*/gi, '')
     .replace(/\[[a-z]+:([^\]]*)\]/gi, '$1')
-    .replace(/\[DAMAGELINE\]|\[STEALTHLINE\]|\[PARRYLINE\]|\[BONUSLINE\]/g, '')
+    .replace(/\[DAMAGELINE\]|\[GFB\]|\[STEALTHLINE\]|\[PARRYLINE\]|\[BONUSLINE\]/g, '')
     // a plural marker whose argument never resolved (`{^0:second;seconds}`) — keep the plural arm
     .replace(/\{\^\d+:[^};]*;([^}]*)\}/g, '$1')
     .replace(/\r/g, '')
@@ -49,7 +49,7 @@ export function cleanText(s) {
 const deCamelWords = (n) => n.replace(/([a-z\d])([A-Z])/g, '$1 $2');
 
 const CLASS_WORDS = {
-  melee: /\bmelee\b/i,
+  melee: /\bmelee\b|\b(?:sword|spear)s?\s+(?:strikes?|weapons?)\b/i,
   ranged: /\branged\b/i,
   magic: /\bmagic(?:al)?\b/i,
   summon: /\bsummon(?:er|ing)?\b|\bminion\b|\bwhip\b|\bsentr(?:y|ies)\b/i,
@@ -67,7 +67,12 @@ const CONDITIONAL = /\b(?:when|while|if|after|during|until|instead|only|upon|eve
 // ("Arrows that pass through these fields gain a 75% damage boost")
 // a named buff (`CalamityMod/Mushy`): stats on that line are the buff's, and you only have them
 // while the buff is up ("Consuming mushrooms provides CalamityMod/Mushy, granting 3 defense")
-const CONDITIONAL_STRONG = /\bstealth strikes?|\bfor each|\bfor every|\bper |\bwhile\b|\bwhen\b|\bif |\bunless\b|\bduring\b|\bto non-|\bof the (?:increases|bonuses)|\btakes?\b|\bdoes\b|\bthat\b[^.]*\bgains?\b|[A-Za-z]+Mod\/[A-Za-z0-9_]+/;
+// "up to": a ceiling on something that scales, not a stat you carry ("Up to 30% increased damage
+// the lower your life is" — you only see the 30% at a sliver of health)
+// damage aimed at a named target set ("20% increased damage dealt to Old One's Army enemies") is
+// worth nothing against everything else you fight. The enemy noun is what makes it a target set —
+// "8% increased damage to all other classes" is a plain stat and must not be caught.
+const CONDITIONAL_STRONG = /\bstealth strikes?|\bfor each|\bfor every|\bper |\bwhile\b|\bwhen\b|\bif |\bunless\b|\bduring\b|\bto non-|\bof the (?:increases|bonuses)|\btakes?\b|\bdoes\b|\bthat\b[^.]*\bgains?\b|\b[Uu]p to \d|[Dd]amage (?:dealt |done )?(?:to|against) [\w'’ -]*\b(?:enem(?:y|ies)|foes?|targets?|bosses|mobs?)\b|[A-Za-z]+Mod\/[A-Za-z0-9_]+/;
 const UNCONDITIONAL_START = /^(\+?\d+(\.\d+)?% |increases? (your )?(max(imum)? )?(melee|ranged|magic|summon|minion|rogue|throwing|symphonic|radiant|movement|move|attack|melee speed|critical|damage|life|mana|defense|inspiration))/i;
 
 /** Damage the *enemy* deals or takes — never the player's damage stat. */
@@ -75,6 +80,23 @@ const ENEMY_DAMAGE = /damage reduction|damage taken|less damage|damage over time
 
 /** A line that takes something away ("jump height slightly decreased") — never a buff flag. */
 const WORSE = /\b(?:decreas|reduc|lower|weaker|slower|penalt|less\b)/i;
+
+/** Where a line turns from what it gives to what it takes. */
+const DRAWBACK = /,?\s+(?:but|however|at the cost of|in exchange for)\s+/i;
+/**
+ * The wording of a loss, rewritten to the matching gain so the ordinary rules read the magnitude
+ * out of it ("decreases damage by 10%" → "increases damage by 10%", "10% reduced speed" → "10%
+ * increased speed"). The sign is put back by the caller; this only gets the number out.
+ */
+const asGain = (s) => s
+  .replace(/\b(?:reduces|decreases|lowers|loses)\b/gi, 'increases')
+  .replace(/\b(?:reducing|decreasing|lowering|losing)\b/gi, 'increasing')
+  .replace(/\b(?:reduced|decreased|lowered|lost|less|weaker|slower)\b/gi, 'increased')
+  .replace(/\b(?:reduce|decrease|lower|lose)\b/gi, 'increase');
+/** Damage the player *takes* — a real drawback, but not one any stat here can carry. */
+const TAKES_DAMAGE = /\btak(?:e|es|ing|en)\b|damage taken|damage from/i;
+/** Stats a drawback clause states as-is: a bigger number is already the worse one. */
+const MORE_IS_WORSE = new Set(['cooldown', 'altCooldown', 'manaCost', 'voidCost', 'stealthCost']);
 
 /**
  * The abilities a line names. Every flag rule lives here: an ability reads the same in a
@@ -85,7 +107,7 @@ function flagsOnly(line, flags) {
   if (/immun(?:e|ity) to knockback/i.test(line) || /\bknockback immunity\b/i.test(line)) flags.add('knockbackImmune');
   if (/allows (?:the (?:wearer|holder|player) )?(?:to )?fl(?:y|ight)|\bflight\b/i.test(line)) flags.add('flight');
   if (/allows (?:you to )?dash|\bdash\b/i.test(line)) flags.add('dash');
-  if (/extra jump|double jump/i.test(line)) flags.add('jump'); // jump height / speed is a boost, not a jump
+  if (/(?:extra|additional|double) jump/i.test(line)) flags.add('jump'); // jump height / speed is a boost, not a jump
   if (/immun(?:e|ity) to (?:most |all )?debuffs/i.test(line)) flags.add('debuffImmune');
   // named debuffs ("Immunity to Poison and Bleeding") are worth less than a blanket immunity
   else if (/immun(?:e|ity) to \w/i.test(line) && !/knockback|fire block|lava/i.test(line)) flags.add('debuffResist');
@@ -116,8 +138,10 @@ export function parseTooltipStats(text) {
   const t = cleanText(text);
   const stats = {};
   const flags = new Set();
+  const debuffs = new Set();
   let placeholders = false;
-  const add = (k, v) => { stats[k] = (stats[k] ?? 0) + v; };
+  const addStat = (k, v) => { stats[k] = (stats[k] ?? 0) + v; };
+  const add = addStat;
   const pct = (s) => { if (s.startsWith('{')) placeholders = true; return numVal(s, 8) / 100; };
   const flat = (s, fb = 1) => { if (s.startsWith('{')) placeholders = true; return numVal(s, fb); };
   // A class mechanic in prose ("Stealth strikes deal 8% more damage", "15% of your throwing damage
@@ -125,10 +149,11 @@ export function parseTooltipStats(text) {
   // damage / crit / armor-pen stat: recorded as `<cls>Cond…` so the solver can credit it at a discount.
   // `partTime` when the line is conditional; a plain line that no flat pattern knew ("15% of your
   // throwing damage is duplicated") is the full stat.
-  const classMechanic = (line, partTime = true) => {
+  const classMechanic = (line, partTime = true, sign = 1) => {
     if (WORSE.test(line) && !/increas|more|duplicat/i.test(line)) return;
     const cls = Object.entries(CLASS_WORDS).find(([, re]) => re.test(line))?.[0];
     if (!cls) return;
+    const add = (k, v) => addStat(k, sign * v); // `sign` is -1 for a drawback clause worded as a gain
     let m;
     // a stealth strike bonus is a rogue's full stat (stealth strikes are how the class fights), tagged
     // `Stealth` so the solver can mark the item; other conditions are `Cond`
@@ -149,20 +174,28 @@ export function parseTooltipStats(text) {
     // "granting +1 HP/s life regen", "the aura grants +{1} HP/s life regen": the buff's regen
     if ((m = line.match(new RegExp(`\\+?${NUM} HP/s life regen`, 'i')))) add('condLifeRegen', flat(m[1], 1) * 2); // HP/s → Terraria's half-HP regen units
     // a shell below half life, a barrier while it holds: damage reduction that only sometimes applies
-    const dr = line.match(new RegExp(`reduces? (?:the )?damage(?: taken)?(?: done to \\w+)? by ${NUM}%|${NUM}% damage reduction`, 'i'));
+    const dr = line.match(new RegExp(`reduces? (?:the )?damage(?: taken)?(?: done to \\w+)? by ${NUM}%|${NUM}% (?:increased )?damage reduction`, 'i'));
     if (dr) add('condEndurance', pct(dr[1] ?? dr[2]));
     // damage that grows with a condition and no class named it ("Gain an increase to your damage …
-    // up to 20% at 50% life or below"). It has to say whose damage: half the lines in the pool are
-    // about the damage *enemies* take, and none of those are the player's stat.
-    if (!dr && /your damage|damage you deal/i.test(line) && !ENEMY_DAMAGE.test(line)
+    // up to 20% at 50% life or below", "Up to 30% increased damage the lower your life is"). It has
+    // to say whose damage: half the lines in the pool are about the damage *enemies* take, and none
+    // of those are the player's stat — "up to N% … damage" names it as plainly as "your damage" does.
+    const capped = `up to ${NUM}% (?:increased |more )?damage\\b`;
+    // …and a bonus gated on the target rather than on your own state ("20% increased damage dealt to
+    // Old One's Army enemies"). Only where the line does not *deal* the damage itself: "deals 150%
+    // damage to nearby foes" is a weapon describing its own attack, not a stat you wear.
+    const targeted = /\bdeals?\b|\bdealing\b/i.test(line) ? null
+      : `${NUM}% (?:increased |more |bonus )?damage (?:dealt |done )?(?:to|against) [\\w'’ -]*\\b(?:enem(?:y|ies)|foes?|targets?|bosses|mobs?)\\b`;
+    const forms = [capped, targeted].filter(Boolean).join('|');
+    if (!dr && new RegExp(`your damage|damage you deal|${forms}`, 'i').test(line) && !ENEMY_DAMAGE.test(line)
       && !Object.keys(CLASS_WORDS).some((c) => CLASS_WORDS[c].test(line))
-      && (m = line.match(new RegExp(`\\bdamage\\b[^%]*?(?:by|up to|of) ${NUM}%`, 'i')))) add('allCondDamage', Math.min(0.3, pct(m[1])));
+      && (m = line.match(new RegExp(`\\bdamage\\b[^%]*?(?:by|up to|of) ${NUM}%|${forms}`, 'i')))) add('allCondDamage', Math.min(0.3, pct(m[1] ?? m[2] ?? m[3])));
   };
   // "Critical strikes deal 40 more damage", "Critical strikes have a 50% chance to deal 30 more
   // damage": a flat bonus only the hits that crit get, kept with the chance it comes with. Read
   // before the conditional gate, since the chance makes the line read as conditional.
   const critFlat = (line) => {
-    const m = line.match(new RegExp(`crit\\w*.*?deals?(?: an additional| an extra)? ${NUM} more damage`, 'i'));
+    const m = line.match(new RegExp(`crit\\w*.*?deals?(?: an additional| an extra| up to)? ${NUM} more damage`, 'i'));
     if (!m) return false;
     add('critFlat', flat(m[1], 10));
     const c = line.match(new RegExp(`${NUM}% chance`, 'i'));
@@ -184,24 +217,79 @@ export function parseTooltipStats(text) {
   const cond = new Set();
 
   for (const raw of t.split('\n')) {
-    const line = raw.trim();
+    let line = raw.trim();
     if (!line) continue;
+    // Preserve a named ailment even when it is only described in conditional tooltip prose.
+    const inflicted = line.match(/\binflicts?\s+(.+?)(?=\s+(?:for\b|on\b|when\b|while\b|after\b|and\s+(?:deals?|grants?|causes?|reduces?|increases?|inflicts?)\b)|[,.]|$)/i)?.[1]
+      ?.replace(/^(?:enemies?|targets?)\s+with\s+/i, '').replace(/^(?:the|a|an)\s+/i, '').trim();
+    if (inflicted && !/^(?:damage|knockback)$/i.test(inflicted)) debuffs.add(inflicted);
     let cd;
-    if ((cd = line.match(new RegExp(`${NUM}[- ]second cooldown|cooldown of ${NUM} seconds?`, 'i')))) add('cooldown', flat(cd[1] ?? cd[2], 5)); // seconds; an on-hit effect's rate
+    if ((cd = line.match(new RegExp(`${NUM}[- ]second cooldown|cooldown of ${NUM} seconds?`, 'i')))) {
+      add('cooldown', flat(cd[1] ?? cd[2], 5)); // seconds; an on-hit effect's rate
+      // …and when the same line is the one describing the right click, the cooldown is that click's
+      // own: "Right click to unleash Surging Vampirism … (30 second cooldown)" is one cast every
+      // 30 s, not an attack the weapon can be graded on at its use time.
+      if (/right[- ]?click|alternate (?:fire|attack)|secondary (?:fire|attack)/i.test(line)) add('altCooldown', flat(cd[1] ?? cd[2], 5));
+    }
+    // "12.5% of your rogue damage is duplicated" with "Duplication damage caps at 50": the share
+    // is recorded next to the ordinary damage stat, and the cap beside it, because a copy of your
+    // hit stops growing once the copy reaches the cap — what that is worth is a question of how
+    // hard you hit, so `pieceScore` settles it per stage.
+    let dm;
+    if ((dm = line.match(new RegExp(`${NUM}% of your [\\w ]*damage is duplicated`, 'i')))) add(`${Object.entries(CLASS_WORDS).find(([, re]) => re.test(line))?.[0] ?? 'all'}Duplicated`, pct(dm[1]));
+    if ((dm = line.match(new RegExp(`damage caps? (?:out )?at ${NUM}\\b`, 'i')))) stats.damageCap = Math.min(stats.damageCap ?? Infinity, flat(dm[1], 0));
     if (critFlat(line) || stealthRate(line)) continue;
     // Conditional or descriptive lines ("Critical strikes may … dealing 100% damage",
     // "Deals 75% increased damage to enemies above 90% health") are not flat stats.
     // "critical strike chance" is the name of a stat, not a condition: without masking it the
     // CONDITIONAL word `strikes?` makes every line that mentions crit read as conditional, and
     // "Reduces damage taken by 7% and increases critical strike chance by 4%" loses its crit.
-    const cl = line.replace(/critical strikes? (?:chance|damage)/gi, 'crit');
+    // The whole sentence decides this, drawback clause included — the word that makes it
+    // conditional is often in the half after the turn ("…, but only 100% to bosses").
+    // …and "…, does not stack with downgrades" says how the bonus combines with the weaker
+    // version of the same accessory, not when it applies. Left in, its `does` made every
+    // reworded line conditional and Focus Reticle's 15% crit vanished from the item.
+    const cl = line.replace(/critical strikes? (?:chance|damage)/gi, 'crit').replace(/,?\s*(?:and )?does not stack[^,.]*/gi, '');
     if ((CONDITIONAL.test(cl) && !UNCONDITIONAL_START.test(line)) || CONDITIONAL_STRONG.test(cl)) {
       flagsOnly(line, flags);
-      classMechanic(line);
       condValues(line);
       for (const k of statWords(line)) cond.add(k);
+      // a conditional line turns too ("For 5 seconds after a stealth strike, all damage increased
+      // by 25%, but stealth strike damage reduced by 25%"): each half is its own class mechanic,
+      // and the half that reads as a loss is worded as a gain and counted against you
+      for (const [i, clause] of line.split(DRAWBACK).entries()) {
+        if (i && (TAKES_DAMAGE.test(clause) || /\bnon-\w/i.test(clause))) continue;
+        const loss = i > 0 && WORSE.test(clause);
+        classMechanic(loss ? asGain(clause) : clause, true, loss ? -1 : 1);
+      }
       continue;
     }
+    // What the line takes back ("Increases rogue attack speed by 15%, but decreases damage by 10%
+    // and crit by 5%"). Every rule below reads a magnitude and trusts the line's wording for its
+    // sign, so a drawback tacked onto a bonus was read as a second bonus — Glove of Recklessness's
+    // −5 crit came out as +10. A clause that reads as a loss is parsed on its own, worded as a gain
+    // so the same rules find its number, and counted against you. `but` also joins two *bonuses*
+    // ("Has a 16 second cooldown, but increases melee damage by 50%"), so only the wording of a
+    // loss makes a clause a drawback; anything else is parsed as the ordinary clause it is.
+    const clauses = line.split(DRAWBACK);
+    if (clauses.length > 1) {
+      line = clauses[0];
+      for (const clause of clauses.slice(1)) {
+        // damage *taken*, and a comparison against the classes this is not ("80% decreased
+        // non-radiant damage"): real drawbacks, but not ones any stat here can carry
+        if (TAKES_DAMAGE.test(clause) || /\bnon-\w/i.test(clause)) continue;
+        const loss = WORSE.test(clause);
+        const parsed = parseTooltipStats(loss ? asGain(clause) : clause);
+        for (const [k, v] of Object.entries(parsed.stats)) add(k, loss && !MORE_IS_WORSE.has(k) ? -Math.abs(v) : v);
+        for (const f of parsed.flags) if (!loss) flags.add(f);
+        for (const d of parsed.debuffs ?? []) if (!loss) debuffs.add(d);
+        for (const k of parsed.conditional) cond.add(k);
+        if (parsed.placeholders) placeholders = true;
+      }
+    }
+    // "Provides between -15% and 15% damage" (Calamity's Whiskey, which decays and recharges as you
+    // swap weapons): what it is worth over a fight is the middle of its range, not its best end.
+    line = line.replace(new RegExp(`between -${NUM}% and ${NUM}%`, 'i'), (s, lo, hi) => (s.includes('{') ? s : `${(Number(hi) - Number(lo)) / 2}%`));
     let m;
     // Damage reduction first: "10% increased damage reduction" also matches the damage patterns below.
     if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |more |bonus )?(?:damage reduction|dr)\\b`, 'i')))) { add('damageReduction', pct(m[1])); continue; }
@@ -216,7 +304,10 @@ export function parseTooltipStats(text) {
     if ((m = line.match(new RegExp(`(?:mana and )?void (?:cost|usage) by ${NUM}%`, 'i')))) add('voidCost', -pct(m[1]));
     if ((m = line.match(new RegExp(`void regeneration speed by ${NUM}%`, 'i')))) add('voidRegen', pct(m[1]) * (WORSE.test(line) ? -1 : 1));
     // "12% increased melee damage", "+12% melee damage", "Increases melee damage by 12%"
-    if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |more |bonus )?(melee|ranged|magic|summon|minion|rogue|throwing|symphonic|radiant|void|true melee|stealth strike|whip|sentry)?\\s?(?:and (melee|ranged|magic|summon|rogue|throwing|symphonic|radiant) )?(?:damage|dmg)\\b`, 'i')))) {
+    if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |more |bonus )?(melee|ranged|magic|summon|minion|rogue|throwing|symphonic|radiant|void|true melee|stealth strike|whip|sentry)?\\s?(?:and (melee|ranged|magic|summon|rogue|throwing|symphonic|radiant) )?(?:damage|dmg)\\b(?! taken)`, 'i')))) {
+      // "Removes the 50% damage penalty from the Broken Oath debuff": the number belongs to the
+      // penalty being taken away, not to a bonus you wear
+      if (/penalt/i.test(line)) { flagsOnly(line, flags); continue; }
       const v = pct(m[1]);
       const cls = m[2] ? classOf(m[2]) : 'all';
       const cls2 = m[3] ? classOf(m[3]) : null;
@@ -290,6 +381,20 @@ export function parseTooltipStats(text) {
     // "Increases your max movement speed and acceleration by 5%": the percentage comes after both
     if ((m = line.match(new RegExp(`(?:movement|move) speed[a-z ]*by ${NUM}%`, 'i')))) { add('moveSpeed', pct(m[1])); if (/acceleration/i.test(line)) add('accel', pct(m[1])); continue; }
     if ((m = line.match(new RegExp(`increases? (?:your )?(?:melee|attack) speed by ${NUM}%`, 'i')))) { add('meleeSpeed', pct(m[1])); continue; }
+    // ---- potions: how much they give back, and how often you may drink one. Read before life and
+    // regen and without `continue`, because a potion clause almost always shares its line with a
+    // stat that has to be read too ("+2 HP/s life regen and reduces the cooldown of healing
+    // potions by 25%", which used to lose the potion half to the regen rule below).
+    if ((m = line.match(new RegExp(`healing potions? are ${NUM}% more effective|(healing and mana|healing|mana) received from potions by ${NUM}|potion healing by ${NUM}%`, 'i')))) {
+      const v = (m[1] ?? m[4]) ? pct(m[1] ?? m[4]) : flat(m[3], 20) / 100; // SOTS words its percentage as a bare "by 40"
+      const gain = WORSE.test(line) ? -v : v;
+      if (!m[2] || /heal/i.test(m[2])) add('potionHeal', gain);
+      if (m[2] && /mana/i.test(m[2])) add('potionMana', gain);
+    }
+    // a shorter potion sickness is more potions drunk in one fight: the same thing as more per potion
+    if ((m = line.match(new RegExp(`cooldown of healing potions by ${NUM}%|potion (?:sickness|cooldown)[a-z ]*by ${NUM}%`, 'i')))) add('potionHeal', pct(m[1] ?? m[2]));
+    // Thorium's Potion Chaser, in the same currency: a Greater Healing Potion heals 150
+    if ((m = line.match(new RegExp(`(?:drinking|using) a potion heals an additional ${NUM} (?:life|health)`, 'i')))) add('potionHeal', flat(m[1], 25) / 150);
     // defense / life / mana
     if ((m = line.match(new RegExp(`\\+${NUM} defense`, 'i')))) { add('defense', flat(m[1], 4)); continue; }
     if ((m = line.match(new RegExp(`increases? (?:your )?defense by ${NUM}`, 'i')))) { add('defense', flat(m[1], 4)); continue; }
@@ -306,9 +411,6 @@ export function parseTooltipStats(text) {
     // "+{0} to +{1} HP/s life regen based on missing health": the numbers only exist at runtime
     if (/HP\/s life regen/i.test(line)) { add('lifeRegen', 3); placeholders = placeholders || /\{\d\}/.test(line); continue; }
     if (/life regen/i.test(line) && /increas|boost|improv|provid|potent/i.test(line)) { add('lifeRegen', 2); continue; }
-    // potions: how much they give back, and how often you may drink one
-    if ((m = line.match(new RegExp(`healing potions? are ${NUM}% more effective|increases? healing (?:and mana )?received from potions by ${NUM}|potion healing by ${NUM}%`, 'i')))) { add('potionHeal', m[1] ? pct(m[1]) : flat(m[2] ?? m[3], 20) / 100); continue; }
-    if ((m = line.match(new RegExp(`reduces? the cooldown of healing potions by ${NUM}%|potion (?:sickness|cooldown)[a-z ]*by ${NUM}%`, 'i')))) { add('potionHeal', pct(m[1] ?? m[2])); continue; }
     // Thorium's healer: a flat bonus on every heal they cast
     if ((m = line.match(new RegExp(`healing spells will heal an additional ${NUM} (?:life|health)`, 'i')))) { add('healerHealing', flat(m[1], 1)); continue; }
     if ((m = line.match(new RegExp(`increases? (?:your )?(?:armor|armour) penetration by ${NUM}|\\+${NUM} armor penetration`, 'i')))) { add('armorPen', flat(m[1] ?? m[2], 5)); continue; }
@@ -324,7 +426,7 @@ export function parseTooltipStats(text) {
   const classes = Object.entries(CLASS_WORDS).filter(([, re]) => re.test(t)).map(([k]) => k);
   const flatKeys = new Set(Object.keys(stats).filter((k) => !/cond|stealth/i.test(k)).map((k) => (/Damage$/.test(k) ? 'damage' : /Crit$/.test(k) ? 'crit' : k === 'damageReduction' ? 'endurance' : k === 'meleeSpeed' ? 'attackSpeed' : k)));
   const conditional = [...cond].filter((k) => !flatKeys.has(k));
-  return { stats, classes, placeholders, flags: [...flags], conditional };
+  return { stats, classes, placeholders, flags: [...flags], debuffs: [...debuffs], conditional };
 }
 
 /** The solver's stat keys a line talks about. */

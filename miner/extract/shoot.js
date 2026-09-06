@@ -11,7 +11,7 @@
  */
 import { decodeIL, ldcValue } from '../clr/il.js';
 import { Machine, PLAYER, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { chanceAt as chanceOf, chanceRanges, guardRanges } from './guards.js';
+import { alwaysRanges, branchRanges, chanceAt as chanceOf, chanceRanges, counterRanges, followLoads, gatesAt, guardRanges, requiresRanges } from './guards.js';
 import { findInherited } from './util.js';
 import { loopTracker, projTypeArg } from './projectiles.js';
 
@@ -26,6 +26,29 @@ const STEALTH_FLAG = 'stealthStrike';
 const taggedStealth = (tags) => !!tags?.some((t) => t === STEALTH_FLAG || t === `any:${STEALTH_FLAG}`);
 const rand = (lo, hi) => ({ k: 'rand', lo, hi });
 const mag = (v) => (isNum(v) ? Math.abs(v) : v?.k === 'rand' ? Math.max(Math.abs(v.lo), Math.abs(v.hi)) : v?.k === 'adj' && v.slot === 'angle' ? Math.abs(v.add) : null);
+
+/**
+ * Counters earned by actually landing an item hit. A `Shoot` branch can only see that a field has
+ * reached three; `OnHitNPC` says whether the three came from clicks or successful attacks. Keeping
+ * that distinction is what stops a charged alternate attack being fired on a perfect every-N-use
+ * schedule.
+ */
+function hitCounters(asm, td) {
+  const out = new Set();
+  const hit = findInherited(asm, td, 'OnHitNPC');
+  const body = hit && asm.methodBody(hit);
+  if (!body) return out;
+  let ins;
+  try { ins = decodeIL(body.il); } catch { return out; }
+  for (let i = 3; i < ins.length; i++) {
+    const store = ins[i];
+    if (store.op !== 'stfld' || ins[i - 1]?.op !== 'add' || ldcValue(ins[i - 2]) !== 1 || ins[i - 3]?.op !== 'ldfld') continue;
+    const from = asm.resolve(ins[i - 3].operand);
+    const to = asm.resolve(store.operand);
+    if (from?.name === to?.name) out.add(to.name);
+  }
+  return out;
+}
 
 /** Static XNA / Terraria helpers that shape velocity vectors and angles. */
 export function vectorHook(callee, args, ctx) {
@@ -58,6 +81,9 @@ export function vectorHook(callee, args, ctx) {
   }
   if (short === 'Vector2') {
     const [a, b] = args;
+    // IL exposes `Vector2.Zero` as its getter call, not always as a static field load. A projectile
+    // spawned this way has deliberately not been launched at the item's shoot speed.
+    if (name === 'get_Zero') return { ...VEC, abs: 0 };
     if (name === 'op_Multiply') {
       if (isVec(a) && isNum(b)) return { ...a, mul: a.mul * Math.abs(b) };
       if (isVec(b) && isNum(a)) return { ...b, mul: b.mul * Math.abs(a) };
@@ -103,7 +129,7 @@ export function vectorHook(callee, args, ctx) {
 }
 
 /** Which side of a set of guard ranges an offset sits on: true, false, or neither. */
-const sideAt = (ranges, o) => {
+export const sideAt = (ranges, o) => {
   const r = ranges.filter((x) => o >= x.lo && o < x.hi);
   if (!r.length) return undefined;
   return r.every((x) => x.on) ? true : r.every((x) => !x.on) ? false : undefined;
@@ -139,21 +165,88 @@ export function stealthRanges(asm, m) {
  * collected on the right, and read together the throw was a free extra on every stab.
  */
 export function altRanges(asm, m) {
-  return guardRanges(asm, m, (ins, branchAt) => {
+  const ranges = guardRanges(asm, m, (ins, branchAt) => {
     for (let i = 0; i < ins.length; i++) {
       if (ins[i].op !== 'ldfld' || asm.resolve(ins[i].operand)?.name !== 'altFunctionUse') continue;
-      if (ldcValue(ins[i + 1]) !== 2) continue;
-      // `== 2` compared straight into a branch, or through a `ceq` the branch then reads
-      branchAt(ins[i + 2]?.op === 'ceq' ? i + 3 : i + 2);
+      // `altFunctionUse` is 0 or 2, so every spelling reduces to "is the value truthy": `== 2`,
+      // `!= 2`, `== 1` (never true, read as the left click), `> 1`, or the bare field. `right`
+      // says whether a truthy value on the stack means the right click.
+      const k = ldcValue(ins[i + 1]);
+      let at = i + 1;
+      let right = true;
+      if (k !== undefined) {
+        at = i + 2;
+        const cmp = ins[at]?.op ?? '';
+        if (/^ceq/.test(cmp)) { right = k === 2; at++; }
+        else if (/^clt/.test(cmp)) { right = false; at++; }
+        else if (/^cgt/.test(cmp)) { right = true; at++; }
+        else if (/^beq/.test(cmp)) right = k === 2;
+        else if (/^bne\.un/.test(cmp)) right = k === 2; // guardRanges reads bne.un as "on = equal"
+        else if (/^(blt|ble)/.test(cmp)) right = false;
+        else if (/^(bgt|bge)/.test(cmp)) right = true;
+        else continue;
+        // a negation between the compare and the branch
+        if (ldcValue(ins[at]) === 0 && ins[at + 1]?.op === 'ceq') { right = !right; at += 2; }
+      }
+      followLoads(ins, at - 1, branchAt, { right });
     }
   });
+  return ranges.map((r) => ({ lo: r.lo, hi: r.hi, on: r.right ? r.on : !r.on }));
 }
 
 /**
- * @returns {{ calls: Array<{ type: string|null, count: number, dmgMul: number, velMul: number, abs: number|null, spread: number, variant: 'both'|'spam'|'stealth' }>, returnsTrue: boolean, hasShoot: boolean, typeOverride?: any, velMul?: number, stealthMult?: number } | null}
+ * What one use costs the player in health: `player.statLife -= N` in the item's own use hooks.
+ *
+ * A weapon that pays in life is the one cost the model had no way to see — `mana` and SOTS's void
+ * are fields, this is a subtraction in the middle of `Shoot` — so a weapon that spends ten health
+ * a cast was being graded as if it spent nothing. The pool it draws on is the one keeping the
+ * player alive, which is why it is worth reading rather than assuming.
+ *
+ * Only a constant is read. A share of the bar (`statLifeMax2 * 0.1`) stays unread rather than
+ * guessed at, and the `KillMe` on the branch where the player cannot pay is the failure case, not
+ * the cost. A cost behind `altFunctionUse == 2` belongs to the right click alone and is skipped:
+ * charging Butcher's Bloodmaker's 50-life Blood Rage to its ordinary shots would price a free
+ * attack as a lethal one.
+ *
+ * ponytail: one number per item, so a right-click-only cost is dropped rather than carried per
+ * click — give it `alt` the way `fire.calls` has it if a weapon ever turns on that difference.
+ */
+export function lifeCostOf(asm, td) {
+  let cost = 0;
+  for (const hook of ['Shoot', 'UseItem', 'CanUseItem', 'ConsumeItem']) {
+    const m = findInherited(asm, td, hook);
+    const body = m && asm.methodBody(m);
+    if (!body) continue;
+    let ins;
+    try { ins = decodeIL(body.il); } catch { continue; }
+    const alts = altRanges(asm, m);
+    for (let i = 3; i < ins.length; i++) {
+      if (ins[i].op !== 'stfld' || asm.resolve(ins[i].operand)?.name !== 'statLife') continue;
+      if (ins[i - 1].op !== 'sub' || ins[i - 3].op !== 'ldfld' || asm.resolve(ins[i - 3].operand)?.name !== 'statLife') continue;
+      const n = ldcValue(ins[i - 2]);
+      if (!(n > 0) || sideAt(alts, ins[i].offset) === true) continue;
+      cost = Math.max(cost, n);
+    }
+  }
+  return cost || undefined;
+}
+
+/**
+ * A call's damage is recorded as what it *is*: `dmgMul` where the machine read a share of the
+ * `damage` argument, `dmgAbs` where it read a number, and neither where it could read nothing.
+ * The share is relative to the argument `Shoot` receives, which `ModifyShootStats` has already
+ * scaled by `dmgMul` on the record itself — the two multiply. Astral's End carries 1.5 on the
+ * whole shot and 0.667 on each of five calls, which is ×1.0 in play, and writing the call's 0.667
+ * as the answer underpriced every asteroid by a third.
+ * @returns {{ calls: Array<{ type: string|null, count: number, dmgMul?: number, dmgAbs?: number, velMul: number, abs: number|null, spread: number, variant: 'both'|'spam'|'stealth' }>, returnsTrue: boolean, hasShoot: boolean, typeOverride?: any, velMul?: number, dmgMul?: number, stealthMult?: number } | null}
  */
 export function analyzeShoot(asm, td, { tml, projRef }) {
-  const shoot = findInherited(asm, td, 'Shoot');
+  // Thorium's bards do not override `Shoot`. `BardItem.Shoot` is an eighteen-byte forwarder to a
+  // virtual `BardShoot` with the identical seven-parameter signature, and the machine was not
+  // following it through — so of 208 bard weapons only 64 had a `Shoot` read at all and only 34
+  // their projectile calls, against 52–62% for every other class that shoots. Taking `BardShoot`
+  // where the type declares one reads the real method instead of its wrapper.
+  const shoot = findInherited(asm, td, 'BardShoot') ?? findInherited(asm, td, 'Shoot');
   const modify = findInherited(asm, td, 'ModifyShootStats');
   if (!shoot && !modify) return null;
   const calls = [];
@@ -174,10 +267,14 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
       return undefined;
     },
     onCall(callee, args, ctx) {
-      const hooked = tmlStaticHook(callee, args, ctx);
-      if (hooked !== undefined) return hooked;
       const name = callee.name;
       const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
+      // `Vector2.Zero` is a getter call. Recognise it before the generic tML static hook turns it
+      // into an opaque value, otherwise a zero-launch custom animation is indistinguishable from
+      // the item's ordinary shoot-speed projectile.
+      if (decl.endsWith('Vector2') && name === 'get_Zero') return { ...VEC, abs: 0 };
+      const hooked = tmlStaticHook(callee, args, ctx);
+      if (hooked !== undefined) return hooked;
       if (ctx.recv === THIS && name === 'get_Item') return undefined; // machine maps it to ITEM
       if (decl === 'Terraria.Projectile' && /^NewProjectile(Direct)?$/.test(name)) {
         const n = callee.sig?.params.length ?? args.length;
@@ -217,7 +314,11 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     onStaticLoad(f) {
       const decl = f.declaringType?.fullName ?? '';
       if (decl.endsWith('MathHelper')) return { Pi: Math.PI, TwoPi: 2 * Math.PI, PiOver2: Math.PI / 2, PiOver4: Math.PI / 4 }[f.name] ?? UNKNOWN;
-      if (decl.endsWith('Vector2') && (f.name === 'UnitX' || f.name === 'UnitY')) return { ...VEC, unit: true };
+    if (decl.endsWith('Vector2') && (f.name === 'UnitX' || f.name === 'UnitY')) return { ...VEC, unit: true };
+    // A custom melee image commonly starts at the player with `Vector2.Zero` and moves under its
+    // own AI. It is not a projectile launched at `item.shootSpeed`; preserving zero lets scoring
+    // refuse the free-flight/pierce model for that delivery.
+    if (decl.endsWith('Vector2') && (f.name === 'Zero' || f.name === 'get_Zero')) return { ...VEC, abs: 0 };
       return tmlStaticLoadHook(f);
     },
     onReturn(v, ctx) { if (ctx.method === cur) rets.push({ v, offset: ctx.offset }); },
@@ -230,10 +331,17 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
   machine.trace = (x) => { at = x.offset; };
   if (modify) {
     let ranges = stealthRanges(asm, modify);
+    // `ModifyShootStats` branches on the right click exactly as it branches on a stealth strike, and
+    // the swap it makes there belongs to that click alone. Wulfrum Prosthesis is the whole story:
+    // `if (player.altFunctionUse == 2) type = WulfrumManaDrain;` — read without the guard, the left
+    // click's bolt became the right click's 36 px mana drain and the weapon scored a flat zero.
+    let alts = altRanges(asm, modify);
     const inStealth = (o) => sideAt(ranges, o) === true;
+    const inAlt = (o) => sideAt(alts, o) === true;
     const cells = { velocity: VEC, type: SHOOT_TYPE, damage: DMG, position: UNKNOWN, knockback: UNKNOWN };
     const stealthCells = {};
-    const ref = (k) => ({ k: 'ref', get: () => stealthCells[k] ?? cells[k], set: (v, sctx) => { if (inStealth(at) || taggedStealth(sctx?.condTags)) stealthCells[k] = v; else cells[k] = v; } });
+    const altCells = {};
+    const ref = (k) => ({ k: 'ref', get: () => altCells[k] ?? stealthCells[k] ?? cells[k], set: (v, sctx) => { if (inAlt(at)) altCells[k] = v; else if (inStealth(at) || taggedStealth(sctx?.condTags)) stealthCells[k] = v; else cells[k] = v; } });
     const args = () => [PLAYER, ref('position'), ref('velocity'), ref('type'), ref('damage'), ref('knockback')];
     cur = modify;
     try { machine.run(modify, THIS, args()); } catch { /* partial */ }
@@ -244,15 +352,21 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     // every normal attack. Running the override on its own, against its own ranges, sees it.
     const extra = findInherited(asm, td, 'ModifyStatsExtra');
     if (extra && extra.declaringType === td) {
-      delete cells.type; delete stealthCells.type;
+      delete cells.type; delete stealthCells.type; delete altCells.type;
       cells.type = SHOOT_TYPE;
       ranges = stealthRanges(asm, extra);
+      alts = altRanges(asm, extra);
       cur = extra;
       try { machine.run(extra, THIS, args()); } catch { /* partial */ }
     }
     if (isVec(cells.velocity) && cells.velocity !== VEC) out.velMul = cells.velocity.abs ? null : cells.velocity.mul;
     if (cells.type !== SHOOT_TYPE) out.typeOverride = projRef(cells.type) ?? undefined;
     if (cells.damage?.k === 'adj' && cells.damage.mul !== 1) out.dmgMul = cells.damage.mul;
+    if (altCells.type && altCells.type !== SHOOT_TYPE) {
+      // ponytail: the swapped projectile only. A right click that also changes the velocity or the
+      // damage there would need the same treatment; none in the pack does yet.
+      out.altMods = { type: projRef(altCells.type) ?? undefined };
+    }
     if (Object.keys(stealthCells).length) {
       out.stealthMods = {};
       if (isVec(stealthCells.velocity)) out.stealthMods.velMul = stealthCells.velocity.abs ? null : stealthCells.velocity.mul;
@@ -271,13 +385,22 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     // which click fires it: true = only the right one does, false = only the left, undefined = both
     const altAt = (o) => sideAt(alts, o);
     const chanceAt = (o) => chanceOf(chances, o);
+    // the gates a call sits behind, and the branches nobody has a reader for yet
+    const counters = counterRanges(asm, shoot, 'use');
+    const onHit = hitCounters(asm, td);
+    for (const r of counters) if (onHit.has(r.counter)) r.gate.event = 'hit';
+    // arg 5 of `Shoot(player, source, position, velocity, type, damage, knockback)` is the type
+    const reqs = requiresRanges(asm, shoot, { typeArg: 5 }).map((r) => (r.gate.what === 'ammoType' ? { ...r, gate: { ...r.gate, id: projRef(r.gate.id) ?? r.gate.id } } : r));
+    const always = alwaysRanges(asm, shoot);
+    const guards = { counters: counters.filter((r) => r.gate), requires: reqs, always, explained: [...ranges, ...alts, ...chances, ...counters, ...reqs, ...always], all: branchRanges(asm, shoot) };
     for (const c of calls) {
       if (c.depth !== 0) continue; // helpers called from Shoot are counted through their own calls
       const n = loops.filter((l) => l.method === shoot && c.offset >= l.lo && c.offset <= l.hi).reduce((p, l) => p * l.n, 1);
       out.calls.push({
         type: c.type === SHOOT_TYPE ? 'shoot' : projRef(c.type),
         count: n,
-        dmgMul: c.dmg?.k === 'adj' ? c.dmg.mul : c.dmg === DMG ? 1 : isNum(c.dmg) ? null : 1,
+        dmgMul: c.dmg?.k === 'adj' && c.dmg.slot === 'dmg' ? c.dmg.mul : undefined,
+        dmgAbs: isNum(c.dmg) ? c.dmg : undefined,
         velMul: c.vel.abs ? null : c.vel.mul,
         abs: c.vel.abs ?? null,
         spread: c.vel.spread + (c.vel.perturbed ? 0.08 : 0),
@@ -286,6 +409,7 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         alt: altAt(c.offset),
         chance: chanceAt(c.offset),
         region: c.region ?? undefined,
+        ...gatesAt(guards, c.offset),
       });
     }
     // does the default shot fire too? per path: `return true` on the normal / stealth path

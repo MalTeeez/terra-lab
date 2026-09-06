@@ -43,7 +43,7 @@
     <div>
       <span class="lab-label mb-1">Owned</span>
       {#if !owned.length}
-        <p class="m-0 text-[12.5px] text-dim">Nothing yet. Add items here, or tick “I own this” on any item card.</p>
+        <p class="m-0 text-[12.5px] text-dim">Nothing yet. Add items here, or tick "I own this" on any item card.</p>
       {:else}
         <table class="lab-table">
           <thead><tr><th>Item</th><th>Reforge</th><th>Solver</th><th></th></tr></thead>

@@ -20,6 +20,7 @@ import { loadAssembly } from '../miner/clr/metadata.js';
 import { extractItems } from '../miner/extract/items.js';
 import { evalStatics } from '../miner/extract/interp.js';
 import { loadLocalization } from '../miner/extract/localization.js';
+import { configHooks, loadModConfigs } from '../miner/config.js';
 import { defaultPaths, readEnabled, resolveMods } from '../miner/resolve.js';
 import { readTmodFile } from '../miner/tmod.js';
 
@@ -36,6 +37,7 @@ const EQUIP = new Set(['weapon', 'head', 'body', 'legs', 'accessory']);
 const paths = defaultPaths();
 const tml = loadAssembly(readFileSync(paths.tmlDll));
 const ammoIds = evalStatics(tml, tml.typeByName.get('Terraria.ID.AmmoID'), tml);
+const configs = loadModConfigs(paths.saves); // a mod's own balance config decides stats in SetDefaults
 const { resolved, missing } = resolveMods(readEnabled(paths.enabledJson), paths);
 if (missing.length) console.log(`! no .tmod for: ${missing.join(', ')}`);
 
@@ -131,7 +133,7 @@ const unread = []; // SetDefaults told us nothing, so whatever reason it got is 
 const reasons = new Map();
 for (const { name, asm, loc } of mods) {
   let items = [];
-  try { items = extractItems(asm, { tml, loc, modId: name, ammoIds }); } catch (e) { console.log(`! ${name} items: ${e.message}`); }
+  try { items = extractItems(asm, { tml, loc, modId: name, ammoIds, cfg: configHooks(asm, name, configs) }); } catch (e) { console.log(`! ${name} items: ${e.message}`); }
   let equip = 0;
   let carried = 0;
   for (const it of items) {

@@ -24,30 +24,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | armor |  |  | Demonshade |  |  | CalamityMod:DemonshadeHelm |
 | accessory | defense |  | Draedon's Heart |  |  | CalamityMod:DraedonsHeart |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon |  |  | Eternity |  |  | CalamityMod:Eternity |
 | accessory | offense |  | Ethereal Talisman |  |  | CalamityMod:EtherealTalisman |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | armor |  |  | Gem Tech |  |  | CalamityMod:GemTechHeadgear |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon |  |  | Rainbow Party Cannon |  |  | CalamityMod:RainbowPartyCannon |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Harmony |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Staff of Blushie |  |  | CalamityMod:StaffofBlushie |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Sylvestaff |  |  | CalamityMod:Sylvestaff |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
@@ -55,7 +55,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -76,33 +76,33 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Draedon's Heart |  |  | CalamityMod:DraedonsHeart |
 | weapon |  |  | Earth |  |  | CalamityMod:Earth |
 | accessory | offense |  | Elemental Gauntlet |  |  | CalamityMod:ElementalGauntlet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | armor |  |  | Gem Tech |  |  | CalamityMod:GemTechHeadgear |
 | weapon | support |  | Illustrious Knives | + | This is used for support. | CalamityMod:IllustriousKnives |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
 | weapon |  |  | Red Sun |  |  | CalamityMod:RedSun |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Harmony |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | weapon |  |  | Triactis' True Paladinian Mage-Hammer of Might |  |  | CalamityMod:TriactisTruePaladinianMageHammerofMight |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -110,9 +110,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory |  |  | Affliction |  |  | CalamityMod:Affliction |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | offense |  | Arc Flash Ring |  |  | CalamityMod:ArcFlashRing |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Ascendant Insignia |  |  | CalamityMod:AscendantInsignia |
 | accessory | mobility |  | Asgardian Aegis / Statis' Void Sash |  |  | CalamityMod:AsgardianAegis |
 | armor |  |  | Auric Tesla |  |  | CalamityMod:AuricTeslaHeadMagic |
@@ -124,28 +124,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | armor |  |  | Demonshade |  |  | CalamityMod:DemonshadeHelm |
 | accessory | defense |  | Draedon's Heart |  |  | CalamityMod:DraedonsHeart |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | armor |  |  | Gem Tech |  |  | CalamityMod:GemTechHeadgear |
 | ammo |  |  | God Slayer Slug |  |  | CalamityMod:GodSlayerSlug |
 | weapon |  |  | Halibut Cannon |  |  | CalamityMod:HalibutCannon |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | offense |  | Planebreaker's Pouch |  |  | CalamityMod:PlanebreakersPouch |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Harmony |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Soma Prime |  |  | CalamityMod:SomaPrime |
 | weapon |  |  | Svantechnical |  |  | CalamityMod:Svantechnical |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
@@ -153,7 +153,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | ammo |  |  | Vanquisher Arrow |  |  | CalamityMod:VanquisherArrow |
 | weapon |  |  | Voidragon |  |  | CalamityMod:Voidragon |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -173,14 +173,14 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Demonshade |  |  | CalamityMod:DemonshadeHelm |
 | accessory | defense |  | Draedon's Heart |  |  | CalamityMod:DraedonsHeart |
 | weapon | minion |  | Endogenesis |  |  | CalamityMod:Endogenesis |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | weapon | minion |  | Flamsteed Ring |  |  | CalamityMod:FlamsteedRing |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | armor |  |  | Gem Tech |  |  | CalamityMod:GemTechHeadgear |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | offense |  | Nucleogenesis |  |  | CalamityMod:Nucleogenesis |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon | sentry |  | Perdition |  |  | CalamityMod:Perdition |
@@ -188,15 +188,15 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Harmony |  |  | — |
 | weapon | minion |  | Saros Possession |  |  | CalamityMod:SarosPossession |
 | weapon | minion |  | Saros Possession |  |  | CalamityMod:SarosPossession |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon | minion |  | Temporal Umbrella |  |  | CalamityMod:TemporalUmbrella |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
@@ -205,7 +205,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Universe Splitter |  |  | CalamityMod:UniverseSplitter |
 | buff | offense |  | War Table |  |  | — |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -226,36 +226,36 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Draedon's Heart |  |  | CalamityMod:DraedonsHeart |
 | accessory | spam |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
 | accessory | stealthAcc |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | armor |  |  | Gem Tech |  |  | CalamityMod:GemTechHeadgear |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | spam |  | Nanotech |  |  | CalamityMod:Nanotech |
 | accessory | stealthAcc |  | Nanotech |  |  | CalamityMod:Nanotech |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Harmony |  |  | — |
 | weapon | spam |  | Sacrifice |  |  | CalamityMod:Sacrifice |
 | weapon | stealth |  | Scarlet Devil |  |  | CalamityMod:ScarletDevil |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | stealthAcc |  | Spectral Veil | † | This is difficult and risky to use. | CalamityMod:SpectralVeil |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-exo → XS-03 Apollo (stage 89)
 
@@ -313,39 +313,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | weapon |  |  | Chain Guillotines |  |  | v:3012 |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Deep Diver |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon |  |  | Inferna Cutter | C | This is best on worms and other multi-hit scenarios. | CalamityMod:InfernaCutter |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Majestic Guard | † Ω (Power Glove) | This is difficult to use and should be used with Power Glove. | CalamityMod:MajesticGuard |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | armor |  |  | Mythril | Δ | This has a new set bonus. | v:376 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
 | accessory | offense |  | Power Glove | Ω (Majestic Guard) | This should be used with Majestic Guard. | v:897 |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadowflame Knife |  |  | v:3054 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon |  |  | Storm Saber |  |  | CalamityMod:StormSaber |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | Warrior Emblem |  |  | v:490 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -354,8 +354,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Abaddon |  |  | CalamityMod:Abaddon |
 | accessory |  |  | Amalgamated Brain |  |  | CalamityMod:AmalgamatedBrain |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | weapon |  |  | Buzzkill | † | This is difficult to use. | CalamityMod:Buzzkill |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
@@ -363,7 +363,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | ammo |  |  | Cursed Dart / Ichor Dart |  |  | v:3010 |
 | weapon |  |  | Daedalus Stormbow |  |  | v:3029 |
 | weapon |  |  | Dart Pistol / Dart Rifle |  |  | v:3007 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Deep Diver |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
@@ -371,29 +371,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | ammo |  |  | Ichor Bullet / Cursed Bullet |  |  | v:1335 |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Magic Quiver | ≤ | Upgrades of this are also viable. | v:1321 |
 | weapon |  |  | Megashark |  |  | v:533 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | armor |  |  | Mythril | Δ | This has a new set bonus. | v:376 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Polaris Parrotfish | † | This is difficult to use. | CalamityMod:PolarisParrotfish |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Ranger Emblem |  |  | v:491 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | ammo |  |  | Unholy Arrow | C | This is best on worms and other multi-hit scenarios. | v:47 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -408,7 +408,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | buff | offense |  | Crystal Ball |  |  | — |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Deep Diver |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
@@ -416,32 +416,32 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | defense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | armor |  |  | Mythril | Δ | This has a new set bonus. | v:376 |
 | weapon | support |  | Nimbus Rod | + | This is used for support. | v:1244 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | R-GSS: Vulcan |  |  | CalamityMod:Vulcan |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Snowstorm Staff | C | This is best on worms and other multi-hit scenarios. | CalamityMod:SnowstormStaff |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Sorcerer Emblem |  |  | v:489 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Unholy Trident |  |  | v:683 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -455,45 +455,45 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Cobalt Kunai |  |  | CalamityMod:CobaltKunai |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | accessory | stealthAcc |  | Electrician's Glove |  |  | CalamityMod:ElectriciansGlove |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | stealth |  | Equanimity |  |  | CalamityMod:Equanimity |
 | accessory | mobility |  | Evasion Scarf / Deep Diver |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon | spam |  | Ice Star |  |  | CalamityMod:IceStar |
 | weapon | stealth |  | Ice Star |  |  | CalamityMod:IceStar |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | stealthAcc |  | Mirage Mirror |  |  | CalamityMod:MirageMirror |
 | armor |  |  | Monk | Δ | This works as a rogue armor. | v:3806 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon | spam |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
 | weapon | stealth |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon | spam |  | Prismalline |  |  | CalamityMod:Prismalline |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Rogue Emblem |  |  | CalamityMod:RogueEmblem |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | weapon | spam |  | Scourge of the Seas |  |  | CalamityMod:ScourgeoftheSeas |
 | weapon | stealth |  | Scourge of the Seas |  |  | CalamityMod:ScourgeoftheSeas |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Titan Heart |  |  | CalamityMod:TitanHeartMask |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -505,40 +505,40 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Cool Whip / Firecracker |  |  | v:4911 |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | weapon | minion |  | Deepsea Staff |  |  | CalamityMod:DeepseaStaff |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Deep Diver |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon | minion |  | Igneous Exaltation | † C | This is difficult to use, and is best on worms and other multi-hit scenarios. | CalamityMod:IgneousExaltation |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | accessory | offense |  | Nuclear Fuel Rod |  |  | CalamityMod:NuclearFuelRod |
 | weapon | sentry |  | Orthocera Shell |  |  | CalamityMod:OrthoceraShell |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | armor |  |  | Spider |  |  | v:2370 |
 | weapon | minion |  | Spider Staff |  |  | v:2551 |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
 | armor |  |  | Squire |  |  | v:3800 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | The First Shadowflame |  |  | CalamityMod:TheFirstShadowflame |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · post-mech2 → The Destroyer (stage 40)
 
@@ -554,36 +554,36 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Chain Guillotines |  |  | v:3012 |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | weapon |  |  | Darklight Greatsword |  |  | CalamityMod:DarklightGreatsword |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon |  |  | Inferna Cutter | C | This is best on worms and other multi-hit scenarios. | CalamityMod:InfernaCutter |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Majestic Guard | † C | This is difficult to use and is best on worms and other mult-hit scenarios. | CalamityMod:MajesticGuard |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon |  |  | Starnight Lance |  |  | CalamityMod:StarnightLance |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | Warrior Emblem |  |  | v:490 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -593,13 +593,13 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Adamantite | Δ | This has a new set bonus. | v:400 |
 | accessory |  |  | Amalgamated Brain |  |  | CalamityMod:AmalgamatedBrain |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | weapon |  |  | Buzzkill | † | This is difficult to use. | CalamityMod:Buzzkill |
 | ammo |  |  | Cinder Arrow |  |  | CalamityMod:CinderArrow |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | weapon |  |  | Flak Toxicannon |  |  | CalamityMod:FlakToxicannon |
@@ -608,31 +608,31 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | weapon |  |  | Hellborn | † | This is difficult to use. | CalamityMod:Hellborn |
 | ammo |  |  | Holy Arrow |  |  | v:516 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | ammo |  |  | Ichor Bullet / Cursed Bullet |  |  | v:1335 |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Magic Quiver | ≤ | Upgrades of this are also viable. | v:1321 |
 | weapon |  |  | Megashark |  |  | v:533 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
 | weapon |  |  | Phantom Phoenix |  |  | v:3854 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Ranger Emblem |  |  | v:491 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | ammo |  |  | Rocket I |  |  | v:771 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | ammo |  |  | Unholy Arrow | C | This is best on worms and other multi-hit scenarios. | v:47 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -646,7 +646,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | buff | offense |  | Crystal Ball |  |  | — |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
@@ -655,31 +655,31 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon |  |  | Ion Blaster |  |  | CalamityMod:IonBlaster |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | defense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon | support |  | Nimbus Rod | + | This is used for support. | v:1244 |
 | armor |  |  | Orichalcum |  |  | v:1210 |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | R-GSS: Vulcan |  |  | CalamityMod:Vulcan |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Sorcerer Emblem |  |  | v:489 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Unholy Trident |  |  | v:683 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -700,38 +700,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Daedalus |  |  | CalamityMod:DaedalusHeadMagic |
 | weapon | stealth |  | Desecrated Water |  |  | CalamityMod:DesecratedWater |
 | accessory | stealthAcc |  | Electrician's Glove |  |  | CalamityMod:ElectriciansGlove |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon | spam |  | Ice Star |  |  | CalamityMod:IceStar |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | stealthAcc |  | Mirage Mirror |  |  | CalamityMod:MirageMirror |
 | armor |  |  | Monk | Δ | This works as a rogue armor. | v:3806 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon | stealth |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Rogue Emblem |  |  | CalamityMod:RogueEmblem |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -746,37 +746,37 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Daedalus Golem Staff |  |  | CalamityMod:DaedalusGolemStaff |
 | weapon | minion |  | Deepsea Staff |  |  | CalamityMod:DeepseaStaff |
 | weapon | minion |  | Dormant Brimseeker |  | Keep the Brimseekers in their empowered state, even if using a whip. | CalamityMod:DormantBrimseeker |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | accessory | offense |  | Nuclear Fuel Rod |  |  | CalamityMod:NuclearFuelRod |
 | weapon | sentry |  | Orthocera Shell |  |  | CalamityMod:OrthoceraShell |
-| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Destroyer. | CalamityMod:PhotosynthesisPotion |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
 | armor |  |  | Squire |  |  | v:3800 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | The First Shadowflame |  |  | CalamityMod:TheFirstShadowflame |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-plantera → Plantera (stage 46)
 
@@ -793,32 +793,32 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Chlorophyte |  |  | v:1001 |
 | weapon |  |  | Chlorophyte Partisan |  |  | v:1228 |
 | weapon |  |  | Darklight Greatsword |  |  | CalamityMod:DarklightGreatsword |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Brimstone |  | This should be used for Plantera. | — |
-| buff | offense |  | Flask of Ichor |  | This should be used for Calamitas Clone. | — |
+| buff | offense |  | Flask of Brimstone |  | This should be used for Plantera. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Ichor |  | This should be used for Calamitas Clone. | v:1356 |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Mechanical Glove |  |  | v:936 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon |  |  | Pwnagehammer |  |  | CalamityMod:Pwnagehammer |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | True Excalibur | † | This is risky to use. | v:674 |
 | armor |  |  | Turtle |  |  | v:1316 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -827,15 +827,15 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Abaddon |  |  | CalamityMod:Abaddon |
 | accessory |  |  | Amalgamated Brain |  |  | CalamityMod:AmalgamatedBrain |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Treads / Fairy Boots | Δ | Fairy boots offer defensive benefits. | CalamityMod:AngelTreads |
 | weapon |  |  | Animosity |  |  | CalamityMod:Animosity |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Butterfly Wings | Δ | This has increased acceleration. | v:749 |
 | armor |  |  | Chlorophyte |  |  | v:1001 |
 | ammo |  |  | Chlorophyte Arrow |  |  | v:1235 |
 | weapon |  |  | Chlorophyte Shotbow |  |  | v:1229 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
@@ -845,22 +845,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Hellborn | † | This is difficult to use. | CalamityMod:Hellborn |
 | ammo |  |  | Holy Arrow |  |  | v:516 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Magic Quiver | ≤ | Upgrades of this are also viable. | v:1321 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon |  |  | Pulse Bow | * | This is difficult to obtain. | v:2223 |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Ranger Emblem |  |  | v:491 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | ammo |  |  | Verium Bolt |  |  | CalamityMod:VeriumBolt |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -875,7 +875,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Celestial Emblem |  |  | v:2220 |
 | armor |  |  | Chlorophyte |  |  | v:1001 |
 | buff | offense |  | Crystal Ball |  |  | — |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
@@ -883,26 +883,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | defense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadecrystal Barrage |  |  | CalamityMod:ShadecrystalBarrage |
 | weapon |  |  | SHPC | Ω (Soul of Sight) | This should be used with Souls of Sight. | CalamityMod:SHPC |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | ammo |  |  | Soul of Sight | Ω (SHPC) | This should be used with SHPC. | — |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Venom Staff |  |  | v:2188 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -919,39 +919,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Desecrated Water |  |  | CalamityMod:DesecratedWater |
 | weapon | stealth |  | Desecrated Water |  |  | CalamityMod:DesecratedWater |
 | accessory | stealthAcc |  | Electrician's Glove |  |  | CalamityMod:ElectriciansGlove |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Brimstone |  | This should be used for Plantera. | — |
-| buff | offense |  | Flask of Ichor |  | This should be used for Calamitas Clone. | — |
+| buff | offense |  | Flask of Brimstone |  | This should be used for Plantera. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Ichor |  | This should be used for Calamitas Clone. | v:1356 |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon | spam |  | Ice Star |  |  | CalamityMod:IceStar |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | stealthAcc |  | Mirage Mirror |  |  | CalamityMod:MirageMirror |
 | armor |  |  | Monk | Δ | This works as a rogue armor. | v:3806 |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | weapon | stealth |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Rogue Emblem |  |  | CalamityMod:RogueEmblem |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | weapon | spam |  | Skyfin Bombers |  |  | CalamityMod:SkyfinBombers |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon | spam |  | Totality Breakers |  |  | CalamityMod:TotalityBreakers |
 | weapon | stealth |  | Totality Breakers |  |  | CalamityMod:TotalityBreakers |
 | armor |  |  | Umbraphile | * | This is difficult to obtain. | CalamityMod:UmbraphileHood |
 | accessory | stealthAcc |  | Vampiric Talisman | * | This is difficult to obtain. | CalamityMod:VampiricTalisman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -966,35 +966,35 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Daedalus Golem Staff |  |  | CalamityMod:DaedalusGolemStaff |
 | weapon | minion |  | Dormant Brimseeker |  | Keep the Brimseekers in their empowered state, even if using a whip. | CalamityMod:DormantBrimseeker |
 | weapon | minion |  | Durendal |  |  | v:4678 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Evasion Scarf / Ornate Shield |  |  | CalamityMod:EvasionScarf |
 | accessory | mobility |  | Flame Wings | Δ | This has increased vertical mobility. | v:821 |
-| buff | offense |  | Flask of Brimstone |  | This should be used on Plantera. | — |
-| buff | offense |  | Flask of Ichor |  | This should be used on Calamitas Clone. | — |
+| buff | offense |  | Flask of Brimstone |  | This should be used on Plantera. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Ichor |  | This should be used on Calamitas Clone. | v:1356 |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
 | accessory |  |  | Hallowed Rune |  |  | CalamityMod:HallowedRune |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory |  |  | Moon Stone | * | This is difficult to obtain. | v:900 |
 | accessory | offense |  | Nuclear Fuel Rod |  |  | CalamityMod:NuclearFuelRod |
 | weapon | sentry |  | Orthocera Shell |  |  | CalamityMod:OrthoceraShell |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | armor |  |  | Squire |  |  | v:3800 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | The First Shadowflame |  |  | CalamityMod:TheFirstShadowflame |
 | weapon | minion |  | Vengeful Sun Staff |  |  | CalamityMod:VengefulSunStaff |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · post-golem → Golem (stage 54)
 
@@ -1011,46 +1011,46 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | spam |  | Destroyer Emblem |  |  | v:1301 |
 | weapon | spam |  | Doomsday Device |  |  | CalamityMod:DoomsdayDevice |
 | weapon | stealth |  | Doomsday Device |  |  | CalamityMod:DoomsdayDevice |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | spam |  | Epidemic Shredder |  |  | CalamityMod:EpidemicShredder |
 | accessory | spam |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | stealthAcc |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | mobility |  | Hadal Mantle |  |  | CalamityMod:HadalMantle |
-| buff |  |  | Heartreach Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  |  | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
 | weapon | stealth |  | Leviathan Teeth |  |  | CalamityMod:LeviathanTeeth |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff |  |  | Photosynthesis Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
 | weapon | spam |  | Plaguenade |  |  | CalamityMod:Plaguenade |
 | weapon | stealth |  | Plaguenade |  |  | CalamityMod:Plaguenade |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | weapon | stealth |  | Samsara Slicer |  |  | CalamityMod:SamsaraSlicer |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | armor |  |  | Shinobi Infiltrator | Δ | This works as a rogue armor. | v:3880 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon | spam |  | Stellar Knife |  |  | CalamityMod:StellarKnife |
 | weapon | stealth |  | Stellar Knife |  |  | CalamityMod:StellarKnife |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -1065,38 +1065,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Bloom Stone |  |  | CalamityMod:BloomStone |
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | weapon |  |  | Christmas Tree Sword |  |  | v:1928 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | weapon |  |  | Fallen Paladin's Hammer |  |  | CalamityMod:FallenPaladinsHammer |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | mobility |  | Hadal Mantle |  |  | CalamityMod:HadalMantle |
-| buff |  |  | Heartreach Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  |  | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon |  |  | Lucrecia |  |  | CalamityMod:Lucrecia |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Omniblade | † | This is risky to use. | CalamityMod:Omniblade |
-| buff |  |  | Photosynthesis Potion |  |  | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -1114,48 +1114,48 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Charged Blaster Cannon |  |  | v:2882 |
 | buff | offense |  | Crystal Ball |  |  | — |
 | accessory | offense |  | Destroyer Emblem |  |  | v:1301 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | mobility |  | Hadal Mantle |  |  | CalamityMod:HadalMantle |
-| buff |  |  | Heartreach Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  |  | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Photosynthesis Potion |  |  | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon | support |  | Rainbow Gun | + | This is used for support and the Hallowed Key to obtain this drops more commonly from Hallowed Mimics. | v:1260 |
 | weapon |  |  | Razorpine |  |  | v:1930 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Wingman |  |  | CalamityMod:Wingman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Treads / Fairy Boots | Δ | Fairy boots offer defensive benefits. | CalamityMod:AngelTreads |
 | accessory | offense |  | Apollyon |  |  | CalamityMod:Apollyon |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Asgard's Valor / Master Ninja Gear / Shield of the High Ruler | Δ | Master Ninja Gear has a faster dash and a consistent dodge on a cooldown. | CalamityMod:AsgardsValor |
 | accessory | defense |  | Bloom Stone |  |  | CalamityMod:BloomStone |
 | ammo |  |  | Bubonic Round |  |  | CalamityMod:BubonicRound |
@@ -1164,39 +1164,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | ammo |  |  | Cluster Rocket I | Ω (Snowman Cannon) | This should be used with Snowman Cannon. | v:4445 |
 | accessory | offense |  | Deadshot Brooch |  |  | CalamityMod:DeadshotBrooch |
 | weapon |  |  | Electrosphere Launcher | C Ω (Rocket III) | This is best on worms and other multi-hit scenarios, and should be used with Rocket IIIs. | v:2796 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | mobility |  | Hadal Mantle |  |  | CalamityMod:HadalMantle |
 | ammo |  |  | Hailstorm Bullet | C | This is best on worms and other multi-hit scenarios. | CalamityMod:HailstormBullet |
-| buff |  |  | Heartreach Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  |  | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Nullification Pistol |  |  | CalamityMod:NullificationPistol |
-| buff |  |  | Photosynthesis Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
 | armor |  |  | Plague Reaper |  |  | CalamityMod:PlagueReaperMask |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | ammo |  |  | Rocket III | Ω (Electrosphere Launcher) | This should be used with Electrosphere Launcher. | v:773 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shroomite |  |  | v:1546 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
 | weapon |  |  | Snowman Cannon | Ω (Cluster Rocket I) | This should be used with Cluster Rocket Is. | v:1946 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon |  |  | Stynger |  |  | v:1258 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon |  |  | Xenopopper |  |  | v:2797 |
 
 ### summon
@@ -1210,43 +1210,43 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | weapon | minion |  | Dark Harvest / Morning Star |  |  | v:4680 |
 | weapon | sentry |  | Dreadmine Staff |  |  | CalamityMod:DreadmineStaff |
-| buff |  |  | Endurance Potion |  |  | — |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory | mobility |  | Hadal Mantle |  |  | CalamityMod:HadalMantle |
 | accessory |  |  | Hallowed Rune |  |  | CalamityMod:HallowedRune |
-| buff |  |  | Heartreach Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  |  | v:2323 |
 | weapon | sentry |  | Hive Pod |  |  | CalamityMod:HivePod |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Papyrus Scarab |  |  | v:1864 |
-| buff |  |  | Photosynthesis Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
 | weapon | minion |  | Raven Staff |  |  | v:1802 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | minion |  | Resurrection Butterfly |  |  | CalamityMod:ResurrectionButterfly |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
 | weapon | minion |  | Sand Sharknado Staff |  |  | CalamityMod:SandSharknadoStaff |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | weapon | sentry |  | Staff of the Frost Hydra |  | The Frozen Key to obtain this drops more commonly from Ice Golems. | v:1572 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | accessory | offense |  | Statis' Blessing |  |  | CalamityMod:StatisBlessing |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
 | buff | offense |  | War Table |  |  | — |
 | weapon | minion |  | Wither Blossoms Staff | + | This is used for support. | CalamityMod:WitherBlossomsStaff |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon | minion |  | Xeno Staff |  |  | v:2749 |
 
 ## calamity · pre-dog → The Devourer of Gods (stage 85)
@@ -1271,29 +1271,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
-| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | spam |  | Jaws of Oblivion |  |  | CalamityMod:JawsOfOblivion |
 | weapon | stealth |  | Jaws of Oblivion |  |  | CalamityMod:JawsOfOblivion |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | stealth |  | Molten Amputator |  |  | CalamityMod:MoltenAmputator |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon | spam |  | Sealed Singularity | C | This is best used on worms and other multi-hit scenarios. | CalamityMod:SealedSingularity |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | stealthAcc |  | Spectral Veil | † | This is difficult and risky to use. | CalamityMod:SpectralVeil |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | accessory | mobility |  | Tarragon Wings |  |  | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
@@ -1308,7 +1308,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Vega |  |  | CalamityMod:Vega |
 | weapon | stealth |  | Vega |  |  | CalamityMod:Vega |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -1329,33 +1329,33 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | weapon |  |  | Galileo Gladius | † | This is difficult to use. | CalamityMod:GalileoGladius |
-| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Neptune's Bounty |  |  | CalamityMod:NeptunesBounty |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Tarragon Wings |  |  | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -1364,9 +1364,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Affliction |  |  | CalamityMod:Affliction |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | offense |  | Arc Flash Ring |  |  | CalamityMod:ArcFlashRing |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Ascendant Insignia |  |  | CalamityMod:AscendantInsignia |
 | buff |  |  | Bloodfin / Supreme Healing Potion |  |  | — |
 | ammo | support |  | Bloodfire Bullet | + | This is used for support. | CalamityMod:BloodfireBullet |
@@ -1377,31 +1377,31 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | weapon |  |  | Fetid Emesis | † | This is difficult to use. | CalamityMod:FetidEmesis |
 | weapon |  |  | Halley's Inferno |  |  | CalamityMod:HalleysInferno |
-| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | — |
+| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | v:2323 |
 | ammo |  |  | Holy Fire Bullet |  |  | CalamityMod:HolyFireBullet |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | ammo |  |  | Luminite Bullet | C | This is best used on worms and other multi-hit scenarios. | v:3567 |
 | ammo |  |  | Mini Nuke I |  |  | v:4457 |
 | weapon |  |  | Monsoon | Ω (Quiver of Nihility) | This should be used with Quiver of Nihility. | CalamityMod:Monsoon |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
 | accessory | offense |  | Quiver of Nihility | † Ω (Monsoon) | This is difficult to use and should be used with Monsoon. | CalamityMod:QuiverofNihility |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
 | weapon |  |  | Sulphuric Acid Cannon |  |  | CalamityMod:SulphuricAcidCannon |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Tarragon Wings |  |  | CalamityMod:TarragonWings |
 | weapon |  |  | Tau Cannon | C | This is best on worms and other multi-hit scenarios. | CalamityMod:TauCannon |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
@@ -1409,7 +1409,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | ammo |  |  | Wooden Arrow |  |  | v:40 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -1429,28 +1429,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
 | weapon |  |  | Phantasmal Fury |  |  | CalamityMod:PhantasmalFury |
 | armor |  |  | Prismatic |  |  | CalamityMod:PrismaticHelmet |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadowbolt Staff |  |  | CalamityMod:ShadowboltStaff |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Tarragon Wings |  |  | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -1458,7 +1458,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Venusian Trident |  |  | CalamityMod:VenusianTrident |
 | weapon |  |  | Vitriolic Viper |  |  | CalamityMod:VitriolicViper |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -1477,40 +1477,40 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Dragonblood Disgorger | + | This is used for support. | CalamityMod:DragonbloodDisgorger |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | minion |  | Ethereal Subjugator |  |  | CalamityMod:EtherealSubjugator |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
-| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
+| buff |  |  | Heartreach Potion / Photosynthesis Potion | Ω (Bloodflare armor) | These should be used with Bloodflare armor. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
 | weapon | minion |  | King of Constellations, Tenryū |  |  | CalamityMod:KingofConstellationsTenryu |
 | accessory | mobility |  | Leviathan Ambergris |  |  | CalamityMod:LeviathanAmbergris |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | sentry |  | Lunar Portal Staff |  |  | v:3569 |
 | weapon | minion |  | Mutated Truffle |  |  | CalamityMod:MutatedTruffle |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
 | accessory |  |  | Profaned Soul Artifact |  |  | CalamityMod:ProfanedSoulArtifact |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon | sentry |  | Sanctified Spark | + | This is used for support. | CalamityMod:SanctifiedSpark |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | armor |  |  | Stardust | † Ω (Stardust Wings) | This is riskier to use and should be used with Stardust Wings. | v:3381 |
 | accessory | mobility |  | Stardust Wings | Ω (Stardust armor) | This should be used with Stardust armor. | v:3471 |
 | accessory | offense |  | Statis' Curse |  |  | CalamityMod:StatisCurse |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Tarragon Wings |  |  | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | weapon | minion |  | Virid Vanguard |  |  | CalamityMod:ViridVanguard |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-golem → Golem (stage 53)
 
@@ -1526,44 +1526,44 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Defective Sphere |  |  | CalamityMod:DefectiveSphere |
 | weapon | stealth |  | Duststorm in a Bottle |  |  | CalamityMod:DuststormInABottle |
 | accessory | stealthAcc |  | Electrician's Glove |  |  | CalamityMod:ElectriciansGlove |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | spam |  | Fantasy Talisman |  |  | CalamityMod:FantasyTalisman |
-| buff | offense |  | Flask of Brimstone |  | This is for all bosses that are not Leviathan and Anahita. | — |
-| buff | offense |  | Flask of Venom |  | This is for Leviathan and Anahita. | — |
+| buff | offense |  | Flask of Brimstone |  | This is for all bosses that are not Leviathan and Anahita. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Venom |  | This is for Leviathan and Anahita. | v:1340 |
 | accessory | defense |  | Frozen Shield / Hero Shield |  |  | v:3997 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | spam |  | Leviathan Teeth |  |  | CalamityMod:LeviathanTeeth |
 | weapon | stealth |  | Leviathan Teeth |  |  | CalamityMod:LeviathanTeeth |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory |  |  | Moon Stone |  |  | v:900 |
 | weapon | spam |  | Phantasmal Ruin |  |  | CalamityMod:PhantasmalRuin |
 | weapon | stealth |  | Phantasmal Ruin |  |  | CalamityMod:PhantasmalRuin |
-| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | weapon | spam |  | Samsara Slicer |  |  | CalamityMod:SamsaraSlicer |
 | weapon | stealth |  | Samsara Slicer |  |  | CalamityMod:SamsaraSlicer |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon | spam |  | Stellar Knife |  |  | CalamityMod:StellarKnife |
 | weapon | stealth |  | Stellar Knife |  |  | CalamityMod:StellarKnife |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Umbraphile |  |  | CalamityMod:UmbraphileHood |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -1578,39 +1578,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Brimflame |  |  | CalamityMod:BrimflameCowl |
 | accessory | offense |  | Celestial Emblem |  |  | v:2220 |
 | buff | offense |  | Crystal Ball |  |  | — |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | defense |  | Frozen Shield / Hero Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
-| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | defense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory |  |  | Moon Stone |  |  | v:900 |
-| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Primordial Earth |  |  | CalamityMod:PrimordialEarth |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon | support |  | Rainbow Gun | + | This is used for support and the Hallowed Key to obtain this drops more commonly from Hallowed Mimics. | v:1260 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | SHPC | Ω (Soul of Sight) | This should be used with Souls of Sight. | CalamityMod:SHPC |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | ammo |  |  | Soul of Sight | Ω (SHPC) | This should be used with SHPC. | — |
 | armor |  |  | Spectre |  |  | v:1503 |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Undine's Retribution |  |  | CalamityMod:UndinesRetribution |
 | weapon |  |  | Wasp Gun |  (Super Mana Potion) | This should be used with Mana Regeneration Potions '''instead''' of Mana Potions. | v:1155 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -1625,34 +1625,34 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Bloom Stone |  |  | CalamityMod:BloomStone |
 | weapon |  |  | Botanic Piercer |  |  | CalamityMod:BotanicPiercer |
 | armor |  |  | Chlorophyte |  |  | v:1001 |
-| buff |  |  | Endurance Potion |  |  | — |
-| buff | offense |  | Flask of Brimstone |  | This is for all bosses that are not Leviathan and Anahita. | — |
-| buff | offense |  | Flask of Venom |  | This is for Leviathan and Anahita. | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
+| buff | offense |  | Flask of Brimstone |  | This is for all bosses that are not Leviathan and Anahita. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Venom |  | This is for Leviathan and Anahita. | v:1340 |
 | accessory | defense |  | Frozen Shield / Hero Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
-| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | — |
+| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | v:2323 |
 | weapon |  |  | Hellkite |  |  | CalamityMod:Hellkite |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Mechanical Glove |  |  | v:936 |
 | accessory |  |  | Moon Stone |  |  | v:900 |
-| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon | support |  | Vampire Knives | + | This is used for support and the Crimson Key to obtain this drops more commonly from Crimson Mimics. | v:1569 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -1660,43 +1660,43 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory |  |  | Amalgamated Brain |  |  | CalamityMod:AmalgamatedBrain |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Treads / Fairy Boots | Δ | Fairy boots offer defensive benefits. | CalamityMod:AngelTreads |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Asgard's Valor / Master Ninja Gear | Δ | Master Ninja Gear has a faster dash and a consistent dodge on a cooldown. | CalamityMod:AsgardsValor |
 | weapon |  |  | Bladedge Railbow |  |  | CalamityMod:BladedgeRailbow |
 | accessory | defense |  | Bloom Stone |  |  | CalamityMod:BloomStone |
 | weapon |  |  | Blossom Flux | * | This is difficult to obtain. | CalamityMod:BlossomFlux |
 | accessory | offense |  | Deadshot Brooch |  |  | CalamityMod:DeadshotBrooch |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | defense |  | Frozen Shield / Hero Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | armor |  |  | Hallowed |  |  | v:553 |
-| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | — |
+| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | v:2323 |
 | weapon |  |  | Hydra |  |  | CalamityMod:Hydra |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Megalodon |  |  | CalamityMod:Megalodon |
 | accessory |  |  | Moon Stone |  |  | v:900 |
-| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Ranger Emblem |  |  | v:491 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shroomite |  |  | v:1546 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | ammo |  |  | Venom Arrow |  |  | v:1341 |
 | ammo |  |  | Venom Bullet |  |  | v:1342 |
 | weapon |  |  | Wildfire Bloom |  |  | CalamityMod:WildfireBloom |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -1710,44 +1710,44 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Borealis Bomber | + | This is used for support. | CalamityMod:BorealisBomber |
 | weapon | minion |  | Desert Tiger Staff |  | The Desert Key to obtain this drops more commonly from Sand Elementals. | v:4607 |
 | weapon | sentry |  | Dreadmine Staff |  |  | CalamityMod:DreadmineStaff |
-| buff |  |  | Endurance Potion |  |  | — |
-| buff | offense |  | Evergreen Gin | Ω (Viral Sprout) | This should be used with Viral Sprout. | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
+| buff | offense |  | Evergreen Gin | Ω (Viral Sprout) | This should be used with Viral Sprout. | CalamityMod:EvergreenGin |
 | armor |  |  | Fathom Swarmer |  |  | CalamityMod:FathomSwarmerVisage |
-| buff | offense |  | Flask of Brimstone |  | This should be used for Astrum Aureus and Golem. | — |
-| buff | offense |  | Flask of Venom |  | This should be used for Leviathan and Anahita. | — |
+| buff | offense |  | Flask of Brimstone |  | This should be used for Astrum Aureus and Golem. | CalamityMod:FlaskOfBrimstone |
+| buff | offense |  | Flask of Venom |  | This should be used for Leviathan and Anahita. | v:1340 |
 | accessory | defense |  | Frozen Shield / Hero Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory |  |  | Hallowed Rune |  |  | CalamityMod:HallowedRune |
-| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | — |
+| buff |  |  | Heartreach Potion |  | Use on Astrum Aureus. | v:2323 |
 | weapon | sentry |  | Hive Pod |  |  | CalamityMod:HivePod |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory |  |  | Moon Stone |  |  | v:900 |
 | weapon | minion |  | Morning Star |  |  | v:4679 |
-| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Astrum Aureus. | CalamityMod:PhotosynthesisPotion |
 | weapon | minion |  | Plantation Staff |  |  | CalamityMod:PlantationStaff |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
 | weapon | minion |  | Sand Sharknado Staff |  |  | CalamityMod:SandSharknadoStaff |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | mobility |  | Spectre Wings | Δ | This has increased acceleration. | v:823 |
 | armor |  |  | Squire |  |  | v:3800 |
 | weapon | sentry |  | Staff of the Frost Hydra |  | The Frozen Key to obtain this drops more commonly from Ice Golems. | v:1572 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | offense |  | Starbuster Core |  |  | CalamityMod:StarbusterCore |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | The First Shadowflame |  |  | CalamityMod:TheFirstShadowflame |
 | armor |  |  | Tiki |  |  | v:1159 |
 | weapon | minion |  | Viral Sprout | Ω (Evergreen Gin) | This should be used with Evergreen Gin. | CalamityMod:ViralSprout |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-lunar → Lunatic Cultist (stage 62)
 
@@ -1770,44 +1770,44 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | spam |  | Destroyer Emblem |  |  | v:1301 |
 | weapon | stealth |  | Duke's Decapitator |  |  | CalamityMod:DukesDecapitator |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | spam |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | stealthAcc |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | stealth |  | Leviathan Teeth |  |  | CalamityMod:LeviathanTeeth |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | CalamityMod:PhotosynthesisPotion |
 | weapon | spam |  | Plaguenade |  |  | CalamityMod:Plaguenade |
 | weapon | stealth |  | Plaguenade |  |  | CalamityMod:Plaguenade |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | stealthAcc |  | Ruin Medallion |  |  | CalamityMod:RuinMedallion |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | armor |  |  | Shinobi Infiltrator | Δ | This works as a rogue armor. | v:3880 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon | spam |  | Stellar Knife |  |  | CalamityMod:StellarKnife |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon | stealth |  | System Bane |  |  | CalamityMod:SystemBane |
 | weapon | spam |  | The Syringe |  |  | CalamityMod:TheSyringe |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -1816,10 +1816,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Aerial Bane |  |  | v:3859 |
 | accessory | offense |  | Alchemical Decanter |  |  | CalamityMod:AlchemicalDecanter |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Treads / Fairy Boots | Δ | Fairy boots offer defensive benefits. | CalamityMod:AngelTreads |
 | accessory | offense |  | Apollyon |  |  | CalamityMod:Apollyon |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Asgard's Valor / Master Ninja Gear / Shield of the High Ruler | Δ | Master Ninja Gear has a faster dash and a consistent dodge on a cooldown. | CalamityMod:AsgardsValor |
 | weapon |  |  | B-GSS: Nidhogg |  |  | CalamityMod:Nidhogg |
 | accessory | mobility |  | Betsy's Wings |  (Angel Treads) | This should be used with Angel Treads. | v:3883 |
@@ -1829,38 +1829,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | accessory | offense |  | Deadshot Brooch |  |  | CalamityMod:DeadshotBrooch |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | weapon |  |  | Nullification Pistol |  |  | CalamityMod:NullificationPistol |
-| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | CalamityMod:PhotosynthesisPotion |
 | armor |  |  | Plague Reaper |  |  | CalamityMod:PlagueReaperMask |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | ammo |  |  | Rocket III |  |  | v:773 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shroomite |  |  | v:1546 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon |  |  | Stynger |  |  | v:1258 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | The Hive |  |  | CalamityMod:TheHive |
 | ammo |  |  | Venom Arrow |  |  | v:1341 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -1878,38 +1878,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Briny Baron |  |  | CalamityMod:BrinyBaron |
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon |  |  | Exalted Oathblade |  |  | CalamityMod:ExaltedOathblade |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | weapon |  |  | Flying Dragon |  |  | v:3827 |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon |  |  | Galvanizing Glaive |  |  | CalamityMod:GalvanizingGlaive |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon |  |  | Lucrecia |  |  | CalamityMod:Lucrecia |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -1929,39 +1929,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff | offense |  | Crystal Ball |  |  | — |
 | accessory | offense |  | Destroyer Emblem |  |  | v:1301 |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | v:2323 |
 | weapon |  |  | Hematemesis |  |  | CalamityMod:Hematemesis |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Plague Staff |  |  | CalamityMod:PlagueStaff |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon | support |  | Rainbow Gun | + | This is used for support and the Hallowed Key to obtain this drops more commonly from Hallowed Mimics. | v:1260 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| weapon |  |  | Stellar Tune |  |  | v:4715 |
+| weapon |  |  | Stellar Tune |  |  | ThoriumRework:StellarTune |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Wingman |  |  | CalamityMod:Wingman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -1978,42 +1978,42 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Dark Harvest / Kaleidoscope |  |  | v:4680 |
 | weapon | sentry |  | Dreadmine Staff |  |  | CalamityMod:DreadmineStaff |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon | minion |  | Fuel Cell Bundle |  |  | CalamityMod:FuelCellBundle |
 | buff |  |  | Greater Healing Potion |  |  | — |
 | accessory |  |  | Hallowed Rune |  |  | CalamityMod:HallowedRune |
-| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Heartreach Potion |  | Use on the Plaguebringer Goliath. | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | weapon | minion |  | Infected Remote |  |  | CalamityMod:InfectedRemote |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | defense |  | Living Dew |  |  | CalamityMod:LivingDew |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Papyrus Scarab |  |  | v:1864 |
-| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on the Plaguebringer Goliath. | CalamityMod:PhotosynthesisPotion |
 | armor |  |  | Plaguebringer |  |  | CalamityMod:PlaguebringerVisor |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | minion |  | Resurrection Butterfly |  |  | CalamityMod:ResurrectionButterfly |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | sentry |  | Spikecrag Staff |  |  | CalamityMod:SpikecragStaff |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | accessory | offense |  | Statis' Blessing |  |  | CalamityMod:StatisBlessing |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
 | buff | offense |  | War Table |  |  | — |
 | weapon | minion |  | Wither Blossoms Staff | + | This is used for support. | CalamityMod:WitherBlossomsStaff |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon | minion |  | Xeno Staff |  |  | v:2749 |
 
 ## calamity · pre-moonlord → Moon Lord (stage 66)
@@ -2039,43 +2039,43 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | spam |  | Destroyer Emblem |  |  | v:1301 |
 | weapon | stealth |  | Duke's Decapitator |  |  | CalamityMod:DukesDecapitator |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | spam |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | stealthAcc |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | defense |  | Infected Jewel |  | Use on Astrum Deus. | CalamityMod:InfectedJewel |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | stealth |  | Leviathan Teeth |  |  | CalamityMod:LeviathanTeeth |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | spam |  | Plaguenade |  |  | CalamityMod:Plaguenade |
 | weapon | spam |  | Radiant Star |  |  | CalamityMod:RadiantStar |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | spam |  | Regulus Riot |  |  | CalamityMod:RegulusRiot |
 | weapon | stealth |  | Regulus Riot |  |  | CalamityMod:RegulusRiot |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | weapon | spam |  | Shard of Antumbra |  |  | CalamityMod:ShardofAntumbra |
 | weapon | stealth |  | Shard of Antumbra |  |  | CalamityMod:ShardofAntumbra |
 | armor |  |  | Shinobi Infiltrator | Δ | This works as a rogue armor. | v:3880 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | spam |  | Star of Destruction |  |  | CalamityMod:StarofDestruction |
 | weapon | stealth |  | Star of Destruction |  |  | CalamityMod:StarofDestruction |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -2094,37 +2094,37 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon |  |  | Entropic Claymore |  |  | CalamityMod:EntropicClaymore |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon |  |  | Grand Guardian | † Ω (Hide of Astrum Deus) | This is risky to use and should be used with Hide of Astrum Deus. | CalamityMod:GrandGuardian |
 | accessory |  |  | Hide of Astrum Deus | Ω (Grand Guardian) | This should be used with Grand Guardian. | CalamityMod:HideofAstrumDeus |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | defense |  | Infected Jewel |  | Use on Astrum Deus. | CalamityMod:InfectedJewel |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Lucrecia |  |  | CalamityMod:Lucrecia |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Storm Ruler | C | This is best on worms and other multi-hit scenarios. | CalamityMod:StormRuler |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -2132,10 +2132,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Treads |  |  | CalamityMod:AngelTreads |
 | accessory | offense |  | Apollyon |  |  | CalamityMod:Apollyon |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Asgard's Valor / Master Ninja Gear / Shield of the High Ruler | Δ | Master Ninja Gear has a faster dash and a consistent dodge on a cooldown. | CalamityMod:AsgardsValor |
 | armor |  |  | Astral |  |  | CalamityMod:AstralHelm |
 | weapon |  |  | B-GSS: Nidhogg |  |  | CalamityMod:Nidhogg |
@@ -2150,7 +2150,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Deadshot Brooch |  |  | CalamityMod:DeadshotBrooch |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | ammo |  |  | Exploding Bullet | C | This is best on worms and other multi-hit scenarios. | v:1351 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
@@ -2158,26 +2158,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | defense |  | Infected Jewel |  | Use on Astrum Deus. | CalamityMod:InfectedJewel |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | armor |  |  | Lunic Corps |  |  | CalamityMod:LunicCorpsHelmet |
 | armor |  |  | Plague Reaper | † | This is difficult and risky to use. | CalamityMod:PlagueReaperMask |
 | weapon |  |  | Plague Tainted SMG | Ω (Bubonic Round) | This should be used with Bubonic Rounds. | CalamityMod:PlagueTaintedSMG |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | weapon |  |  | Vortexpopper |  |  | CalamityMod:Vortexpopper |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -2199,7 +2199,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | offense |  | Destroyer Emblem |  |  | v:1301 |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | offense |  | Eye of the Golem | Δ | This grants critical strike damage. | v:1248 |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
@@ -2208,28 +2208,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | defense |  | Infected Jewel |  | Use on Astrum Deus. | CalamityMod:InfectedJewel |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | weapon |  |  | Nebula Arcanum |  |  | v:3476 |
 | weapon |  |  | Nebula Blaze |  |  | v:3542 |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Star Shower |  |  | CalamityMod:StarShower |
 | buff |  |  | Super Healing Potion |  |  | — |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | weapon |  |  | The Swarmer | Ω (Hive Pack) | This should be used with Hive Pack. | CalamityMod:TheSwarmer |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -2247,41 +2247,41 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | mobility |  | Empress Wings |  |  | v:4823 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | mobility |  | Fishron Wings |  |  | v:2609 |
-| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | — |
+| buff | offense |  | Flask of Brimstone / Flask of Venom |  |  | CalamityMod:FlaskOfBrimstone |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon | minion |  | Fuel Cell Bundle |  |  | CalamityMod:FuelCellBundle |
 | accessory |  |  | Heart of the Elements | Ω (Heartreach Potion) | This should be used with Heartreach Potion. | CalamityMod:HeartoftheElements |
-| buff |  |  | Heartreach Potion | Ω (Heart of the Elements) | This should be used with Heart of the Elements. | — |
+| buff |  |  | Heartreach Potion | Ω (Heart of the Elements) | This should be used with Heart of the Elements. | v:2323 |
 | armor |  |  | Hydrothermic |  |  | CalamityMod:HydrothermicHeadMagic |
 | accessory | defense |  | Infected Jewel |  | Use on Astrum Deus. | CalamityMod:InfectedJewel |
 | accessory | mobility |  | Interstellar Stompers |  |  | CalamityMod:InterstellarStompers |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | offense |  | Papyrus Scarab |  |  | v:1864 |
 | armor |  |  | Plaguebringer |  |  | CalamityMod:PlaguebringerVisor |
 | armor |  |  | Reaver |  |  | CalamityMod:ReaverHeadExplore |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | sentry |  | Spikecrag Staff |  |  | CalamityMod:SpikecragStaff |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | weapon | minion |  | Stardust Cell Staff |  |  | v:3474 |
 | accessory | offense |  | Statis' Curse |  |  | CalamityMod:StatisCurse |
-| buff | offense |  | Summoning Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
 | buff | offense |  | War Table |  |  | — |
 | weapon | minion |  | Wither Blossoms Staff | + | This is used for support. | CalamityMod:WitherBlossomsStaff |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-polter → Polterghast (stage 81)
 
@@ -2305,26 +2305,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
 | armor |  |  | Empyrean |  |  | CalamityMod:EmpyreanMask |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | spam |  | Molten Amputator |  |  | CalamityMod:MoltenAmputator |
 | weapon | stealth |  | Molten Amputator |  |  | CalamityMod:MoltenAmputator |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | weapon | stealth |  | Profaned Partisan |  |  | CalamityMod:ProfanedPartisan |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon | stealth |  | Reality Rupture |  |  | CalamityMod:RealityRupture |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | stealthAcc |  | Spectral Veil | † | This is difficult and risky to use. | CalamityMod:SpectralVeil |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | weapon | spam |  | Tarragon Throwing Dart |  |  | CalamityMod:TarragonThrowingDart |
 | accessory | mobility |  | Tarragon Wings |  | This has more flight time than the other wings. | CalamityMod:TarragonWings |
@@ -2334,7 +2334,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Twisting Thunder | C | This is best used on worms and other multi-hit scenarios. | CalamityMod:TwistingThunder |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
 | weapon | spam |  | Wave Pounder |  |  | CalamityMod:WavePounder |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -2351,25 +2351,25 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
 | weapon | support |  | Empyrean Knives | + | This is used for support. | CalamityMod:EmpyreanKnives |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
-| buff | offense |  | Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
 | weapon |  |  | Holy Collider | † | This is difficult to use. | CalamityMod:HolyCollider |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Meowmere |  |  | v:3063 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | weapon |  |  | Pulse Dragon |  |  | CalamityMod:PulseDragon |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Stellar Contempt |  |  | CalamityMod:StellarContempt |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | accessory | mobility |  | Tarragon Wings |  | This has more flight time than the other wings. | CalamityMod:TarragonWings |
 | weapon |  |  | Terratomere |  |  | CalamityMod:Terratomere |
@@ -2377,7 +2377,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -2385,10 +2385,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | weapon |  |  | Angelic Shotgun |  |  | CalamityMod:AngelicShotgun |
 | accessory | offense |  | Arc Flash Ring |  |  | CalamityMod:ArcFlashRing |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Ascendant Insignia |  |  | CalamityMod:AscendantInsignia |
 | weapon | support |  | Blood Boiler | + | This is used for support. | CalamityMod:BloodBoiler |
 | buff |  |  | Bloodfin / Supreme Healing Potion |  |  | — |
@@ -2401,30 +2401,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
 | ammo |  |  | Endless Musket Pouch |  |  | v:3104 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | ammo |  |  | Luminite Arrow | C | This is best on worms and other multi-hit scenarios. | v:3568 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | weapon |  |  | Ontological Despoiler |  |  | CalamityMod:OntologicalDespoiler |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Spyker |  |  | CalamityMod:Spyker |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | accessory | mobility |  | Tarragon Wings |  | This has more flight time than the other wings. | CalamityMod:TarragonWings |
 | weapon |  |  | Telluric Glare |  |  | CalamityMod:TelluricGlare |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -2442,26 +2442,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Destroyer Emblem |  |  | v:1301 |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | weapon |  |  | Nano Purge |  |  | CalamityMod:NanoPurge |
 | weapon |  |  | Plasma Caster |  |  | CalamityMod:PlasmaCaster |
 | armor |  |  | Prismatic |  |  | CalamityMod:PrismaticHelmet |
 | weapon |  |  | Purge Guzzler |  |  | CalamityMod:PurgeGuzzler |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | accessory | mobility |  | Tarragon Wings |  | This has more flight time than the other wings. | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
@@ -2469,7 +2469,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | weapon |  |  | Thorn Blossom |  |  | CalamityMod:ThornBlossom |
 | weapon |  |  | Volterion |  |  | CalamityMod:Volterion |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -2485,30 +2485,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Dragonblood Disgorger | + | This is used for support. | CalamityMod:DragonbloodDisgorger |
 | accessory | mobility |  | Elysian Aegis / Statis' Ninja Belt |  |  | CalamityMod:ElysianAegis |
 | accessory | mobility |  | Elysian Wings |  | This is faster than the other wings. | CalamityMod:ElysianWings |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Ichor |  |  | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
 | weapon | minion |  | King of Constellations, Tenryū |  |  | CalamityMod:KingofConstellationsTenryu |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | sentry |  | Lunar Portal Staff |  |  | v:3569 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | accessory |  |  | Profaned Soul Artifact |  |  | CalamityMod:ProfanedSoulArtifact |
 | weapon | sentry |  | Rainbow Crystal Staff |  |  | v:3571 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon | sentry |  | Sanctified Spark | + | This is used for support. | CalamityMod:SanctifiedSpark |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon | minion |  | Snake Eyes |  |  | CalamityMod:SnakeEyes |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | armor |  |  | Stardust | Ω (Stardust Wings) | This should be used with Stardust Wings. | v:3381 |
 | accessory | mobility |  | Stardust Wings | Ω (Stardust armor) | This should be used with Stardust armor. | v:3471 |
 | accessory | offense |  | Statis' Curse |  |  | CalamityMod:StatisCurse |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Tarragon |  |  | CalamityMod:TarragonHeadMagic |
 | accessory | mobility |  | Tarragon Wings |  | This has more flight time than the other wings. | CalamityMod:TarragonWings |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
@@ -2516,7 +2516,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
 | weapon | minion |  | Virid Vanguard |  |  | CalamityMod:ViridVanguard |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-provi → Providence, the Profaned Goddess (stage 75)
 
@@ -2539,39 +2539,39 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | spam |  | Destroyer Emblem |  |  | v:1301 |
 | armor |  |  | Empyrean | Ω (Exodus Wings) | This should be used with Exodus Wings. | CalamityMod:EmpyreanMask |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Exodus Wings | Ω (Empyrean armor) | This should be used with Empyrean armor. | CalamityMod:ExodusWings |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
-| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | spam |  | Lunar Kunai |  |  | CalamityMod:LunarKunai |
 | weapon | stealth |  | Lunar Kunai |  |  | CalamityMod:LunarKunai |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
-| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | — |
+| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | CalamityMod:PhotosynthesisPotion |
 | weapon | spam |  | Profaned Partisan |  |  | CalamityMod:ProfanedPartisan |
 | weapon | stealth |  | Profaned Partisan |  |  | CalamityMod:ProfanedPartisan |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | weapon | spam |  | Rebounding Rainbow |  |  | CalamityMod:ReboundingRainbow |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | weapon | stealth |  | Utensil Poker |  |  | CalamityMod:UtensilPoker |
 | accessory | stealthAcc |  | Vampiric Talisman |  |  | CalamityMod:VampiricTalisman |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -2586,37 +2586,37 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Shell |  |  | v:3110 |
 | accessory | mobility |  | Celestial Starboard |  | This has powerful hover and boost abilities. | v:4954 |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | offense |  | Fire Gauntlet |  |  | v:1343 |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon |  |  | Greatsword of Judgement |  |  | CalamityMod:GreatswordofJudgement |
-| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Lightspeed | † | This is risky to use. | CalamityMod:Lightspeed |
 | weapon |  |  | Meowmere |  |  | v:3063 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
-| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | — |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | armor |  |  | Solar Flare | Ω (Solar Wings) | This should be used with Solar Wings. | v:2763 |
 | accessory | mobility |  | Solar Wings | Ω (Solar Flare armor) | This should be used with Solar Flare armor. | v:3468 |
 | weapon |  |  | Stellar Contempt |  |  | CalamityMod:StellarContempt |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -2624,8 +2624,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Asgard's Valor / Statis' Ninja Belt / Shield of the High Ruler |  |  | CalamityMod:AsgardsValor |
 | armor |  |  | Astral |  |  | CalamityMod:AstralHelm |
 | weapon |  |  | Barracuda Gun |  |  | CalamityMod:BarracudaGun |
@@ -2637,30 +2637,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | offense |  | Dynamo Stem Cells |  |  | CalamityMod:DynamoStemCells |
 | ammo |  |  | Endless Musket Pouch |  |  | v:3104 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
-| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | armor |  |  | Lunic Corps |  |  | CalamityMod:LunicCorpsHelmet |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
-| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | — |
+| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Planetary Annihilation | Ω (Wooden Arrow) | This should be used with Wooden Arrows. | CalamityMod:PlanetaryAnnihilation |
 | weapon |  |  | Prideful Hunter's Planar Ripper |  |  | CalamityMod:PridefulHuntersPlanarRipper |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Recon Scope |  |  | v:4005 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Super Healing Potion |  |  | — |
 | weapon |  |  | Superradiant Slaughterer |  |  | CalamityMod:SuperradiantSlaughterer |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | ammo |  |  | Venom Arrow |  |  | v:1341 |
@@ -2668,7 +2668,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Vortex Booster | Δ Ω (Vortex armor) | This restores flight time while in Vortex stealth and so should be used with Vortex armor. | v:3469 |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
 | ammo |  |  | Wooden Arrow | Ω (Planetary Annihilation) | This should be used with Planetary Annihilation. | v:40 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -2685,38 +2685,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff | offense |  | Crystal Ball |  |  | — |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | offense |  | Destroyer Emblem |  |  | v:1301 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | weapon |  |  | Genesis |  |  | CalamityMod:Genesis |
-| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
 | armor |  |  | Nebula | Ω (Nebula Mantle) | This should be used with Nebula Mantle. | v:2760 |
 | accessory | mobility |  | Nebula Mantle | Δ Ω (Nebula armor) | This grants increased booster pickup range and so should be used with Nebula armor. | v:3470 |
 | weapon |  |  | Nuclear Fury |  |  | CalamityMod:NuclearFury |
 | weapon |  |  | Nucleosynthesis |  |  | CalamityMod:Nucleosynthesis |
-| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | — |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | CalamityMod:PhotosynthesisPotion |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon |  |  | Rouge Slash |  |  | CalamityMod:RougeSlash |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Super Healing Potion |  |  | — |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -2730,43 +2730,43 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Candles#Purchased |  |  | — |
 | accessory | mobility |  | Celestial Starboard |  | This has powerful hover and boost abilities. | v:4954 |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | weapon | minion |  | Flowers of Mortality | + | This is used for support. | CalamityMod:FlowersOfMortality |
 | accessory | defense |  | Frozen Shield |  |  | v:3997 |
 | accessory |  |  | Heart of the Elements |  |  | CalamityMod:HeartoftheElements |
-| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | — |
+| buff |  |  | Heartreach Potion |  | Use this on Dragonfolly. | v:2323 |
 | ammo |  |  | Holy Fire Bullet / Luminite Bullet |  |  | CalamityMod:HolyFireBullet |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
 | weapon | minion |  | Legion of Celestia |  |  | CalamityMod:LegionofCelestia |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | sentry |  | Lunar Portal Staff |  |  | v:3569 |
 | accessory | mobility |  | Moon Walkers |  |  | CalamityMod:MoonWalkers |
-| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | — |
+| buff |  |  | Photosynthesis Potion |  | Use this on Dragonfolly. | CalamityMod:PhotosynthesisPotion |
 | weapon | sentry |  | Rainbow Crystal Staff |  |  | v:3571 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Relic of Deliverance |  |  | CalamityMod:RelicOfDeliverance |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon | sentry |  | Sanctified Spark | + | This is used for support. | CalamityMod:SanctifiedSpark |
 | accessory | offense |  | Sand Shark Tooth Necklace |  |  | CalamityMod:SandSharkToothNecklace |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Soaring Insignia | Δ | This no longer grants infinite flight. | v:4989 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Star-Tainted Generator |  |  | CalamityMod:StarTaintedGenerator |
 | armor |  |  | Stardust | Ω (Stardust Wings) | This should be used with Stardust Wings. | v:3381 |
 | accessory | mobility |  | Stardust Wings | Ω (Stardust armor) | This should be used with Stardust armor. | v:3471 |
 | accessory | offense |  | Statis' Curse |  |  | CalamityMod:StatisCurse |
-| buff | offense |  | Summoning Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Super Healing Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon | minion |  | Tactical Plague Engine |  |  | CalamityMod:TacticalPlagueEngine |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | armor |  |  | Valhalla Knight |  |  | v:3871 |
 | buff | offense |  | War Table |  |  | — |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-wof → Wall of Flesh (stage 30)
 
@@ -2780,7 +2780,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Batholith Bangle |  |  | CalamityMod:BatholithBangle |
 | weapon |  |  | Blood Bath |  |  | CalamityMod:BloodBath |
 | accessory | offense |  | Bone Glove |  |  | v:3245 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
@@ -2788,59 +2788,59 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
 | weapon |  |  | Demon Scythe |  |  | v:272 |
 | weapon |  |  | Eldritch Tome |  |  | CalamityMod:EldritchTome |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
-| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | v:2323 |
 | buff |  |  | Honeyfin / Restoration Potion |  |  | — |
-| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | v:2348 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | offense |  | Mana Flower / Magic Cuffs |  |  | v:555 |
 | accessory | offense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
 | buff |  |  | Mana Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | armor |  |  | Meteor |  |  | v:123 |
 | weapon |  |  | Night's Ray |  |  | CalamityMod:NightsRay |
 | accessory | defense |  | Obsidian Shield |  |  | v:397 |
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | buff | mobility |  | Slice of Cake |  |  | — |
 | armor |  |  | Statigel |  |  | CalamityMod:StatigelHeadMagic |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Terraspark Boots |  |  | v:5000 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | weapon |  |  | Archerfish | Ω (Tungsten Bullet) | This should be used with Musket Balls or Tungsten Bullets. | CalamityMod:Archerfish |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | offense |  | Bone Glove |  |  | v:3245 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | mobility |  | Counter Scarf |  |  | CalamityMod:CounterScarf |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon |  |  | Flurrystorm Cannon |  |  | CalamityMod:FlurrystormCannon |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | weapon |  |  | Gunk Shot |  |  | CalamityMod:GunkShot |
-| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | v:2323 |
 | buff |  |  | Honeyfin / Restoration Potion |  |  | — |
-| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | v:2348 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Lunarian Bow |  |  | CalamityMod:LunarianBow |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | ammo |  |  | Meteor Shot |  |  | v:234 |
@@ -2849,17 +2849,17 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Obsidian Shield |  |  | v:397 |
 | accessory | offense |  | Protolith Bangle |  |  | CalamityMod:ProtolithBangle |
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadethrower |  |  | CalamityMod:Shadethrower |
 | ammo |  |  | Shimmer Arrow |  |  | v:5348 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | buff | mobility |  | Slice of Cake |  |  | — |
 | armor |  |  | Statigel |  |  | CalamityMod:StatigelHeadMagic |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Terraspark Boots |  |  | v:5000 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -2868,44 +2868,44 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Bee |  |  | v:2361 |
 | buff | offense |  | Bewitching Table |  |  | — |
 | accessory | offense |  | Bone Glove |  |  | v:3245 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | mobility |  | Counter Scarf |  |  | CalamityMod:CounterScarf |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
 | weapon | minion |  | Dank Staff |  |  | CalamityMod:DankStaff |
-| buff |  |  | Endurance Potion |  |  | — |
-| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
+| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | v:1359 |
 | weapon | minion |  | Flesh of Infidelity | † | This requires an arena set at the same height as one of the Wall of Flesh's eyes. | CalamityMod:FleshOfInfidelity |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
-| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | v:2323 |
 | buff |  |  | Honeyfin / Restoration Potion |  |  | — |
 | weapon | sentry |  | Houndius Shootius |  |  | v:5119 |
 | weapon | minion |  | Imp Staff |  |  | v:2365 |
-| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | v:2348 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | armor |  |  | Obsidian |  |  | v:3266 |
 | accessory | defense |  | Obsidian Shield |  |  | v:397 |
 | weapon | sentry |  | Polyp Launcher |  |  | CalamityMod:PolypLauncher |
 | accessory | offense |  | Pygmy Necklace |  |  | v:1158 |
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | buff | mobility |  | Slice of Cake |  |  | — |
 | weapon | minion |  | Spinal Tap |  |  | v:5074 |
 | weapon | minion |  | Staff of Necrosteocytes | † | This requires an arena set at the same height as one of the Wall of Flesh's eyes. | CalamityMod:StaffOfNecrosteocytes |
 | armor |  |  | Statigel |  |  | CalamityMod:StatigelHeadMagic |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Terraspark Boots |  |  | v:5000 |
 | buff | offense |  | War Table | * | This is difficult to obtain. | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -2913,7 +2913,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory |  |  | Bloodstained Glove |  |  | CalamityMod:BloodstainedGlove |
 | accessory | offense |  | Bone Glove |  |  | v:3245 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
@@ -2921,11 +2921,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Counter Scarf |  |  | CalamityMod:CounterScarf |
 | accessory | spam |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | spam |  | Feather Knife |  |  | CalamityMod:FeatherKnife |
 | accessory | stealthAcc |  | Filthy Glove |  |  | CalamityMod:FilthyGlove |
-| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | — |
+| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | v:1359 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | weapon | spam |  | Gel Dart |  |  | CalamityMod:GelDart |
 | weapon | stealth |  | Gel Dart |  |  | CalamityMod:GelDart |
@@ -2933,30 +2933,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Glaive |  |  | CalamityMod:Glaive |
 | weapon | stealth |  | Glaive | † | This requires aggresive play to use. | CalamityMod:Glaive |
 | ammo |  |  | Gold Coin | ≤ Ω (Walking Cane) | Upgrades of this are also viable, and should be in the inventory if using Walking Cane. | v:73 |
-| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | v:2323 |
 | buff |  |  | Honeyfin / Restoration Potion |  |  | — |
-| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | v:2348 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | spam |  | Lionfish |  |  | CalamityMod:Lionfish |
 | weapon | stealth |  | Lionfish |  |  | CalamityMod:Lionfish |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | stealthAcc |  | Mirage Mirror |  |  | CalamityMod:MirageMirror |
 | accessory | defense |  | Obsidian Shield |  |  | v:397 |
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | spam |  | Shark Tooth Necklace |  |  | v:3212 |
 | weapon | stealth |  | Shinobi Blade |  |  | CalamityMod:ShinobiBlade |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | buff | mobility |  | Slice of Cake |  |  | — |
 | armor |  |  | Statigel |  |  | CalamityMod:StatigelHeadMagic |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Terraspark Boots |  |  | v:5000 |
 | weapon | spam |  | Walking Cane |  |  | CalamityMod:WalkingCane |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### melee
 
@@ -2964,7 +2964,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Bloody Worm Tooth |  |  | CalamityMod:BloodyWormTooth |
 | accessory | offense |  | Bone Glove |  |  | v:3245 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
@@ -2972,34 +2972,34 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
 | weapon |  |  | Dark Lance | † | This is risky to use. | v:274 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Feral Claws |  |  | v:211 |
-| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | — |
+| buff | offense |  | Flask of Fire |  | This should be used on Slime God. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Wall of Flesh. | v:1359 |
 | weapon |  |  | Fractured Ark |  | This weapon does not benefit from melee speed bonuses. | CalamityMod:FracturedArk |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | weapon |  |  | Goldplume Spear |  |  | CalamityMod:GoldplumeSpear |
-| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | — |
+| buff |  |  | Heartreach Potion |  | This should be used on Wall of Flesh. | v:2323 |
 | buff |  |  | Honeyfin / Restoration Potion |  |  | — |
-| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Inferno Potion | † | This is difficult to use due to screen clutter. | v:2348 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | armor |  |  | Molten |  |  | v:231 |
 | accessory | defense |  | Obsidian Shield |  |  | v:397 |
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | buff | mobility |  | Slice of Cake |  |  | — |
 | armor |  |  | Statigel |  |  | CalamityMod:StatigelHeadMagic |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | mobility |  | Terraspark Boots |  |  | v:5000 |
 | weapon |  |  | Wind Blade |  |  | CalamityMod:WindBlade |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-scal-exo → XG-07 Mars (stage 92)
 
@@ -3010,9 +3010,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Ace's High |  |  | CalamityMod:AcesHigh |
 | accessory |  |  | Affliction |  |  | CalamityMod:Affliction |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | offense |  | Arc Flash Ring |  |  | CalamityMod:ArcFlashRing |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Ascendant Insignia |  |  | CalamityMod:AscendantInsignia |
 | accessory | mobility |  | Asgardian Aegis / Statis' Void Sash |  |  | CalamityMod:AsgardianAegis |
 | armor |  |  | Auric Tesla |  |  | CalamityMod:AuricTeslaHeadMagic |
@@ -3023,26 +3023,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | weapon |  |  | Dragon's Breath |  |  | ThoriumMod:DragonsBreath |
 | ammo |  |  | Endless Musket Pouch | Ω (Tyranny's End) | This should be used with Tyranny's End. | v:3104 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | ammo |  |  | Holy Fire Bullet |  |  | CalamityMod:HolyFireBullet |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | ammo |  |  | Mini Nuke I |  |  | v:4457 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | offense |  | Planebreaker's Pouch |  |  | CalamityMod:PlanebreakersPouch |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon |  |  | Starmada | † | This is difficult to use. | CalamityMod:Starmada |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3050,7 +3050,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | weapon |  |  | Tyranny's End | Ω (Endless Musket Pouch) | This should be used with Endless Musket Pouch. | CalamityMod:TyrannysEnd |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -3066,28 +3066,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Chalice of the Blood God |  |  | CalamityMod:ChaliceOfTheBloodGod |
 | buff | offense |  | Crystal Ball |  |  | — |
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Ethereal Talisman |  |  | CalamityMod:EtherealTalisman |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | weapon |  |  | Hyperdeath Rift Scepter | C | This is best on worms and other multi-hit scenarios. | CalamityMod:HyperdeathRiftScepter |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon |  |  | Primordial Ancient |  |  | CalamityMod:PrimordialAncient |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam | Ω (Void Vortex) | This should be used with Void Vortex. | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3095,7 +3095,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | weapon |  |  | Void Vortex | Ω (The Amalgam) | This should be used with The Amalgam. | CalamityMod:VoidVortex |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon |  |  | Yharim's Crystal | * | This is difficult to obtain. | CalamityMod:YharimsCrystal |
 
 ### melee
@@ -3114,24 +3114,24 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | weapon |  |  | Dragon Pow |  |  | CalamityMod:DragonPow |
 | accessory | offense |  | Elemental Gauntlet |  |  | CalamityMod:ElementalGauntlet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon |  |  | Orderbringer |  |  | CalamityMod:Orderbringer |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | weapon |  |  | The Burning Sky |  |  | CalamityMod:TheBurningSky |
@@ -3139,7 +3139,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon |  |  | Zenith |  |  | v:4956 |
 
 ### summon
@@ -3155,12 +3155,12 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | sentry |  | Cadaverous Carrion |  |  | CalamityMod:CadaverousCarrion |
 | accessory | defense |  | Chalice of the Blood God |  |  | CalamityMod:ChaliceOfTheBloodGod |
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | minion |  | Lilies of Finality |  |  | CalamityMod:LiliesOfFinality |
 | weapon | minion |  | Midnight Sun Beacon |  |  | CalamityMod:MidnightSunBeacon |
 | weapon | minion |  | Mirror of Kalandra |  |  | CalamityMod:MirrorofKalandra |
@@ -3170,23 +3170,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon | sentry |  | Sanctified Spark | + | This is used for support. | CalamityMod:SanctifiedSpark |
 | weapon | minion |  | Saros Possession |  |  | CalamityMod:SarosPossession |
 | weapon | minion |  | Saros Possession |  |  | CalamityMod:SarosPossession |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | buff | offense |  | War Table |  |  | — |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -3205,28 +3205,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | stealth |  | Dynamic Pursuer |  |  | CalamityMod:DynamicPursuer |
 | accessory | spam |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
 | accessory | stealthAcc |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Crumbling |  |  | — |
+| buff | offense |  | Flask of Crumbling |  |  | CalamityMod:FlaskOfCrumbling |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | spam |  | Nanotech |  |  | CalamityMod:Nanotech |
 | accessory | stealthAcc |  | Nanotech |  |  | CalamityMod:Nanotech |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory | defense |  | Radiance |  |  | CalamityMod:Radiance |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | defense |  | Rampart of Deities |  |  | CalamityMod:RampartofDeities |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Seraph Tracers |  |  | CalamityMod:SeraphTracers |
 | weapon | spam |  | Seraphim |  |  | CalamityMod:Seraphim |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | stealthAcc |  | Spectral Veil | † | This is difficult and risky to use. | CalamityMod:SpectralVeil |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3234,7 +3234,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | stealth |  | The Old Reaper |  |  | CalamityMod:TheOldReaper |
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Wings of Rebirth |  |  | CalamityMod:WingsofRebirth |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | weapon | spam |  | Wrathwing |  |  | CalamityMod:Wrathwing |
 | weapon | stealth |  | Wrathwing |  |  | CalamityMod:Wrathwing |
 
@@ -3247,12 +3247,12 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Acid Gun |  |  | CalamityMod:AcidGun |
 | accessory | offense |  | Amidias' Pendant |  |  | CalamityMod:AmidiasPendant |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | weapon | support |  | Crimson Rod | C + | This is best on worms and other multi-hit scenarios, and is a support weapon. | v:1256 |
 | accessory | defense |  | Crown Jewel | * | This is difficult to obtain. | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
@@ -3261,27 +3261,27 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
 | weapon |  |  | Gray Zapinator | † * | This is difficult to use and to obtain. | v:4347 |
 | buff |  |  | Healing Potion / Strange Brew | ≤ | Upgrades of this are also viable. | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | armor |  |  | Jungle |  |  | v:228 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | offense |  | Mana Flower / Magic Cuffs |  |  | v:555 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon |  |  | Sparkling Empress | C | This is best on worms and other multi-hit scenarios. | CalamityMod:SparklingEmpress |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | weapon |  |  | Thunder Zapper |  |  | v:4062 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### melee
 
@@ -3290,11 +3290,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Amidias' Pendant |  |  | CalamityMod:AmidiasPendant |
 | weapon |  |  | Basher | † | This is risky to use. | CalamityMod:Basher |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel | * | This is difficult to obtain. | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | offense |  | Feral Claws |  |  | v:211 |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
@@ -3303,41 +3303,41 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
 | buff |  |  | Healing Potion / Strange Brew | ≤ | Upgrades of this are also viable. | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | weapon |  |  | Sahara Slicers | † | This is risky to use. | CalamityMod:SaharaSlicers |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Seashine Sword |  |  | CalamityMod:SeashineSword |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | weapon |  |  | Trimarang |  |  | v:5298 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | weapon |  |  | Urchin Mace | C | This is best on worms and other multi-hit scenarios. | CalamityMod:UrchinMace |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### ranged
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Amidias' Pendant |  |  | CalamityMod:AmidiasPendant |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
 | weapon |  |  | Blood Rain Bow |  |  | v:4381 |
 | weapon |  |  | Boomstick |  |  | v:964 |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel | * | This is difficult to obtain. | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | ammo |  |  | Flash Round | C | This is best on worms and other multi-hit scenarios. | CalamityMod:FlashRound |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
@@ -3348,26 +3348,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
 | buff |  |  | Healing Potion / Strange Brew | ≤ | Upgrades of this are also viable. | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | ammo |  |  | Musket Ball / Tungsten Bullet | Ω (Fungicide) | This should be used with Fungicide. | v:97 |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | offense |  | Scions Curio |  |  | CalamityMod:ScionsCurio |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | ammo |  |  | Shimmer Arrow |  |  | v:5348 |
 | armor |  |  | Snow Ruffian |  |  | CalamityMod:SnowRuffianMask |
 | weapon |  |  | Spark Spreader |  |  | CalamityMod:SparkSpreader |
 | weapon | support |  | Spiky Ball | + | This is used for support. | v:161 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### summon
 
@@ -3375,13 +3375,13 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Amidias' Pendant |  |  | CalamityMod:AmidiasPendant |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | weapon | minion |  | Brittle Star Staff |  |  | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel | * | This is difficult to obtain. | CalamityMod:CrownJewel |
 | weapon | minion |  | Deathstare Rod |  |  | CalamityMod:DeathstareRod |
 | weapon | minion |  | Enchanted Conch | C | This is best on worms and other multi-hit scenarios. | CalamityMod:EnchantedConch |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
 | armor |  |  | Flinx Fur Coat |  |  | v:5068 |
@@ -3390,25 +3390,25 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
 | buff |  |  | Healing Potion / Strange Brew | ≤ | Upgrades of this are also viable. | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon | sentry |  | Polyp Launcher |  |  | CalamityMod:PolypLauncher |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | weapon | sentry |  | Rusty Beacon Prototype |  |  | CalamityMod:RustyBeaconPrototype |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon | minion |  | Snapthorn |  |  | v:4913 |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
 | accessory | offense |  | Voltaic Jelly |  |  | CalamityMod:VoltaicJelly |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | armor |  |  | Wulfrum |  |  | CalamityMod:WulfrumHat |
 
 ### rogue
@@ -3417,14 +3417,14 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Amidias' Pendant |  |  | CalamityMod:AmidiasPendant |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | spam |  | Coin of Deceit |  |  | CalamityMod:CoinofDeceit |
 | accessory | stealthAcc |  | Coin of Deceit |  |  | CalamityMod:CoinofDeceit |
 | weapon | stealth |  | Contaminated Bile |  |  | CalamityMod:ContaminatedBile |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | accessory | defense |  | Crown Jewel | * | This is difficult to obtain. | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
@@ -3432,29 +3432,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
 | buff |  |  | Healing Potion / Strange Brew | ≤ | Upgrades of this are also viable. | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon | spam |  | Pumpkaboom |  |  | CalamityMod:Pumpkaboom |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | weapon | spam |  | Sand Dollar |  |  | CalamityMod:SandDollar |
 | weapon | stealth |  | Scourge of the Desert |  |  | CalamityMod:ScourgeoftheDesert |
 | accessory | stealthAcc |  | Scuttler's Jewel |  |  | CalamityMod:ScuttlersJewel |
 | weapon | spam |  | Seafoam Bomb |  |  | CalamityMod:SeafoamBomb |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon | spam |  | Spore Knife |  |  | CalamityMod:SporeKnife |
 | weapon | stealth |  | Spore Knife |  |  | CalamityMod:SporeKnife |
 | armor |  |  | Sulphurous |  |  | CalamityMod:SulphurousHelmet |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ## calamity · pre-skeletron → Skeletron (stage 20)
 
@@ -3465,38 +3465,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Aerospec |  |  | CalamityMod:AerospecHeadMagic |
 | accessory | offense |  | Batholith Bangle |  |  | CalamityMod:BatholithBangle |
 | weapon |  |  | Blood Bath |  |  | CalamityMod:BloodBath |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | offense |  | Mana Flower / Magic Cuffs |  |  | v:555 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | armor |  |  | Meteor | Ω (Space Gun) | This should be used with Space Gun. | v:123 |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shaderain Staff |  |  | CalamityMod:ShaderainStaff |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | weapon |  |  | Space Gun | Ω (Meteor armor) | This should be used with Meteor armor. | v:127 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Tradewinds |  |  | CalamityMod:Tradewinds |
-| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | — |
+| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | v:2359 |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### rogue
 
@@ -3504,7 +3504,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | armor |  |  | Aerospec |  |  | CalamityMod:AerospecHeadMagic |
 | accessory |  |  | Bloodstained Glove |  |  | CalamityMod:BloodstainedGlove |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
@@ -3513,38 +3513,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | spam |  | Feather Knife |  |  | CalamityMod:FeatherKnife |
 | weapon | stealth |  | Feather Knife |  |  | CalamityMod:FeatherKnife |
 | accessory | stealthAcc |  | Filthy Glove |  |  | CalamityMod:FilthyGlove |
-| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | — |
+| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | v:1359 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | weapon | spam |  | Hardened Honeycomb |  |  | CalamityMod:HardenedHoneycomb |
 | weapon | stealth |  | Hardened Honeycomb |  |  | CalamityMod:HardenedHoneycomb |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon | spam |  | Meteor Fist |  |  | CalamityMod:MeteorFist |
 | weapon | stealth |  | Meteor Fist |  |  | CalamityMod:MeteorFist |
 | weapon | spam |  | P-LSR: Aerial Tracker |  |  | CalamityMod:AerialTracker |
 | weapon | stealth |  | P-LSR: Aerial Tracker |  |  | CalamityMod:AerialTracker |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | spam |  | Rot Ball / Tooth Ball |  |  | CalamityMod:RotBall |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | spam |  | Shark Tooth Necklace |  |  | v:3212 |
 | accessory | stealthAcc |  | Silencing Sheath |  |  | CalamityMod:SilencingSheath |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | v:2359 |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### melee
 
@@ -3554,38 +3554,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Aorta |  |  | CalamityMod:Aorta |
 | weapon |  |  | Bladecrest Oathsword |  |  | CalamityMod:BladecrestOathsword |
 | accessory | offense |  | Bloody Worm Tooth |  |  | CalamityMod:BloodyWormTooth |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Feral Claws |  |  | v:211 |
-| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | — |
+| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | v:1359 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | weapon |  |  | Goldplume Spear |  |  | CalamityMod:GoldplumeSpear |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | armor |  |  | Molten |  |  | v:231 |
 | weapon |  |  | Perfect Dark / Vein Burster |  |  | CalamityMod:PerfectDark |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | v:2359 |
 | weapon |  |  | Wind Blade |  |  | CalamityMod:WindBlade |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### summon
 
@@ -3593,84 +3593,84 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | armor |  |  | Aerospec |  |  | CalamityMod:AerospecHeadMagic |
 | armor |  |  | Bee |  |  | v:2361 |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
 | weapon | minion |  | Dank Staff |  |  | CalamityMod:DankStaff |
-| buff |  |  | Endurance Potion |  |  | — |
-| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | — |
-| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
+| buff | offense |  | Flask of Fire |  | This should be used on Skeletron. | v:1354 |
+| buff | offense |  | Flask of Poison |  | This should be used on Deerclops. | v:1359 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | offense |  | Hive Pack | Ω (Hornet Staff) | This should be used with Hornet Staff. | v:3333 |
 | weapon | minion |  | Hornet Staff | Ω (Hive Pack) | This should be used with Hive Pack. | v:2364 |
 | weapon | sentry |  | Houndius Shootius |  |  | v:5119 |
 | weapon | minion |  | Imp Staff |  |  | v:2365 |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | armor |  |  | Obsidian |  |  | v:3266 |
 | weapon | minion |  | P-PMA: Aqueous Hunter Drone |  |  | CalamityMod:AqueousHunterDrone |
 | weapon | sentry |  | Polyp Launcher |  |  | CalamityMod:PolypLauncher |
 | accessory | offense |  | Pygmy Necklace |  |  | v:1158 |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
 | weapon | minion |  | Snapthorn |  |  | v:4913 |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | Voltaic Jelly |  |  | CalamityMod:VoltaicJelly |
 | buff | offense |  | War Table | * | This is difficult to obtain. | — |
-| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | — |
+| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | v:2359 |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### ranged
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | armor |  |  | Aerospec |  |  | CalamityMod:AerospecHeadMagic |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | weapon |  |  | Aquashard Shotgun | Ω (Tungsten Bullet) | This should be used with Musket Balls or Tungsten Bullets. | CalamityMod:AquashardShotgun |
-| buff | offense |  | Archery Potion |  |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel / Honey Dew |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon |  |  | Firestorm Cannon |  |  | CalamityMod:FirestormCannon |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | weapon |  |  | Galeforce |  |  | CalamityMod:Galeforce |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | ammo |  |  | Hellfire Arrow |  |  | v:265 |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | ammo |  |  | Musket Ball / Tungsten Bullet | Ω (Aquashard Shotgun) | This should be used with Aquashard Shotgun. | v:97 |
 | weapon |  |  | P-TSL: Short Circuit |  |  | CalamityMod:ShortCircuit |
 | accessory | offense |  | Protolith Bangle |  |  | CalamityMod:ProtolithBangle |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadethrower |  |  | CalamityMod:Shadethrower |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Skyline Wings |  |  | CalamityMod:SkylineWings |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Warmth Potion |  | This should be used on Deerclops. | v:2359 |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ## calamity · pre-yharon → Yharon, Dragon of Rebirth (stage 86)
 
@@ -3693,26 +3693,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | weapon |  |  | Devil's Devastation |  |  | CalamityMod:DevilsDevastation |
 | accessory | offense |  | Elemental Gauntlet |  |  | CalamityMod:ElementalGauntlet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
 | weapon |  |  | Galaxy Smasher |  |  | CalamityMod:GalaxySmasher |
 | armor |  |  | God Slayer |  |  | CalamityMod:GodSlayerHeadRanged |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon |  |  | Murasama | † | This is risky to use. | CalamityMod:Murasama |
 | armor |  |  | Omega Blue | † | This is difficult and risky to use. | CalamityMod:OmegaBlueHelmet |
 | buff |  |  | Omega Healing Potion |  |  | — |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Silva Wings |  |  | CalamityMod:SilvaWings |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3721,7 +3721,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | accessory | offense |  | Warbanner of the Righteous | † | This requires being close to the boss to perform well. | CalamityMod:WarbanneroftheRighteous |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 | accessory | offense |  | Yoyo Bag | Ω (The Obliterator) | This should be used with The Obliterator. | v:3366 |
 
 ### ranged
@@ -3731,9 +3731,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Affliction |  |  | CalamityMod:Affliction |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | offense |  | Arc Flash Ring |  |  | CalamityMod:ArcFlashRing |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Ascendant Insignia |  |  | CalamityMod:AscendantInsignia |
 | accessory | mobility |  | Asgardian Aegis / Statis' Void Sash |  |  | CalamityMod:AsgardianAegis |
 | ammo | support |  | Bloodfire Bullet | + | This is used for support. | CalamityMod:BloodfireBullet |
@@ -3746,27 +3746,27 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | ammo |  |  | Endless Musket Pouch | Ω (Universal Genesis) | This should be used with Universal Genesis. | v:3104 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | armor |  |  | God Slayer |  |  | CalamityMod:GodSlayerHeadRanged |
 | ammo |  |  | Holy Fire Bullet |  |  | CalamityMod:HolyFireBullet |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | ammo |  |  | Mini Nuke I |  |  | v:4457 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon |  |  | Onyxia |  |  | CalamityMod:Onyxia |
 | accessory | offense |  | Planebreaker's Pouch |  |  | CalamityMod:PlanebreakersPouch |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon |  |  | Scorched Earth |  |  | CalamityMod:ScorchedEarth |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | mobility |  | Silva Wings |  |  | CalamityMod:SilvaWings |
 | accessory | offense |  | Sniper Scope | Δ | This grants critical strike damage. | v:1858 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3776,7 +3776,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Universal Genesis | Ω (Endless Musket Pouch) | This should be used with Endless Musket Pouch. | CalamityMod:UniversalGenesis |
 | ammo |  |  | Venom Arrow |  |  | v:1341 |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -3794,29 +3794,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff | offense |  | Crystal Ball |  |  | — |
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | offense |  | Ethereal Talisman |  |  | CalamityMod:EtherealTalisman |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | weapon |  |  | Hyperdeath Rift Scepter |  |  | CalamityMod:HyperdeathRiftScepter |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
-| buff | offense |  | Magic Power Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon |  |  | Omicron |  |  | CalamityMod:Omicron |
 | weapon |  |  | Primordial Ancient | † | This is difficult to use. | CalamityMod:PrimordialAncient |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | accessory | offense |  | Sigil of Calamitas |  |  | CalamityMod:SigilofCalamitas |
 | armor |  |  | Silva |  |  | CalamityMod:SilvaHeadMagic |
 | accessory | mobility |  | Silva Wings |  |  | CalamityMod:SilvaWings |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
 | buff |  |  | Supreme Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Tesla Cannon |  |  | CalamityMod:TeslaCannon |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
@@ -3825,7 +3825,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | weapon |  |  | Voltaic Climax |  |  | CalamityMod:VoltaicClimax |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -3844,30 +3844,30 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Corvid Harbinger Staff |  |  | CalamityMod:CorvidHarbringerStaff |
 | accessory |  |  | Dark Sun Ring |  |  | CalamityMod:DarkSunRing |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | minion |  | Ethereal Subjugator |  |  | CalamityMod:EtherealSubjugator |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
 | armor |  |  | Fearmonger |  |  | CalamityMod:FearmongerGreathelm |
-| buff | offense |  | Flask of Ichor |  |  | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Kaleidoscope |  |  | v:4914 |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | minion |  | Mirror of Kalandra |  |  | CalamityMod:MirrorofKalandra |
 | accessory | offense |  | Nucleogenesis |  |  | CalamityMod:Nucleogenesis |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | accessory |  |  | Profaned Soul Artifact |  |  | CalamityMod:ProfanedSoulArtifact |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
 | weapon | sentry |  | Sanctified Spark | + | This is used for support. | CalamityMod:SanctifiedSpark |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Silva |  |  | CalamityMod:SilvaHeadMagic |
 | accessory | mobility |  | Silva Wings |  |  | CalamityMod:SilvaWings |
 | weapon | minion |  | Sirius |  |  | CalamityMod:Sirius |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Evolution |  |  | CalamityMod:TheEvolution |
@@ -3875,7 +3875,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | minion |  | Void Eater Marionette |  |  | CalamityMod:VoidEaterMarionette |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
 | buff | offense |  | War Table |  |  | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -3896,31 +3896,31 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | stealth |  | Dimension-Tearing Disk |  |  | CalamityMod:DimensionTearingDisk |
 | accessory | spam |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
 | accessory | stealthAcc |  | Eclipse Mirror |  |  | CalamityMod:EclipseMirror |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | spam |  | Executioner's Blade |  |  | CalamityMod:ExecutionersBlade |
 | weapon | stealth |  | Executioner's Blade |  |  | CalamityMod:ExecutionersBlade |
 | weapon | support |  | Eye of Magnus |  |  | CalamityMod:EyeofMagnus |
-| buff | offense |  | Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Ichor |  |  | v:1356 |
 | accessory | stealthAcc |  | Glove of Precision |  |  | CalamityMod:GloveOfPrecision |
 | armor |  |  | God Slayer |  |  | CalamityMod:GodSlayerHeadRanged |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | accessory | spam |  | Nanotech |  |  | CalamityMod:Nanotech |
 | accessory | stealthAcc |  | Nanotech |  |  | CalamityMod:Nanotech |
 | buff |  |  | Omega Healing Potion |  |  | — |
 | weapon | spam |  | Plasma Grenade |  |  | CalamityMod:PlasmaGrenade |
 | weapon | stealth |  | Plasma Grenade |  |  | CalamityMod:PlasmaGrenade |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Reaper Tooth Necklace |  |  | CalamityMod:ReaperToothNecklace |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord | ≤ | Calamity adds a sidegrade to this item, the Normality Relocator. | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | mobility |  | Silva Wings |  |  | CalamityMod:SilvaWings |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | stealthAcc |  | Spectral Veil | † | This is difficult and risky to use. | CalamityMod:SpectralVeil |
 | weapon | support |  | Stratus Sphere |  |  | CalamityMod:StratusSphere |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory |  |  | The Absorber |  |  | CalamityMod:TheAbsorber |
 | accessory |  |  | The Amalgam |  |  | CalamityMod:TheAmalgam |
 | accessory |  |  | The Community |  |  | CalamityMod:TheCommunity |
@@ -3931,7 +3931,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Toxicant Twister |  |  | CalamityMod:ToxicantTwister |
 | weapon | stealth |  | Toxicant Twister |  |  | CalamityMod:ToxicantTwister |
 | accessory | mobility |  | Void Striders |  |  | CalamityMod:VoidStriders |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-mech → The Twins (stage 36)
 
@@ -3951,37 +3951,37 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Counter Scarf / Deep Diver |  |  | CalamityMod:CounterScarf |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | accessory | mobility |  | Demon Wings | Δ | This has increased fall speed. | v:492 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Frost Barrier |  | This should be used for Cryogen. | CalamityMod:FrostBarrier |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | accessory |  |  | Grand Gelatin |  |  | CalamityMod:GrandGelatin |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | armor |  |  | Palladium |  |  | v:1205 |
-| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | CalamityMod:PhotosynthesisPotion |
 | accessory | offense |  | Power Glove |  |  | v:897 |
 | accessory | offense |  | Putrid Scent |  |  | v:3015 |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadowflame Knife |  |  | v:3054 |
 | buff | offense |  | Sharpening Station |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | weapon |  |  | Storm Saber |  |  | CalamityMod:StormSaber |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff |  |  | Warmth Potion |  | Use on Cryogen. | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Warmth Potion |  | Use on Cryogen. | v:2359 |
 | accessory | offense |  | Warrior Emblem |  |  | v:490 |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### ranged
 
@@ -3989,9 +3989,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory |  |  | Amalgamated Brain |  |  | CalamityMod:AmalgamatedBrain |
 | buff | offense |  | Ammo Box |  |  | — |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
 | accessory | mobility |  | Angel Wings | Δ | This has increased vertical speed. | v:493 |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | mobility |  | Bundle of Horseshoe Balloons |  |  | v:5331 |
 | accessory | defense |  | Charm of Myths |  |  | v:860 |
 | armor |  |  | Cobalt | Δ | This has a new set bonus. | v:371 |
@@ -4004,7 +4004,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Dart Pistol / Dart Rifle |  |  | v:3007 |
 | accessory | mobility |  | Demon Wings | Δ | This has increased fall speed. | v:492 |
 | ammo |  |  | Endless Musket Pouch | Ω (Needler) | These should be used with Needler. | v:3104 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | ammo |  |  | Exploding Bullet | C | This is best on worms and other multi-hit scenarios. | v:1351 |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
@@ -4013,29 +4013,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | accessory |  |  | Grand Gelatin |  |  | CalamityMod:GrandGelatin |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | offense |  | Magic Quiver | ≤ | Upgrades of this are also viable. | v:1321 |
 | weapon |  |  | Needler | Ω (Endless Musket Pouch) | This should be used with Endless Musket Pouch. | CalamityMod:Needler |
 | armor |  |  | Palladium |  |  | v:1205 |
-| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Polaris Parrotfish | † | This is difficult to use. | CalamityMod:PolarisParrotfish |
 | accessory | offense |  | Putrid Scent |  |  | v:3015 |
-| buff | offense |  | Rage Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
 | accessory | offense |  | Ranger Emblem |  |  | v:491 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | ammo |  |  | Unholy Arrow | C | This is best on worms and other multi-hit scenarios. | v:47 |
 | weapon |  |  | Uzi | * | This is difficult to obtain. | v:1265 |
-| buff |  |  | Warmth Potion |  | Use on Cryogen. | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff |  |  | Warmth Potion |  | Use on Cryogen. | v:2359 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### magic
 
@@ -4053,7 +4053,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff | offense |  | Crystal Ball |  |  | — |
 | weapon |  |  | Death Valley Duster |  |  | CalamityMod:DeathValleyDuster |
 | accessory | mobility |  | Demon Wings | Δ | This has increased fall speed. | v:492 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Frost Barrier |  | This should be used for Cryogen. | CalamityMod:FrostBarrier |
@@ -4061,33 +4061,33 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | accessory |  |  | Grand Gelatin |  |  | CalamityMod:GrandGelatin |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | defense |  | Mana Polarizer |  |  | CalamityMod:ManaPolarizer |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | weapon |  |  | Meteor Staff |  |  | v:2750 |
 | weapon | support |  | Nimbus Rod | + | This is used for support. | v:1244 |
 | armor |  |  | Palladium |  |  | v:1205 |
 | accessory |  |  | Permafrost's Concoction |  |  | CalamityMod:PermafrostsConcoction |
-| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon |  |  | Poseidon |  |  | CalamityMod:Poseidon |
 | accessory | offense |  | Putrid Scent |  |  | v:3015 |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Shadowflame Hex Doll |  |  | v:3053 |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | offense |  | Sorcerer Emblem |  |  | v:489 |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | buff |  |  | Super Mana Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff |  |  | Warmth Potion |  | Use on Cryogen. | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Warmth Potion |  | Use on Cryogen. | v:2359 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### summon
 
@@ -4103,38 +4103,38 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | mobility |  | Counter Scarf / Deep Diver |  |  | CalamityMod:CounterScarf |
 | armor |  |  | Crystal Assassin | Δ | This works as a rogue armor. | v:4982 |
 | accessory | mobility |  | Demon Wings | Δ | This has increased fall speed. | v:492 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Frost Barrier |  | This should be used for Cryogen. | CalamityMod:FrostBarrier |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | accessory |  |  | Grand Gelatin |  |  | CalamityMod:GrandGelatin |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | offense |  | Jelly-Charged Battery |  |  | CalamityMod:JellyChargedBattery |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
-| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | CalamityMod:PhotosynthesisPotion |
 | accessory | offense |  | Pygmy Necklace |  |  | v:1158 |
 | weapon | sentry |  | Queen Spider Staff |  |  | v:2366 |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | armor |  |  | Spider |  |  | v:2370 |
 | weapon | minion |  | Spider Staff |  | Background walls are not required. | v:2551 |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | accessory | offense |  | The First Shadowflame |  |  | CalamityMod:TheFirstShadowflame |
 | buff | offense |  | War Table |  |  | — |
-| buff |  |  | Warmth Potion |  | Use on Cryogen. | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff |  |  | Warmth Potion |  | Use on Cryogen. | v:2359 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ### rogue
 
@@ -4151,43 +4151,43 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Cursed Dagger / Ichor Spear |  |  | CalamityMod:CursedDagger |
 | weapon | stealth |  | Cursed Dagger |  |  | CalamityMod:CursedDagger |
 | accessory | mobility |  | Demon Wings | Δ | This has increased fall speed. | v:492 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | weapon | stealth |  | Equanimity |  |  | CalamityMod:Equanimity |
 | accessory | mobility |  | Fairy Boots / Terraspark Boots | Δ | Fairy boots offer defensive benefits. | v:3993 |
 | accessory | stealthAcc |  | Filthy Glove |  |  | CalamityMod:FilthyGlove |
-| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | — |
+| buff | offense |  | Flask of Cursed Flames / Flask of Ichor |  |  | v:1353 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory | defense |  | Frost Barrier |  | This should be used for Cryogen. | CalamityMod:FrostBarrier |
 | accessory |  |  | Frost Flare |  |  | CalamityMod:FrostFlare |
 | accessory | defense |  | Giant Tortoise Shell |  |  | CalamityMod:GiantTortoiseShell |
 | accessory |  |  | Grand Gelatin |  |  | CalamityMod:GrandGelatin |
 | buff |  |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Heartreach Potion |  | Use on Queen Slime or Destroyer. | v:2323 |
 | accessory | defense |  | Honey Dew / Radiant Ooze |  |  | CalamityMod:HoneyDew |
 | weapon | spam |  | Ice Star |  |  | CalamityMod:IceStar |
 | weapon | stealth |  | Ice Star |  |  | CalamityMod:IceStar |
-| buff |  |  | Ironskin Potion |  |  | — |
-| buff |  |  | Lifeforce Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
+| buff |  |  | Lifeforce Potion |  |  | v:2345 |
 | weapon | support |  | Lunic Eye |  |  | CalamityMod:LunicEye |
 | accessory | stealthAcc |  | Mirage Mirror |  |  | CalamityMod:MirageMirror |
 | weapon | spam |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
 | weapon | stealth |  | Palladium Javelin |  |  | CalamityMod:PalladiumJavelin |
-| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | — |
+| buff |  |  | Photosynthesis Potion |  | Use on Queen Slime or Destroyer. | CalamityMod:PhotosynthesisPotion |
 | weapon | spam |  | Prismalline |  |  | CalamityMod:Prismalline |
 | weapon | stealth |  | Prismalline |  |  | CalamityMod:Prismalline |
 | accessory | offense |  | Putrid Scent |  |  | v:3015 |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | support |  | Rod of Discord |  | Calamity increases this item's drop rate to '''2%''' . | — |
 | accessory | spam |  | Rogue Emblem |  |  | CalamityMod:RogueEmblem |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
-| buff | offense |  | Shadow Potion |  |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
 | accessory | defense |  | Star Veil |  |  | v:862 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | armor |  |  | Titan Heart |  |  | CalamityMod:TitanHeartMask |
-| buff |  |  | Warmth Potion |  | Use on Cryogen. | — |
-| buff | offense |  | Wrath Potion |  |  | — |
+| buff |  |  | Warmth Potion |  | Use on Cryogen. | v:2359 |
+| buff | offense |  | Wrath Potion |  |  | v:2349 |
 
 ## calamity · pre-boss → Pre-boss (stage 0)
 
@@ -4201,44 +4201,44 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | weapon | support |  | Crimson Rod | C + | This is best on worms and other multi-hit scenarios, and is a support weapon. | v:1256 |
 | armor |  |  | Diamond Robe / Mystic Robe | * | The Mystic Robe is difficult to obtain. | v:1287 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | armor |  |  | Gi | * | This is difficult to obtain. | v:2277 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | mobility |  | Hermes Boots | ≤ | Upgrades of this are also viable. | v:54 |
 | accessory | defense |  | Ilmeris' Spark | C | This is best on worms and other multi-hit scenarios. | CalamityMod:IlmerisSpark |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | buff |  |  | Lesser Healing Potion / Eggnog | ≤ | Upgrades of this are also viable. | — |
 | armor |  |  | Magic Hat / Wizard Hat | * | These are difficult to obtain. | v:2275 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | v:4031 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | offense |  | Shark Tooth Necklace |  |  | v:3212 |
 | armor |  |  | Silver | Δ * | This has a new set bonus and is difficult to obtain if your world did not spawn silver. | v:91 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | weapon |  |  | Thunder Zapper |  |  | v:4062 |
 | weapon |  |  | Veering Wind | C | This is best on worms and other multi-hit scenarios. | CalamityMod:VeeringWind |
 | weapon |  |  | Vilethorn | C | This is best on worms and other multi-hit scenarios. | v:64 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | weapon | support |  | Wulfrum Controller |  | Use in its defensive form. | CalamityMod:WulfrumController |
 
 ### ranged
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | weapon |  |  | Demon Bow / Tendon Bow |  |  | v:44 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | ammo |  |  | Flash Round | C | This is best on worms and other multi-hit scenarios. | CalamityMod:FlashRound |
 | weapon |  |  | Flintlock Pistol |  |  | v:95 |
@@ -4248,18 +4248,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Gi | * | This is difficult to obtain. | v:2277 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | mobility |  | Hermes Boots | ≤ | Upgrades of this are also viable. | v:54 |
 | accessory | defense |  | Ilmeris' Spark | C | This is best on worms and other multi-hit scenarios. | CalamityMod:IlmerisSpark |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | ammo |  |  | Jester's Arrow | C | This is best on worms and other multi-hit scenarios. | v:51 |
 | buff |  |  | Lesser Healing Potion / Eggnog | ≤ | Upgrades of this are also viable. | — |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon |  |  | Molotov Cocktail |  |  | v:2590 |
 | weapon |  |  | Paintball Gun |  |  | v:3350 |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | v:4031 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | offense |  | Scions Curio | * | This is difficult to obtain. | CalamityMod:ScionsCurio |
 | accessory | offense |  | Shark Tooth Necklace |  |  | v:3212 |
@@ -4267,10 +4267,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | ammo |  |  | Silver Bullet / Tungsten Bullet |  |  | v:278 |
 | armor |  |  | Snow Ruffian |  |  | CalamityMod:SnowRuffianMask |
 | weapon |  |  | Spark Spreader |  |  | CalamityMod:SparkSpreader |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | ammo |  |  | Unholy Arrow |  |  | v:47 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | weapon | support |  | Wulfrum Controller |  | Use in its defensive form. | CalamityMod:WulfrumController |
 
 ### rogue
@@ -4284,7 +4284,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | stealth |  | Contaminated Bile |  |  | CalamityMod:ContaminatedBile |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Desert Prowler |  |  | CalamityMod:DesertProwlerHat |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | armor |  |  | Gi | * | This is difficult to obtain. | v:2277 |
@@ -4293,26 +4293,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Gladiator | Δ * | This works as a rogue armor and is difficult to obtain. | v:3187 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | mobility |  | Hermes Boots | ≤ | Upgrades of this are also viable. | v:54 |
 | accessory | defense |  | Ilmeris' Spark | C | This is best on worms and other multi-hit scenarios. | CalamityMod:IlmerisSpark |
 | weapon | stealth |  | Iron Francisca / Lead Tomahawk |  |  | CalamityMod:IronFrancisca |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | buff |  |  | Lesser Healing Potion / Eggnog | ≤ | Upgrades of this are also viable. | — |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
-| buff | offense |  | Purple Haze | Ω (Wulfrum Knife) | This should be used with Wulfrum Knife. | — |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Purple Haze | Ω (Wulfrum Knife) | This should be used with Wulfrum Knife. | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | v:4031 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | stealthAcc |  | Scuttler's Jewel |  |  | CalamityMod:ScuttlersJewel |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | offense |  | Shark Tooth Necklace |  |  | v:3212 |
 | armor |  |  | Silver | Δ * | This has a new set bonus and is difficult to obtain if your world did not spawn silver. | v:91 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | weapon | spam |  | Urchin Stinger |  |  | CalamityMod:UrchinStinger |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | weapon | support |  | Wulfrum Controller |  | Use in its defensive form. | CalamityMod:WulfrumController |
 | weapon | spam |  | Wulfrum Knife | Ω (Purple Haze) | This should be used with Purple Haze. | CalamityMod:WulfrumKnife |
 | weapon | stealth |  | Wulfrum Knife | Ω (Purple Haze) | This should be used with Purple Haze. | CalamityMod:WulfrumKnife |
@@ -4325,32 +4325,32 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Burnt Sienna |  |  | CalamityMod:BurntSienna |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | weapon |  |  | Enchanted Boomerang |  |  | v:55 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | offense |  | Feral Claws |  |  | v:211 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | armor |  |  | Gi | * | This is difficult to obtain. | v:2277 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | mobility |  | Hermes Boots | ≤ | Upgrades of this are also viable. | v:54 |
 | accessory | defense |  | Ilmeris' Spark | C | This is best on worms and other multi-hit scenarios. | CalamityMod:IlmerisSpark |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | buff |  |  | Lesser Healing Potion / Eggnog | ≤ | Upgrades of this are also viable. | — |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon |  |  | Monstrous Knives |  |  | CalamityMod:MonstrousKnives |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | v:4031 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | offense |  | Shark Tooth Necklace |  |  | v:3212 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | armor |  |  | Silver | Δ * | This has a new set bonus and is difficult to obtain if your world did not spawn silver. | v:91 |
 | weapon |  |  | Starfury |  |  | v:65 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | Terragrim |  | Can be obtained by shimmering an Enchanted Sword. | v:4144 |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | weapon | support |  | Wulfrum Controller |  | Use in its defensive form. | CalamityMod:WulfrumController |
 
 ### summon
@@ -4360,22 +4360,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | weapon | minion |  | Enchanted Knife Staff | † | This is difficult to use. | CalamityMod:EnchantedKnifeStaff |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | armor |  |  | Flinx Fur Coat |  |  | v:5068 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | armor |  |  | Gi | * | This is difficult to obtain. | v:2277 |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | armor |  |  | Gold / Platinum | Δ | These have a new set bonus. | v:92 |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | accessory | mobility |  | Hermes Boots | ≤ | Upgrades of this are also viable. | v:54 |
 | accessory | defense |  | Ilmeris' Spark | C | This is best on worms and other multi-hit scenarios. | CalamityMod:IlmerisSpark |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | weapon | minion |  | Leather Whip |  |  | v:4672 |
 | buff |  |  | Lesser Healing Potion / Eggnog | ≤ | Upgrades of this are also viable. | — |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Roasted Bird | ≤ | Upgrades of this are also viable. | v:4031 |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | weapon | sentry |  | Rusty Beacon Prototype | * | This is difficult to obtain. | CalamityMod:RustyBeaconPrototype |
 | accessory | offense |  | Shark Tooth Necklace |  |  | v:3212 |
@@ -4384,9 +4384,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | sentry |  | Squirrel Squire Staff |  |  | CalamityMod:SquirrelSquireStaff |
 | weapon | minion |  | Stormjaw Staff | C | This is best on worms and other multi-hit scenarios. | CalamityMod:StormjawStaff |
 | weapon | minion |  | Sun Spirit Staff |  |  | CalamityMod:SunSpiritStaff |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 | armor |  |  | Wulfrum |  |  | CalamityMod:WulfrumHat |
 | accessory | offense |  | Wulfrum Battery |  |  | CalamityMod:WulfrumBattery |
 
@@ -4396,16 +4396,16 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| buff | offense |  | Ammo Reservation Potion |  |  | — |
-| buff | offense |  | Archery Potion |  |  | — |
+| buff | offense |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff | offense |  | Archery Potion |  |  | v:303 |
 | weapon |  |  | Boomstick |  |  | v:964 |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | weapon |  |  | Firestorm Cannon |  |  | CalamityMod:FirestormCannon |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
@@ -4413,29 +4413,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fungal Clump |  |  | CalamityMod:FungalClump |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | ammo |  |  | Hellfire Arrow |  |  | v:265 |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon |  |  | Magna Cannon / Opal Striker |  |  | CalamityMod:MagnaCannon |
 | ammo |  |  | Meteor Shot |  |  | v:234 |
 | weapon |  |  | Molten Fury |  |  | v:120 |
 | accessory | offense |  | Protolith Bangle |  |  | CalamityMod:ProtolithBangle |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | offense |  | Scions Curio |  |  | CalamityMod:ScionsCurio |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon | support |  | Spiky Ball | + | This is used for support. | v:161 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | ammo |  |  | Unholy Arrow |  |  | v:47 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | armor |  |  | Victide |  |  | CalamityMod:VictideHeadMagic |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### rogue
 
@@ -4444,7 +4444,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Ashen Stalactite |  |  | CalamityMod:AshenStalactite |
 | weapon | stealth |  | Ashen Stalactite | C | This is best on worms and other multi-hit scenarios. | CalamityMod:AshenStalactite |
 | accessory | spam |  | Black Glass Band |  |  | CalamityMod:BlackGlassBand |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | spam |  | Coin of Deceit |  |  | CalamityMod:CoinofDeceit |
@@ -4452,51 +4452,51 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Fungal Clump |  |  | CalamityMod:FungalClump |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | weapon | spam |  | Infernal Kris |  |  | CalamityMod:InfernalKris |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | weapon | spam |  | Meteor Fist |  |  | CalamityMod:MeteorFist |
 | weapon | stealth |  | Meteor Fist |  |  | CalamityMod:MeteorFist |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | accessory | stealthAcc |  | Scuttler's Jewel |  |  | CalamityMod:ScuttlersJewel |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
-| buff | offense |  | Shadow Potion |  |  | — |
+| buff | offense |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | accessory | spam |  | Shark Tooth Necklace |  |  | v:3212 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | accessory | stealthAcc |  | Silencing Sheath |  |  | CalamityMod:SilencingSheath |
 | weapon | spam |  | Sludge Splotch |  |  | CalamityMod:SludgeSplotch |
 | weapon | stealth |  | Sludge Splotch |  |  | CalamityMod:SludgeSplotch |
 | armor |  |  | Sulphurous |  |  | CalamityMod:SulphurousHelmet |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### magic
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Batholith Bangle |  |  | CalamityMod:BatholithBangle |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel |  |  | CalamityMod:CrownJewel |
 | weapon |  |  | Demon Scythe |  |  | v:272 |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | weapon |  |  | Flare Bolt |  |  | CalamityMod:FlareBolt |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
@@ -4504,42 +4504,42 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fungal Clump |  |  | CalamityMod:FungalClump |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | weapon |  |  | Hellwing Staff | † | This is difficult to use. | CalamityMod:HellwingStaff |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | armor |  |  | Jungle |  |  | v:228 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
-| buff | offense |  | Magic Power Potion |  |  | — |
+| buff | offense |  | Magic Power Potion |  |  | v:294 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | offense |  | Mana Flower / Magic Cuffs |  |  | v:555 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff | offense |  | Mana Regeneration Potion |  |  | — |
+| buff | offense |  | Mana Regeneration Potion |  |  | v:293 |
 | armor |  |  | Meteor | Ω (Space Gun) | This should be used with Space Gun. | v:123 |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon |  |  | Space Gun | Ω (Meteor armor) | This should be used with Meteor armor. | v:127 |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | The Cauldron |  |  | CalamityMod:TheCauldron |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### melee
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | accessory | offense |  | Counterweights | Ω (Smoking Comet) | This should be used with Smoking Comet. | — |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | weapon | support |  | Brittle Star Staff / Wulfrum Controller |  | Use in its defensive form. | CalamityMod:BrittleStarStaff |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | offense |  | Feral Claws |  |  | v:211 |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
@@ -4547,69 +4547,69 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fungal Clump |  |  | CalamityMod:FungalClump |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | accessory | offense |  | Magma Stone |  |  | v:1322 |
 | armor |  |  | Molten |  |  | v:231 |
 | weapon |  |  | Old Lord Claymore |  |  | CalamityMod:OldLordClaymore |
-| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | — |
-| buff |  |  | Regeneration Potion |  |  | — |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff | offense |  | Rage Potion | * | This is difficult to obtain depending on your world evil. | v:2347 |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | weapon |  |  | Seashine Sword |  |  | CalamityMod:SeashineSword |
 | armor |  |  | Shadow |  |  | v:102 |
 | buff | offense |  | Sharpening Station |  |  | — |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon |  |  | Smoking Comet | Ω (Counterweights) | This should be used with a Counterweight. | CalamityMod:SmokingComet |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | weapon |  |  | The Meatball |  |  | v:801 |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | weapon |  |  | Urchin Mace | C | This is best on worms and other multi-hit scenarios. | CalamityMod:UrchinMace |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ### summon
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | — |
+| buff | mobility |  | Bounding Potion | * | This is difficult to obtain. | CalamityMod:BoundingPotion |
 | accessory | defense |  | Brain of Confusion | Δ | Dodges in Calamity are guaranteed on a cooldown. | v:3223 |
 | accessory | offense |  | Craw Carapace |  |  | CalamityMod:CrawCarapace |
 | armor |  |  | Crimson |  |  | v:792 |
 | accessory | defense |  | Crown Jewel |  |  | CalamityMod:CrownJewel |
-| buff |  |  | Endurance Potion |  |  | — |
+| buff |  |  | Endurance Potion |  |  | v:2346 |
 | accessory | mobility |  | Extra jump |  |  | — |
 | accessory | mobility |  | Fledgling Wings |  |  | v:4978 |
 | accessory | mobility |  | Frog Leg | ≤ | Upgrades of this are also viable. | v:2423 |
 | accessory |  |  | Fungal Clump |  |  | CalamityMod:FungalClump |
 | accessory | defense |  | Gladiator's Locket | * | This is difficult to obtain, and only one can be obtained per world. | CalamityMod:GladiatorsLocket |
 | buff |  |  | Healing Potion / Honeyfin |  |  | — |
-| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff |  |  | Heartreach Potion | * | This is difficult to obtain depending on your world evil. | v:2323 |
 | weapon | minion |  | Imp Staff |  |  | v:2365 |
-| buff |  |  | Ironskin Potion |  |  | — |
+| buff |  |  | Ironskin Potion |  |  | v:292 |
 | accessory | mobility |  | Lightning Boots | ≤ | Upgrades of this are also viable. | v:898 |
 | accessory | mobility |  | Magiluminescence |  |  | v:5107 |
 | armor |  |  | Obsidian |  |  | v:3266 |
 | weapon | sentry |  | Polyp Launcher |  |  | CalamityMod:PolypLauncher |
-| buff |  |  | Regeneration Potion |  |  | — |
+| buff |  |  | Regeneration Potion |  |  | v:289 |
 | weapon | sentry |  | Rusty Beacon Prototype |  |  | CalamityMod:RustyBeaconPrototype |
 | weapon | minion |  | Scab Ripper |  |  | CalamityMod:ScabRipper |
-| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | — |
+| buff |  |  | Seafood Dinner | ≤ | Upgrades of this are also viable. | v:4034 |
 | armor |  |  | Shadow |  |  | v:102 |
 | accessory | mobility |  | Shield of Cthulhu |  |  | v:3097 |
 | weapon | minion |  | Snapthorn |  |  | v:4913 |
 | accessory |  |  | Spirit Glyph |  |  | CalamityMod:SpiritGlyph |
-| buff | offense |  | Summoning Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
+| buff | offense |  | Summoning Potion |  |  | v:2328 |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
 | accessory | defense |  | Unholy Tonic / Vicious Tonic |  | Use which matches your world evil. | CalamityMod:UnholyTonic |
 | weapon | minion |  | Vile Feeder | † | This item is difficult to use. | CalamityMod:VileFeeder |
 | accessory | offense |  | Voltaic Jelly |  |  | CalamityMod:VoltaicJelly |
 | buff | offense |  | War Table | * | This is difficult to obtain. | — |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | — |
+| buff | offense |  | Wrath Potion | * | This is difficult to obtain depending on your world evil. | v:2349 |
 
 ## calamity · pre-scal → Supreme Witch, Calamitas (stage 90)
 
@@ -4698,18 +4698,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -4761,21 +4761,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Jester's Arrow | C |  | — |
 | buff |  |  | Silver Bullet / Tungsten Bullet |  |  | — |
 | buff |  |  | Unholy Arrow |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -4830,18 +4830,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Arcane Crystal | * |  | — |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
@@ -4897,19 +4897,19 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Summoning Potion | * |  | — |
+| buff |  |  | Summoning Potion | * |  | v:2328 |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -4927,7 +4927,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Gilded Dagger / Gleaming Dagger |  |  | CalamityMod:GildedDagger |
 | weapon | spam |  | Iron Francisca / Lead Tomahawk |  |  | CalamityMod:IronFrancisca |
 | weapon | spam |  | Lasting Pliers |  |  | ThoriumMod:LastingPliers |
-| weapon | spam |  | Vibrant Tomahawk |  |  | — |
+| weapon | spam |  | Vibrant Tomahawk |  |  | SOTSBardHealer:VibrantTomahawk |
 | weapon | stealth |  | Crystalline |  |  | CalamityMod:Crystalline |
 | weapon | stealth |  | Gilded Dagger / Gleaming Dagger |  |  | CalamityMod:GildedDagger |
 | weapon | stealth |  | Nasty Cholla |  |  | CalamityMod:NastyCholla |
@@ -4961,20 +4961,20 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -4993,8 +4993,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Rotten Cod | * |  | ThoriumMod:RottenCod |
 | weapon |  |  | Ice Shaver |  |  | ThoriumMod:IceShaver |
 | weapon |  |  | Palm Cross |  |  | ThoriumMod:PalmCross |
-| weapon |  |  | Thorium Heavy Scythe |  |  | — |
-| weapon |  |  | Wulfrum Weed Wacker |  |  | — |
+| weapon |  |  | Thorium Heavy Scythe |  |  | ThoriumRework:ThoriumHeavyScythe |
+| weapon |  |  | Wulfrum Weed Wacker |  |  | CalamityBardHealer:WulfrumWeedWacker |
 | weapon | support |  | Coral Purifier |  |  | ThoriumMod:CoralPurifier |
 | weapon | support |  | Heart Wand |  |  | — |
 | weapon | support |  | Renew | * |  | — |
@@ -5030,18 +5030,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Arcane Crystal | * |  | — |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
@@ -5056,7 +5056,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon |  |  | Antlion Maraca | Ω |  | ThoriumMod:AntlionMaraca |
-| weapon |  |  | Dual Stylophone | ν |  | — |
+| weapon |  |  | Dual Stylophone | ν |  | SOTSBardHealer:DualStylophone |
 | weapon |  |  | Dynasty Guzheng | * |  | ThoriumMod:DynastyGuzheng |
 | weapon |  |  | Gold Bugle Horn / Platinum Bugle Horn |  |  | ThoriumMod:GoldBugleHorn |
 | weapon |  |  | Grand Piano |  |  | ThoriumMod:GrandPiano |
@@ -5066,7 +5066,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Seashell Castanets | Ω |  | ThoriumMod:SeashellCastanettes |
 | weapon |  |  | Ukulele |  |  | ThoriumMod:Ukulele |
 | weapon |  |  | Skyware Lute | Ω |  | ThoriumMod:SkywareLute |
-| weapon |  |  | Wulfrum Megaphone |  |  | — |
+| weapon |  |  | Wulfrum Megaphone |  |  | CalamityBardHealer:WulfrumMegaphone |
 | armor |  |  | Crier's |  |  | ThoriumMod:CriersCap |
 | armor |  |  | Ancient Shadow | * |  | v:956 |
 | armor |  |  | Frigid | * |  | SOTS:FrigidCrown |
@@ -5096,21 +5096,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Inspiration Fragment |  |  | — |
 | buff |  |  | Inspiration Gem | * |  | — |
@@ -5172,18 +5172,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### ranged
 
@@ -5242,21 +5242,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Musket Ball / Tungsten Bullet |  |  | — |
 | buff |  |  | Shimmer Arrow | Ω |  | — |
 | buff |  |  | Unholy Arrow |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### magic
 
@@ -5312,22 +5312,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Magic Power Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### summon
 
@@ -5385,20 +5385,20 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Artillery Potion |  |  | — |
-| buff |  |  | Summoning Potion | * |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
+| buff |  |  | Summoning Potion | * |  | v:2328 |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### rogue
 
@@ -5406,18 +5406,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon | spam |  | Blooming Shuriken |  |  | ThoriumMod:BloomingShuriken |
 | weapon | spam |  | Enchanted Knife |  |  | ThoriumMod:EnchantedKnife |
-| weapon | spam |  | Mothwing Dagger |  |  | — |
+| weapon | spam |  | Mothwing Dagger |  |  | InfernalEclipseWeaponsDLC:MothwingDagger |
 | weapon | spam |  | Mycoroot |  |  | CalamityMod:Mycoroot |
 | weapon | spam |  | Sand Dollar |  |  | CalamityMod:SandDollar |
-| weapon | spam |  | Zephyr's Ruin |  |  | — |
+| weapon | spam |  | Zephyr's Ruin |  |  | ThoriumRework:ZephyrsRuin |
 | weapon | stealth |  | Bouncing Eyeball |  |  | CalamityMod:BouncingEyeball |
 | weapon | stealth |  | Gel Glove |  |  | ThoriumMod:GelGlove |
 | weapon | stealth |  | Goblin War Spear |  |  | ThoriumMod:GoblinWarSpear |
-| weapon | stealth |  | Mothwing Dagger |  |  | — |
+| weapon | stealth |  | Mothwing Dagger |  |  | InfernalEclipseWeaponsDLC:MothwingDagger |
 | weapon | stealth |  | Sand Dollar |  |  | CalamityMod:SandDollar |
 | weapon | stealth |  | Scourge of the Desert |  |  | CalamityMod:ScourgeoftheDesert |
 | weapon | stealth |  | Steel Throwing Axe |  |  | ThoriumMod:SteelThrowingAxe |
-| weapon | stealth |  | Zephyr's Ruin |  |  | — |
+| weapon | stealth |  | Zephyr's Ruin |  |  | ThoriumRework:ZephyrsRuin |
 | weapon | support |  | Technique: Decoy |  |  | — |
 | weapon | support |  | Technique: Sprint |  |  | — |
 | weapon | support |  | Technique: Hidden Blade |  |  | — |
@@ -5458,31 +5458,31 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### healer
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon |  |  | Bountiful Harvest |  |  | ThoriumMod:BountifulHarvest |
-| weapon |  |  | Corrosive Flux |  |  | — |
-| weapon |  |  | Dry Mouth |  |  | — |
+| weapon |  |  | Corrosive Flux |  |  | RagnarokMod:CorrosiveFlux |
+| weapon |  |  | Dry Mouth |  |  | CalamityBardHealer:DryMouth |
 | weapon |  |  | Shadow Wand |  |  | ThoriumMod:ShadowWand |
 | weapon |  |  | Poison Prickler |  |  | ThoriumMod:PoisonPrickler |
-| weapon |  |  | Prisma |  |  | — |
+| weapon |  |  | Prisma |  |  | RagnarokMod:Prisma |
 | weapon |  |  | The Digester |  |  | ThoriumMod:TheDigester |
 | weapon | support |  | Coral Purifier |  |  | ThoriumMod:CoralPurifier |
 | weapon | support |  | Heart Wand |  |  | — |
@@ -5527,18 +5527,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### bard
 
@@ -5546,13 +5546,13 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon |  |  | Acid Belcher | Ω |  | SOTS:PlagueSpitter |
 | weapon |  |  | Blooming Bell | Ω |  | ThoriumMod:BloomingBell |
-| weapon |  |  | Crystal Hydraulophone | Ω |  | — |
-| weapon |  |  | Dual Stylophone | ν |  | — |
+| weapon |  |  | Crystal Hydraulophone | Ω |  | CalamityBardHealer:CrystalHydraulophone |
+| weapon |  |  | Dual Stylophone | ν |  | SOTSBardHealer:DualStylophone |
 | weapon |  |  | Forest Ocarina | Ω |  | ThoriumMod:ForestOcarina |
 | weapon |  |  | Panflute | Ω |  | ThoriumMod:Panflute |
 | weapon |  |  | Sinister Honk | Ω |  | ThoriumMod:SinisterHonk |
 | weapon |  |  | Yew Wood Lute | Ω |  | ThoriumMod:YewWoodLute |
-| weapon |  |  | Shanty of the Former Seas | Ω |  | — |
+| weapon |  |  | Shanty of the Former Seas | Ω |  | InfernalEclipseWeaponsDLC:SandSlasher |
 | weapon |  |  | Skyware Lute | Ω |  | ThoriumMod:SkywareLute |
 | weapon | support |  | Brittle Star Staff |  |  | CalamityMod:BrittleStarStaff |
 | armor |  |  | Crier's |  |  | ThoriumMod:CriersCap |
@@ -5597,22 +5597,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Healing Potion / Strange Brew |  |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ## ieor · Pre-Evil_2 → The Hive Mind (stage 15)
 
@@ -5670,20 +5670,20 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### ranged
@@ -5745,23 +5745,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Unholy Arrow |  |  | — |
 | buff |  |  | Wormhole Arrow | * |  | — |
 | buff |  |  | Wormhole Bullet | * |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### magic
@@ -5813,23 +5813,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Obsidian Scale |  |  | ThoriumMod:ObsidianScale |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Magic Power Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### summon
@@ -5886,23 +5886,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Olympian Aegis |  |  | SOTS:OlympianAegis |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Artillery Potion |  |  | — |
-| buff |  |  | Summoning Potion | * |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
+| buff |  |  | Summoning Potion | * |  | v:2328 |
 | buff |  |  | War Table |  |  | — |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### rogue
@@ -5962,22 +5962,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Obsidian Scale |  |  | ThoriumMod:ObsidianScale |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### healer
@@ -5989,7 +5989,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Life Disperser |  |  | ThoriumMod:LifeDisperser |
 | weapon |  |  | Molten Thresher |  |  | ThoriumMod:MoltenThresher |
 | weapon |  |  | Omen |  |  | ThoriumMod:Omen |
-| weapon |  |  | Red Crescent |  |  | — |
+| weapon |  |  | Red Crescent |  |  | ThoriumRework:RedCresent |
 | weapon | support |  | Dark Gift |  |  | — |
 | weapon | support |  | Life’s Gift |  |  | — |
 | weapon | support |  | Lost Oasis |  |  | — |
@@ -6029,20 +6029,20 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ### bard
@@ -6052,7 +6052,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Bongos | Ω |  | ThoriumMod:Bongos |
 | weapon |  |  | Hot Horn | Ω |  | ThoriumMod:HotHorn |
 | weapon |  |  | Panflute | Ω |  | ThoriumMod:Panflute |
-| weapon |  |  | Jellyfish Jam |  |  | — |
+| weapon |  |  | Jellyfish Jam |  |  | ThoriumRework:JellyfishJam |
 | weapon |  |  | Marine Wine Glass | Ω |  | ThoriumMod:MarineWineGlass |
 | weapon |  |  | Scuba Curva | Ω |  | ThoriumMod:ScubaCurva |
 | weapon |  |  | Sonar Cannon |  |  | ThoriumMod:SonarCannon |
@@ -6099,23 +6099,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Obsidian Scale |  |  | ThoriumMod:ObsidianScale |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | accessory | defense |  | Shatter Heart Shield |  |  | SOTS:ShatterHeartShield |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Violet Crescent / Scarlet Crescent | ν |  | — |
 
 ## ieor · Pre-Skeletron → Skeletron (stage 20)
@@ -6168,22 +6168,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### ranged
@@ -6237,23 +6237,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Unholy Arrow |  |  | — |
 | buff |  |  | Wormhole Arrow |  |  | — |
 | buff |  |  | Wormhole Bullet |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### magic
@@ -6306,23 +6306,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Magic Power Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### summon
@@ -6383,24 +6383,24 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Artillery Potion |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Summoning Potion | * |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Summoning Potion | * |  | v:2328 |
 | buff |  |  | War Table |  |  | — |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### rogue
@@ -6408,8 +6408,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon | spam |  | Dracula Fang |  |  | ThoriumMod:DraculaFang |
-| weapon | spam |  | Forbidden Maelstrom | ν |  | — |
-| weapon | spam |  | Goopwood Split | ν |  | — |
+| weapon | spam |  | Forbidden Maelstrom | ν |  | SOTSBardHealer:ForbiddenMaelstrom |
+| weapon | spam |  | Goopwood Split | ν |  | SOTSBardHealer:GoopwoodSplit |
 | weapon | spam |  | Hardened Honeycomb |  |  | CalamityMod:HardenedHoneycomb |
 | weapon | spam |  | Rot Ball / Tooth Ball |  |  | CalamityMod:RotBall |
 | weapon | spam |  | Sludge Splotch |  |  | CalamityMod:SludgeSplotch |
@@ -6459,36 +6459,36 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Hydration Potion |  |  | — |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Hydration Potion |  |  | ThoriumMod:HydrationPotion |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### healer
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| weapon |  |  | Cursed Ankh Staff | ν |  | — |
-| weapon |  |  | Defibrillanator |  |  | — |
-| weapon |  |  | Goopwood Reap |  |  | — |
-| weapon |  |  | Red Crescent |  |  | — |
-| weapon |  |  | The Windmill |  |  | — |
-| weapon |  |  | Wind Reaver |  |  | — |
+| weapon |  |  | Cursed Ankh Staff | ν |  | SOTSBardHealer:CursedAnkhStaff |
+| weapon |  |  | Defibrillanator |  |  | InfernalEclipseWeaponsDLC:Defibrillanator |
+| weapon |  |  | Goopwood Reap |  |  | SOTSBardHealer:GoopwoodReap |
+| weapon |  |  | Red Crescent |  |  | ThoriumRework:RedCresent |
+| weapon |  |  | The Windmill |  |  | CalamityBardHealer:TheWindmill |
+| weapon |  |  | Wind Reaver |  |  | RagnarokMod:WindReaver |
 | weapon | support |  | Dark Gift |  |  | — |
 | weapon | support |  | Life’s Gift |  |  | — |
 | weapon | support |  | Lost Oasis |  |  | — |
@@ -6528,34 +6528,34 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ### bard
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| weapon |  |  | Ancient Harp |  |  | — |
-| weapon |  |  | Goopwood Wiggle | Ω |  | — |
-| weapon |  |  | Harp-Y |  |  | — |
+| weapon |  |  | Ancient Harp |  |  | SOTSBardHealer:AncientHarp |
+| weapon |  |  | Goopwood Wiggle | Ω |  | SOTSBardHealer:GoopwoodWiggle |
+| weapon |  |  | Harp-Y |  |  | CalamityBardHealer:HarpY |
 | weapon |  |  | Hot Horn | Ω |  | ThoriumMod:HotHorn |
-| weapon |  |  | Jellyfish Jam |  |  | — |
+| weapon |  |  | Jellyfish Jam |  |  | ThoriumRework:JellyfishJam |
 | weapon |  |  | Scrap Guitar |  |  | — |
 | weapon |  |  | Violince |  |  | — |
-| weapon |  |  | Windward | Ω |  | — |
+| weapon |  |  | Windward | Ω |  | CalamityBardHealer:Windward |
 | weapon | support |  | Aestheticus | + |  | CalamityMod:Aestheticus |
 | weapon | support |  | Brittle Star Staff |  |  | CalamityMod:BrittleStarStaff |
 | armor |  |  | Jester's |  |  | ThoriumMod:JestersMask2 |
@@ -6599,23 +6599,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Voiden Ankh | ν |  | — |
 
 ## ieor · Pre-Slime_God → The Slime God (stage 26)
@@ -6672,26 +6672,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### ranged
 
@@ -6749,27 +6749,27 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Unholy Arrow |  |  | — |
 | buff |  |  | Wormhole Arrow |  |  | — |
 | buff |  |  | Wormhole Bullet |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### magic
 
@@ -6824,27 +6824,27 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Magic Power Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### summon
 
@@ -6905,29 +6905,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Artillery Potion |  |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
 | buff |  |  | Bewitching Table |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | War Table |  |  | — |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### rogue
 
@@ -6936,9 +6936,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Bronze Throwing Axe |  |  | ThoriumMod:BronzeThrowingAxe |
 | weapon | spam |  | Champion's God Hand |  |  | ThoriumMod:ChampionsGodHand |
 | weapon | spam |  | Enchanted Axe |  |  | CalamityMod:EnchantedAxe |
-| weapon | spam |  | Forbidden Maelstrom | ν |  | — |
+| weapon | spam |  | Forbidden Maelstrom | ν |  | SOTSBardHealer:ForbiddenMaelstrom |
 | weapon | spam |  | Granite Throwing Axe |  |  | ThoriumMod:GraniteThrowingAxe |
-| weapon | spam |  | Goopwood Split | ν |  | — |
+| weapon | spam |  | Goopwood Split | ν |  | SOTSBardHealer:GoopwoodSplit |
 | weapon | spam |  | Kylie |  |  | CalamityMod:Kylie |
 | weapon | spam |  | Shinobi Blade |  |  | CalamityMod:ShinobiBlade |
 | weapon | spam |  | P-LSR Aerial Tracker |  |  | — |
@@ -6992,45 +6992,45 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Assassin Potion |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Hydration Potion |  |  | — |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Assassin Potion |  |  | ThoriumMod:AssassinPotion |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Hydration Potion |  |  | ThoriumMod:HydrationPotion |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### healer
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon |  |  | Bone Reaper |  |  | ThoriumMod:BoneReaper |
-| weapon |  |  | Cursed Ankh Staff | ν |  | — |
-| weapon |  |  | Defibrillanator |  |  | — |
+| weapon |  |  | Cursed Ankh Staff | ν |  | SOTSBardHealer:CursedAnkhStaff |
+| weapon |  |  | Defibrillanator |  |  | InfernalEclipseWeaponsDLC:Defibrillanator |
 | weapon |  |  | Light's Lament |  |  | ThoriumMod:LightsLament |
-| weapon |  |  | Marble Scythe |  |  | — |
-| weapon |  |  | Red Crescent |  |  | — |
-| weapon |  |  | Serpentine Fork |  |  | — |
+| weapon |  |  | Marble Scythe |  |  | RagnarokMod:MarbleScythe |
+| weapon |  |  | Red Crescent |  |  | ThoriumRework:RedCresent |
+| weapon |  |  | Serpentine Fork |  |  | InfernalEclipseWeaponsDLC:DeepseaTrident |
 | weapon |  |  | Spirit Blast Wand |  |  | ThoriumMod:SpiritBlastWand |
 | weapon |  |  | Templar's Judgement |  |  | ThoriumMod:TemplarJudgment |
-| weapon |  |  | The Windmill |  |  | — |
-| weapon |  |  | Wind Reaver |  |  | — |
+| weapon |  |  | The Windmill |  |  | CalamityBardHealer:TheWindmill |
+| weapon |  |  | Wind Reaver |  |  | RagnarokMod:WindReaver |
 | weapon | support |  | Dark Gift |  |  | — |
 | weapon | support |  | Life’s Gift |  |  | — |
 | weapon | support |  | Lost Oasis |  |  | — |
@@ -7071,24 +7071,24 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### bard
 
@@ -7097,14 +7097,14 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Bone Trumpet | Ω |  | ThoriumMod:BoneTrumpet |
 | weapon |  |  | Bronze Tuning Fork | Ω |  | ThoriumMod:TuningFork |
 | weapon |  |  | Calaveras | Ω |  | ThoriumMod:Calaveras |
-| weapon |  |  | Deep Sea Drawl | Ω |  | — |
+| weapon |  |  | Deep Sea Drawl | Ω |  | InfernalEclipseWeaponsDLC:DeepSeaDrawl |
 | weapon |  |  | Granite Boom Box |  |  | ThoriumMod:GraniteBoomBox |
-| weapon |  |  | Harp-Y | Ω |  | — |
+| weapon |  |  | Harp-Y | Ω |  | CalamityBardHealer:HarpY |
 | weapon |  |  | Hot Horn | Ω |  | ThoriumMod:HotHorn |
 | weapon |  |  | Nocturne | Ω |  | ThoriumMod:Nocturne |
 | weapon |  |  | Microphone |  |  | ThoriumMod:Microphone |
 | weapon |  |  | Violince |  |  | — |
-| weapon |  |  | Windward | Ω |  | — |
+| weapon |  |  | Windward | Ω |  | CalamityBardHealer:Windward |
 | weapon | support |  | Aestheticus | + |  | CalamityMod:Aestheticus |
 | weapon | support |  | Brittle Star Staff |  |  | CalamityMod:BrittleStarStaff |
 | armor |  |  | Noble's |  |  | ThoriumMod:NoblesHat |
@@ -7153,27 +7153,27 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ## ieor · Pre-Wall_of_Flesh → Wall of Flesh (stage 30)
 
@@ -7236,26 +7236,26 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### ranged
@@ -7320,28 +7320,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Unholy Arrow |  |  | — |
 | buff |  |  | Wormhole Arrow |  |  | — |
 | buff |  |  | Wormhole Bullet |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion |  |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion |  |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### magic
@@ -7401,28 +7401,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Magic Power Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### summon
@@ -7486,29 +7486,29 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Artillery Potion |  |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
 | buff |  |  | Bewitching Table |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | War Table |  |  | — |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### rogue
@@ -7518,11 +7518,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Bronze Throwing Axe |  |  | ThoriumMod:BronzeThrowingAxe |
 | weapon | spam |  | Champion's God Hand |  |  | ThoriumMod:ChampionsGodHand |
 | weapon | spam |  | Enchanted Axe |  |  | CalamityMod:EnchantedAxe |
-| weapon | spam |  | Forbidden Maelstrom | ν |  | — |
+| weapon | spam |  | Forbidden Maelstrom | ν |  | SOTSBardHealer:ForbiddenMaelstrom |
 | weapon | spam |  | Gauss Flinger |  |  | ThoriumMod:GaussFlinger |
 | weapon | spam |  | Gel Dart |  |  | CalamityMod:GelDart |
 | weapon | spam |  | Granite Throwing Axe |  |  | ThoriumMod:GraniteThrowingAxe |
-| weapon | spam |  | Goopwood Split | ν |  | — |
+| weapon | spam |  | Goopwood Split | ν |  | SOTSBardHealer:GoopwoodSplit |
 | weapon | spam |  | Light's Anguish / Embowelment |  |  | ThoriumMod:LightAnguish |
 | weapon | spam |  | Shinobi Blade |  |  | CalamityMod:ShinobiBlade |
 | weapon | spam |  | P-LSR Aerial Tracker |  |  | — |
@@ -7580,45 +7580,45 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Assassin Potion |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
-| buff |  |  | Hydration Potion |  |  | — |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Assassin Potion |  |  | ThoriumMod:AssassinPotion |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
+| buff |  |  | Hydration Potion |  |  | ThoriumMod:HydrationPotion |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### healer
 
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
-| weapon |  |  | Cursed Ankh Staff | ν |  | — |
+| weapon |  |  | Cursed Ankh Staff | ν |  | SOTSBardHealer:CursedAnkhStaff |
 | weapon |  |  | Dark Contagion |  |  | ThoriumMod:DarkContagion |
-| weapon |  |  | Defibrillanator |  |  | — |
-| weapon |  |  | Duality |  |  | — |
+| weapon |  |  | Defibrillanator |  |  | InfernalEclipseWeaponsDLC:Defibrillanator |
+| weapon |  |  | Duality |  |  | CalamityBardHealer:Duality |
 | weapon |  |  | Falling Twilight / Blood Harvest |  |  | ThoriumMod:FallingTwilight |
-| weapon |  |  | Jelly Slicer |  |  | — |
+| weapon |  |  | Jelly Slicer |  |  | RagnarokMod:JellySlicer |
 | weapon |  |  | Light's Lament |  |  | ThoriumMod:LightsLament |
-| weapon |  |  | Marble Scythe |  |  | — |
-| weapon |  |  | Red Crescent |  |  | — |
-| weapon |  |  | Serpentine Fork |  |  | — |
+| weapon |  |  | Marble Scythe |  |  | RagnarokMod:MarbleScythe |
+| weapon |  |  | Red Crescent |  |  | ThoriumRework:RedCresent |
+| weapon |  |  | Serpentine Fork |  |  | InfernalEclipseWeaponsDLC:DeepseaTrident |
 | weapon |  |  | Spirit Blast Wand |  |  | ThoriumMod:SpiritBlastWand |
 | weapon |  |  | Templar's Judgement |  |  | ThoriumMod:TemplarJudgment |
 | weapon | support |  | Dark Gift |  |  | — |
@@ -7667,25 +7667,25 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ### bard
@@ -7695,11 +7695,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Bone Trumpet | Ω |  | ThoriumMod:BoneTrumpet |
 | weapon |  |  | Bronze Tuning Fork | Ω |  | ThoriumMod:TuningFork |
 | weapon |  |  | Calaveras | Ω |  | ThoriumMod:Calaveras |
-| weapon |  |  | Deep Sea Drawl | Ω |  | — |
+| weapon |  |  | Deep Sea Drawl | Ω |  | InfernalEclipseWeaponsDLC:DeepSeaDrawl |
 | weapon |  |  | Granite Boom Box |  |  | ThoriumMod:GraniteBoomBox |
 | weapon |  |  | Microphone |  |  | ThoriumMod:Microphone |
 | weapon |  |  | Nocturne | Ω |  | ThoriumMod:Nocturne |
-| weapon |  |  | Return to Sludge | Ω |  | — |
+| weapon |  |  | Return to Sludge | Ω |  | CalamityBardHealer:ReturntoSludge |
 | weapon |  |  | Roboboe |  |  | ThoriumMod:Roboboe |
 | weapon |  |  | Song of Ice & Fire | Ω |  | ThoriumMod:SongofIceAndFire |
 | weapon | support |  | Aestheticus | + |  | CalamityMod:Aestheticus |
@@ -7754,28 +7754,28 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Goblet of Entrails / Hadal Stew / Healing Potion / Honeyfin | * |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Bouncing Flame Potion |  |  | — |
-| buff | offense |  | Conflagration Potion |  |  | — |
-| buff | offense |  | Frenzy Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Titan Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Bouncing Flame Potion |  |  | ThoriumMod:BouncingFlamePotion |
+| buff | offense |  | Conflagration Potion |  |  | ThoriumMod:ConflagrationPotion |
+| buff | offense |  | Frenzy Potion |  |  | ThoriumMod:FrenzyPotion |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Titan Potion |  |  | v:2326 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 | buff |  |  | Otherworld Conduit |  |  | — |
 
 ## ieor · Pre-Polaris → Polaris (stage 42)
@@ -7806,7 +7806,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Power Glove |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Arctic Spear Tip | Ω |  | — |
+| accessory |  |  | Arctic Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:ArcticSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -7842,21 +7842,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor |  |  | — |
+| buff |  |  | Flask of Ichor |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ## ieor · Pre-mechanical_Boss_2 → The Twins (stage 37)
 
@@ -7919,24 +7919,24 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor |  |  | — |
+| buff |  |  | Flask of Ichor |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
 | buff |  |  | Tesla's Amulet |  |  | CalamityMod:TeslasAmulet |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | defense |  | Warmth Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion |  |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | defense |  | Warmth Potion |  |  | v:2359 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### ranged
 
@@ -8002,25 +8002,25 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Jester's Arrow | C |  | — |
 | buff |  |  | Musket Ball / Tungsten Bullet | Ω |  | — |
 | buff |  |  | Ammo Box |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
 | buff |  |  | Tesla's Amulet |  |  | CalamityMod:TeslasAmulet |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | defense |  | Warmth Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion |  |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | defense |  | Warmth Potion |  |  | v:2359 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ### summon
 
@@ -8097,24 +8097,24 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Radiant Ooze |  |  | CalamityMod:RadiantOoze |
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
-| buff |  |  | Artillery Potion |  |  | — |
+| buff |  |  | Artillery Potion |  |  | ThoriumMod:ArtilleryPotion |
 | buff |  |  | Bewitching Table |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | War Table |  |  | — |
 | buff | defense |  | Healing Potion / Honeyfin | ≤ * |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 
 ### rogue
 
@@ -8123,11 +8123,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Bronze Throwing Axe |  |  | ThoriumMod:BronzeThrowingAxe |
 | weapon | spam |  | Champion's God Hand |  |  | ThoriumMod:ChampionsGodHand |
 | weapon | spam |  | Enchanted Axe |  |  | CalamityMod:EnchantedAxe |
-| weapon | spam |  | Forbidden Maelstrom | ν |  | — |
+| weapon | spam |  | Forbidden Maelstrom | ν |  | SOTSBardHealer:ForbiddenMaelstrom |
 | weapon | spam |  | Gauss Flinger |  |  | ThoriumMod:GaussFlinger |
 | weapon | spam |  | Gel Dart |  |  | CalamityMod:GelDart |
 | weapon | spam |  | Granite Throwing Axe |  |  | ThoriumMod:GraniteThrowingAxe |
-| weapon | spam |  | Goopwood Split | ν |  | — |
+| weapon | spam |  | Goopwood Split | ν |  | SOTSBardHealer:GoopwoodSplit |
 | weapon | spam |  | Light's Anguish / Embowelment |  |  | ThoriumMod:LightAnguish |
 | weapon | spam |  | Shinobi Blade |  |  | CalamityMod:ShinobiBlade |
 | weapon | spam |  | P-LSR: Aerial Tracker |  |  | CalamityMod:AerialTracker |
@@ -8186,21 +8186,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Healing Potion / Honeyfin | ≤ * |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 
 ### bard
 
@@ -8212,7 +8212,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Granite Boom Box |  |  | ThoriumMod:GraniteBoomBox |
 | weapon |  |  | Microphone |  |  | ThoriumMod:Microphone |
 | weapon |  |  | Nocturne | Ω |  | ThoriumMod:Nocturne |
-| weapon |  |  | Return to Sludge | Ω |  | — |
+| weapon |  |  | Return to Sludge | Ω |  | CalamityBardHealer:ReturntoSludge |
 | weapon |  |  | Roboboe |  |  | ThoriumMod:Roboboe |
 | weapon |  |  | Song of Ice & Fire | Ω |  | ThoriumMod:SongofIceAndFire |
 | weapon | support |  | Aestheticus | + |  | CalamityMod:Aestheticus |
@@ -8268,22 +8268,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Royal Jelly |  |  | SOTS:RoyalJelly |
 | accessory | defense |  | Survivalist's Boots |  |  | ThoriumMod:SurvivalistBoots |
 | accessory | defense |  | Worm Scarf |  |  | v:3224 |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Healing Potion / Honeyfin | ≤ * |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Vigor Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Vigor Potion |  |  | SOTS:VigorPotion |
 
 ## ieor · Post_Mechanical_Boss_2 → The Destroyer (stage 40)
 
@@ -8314,7 +8314,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Power Glove |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Arctic Spear Tip | Ω |  | — |
+| accessory |  |  | Arctic Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:ArcticSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8350,21 +8350,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor |  |  | — |
+| buff |  |  | Flask of Ichor |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 
 ## ieor · Pre-Plantera → Plantera (stage 46)
 
@@ -8390,7 +8390,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Mechanical Glove |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Arctic Spear Tip | Ω |  | — |
+| accessory |  |  | Arctic Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:ArcticSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8427,21 +8427,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Sanguine Tangerine |  |  | — |
 
 ## ieor · Pre-Golem → Golem (stage 53)
@@ -8474,7 +8474,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Mechanical Glove |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Arctic Spear Tip | Ω |  | — |
+| accessory |  |  | Arctic Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:ArcticSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8515,22 +8515,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 
 ## ieor · Post-Golem → Golem (stage 54)
 
@@ -8565,7 +8565,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8610,22 +8610,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Miracle Fruit |  |  | — |
 
 ## ieor · Pre-Lunar_Events → Lunar Events (Pillars) (stage 63)
@@ -8654,7 +8654,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8702,22 +8702,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Star Veil |  |  | v:862 |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Greater Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Chaos Conduit |  |  | — |
 | buff |  |  | Infernal Blood |  |  | — |
 
@@ -8748,7 +8748,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8800,22 +8800,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Super Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 
 ## ieor · Pre-Providence → Providence, the Profaned Goddess (stage 75)
 
@@ -8841,7 +8841,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
 | accessory |  |  | Titan Slayer Sheath |  |  | ThoriumMod:TitanSlayerSheath |
@@ -8892,23 +8892,23 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | — |
+| buff |  |  | Flask of Ichor / Flask of Brimstone |  |  | v:1356 |
 | buff | defense |  | Super Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Singularity Core | ν |  | — |
 | buff |  |  | Red Lightning Container |  |  | — |
 
@@ -8956,21 +8956,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | buff |  |  | Jester's Arrow | C |  | — |
 | buff |  |  | Silver Bullet / Tungsten Bullet |  |  | — |
 | buff |  |  | Unholy Arrow |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -9025,18 +9025,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Arcane Crystal | * |  | — |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
@@ -9092,19 +9092,19 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Summoning Potion | * |  | — |
+| buff |  |  | Summoning Potion | * |  | v:2328 |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -9122,7 +9122,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | spam |  | Gilded Dagger / Gleaming Dagger |  |  | CalamityMod:GildedDagger |
 | weapon | spam |  | Iron Francisca / Lead Tomahawk |  |  | CalamityMod:IronFrancisca |
 | weapon | spam |  | Lasting Pliers |  |  | ThoriumMod:LastingPliers |
-| weapon | spam |  | Vibrant Tomahawk |  |  | — |
+| weapon | spam |  | Vibrant Tomahawk |  |  | SOTSBardHealer:VibrantTomahawk |
 | weapon | stealth |  | Crystalline |  |  | CalamityMod:Crystalline |
 | weapon | stealth |  | Gilded Dagger / Gleaming Dagger |  |  | CalamityMod:GildedDagger |
 | weapon | stealth |  | Nasty Cholla |  |  | CalamityMod:NastyCholla |
@@ -9156,20 +9156,20 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Shadow Potion |  |  | — |
+| buff |  |  | Shadow Potion |  |  | CalamityMod:ShadowPotion |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
 | buff |  |  | Nature Conduit | * |  | — |
@@ -9188,8 +9188,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Rotten Cod | * |  | ThoriumMod:RottenCod |
 | weapon |  |  | Ice Shaver |  |  | ThoriumMod:IceShaver |
 | weapon |  |  | Palm Cross |  |  | ThoriumMod:PalmCross |
-| weapon |  |  | Thorium Heavy Scythe |  |  | — |
-| weapon |  |  | Wulfrum Weed Wacker |  |  | — |
+| weapon |  |  | Thorium Heavy Scythe |  |  | ThoriumRework:ThoriumHeavyScythe |
+| weapon |  |  | Wulfrum Weed Wacker |  |  | CalamityBardHealer:WulfrumWeedWacker |
 | weapon | support |  | Coral Purifier |  |  | ThoriumMod:CoralPurifier |
 | weapon | support |  | Heart Wand |  |  | — |
 | weapon | support |  | Renew | * |  | — |
@@ -9225,18 +9225,18 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
 | buff | defense |  | Mana Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Arcane Crystal | * |  | — |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Life Crystal |  |  | — |
@@ -9251,7 +9251,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | kind | role | target | item | marks | note | in dataset |
 | --- | --- | --- | --- | --- | --- | --- |
 | weapon |  |  | Antlion Maraca | Ω |  | ThoriumMod:AntlionMaraca |
-| weapon |  |  | Dual Stylophone | ν |  | — |
+| weapon |  |  | Dual Stylophone | ν |  | SOTSBardHealer:DualStylophone |
 | weapon |  |  | Dynasty Guzheng | * |  | ThoriumMod:DynastyGuzheng |
 | weapon |  |  | Gold Bugle Horn / Platinum Bugle Horn |  |  | ThoriumMod:GoldBugleHorn |
 | weapon |  |  | Grand Piano |  |  | ThoriumMod:GrandPiano |
@@ -9261,7 +9261,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon |  |  | Seashell Castanets | Ω |  | ThoriumMod:SeashellCastanettes |
 | weapon |  |  | Ukulele |  |  | ThoriumMod:Ukulele |
 | weapon |  |  | Skyware Lute | Ω |  | ThoriumMod:SkywareLute |
-| weapon |  |  | Wulfrum Megaphone |  |  | — |
+| weapon |  |  | Wulfrum Megaphone |  |  | CalamityBardHealer:WulfrumMegaphone |
 | armor |  |  | Crier's |  |  | ThoriumMod:CriersCap |
 | armor |  |  | Ancient Shadow | * |  | v:956 |
 | armor |  |  | Frigid | * |  | SOTS:FrigidCrown |
@@ -9291,21 +9291,21 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | offense |  | Unstable Granite Core | * |  | CalamityMod:UnstableGraniteCore |
 | accessory | defense |  | Gladiator's Locket | * |  | CalamityMod:GladiatorsLocket |
 | accessory | defense |  | Rover Drive |  |  | CalamityMod:RoverDrive |
-| buff |  |  | Creativity Potion |  |  | — |
-| buff |  |  | Earworm Potion | * |  | — |
+| buff |  |  | Creativity Potion |  |  | ThoriumMod:CreativityPotion |
+| buff |  |  | Earworm Potion | * |  | ThoriumMod:EarwormPotion |
 | buff | defense |  | Lesser Healing Potion / Eggnog | ≤ |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Calcium Potion |  |  | — |
-| buff | defense |  | Endurance Potion | * |  | — |
-| buff | defense |  | Heartreach Potion | * |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Inferno Potion |  |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Thorns Potion |  |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Bounding Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Calcium Potion |  |  | CalamityMod:CalciumPotion |
+| buff | defense |  | Endurance Potion | * |  | v:2346 |
+| buff | defense |  | Heartreach Potion | * |  | v:2323 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Inferno Potion |  |  | v:2348 |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Thorns Potion |  |  | v:301 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Bounding Potion |  |  | CalamityMod:BoundingPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
 | buff |  |  | Earth Conduit | * |  | — |
 | buff |  |  | Inspiration Fragment |  |  | — |
 | buff |  |  | Inspiration Gem | * |  | — |
@@ -9341,7 +9341,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9392,22 +9392,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Supreme Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Tainted Cloudberry |  |  | — |
 
 ## ieor · Pre-Devourer_of_Gods → The Devourer of Gods (stage 85)
@@ -9441,7 +9441,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9492,22 +9492,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Supreme Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Ectoheart |  |  | — |
 | buff |  |  | Ruinous Plasma Injection |  |  | — |
 
@@ -9532,7 +9532,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Elemental Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9579,22 +9579,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Voidmage Incubator |  |  | SOTS:VoidmageIncubator |
 | accessory | defense |  | Ambrosial Ampoule |  |  | CalamityMod:AmbrosialAmpoule |
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Omega Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 
 ## ieor · Pre-Primordials → Primordial Wyrm (stage 88)
 
@@ -9623,7 +9623,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Fire Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9675,22 +9675,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
 | accessory | defense |  | Deific Amulet |  |  | CalamityMod:DeificAmulet |
 | accessory | defense |  | Ursa Sergeant |  |  | CalamityMod:UrsaSergeant |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Omega Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 
 ## ieor · Pre-Shadowspec → Supreme Witch, Calamitas (stage 90)
 
@@ -9719,7 +9719,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Elemental Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9764,22 +9764,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | defense |  | Voidmage Incubator |  |  | SOTS:VoidmageIncubator |
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Omega Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 | buff |  |  | Sacred Strawberry |  |  | — |
 
 ## ieor · Endgame → Endgame (stage 95)
@@ -9807,7 +9807,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Bloody Worm Scarf |  |  | CalamityMod:BloodyWormScarf |
 | accessory |  |  | Berserker's Glove / Elemental Gauntlet |  |  | v:3992 |
 | accessory |  |  | Cursed Flail-Core / Vile Flail-Core |  |  | ThoriumMod:CursedFlailCore |
-| accessory |  |  | Searing Spear Tip | Ω |  | — |
+| accessory |  |  | Searing Spear Tip | Ω |  | InfernalEclipseWeaponsDLC:SearingSpearTip |
 | accessory |  |  | Hydrokinetic Antennae | * |  | SOTS:HydrokineticAntennae |
 | accessory |  |  | Badge of Bravery |  |  | CalamityMod:BadgeofBravery |
 | accessory |  |  | Leeching Sheath |  |  | ThoriumMod:LeechingSheath |
@@ -9850,22 +9850,22 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | defense |  | The Sponge |  |  | CalamityMod:TheSponge |
 | accessory | defense |  | Voidmage Incubator |  |  | SOTS:VoidmageIncubator |
 | accessory | defense |  | Sandwich | * |  | SOTS:Sandwich |
-| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | — |
+| buff |  |  | Flask of Crumbling / Flask of Holy Flames |  |  | CalamityMod:FlaskOfCrumbling |
 | buff | defense |  | Omega Healing Potion |  |  | — |
-| buff |  |  | Soul Access Potion | ν |  | — |
-| buff |  |  | Roughskin Potion |  |  | — |
-| buff |  |  | Vibe Potion |  |  | — |
-| buff | defense |  | Endurance Potion |  |  | — |
-| buff | defense |  | Ironskin Potion |  |  | — |
-| buff | defense |  | Lifeforce Potion |  |  | — |
-| buff | defense |  | Photosynthesis Potion |  |  | — |
-| buff | defense |  | Regeneration Potion |  |  | — |
-| buff | offense |  | Purple Haze | † |  | — |
-| buff | offense |  | Rage Potion | * |  | — |
-| buff | offense |  | Wrath Potion | * |  | — |
-| buff | mobility |  | Soaring Potion |  |  | — |
-| buff | mobility |  | Swiftness Potion |  |  | — |
-| buff | mobility |  | Gravity Normalizer Potion |  |  | — |
+| buff |  |  | Soul Access Potion | ν |  | SOTS:SoulAccessPotion |
+| buff |  |  | Roughskin Potion |  |  | SOTS:RoughskinPotion |
+| buff |  |  | Vibe Potion |  |  | SOTS:VibePotion |
+| buff | defense |  | Endurance Potion |  |  | v:2346 |
+| buff | defense |  | Ironskin Potion |  |  | v:292 |
+| buff | defense |  | Lifeforce Potion |  |  | v:2345 |
+| buff | defense |  | Photosynthesis Potion |  |  | CalamityMod:PhotosynthesisPotion |
+| buff | defense |  | Regeneration Potion |  |  | v:289 |
+| buff | offense |  | Purple Haze | † |  | CalamityMod:PurpleHaze |
+| buff | offense |  | Rage Potion | * |  | v:2347 |
+| buff | offense |  | Wrath Potion | * |  | v:2349 |
+| buff | mobility |  | Soaring Potion |  |  | CalamityMod:SoaringPotion |
+| buff | mobility |  | Swiftness Potion |  |  | v:290 |
+| buff | mobility |  | Gravity Normalizer Potion |  |  | CalamityMod:GravityNormalizerPotion |
 
 ## sots · Pre-Boss → Pre-boss (stage 0)
 
@@ -10693,7 +10693,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Poison Barb |  |  | — |
 | accessory |  |  | Harpy Charm |  |  | — |
 | accessory |  |  | Snapping Stone / Pyroclastic Stone |  | (or Pyroclastic Stone) | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | ammo |  | single best | Frostburn Arrow |  |  | v:988 |
 | ammo |  | single best | Shimmer Arrow |  |  | v:5348 |
 | ammo |  | single best | Silver Bullet |  |  | v:278 |
@@ -10728,8 +10728,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Band of Starpower |  | Exclusive to Corrupt worlds until Goblin Army is defeated. | v:111 |
 | accessory |  |  | Nature's Gift |  |  | v:223 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Mana Crystal |  | (9×) | — |
 | buff |  |  | Arcane Crystal |  |  | — |
 
@@ -10748,7 +10748,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | weapon | whip |  | Vasculash |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
 | armor |  |  | Flinx Fur Coat |  |  | v:5068 |
 | accessory |  |  | Feral Claws |  |  | v:211 |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 
 ## vanilla · Pre-Skeletron → Skeletron (stage 20)
 
@@ -10774,9 +10774,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | armor |  |  | Shadow |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | v:102 |
 | armor |  |  | Crimson |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:792 |
 | buff |  |  | Sharpening Station |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 
 ### ranged
 
@@ -10799,7 +10799,7 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Sweet Barb |  |  | — |
 | accessory |  |  | Harpy Charm |  |  | — |
 | accessory |  |  | Snapping Stone / Pyroclastic Stone |  | (or Pyroclastic Stone) | — |
-| buff |  |  | Archery Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
 | ammo |  | single best | Hellfire Arrow |  |  | v:265 |
 | ammo |  | single best | Party Bullet |  |  | v:1349 |
 | ammo |  | single | Shimmer Arrow |  |  | v:5348 |
@@ -10840,8 +10840,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Magnet Flower |  |  | v:4000 |
 | accessory |  |  | Mana Regeneration Band |  |  | v:982 |
 | buff |  |  | Mana Potion |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 
 ### summon
 
@@ -10862,9 +10862,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Feral Claws |  |  | v:211 |
 | accessory |  |  | Pygmy Necklace |  |  | v:1158 |
 | accessory |  |  | Old One's Army accessories |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 
 ## vanilla · Pre-Wall of Flesh → Wall of Flesh (stage 30)
 
@@ -10887,9 +10887,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Strung Counterweight |  |  | — |
 | accessory |  |  | Pyroclastic Stone |  |  | — |
 | buff |  |  | Sharpening Station |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 
 ### ranged
 
@@ -10911,8 +10911,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Sweet Barb |  |  | — |
 | accessory |  |  | Harpy Charm |  |  | — |
 | accessory |  |  | Snapping Stone / Pyroclastic Stone |  | (or Pyroclastic Stone) | — |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | ammo |  | single best | Hellfire Arrow |  |  | v:265 |
 | ammo |  | single best | Party Bullet |  |  | v:1349 |
 | ammo |  | multi best | Jester's Arrow |  |  | v:51 |
@@ -10946,8 +10946,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Cuffs |  |  | v:2221 |
 | accessory |  |  | Magnet Flower |  |  | v:4000 |
 | accessory |  |  | Restoration Shield |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 
 ### summon
 
@@ -10973,10 +10973,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | whip |  | Silver Shield |  |  | — |
 | accessory |  |  | Pygmy Necklace |  |  | v:1158 |
 | accessory |  |  | Old One's Army accessories |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | name=BewitchingTable\|Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing . | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
-| buff |  |  | Flask of Poison |  |  | — |
+| buff |  |  | Flask of Poison |  |  | v:1359 |
 
 ## vanilla · Pre-Mech Bosses → The Twins (stage 36)
 
@@ -11013,11 +11013,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Yoyo Bag |  |  | v:3366 |
 | accessory |  |  | Berserker's Glove |  | name=flesh knuckles\|If the player is playing Multiplayer and is a tank, the Flesh Knuckles and/or its upgrades should be used for increased aggro. | v:3992 |
 | accessory |  |  | Moon Charm |  |  | v:485 |
-| buff |  |  best | Flask of Ichor |  | name=Crimson\|Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | — |
+| buff |  |  best | Flask of Ichor |  | name=Crimson\|Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | v:1353 |
 | buff |  |  | Sharpening Station |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
 
 ### ranged
 
@@ -11045,8 +11045,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Magic Quiver |  | name=Quivers\|It should be noted that the arrow damage buff produced by Quivers stacks additively and not multiplicatively, and arrow velocity, knockback, and ammo conservation do not stack as well, so using more than one of the Quivers is generally not worth it. | v:1321 |
 | accessory |  |  | Stalker's Quiver |  |  | v:4006 |
 | accessory |  |  | Molten Quiver |  |  | v:4002 |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | buff |  |  | Ammo Box |  |  | — |
 | ammo |  | single best | Crystal Bullet |  | name=Crystal Bullet\|Highest single-target . | v:515 |
 | ammo |  | single best | Ichor Arrow |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1334 |
@@ -11086,8 +11086,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Sorcerer Emblem |  |  | v:489 |
 | accessory |  |  | Mana Cloak |  |  | v:4001 |
 | accessory |  |  | Restoration Shield |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Crystal Ball |  |  | — |
 
 ### summon
@@ -11115,9 +11115,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | whip |  | Armlet Of Ruin |  |  | — |
 | accessory | sentry |  | Old One's Army accessories |  |  | — |
 | accessory | sentry |  | Heavy Sling |  | If used intelligently, sentries are potentially much more powerful than minions. For example, a single Queen Spider Staff has DPS | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | v:1353 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | name=BewitchingTable\|Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing . | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 
@@ -11162,11 +11162,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fire Gauntlet |  |  | v:1343 |
 | accessory |  |  | Magic Yoyo Bag |  |  | — |
 | accessory |  |  | Berserker's Glove |  | If the player is playing Multiplayer and is a tank, the Flesh Knuckles and/or its upgrades should be used for increased aggro. | v:3992 |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | — |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | v:1353 |
 | buff |  |  | Sharpening Station |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
 
 ### ranged
 
@@ -11195,8 +11195,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Magic Quiver |  | It should be noted that the arrow damage buff produced by Quivers stacks additively and not multiplicatively, and arrow velocity, knockback, and ammo conservation do not stack as well, so using more than one of the Quivers is generally not worth it. | v:1321 |
 | accessory |  |  | Stalker's Quiver |  |  | v:4006 |
 | accessory |  |  | Molten Quiver |  |  | v:4002 |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | buff |  |  | Ammo Box |  |  | — |
 | ammo |  | single best | Crystal Bullet |  | Highest single-target DPS | v:515 |
 | ammo |  | single best | Holy Arrow |  | name=HolyArrow\|It should be noted that the stars produced by Holy Arrows are inconsistent and less effective against fast-moving targets. | v:516 |
@@ -11242,8 +11242,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Celestial Cuffs |  |  | v:2221 |
 | accessory |  |  | Sorcerer Emblem |  |  | v:489 |
 | accessory |  |  | Restoration Shield |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Crystal Ball |  |  | — |
 
 ### summon
@@ -11273,9 +11273,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | whip |  best | Twilight Grasp |  |  | — |
 | accessory | whip |  best | Druidic Serpent Cloak |  | name=snake band\|This accessory technically does not allow whips to be stacked by themselves, and still requires accessories that increase the player's tag effect slots for its full potential to be realized. However, even with only one tag effect able to be used, it may be worth equipping anyway. | — |
 | accessory | whip |  | Wicked Claws |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Flask of Cursed Flames |  | Exclusive to Corruption worlds, unless an artificial Corruption is created in Hardmode via buying Corrupt Seeds from the Dryad while in a Graveyard. | v:1353 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 
@@ -11309,11 +11309,11 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fire Gauntlet |  |  | v:1343 |
 | accessory |  |  | Berserker's Glove |  | If the player is playing Multiplayer and is a tank, the Flesh Knuckles and/or its upgrades should be used for increased aggro. | v:3992 |
 | accessory |  |  | Magic Yoyo Bag |  |  | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
 | buff |  |  | Sharpening Station |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
 
 ### ranged
 
@@ -11338,8 +11338,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Magic Quiver |  | It should be noted that the arrow damage buff produced by Quivers stacks additively and not multiplicatively, and arrow velocity, knockback, and ammo conservation do not stack as well, so using more than one of the Quivers is generally not worth it. | v:1321 |
 | accessory |  |  | Stalker's Quiver |  |  | v:4006 |
 | accessory |  |  | Molten Quiver |  |  | v:4002 |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | buff |  |  | Ammo Box |  |  | — |
 | ammo |  | single best | Crystal Bullet |  | Highest single-target DPS | v:515 |
 | ammo |  | single best | Ichor Arrow |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1334 |
@@ -11379,8 +11379,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Sorcerer Emblem |  |  | v:489 |
 | accessory |  |  | Restoration Shield |  |  | — |
 | accessory |  |  | Mystic Arts Sash |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Crystal Ball |  |  | — |
 
 ### summon
@@ -11412,9 +11412,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | whip |  best | Twilight Grasp |  |  | — |
 | accessory | whip |  best | Druidic Serpent Cloak |  | This accessory technically does not allow whips to be stacked by themselves, and still requires accessories that increase the player's tag effect slots for its full potential to be realized. However, even with only one tag effect able to be used, it may be worth equipping anyway. | — |
 | accessory | whip |  | Wicked Claws |  |  | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 
@@ -11455,10 +11455,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fire Gauntlet |  |  | v:1343 |
 | accessory |  |  | Berserker's Glove |  | If the player is playing Multiplayer and is a tank, the Flesh Knuckles and/or its upgrades should be used for increased aggro. | v:3992 |
 | accessory |  |  | Magic Yoyo Bag |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  | Ale |  |  | — |
-| buff |  |  | Sake |  |  | — |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  | Ale |  |  | v:353 |
+| buff |  |  | Sake |  |  | v:2266 |
 | buff |  |  | Sharpening Station |  |  | — |
 
 ### ranged
@@ -11495,9 +11495,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  best | Chaos Cylinder |  |  | — |
 | accessory |  |  | Ranger Emblem |  |  | v:491 |
 | accessory |  |  | Phoenix Quiver |  |  | — |
-| buff |  |  | Swiftness Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | buff |  |  | Ammo Box |  |  | — |
 | ammo |  | single best | Crystal Bullet |  | Highest single-target DPS | v:515 |
 | ammo |  | single best | Chlorophyte Bullet |  |  | v:1179 |
@@ -11543,8 +11543,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Sorcerer Emblem |  |  | v:489 |
 | accessory |  |  | Restoration Shield |  |  | — |
 | accessory |  |  | Mystic Arts Sash |  |  | — |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Crystal Ball |  |  | — |
 
 ### summon
@@ -11580,9 +11580,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Summoner Emblem |  |  | v:2998 |
 | accessory | sentry |  | Old One's Army accessories |  |  | — |
 | accessory | sentry |  | Templar's Sling |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 
@@ -11662,10 +11662,10 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Fire Gauntlet |  |  | v:1343 |
 | accessory |  |  | Berserker's Glove |  | If the player is playing Multiplayer and is a tank, the Flesh Knuckles and/or its upgrades should be used for increased aggro. | v:3992 |
 | accessory |  |  | Magic Yoyo Bag |  |  | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  best | Sake |  |  | — |
-| buff |  |  | Ale |  |  | — |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  best | Sake |  |  | v:2266 |
+| buff |  |  | Ale |  |  | v:353 |
 | buff |  |  | Sharpening Station |  |  | — |
 
 ### ranged
@@ -11688,9 +11688,9 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  | Recon Scope |  |  | v:4005 |
 | accessory |  |  | Sniper Scope |  |  | v:1858 |
 | accessory |  |  | Chaos Cylinder |  |  | — |
-| buff |  |  | Swiftness Potion |  |  | — |
-| buff |  |  | Archery Potion |  |  | — |
-| buff |  |  | Ammo Reservation Potion |  |  | — |
+| buff |  |  | Swiftness Potion |  |  | v:290 |
+| buff |  |  | Archery Potion |  |  | v:303 |
+| buff |  |  | Ammo Reservation Potion |  |  | v:2344 |
 | buff |  |  | Ammo Box |  |  | — |
 | ammo |  |  best | Crystal Bullet |  | Highest single-target DPS | v:515 |
 | ammo |  |  best | Chlorophyte Bullet |  | name=Chlorophyte Bullet\|Has homing, making it the most consistent bullet. | v:1179 |
@@ -11730,8 +11730,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory |  |  best | Restoration Shield |  |  | — |
 | accessory |  |  best | Mystic Arts Sash |  |  | — |
 | accessory |  |  | Arcane Flower |  |  | v:3991 |
-| buff |  |  | Mana Regeneration Potion |  |  | — |
-| buff |  |  | Magic Power Potion |  |  | — |
+| buff |  |  | Mana Regeneration Potion |  |  | v:293 |
+| buff |  |  | Magic Power Potion |  |  | v:294 |
 | buff |  |  | Crystal Ball |  |  | — |
 
 ### summon
@@ -11758,8 +11758,8 @@ Marks: `†` risky/close range · `C` best on worms · `+` support · `≤` upgr
 | accessory | sentry |  | Templar's Sling |  |  | — |
 | accessory | whip |  best | Twilight Grasp |  |  | — |
 | accessory | whip |  best | Ouroboros Ring |  |  | — |
-| buff |  |  best | Flask of Venom |  |  | — |
-| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | — |
-| buff |  |  | Summoning Potion |  |  | — |
+| buff |  |  best | Flask of Venom |  |  | v:1340 |
+| buff |  |  best | Flask of Ichor |  | Exclusive to Crimson worlds, unless an artificial Crimson is created in Hardmode via buying Crimson Seeds from the Dryad while in a Graveyard. | v:1356 |
+| buff |  |  | Summoning Potion |  |  | v:2328 |
 | buff |  |  | Bewitching Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |
 | buff |  |  | War Table |  | Also recommended to be used by non-summoners, as just having an additional minion/sentry from the same tier of progression you are in is great for increasing DPS | — |

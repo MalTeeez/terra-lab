@@ -23,7 +23,10 @@ describe('classOf', () => {
 describe('parseTooltipStats', () => {
   test('class mechanics in prose become conditional class stats', () => {
     expect(parseTooltipStats('Stealth strikes inflict Crumbling and deal 8% more damage').stats).toEqual({ rogueStealthDamage: 0.08 });
-    expect(parseTooltipStats('15% of your throwing damage is duplicated').stats).toEqual({ throwerDamage: 0.15 }); // no condition: the full stat
+    // no condition: the full stat, plus the duplicated share on its own so a cap can be priced against it
+    expect(parseTooltipStats('15% of your throwing damage is duplicated').stats).toEqual({ throwerDamage: 0.15, throwerDuplicated: 0.15 });
+    expect(parseTooltipStats('12.5% of your rogue damage is duplicated\nDuplication damage caps at 50.').stats)
+      .toEqual({ rogueDamage: 0.125, rogueDuplicated: 0.125, damageCap: 50 });
     expect(parseTooltipStats('Stealth strikes grant 15% critical strike chance to non-stealth strikes for 10 seconds').stats).toEqual({ rogueCondCrit: 15 }); // a timed buff, not the strike itself
     expect(parseTooltipStats('Stealth strikes have +8 armor penetration and deal 8% more damage').stats).toEqual({ rogueStealthArmorPen: 8, rogueStealthDamage: 0.08 });
     // Coin of Deceit: a strike that costs 90% of the bar comes round more often
@@ -48,6 +51,9 @@ describe('parseTooltipStats', () => {
     expect(parseTooltipStats('Immunity to Poison and Bleeding').flags).toEqual(['debuffResist']);
     expect(parseTooltipStats('Immunity to most debuffs').flags).toEqual(['debuffImmune']);
     expect(parseTooltipStats('Grants immunity to fire blocks').flags).toEqual(['lava']);
+    const sulphurous = parseTooltipStats('Attacking and being attacked by enemies inflicts Poisoned for 1 second\nGrants an additional jump that summons a sulphurous bubble');
+    expect(sulphurous.flags).toContain('jump');
+    expect(sulphurous.debuffs).toEqual(['Poisoned']);
   });
   test('reads the stats a class calls by its own name', () => {
     expect(parseTooltipStats('Reduces damage taken by 17%').stats).toEqual({ damageReduction: 0.17 });
@@ -58,6 +64,14 @@ describe('parseTooltipStats', () => {
     // the sentence can put its percentage last
     expect(parseTooltipStats('After dodging, summon damage and crit chance are boosted by 10%').stats).toEqual({ summonCondCrit: 10, summonCondDamage: 0.1 });
   });
+  test('potions: healing, mana, and the clause that shares its line with life regen', () => {
+    expect(parseTooltipStats('Increases healing and mana received from potions by 40').stats).toEqual({ potionHeal: 0.4, potionMana: 0.4 });
+    expect(parseTooltipStats('Increases mana received from potions by 40').stats).toEqual({ potionMana: 0.4 });
+    expect(parseTooltipStats('Reduces healing received from potions by 20').stats).toEqual({ potionHeal: -0.2 });
+    expect(parseTooltipStats('Healing Potions are 33% more effective').stats).toEqual({ potionHeal: 0.33 });
+    // the potion half used to be eaten by the life regen rule's `continue`
+    expect(parseTooltipStats('+2 HP/s life regen and reduces the cooldown of healing potions by 25%').stats).toEqual({ potionHeal: 0.25, lifeRegen: 3 });
+  });
   test('stats only conditional lines mention are reported, and jump speed is not an extra jump', () => {
     const r = parseTooltipStats('Increased defense by 5 when submerged in liquid\n10% increased movement speed and +1 HP/s life regen while wearing Victide armor');
     expect(r.stats).toEqual({ condLifeRegen: 2 }); // "+1 HP/s" only while the armour is on: a conditional value, not a stat
@@ -65,11 +79,28 @@ describe('parseTooltipStats', () => {
     const u = parseTooltipStats('+4 defense\nIncreased defense by 5 when submerged');
     expect(u.conditional).toEqual([]); // an unconditional line covers it
     expect(parseTooltipStats('12% increased movement and jump speed').flags).not.toContain('jump');
+    const victide = parseTooltipStats('5% increased damage reduction\n+5 defense and 10% increased damage reduction while submerged in liquid');
+    expect(victide.stats).toMatchObject({ damageReduction: 0.05, condEndurance: 0.1 });
     expect(parseTooltipStats('10% increased throwing velocity').stats).toEqual({ rogueVelocity: 0.1 });
     expect(parseTooltipStats('Enemy hits create an obsidian flash\nThis effect has a 5 second cooldown, but is halved if the flash kills an enemy').stats).toEqual({ cooldown: 5 });
     const veil = parseTooltipStats('The veil slowly follows you, and any player inside it gains 3 defense and 75.0% acceleration');
     expect(veil.stats).toEqual({ condDefense: 3, condAccel: 0.75 });
     expect(veil.conditional.sort()).toEqual(['accel', 'defense']);
+    // "up to" is a ceiling on something that scales, not a stat you carry: Necklace of Vexation is
+    // worth 30% only at a sliver of health, and the sentry line is 15% only after two minutes
+    const vex = parseTooltipStats('Up to 30% increased damage the lower your life is');
+    expect(vex.stats).toEqual({ allCondDamage: 0.3 });
+    expect(vex.conditional).toEqual(['damage']);
+    expect(parseTooltipStats('Your sentries last forever and gain up to 15% damage over the course of 2 minutes').stats)
+      .toEqual({ summonCondDamage: 0.15 });
+    // damage only a slice of what you fight is subject to, gated on the target instead of on you
+    const core = parseTooltipStats("20% increased damage dealt to Old One's Army enemies");
+    expect(core.stats).toEqual({ allCondDamage: 0.2 });
+    expect(core.conditional).toEqual(['damage']);
+    // a class named in the same shape stays that class's conditional stat, and a weapon describing
+    // its own attack ("deals … to nearby foes") is not a stat you wear at all
+    expect(parseTooltipStats('8% increased damage to all other classes').stats).toEqual({ allDamage: 0.08 });
+    expect(parseTooltipStats('Deal 150% damage to up to 2 enemies surrounding the initially hit enemy').stats).toEqual({});
   });
 });
 

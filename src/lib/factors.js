@@ -14,7 +14,7 @@ export const FACTORS = {
   landing: { label: 'Landing', color: 'var(--color-info)', hint: 'How much of what the weapon fires actually reaches the boss.' },
   target: { label: 'The target', color: 'var(--color-plum)', hint: 'What the boss itself takes away through its defense, its immunity frames and the size of its body.' },
   debuff: { label: 'Debuffs', color: 'var(--color-warn)', hint: 'The damage the weapon keeps doing after the hit through the debuffs it inflicts.' },
-  resource: { label: 'Upkeep', color: 'var(--color-plum)', hint: 'What keeping the weapon in use costs you in mana and healing.' },
+  resource: { label: 'Upkeep', color: 'var(--color-plum)', hint: 'What keeping the weapon in use costs you out of a bar that refills on its own — mana, void, health, or a thrower’s exhaustion.' },
   cost: { label: 'What it costs you', color: 'var(--color-bad)', hint: 'What using the weapon costs you outside the fight, like standing too close or wrecking your own arena.' },
   // ---- gear (score)
   survival: { label: 'Survival', color: 'var(--color-info)', hint: 'How much punishment you can take, counting defense, life and the immunities that come with the piece.' },

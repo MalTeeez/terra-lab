@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { indexDataset } from '../src/lib/dataset.js';
-import { CLASS_PREF, SOFT, loadoutBonus, STEALTH_SHARE, TYPICAL_CRIT, W, accessoryGroup, defenseScale, foreignClass, minionSlotScale, pieceScore, round1, soft, typicalDps, weaponDps } from '../src/lib/score.js';
+import { CLASS_PREF, SOFT, dupCapLoss, loadoutBonus, STEALTH_SHARE, TYPICAL_CRIT, W, accessoryGroup, defenseScale, foreignClass, minionSlotScale, pieceScore, round1, soft, typicalDefense, typicalDps, weaponDps } from '../src/lib/score.js';
 
 const MELEE_TANK = CLASS_PREF.melee.tank; // melee counts survivability higher than everyone else
-import { REACH, STEALTH_RECHARGE, bladeLanding, bossSpeed, playerDamage } from '../src/lib/dps.js';
+import { REACH, STEALTH_RECHARGE, bladeCoverage, bladeLanding, bossSpeed, playerDamage } from '../src/lib/dps.js';
 import { solveLoadout, solveTimeline } from '../src/lib/solver.js';
 
 const raw = {
@@ -65,6 +65,8 @@ const raw = {
     { id: 'M:coin', mod: 'M', name: 'Coin', slot: 'accessory', effects: { mod: { CritBonusDamage: 30 } }, stats: { critFlatChance: 0.5 }, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:belt', mod: 'M', name: 'Belt', slot: 'accessory', effects: { flags: ['dodge'], onHit: [{ type: 'M:cloud', name: 'Cloud' }] }, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:deceit', mod: 'M', name: 'Deceit Coin', slot: 'accessory', stats: { stealthCost: 0.9 }, textClasses: ['rogue'], stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:clump', mod: 'M', name: 'Clump', slot: 'accessory', effects: { spawns: [{ type: 'M:clumpling', name: 'Clumpling', damage: 10, local: 10, life: 90000, seeks: true }] }, stage: 0, stageSource: { kind: 'rarity' } },
+    { id: 'M:shieldaura', mod: 'M', name: 'Aura Shield', slot: 'accessory', effects: { spawns: [{ type: 'M:hitbox', name: 'Hitbox', damage: 10, local: 10, life: 700 }] }, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'v:bow', mod: 'v', name: 'Bow', slot: 'weapon', class: 'ranged', arch: 'bow', damage: 10, useTime: 20, useAnimation: 20, crit: 4, useAmmo: 40, shootSpeed: 8, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
   ],
   ammo: [
@@ -86,7 +88,10 @@ describe('score', () => {
     // own landing (the boss drifts while the arc comes round; a blade only just reaching is a tip)
     const risk = r.parts.find((p) => /fights at .* px of the/.test(p.label))?.mul ?? 1;
     const blade = bladeLanding({ D: r.distance, boss: r.boss, vb: bossSpeed(r.boss.progression), reach: REACH.swing, ticks: 20 });
-    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * 0.85 * blade.f * risk, 0); // `risk` is the rounded part
+    // …and how much of the fight a blade of that reach is in contact at all. That used to be a flat
+    // ×0.85; it is `bladeCoverage` now, which is 1 at the baseline broadsword reach and falls away
+    // steeply below it, so the expectation tracks the model's own curve rather than a stale literal.
+    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * bladeCoverage(REACH.swing) * blade.f * risk, 0); // `risk` is the rounded part
     expect(weaponDps(ds.byId.get('M:staff')).kind).toBe('per hit');
   });
   test('piece score reads effects for the class and ignores other classes', () => {
@@ -109,6 +114,22 @@ describe('score', () => {
     expect(early.parts[0].value).toBeCloseTo(((30 * 0.5 * TYPICAL_CRIT) / (typicalDps(2) / 3)) * 100, 1);
     expect(pieceScore(coin, 'melee', {}, { progression: 20 }).score).toBeLessThan(early.score / 5);
     expect(pieceScore(coin, 'summon', {}, { progression: 2 }).score).toBe(0); // summons do not crit
+  });
+  test('a permanent minion is graded like a small summon weapon, and capped at a minion slot', () => {
+    const clump = ds.byId.get('M:clump');
+    // 10 damage past half the stage's boss armour, 3 hits/s (10-tick immunity), 90% of the time on
+    // the boss, against a typical weapon at the stage
+    const early = pieceScore(clump, 'melee', {}, { progression: 2 });
+    const hit = 10 - typicalDefense(2) / 2;
+    expect(early.parts[0].value).toBeCloseTo(((hit * 3 * 0.9) / typicalDps(2)) * 100, 1);
+    // it never outscores the slot a summoner would have put its own minion in…
+    const big = { ...clump, effects: { spawns: [{ ...clump.effects.spawns[0], damage: 200 }] } };
+    expect(pieceScore(big, 'melee', {}, { progression: 2 }).score).toBeCloseTo(W.minionSlot * minionSlotScale(2), 1);
+    expect(early.score).toBeLessThan(W.minionSlot * minionSlotScale(2));
+    // …and a fixed 10 damage is worth nothing by the end
+    expect(pieceScore(clump, 'melee', {}, { progression: 20 }).score).toBeLessThan(1);
+    // a hitbox that sits on the player is not a minion: it does not chase the boss, so it is not graded here
+    expect(pieceScore(ds.byId.get('M:shieldaura'), 'melee', {}, { progression: 2 }).score).toBe(0);
   });
   test('a cheaper stealth strike is more stealth strikes', () => {
     const s = pieceScore(ds.byId.get('M:deceit'), 'rogue', ds.aliases);
@@ -183,10 +204,24 @@ describe('score', () => {
     expect(defenseScale(7)).toBeCloseTo(1, 1);
     expect(defenseScale(28)).toBeLessThan(0.7);
     // "+5 defense when submerged", "+10% movement speed while wearing X": the code's value at 15%
-    // (state-gated), the item's own defense in full; the second gated stat at a quarter of that
+    // (state-gated), the item's own defense in full; the smaller gated stat at a quarter of that
     const ocean = pieceScore(ds.byId.get('M:ocean'), 'rogue', {}, { progression: 7 });
-    expect(ocean.parts.find((p) => /defense/.test(p.label)).value).toBeCloseTo(soft(2 + 5 * 0.15, SOFT.defense) * 0.5 * defenseScale(7), 1);
-    expect(ocean.parts.find((p) => /movement/.test(p.label)).value).toBeCloseTo(soft(0.1 * 0.15, SOFT.moveSpeed) * 25 * 0.25, 1);
+    expect(ocean.parts.find((p) => p.label === '+2 defense').value).toBeCloseTo(soft(2, SOFT.defense) * 0.5 * defenseScale(7), 1);
+    expect(ocean.parts.find((p) => p.label === '+5 defense ⅙').value).toBe(0.1); // second gated stat: quarter weight
+    expect(ocean.parts.find((p) => /movement/.test(p.label)).value).toBeCloseTo(soft(0.1 * 0.15, SOFT.moveSpeed) * 25, 1);
+  });
+  test('a duplicated share of your damage is only worth its cap once your hits outgrow it', () => {
+    // "12.5% of your rogue damage is duplicated" + "Duplication damage caps at 50": free while a
+    // hit is small, worth cap ÷ hit once it is not (a typical hit is a third of typicalDps)
+    const guide = { id: 'g', slot: 'accessory', stats: { rogueDamage: 0.125, rogueDuplicated: 0.125, damageCap: 50 } };
+    expect(dupCapLoss(guide, 2, 0.125, 'rogue')).toBe(0); // 50 caps nothing against a 30-damage hit
+    expect(pieceScore(guide, 'rogue', {}, { progression: 2 }).score).toBe(12.5);
+    const late = pieceScore(guide, 'rogue', {}, { progression: 25 });
+    expect(late.score).toBeLessThan(2); // a 2900-damage hit: the copy is a flat 50
+    expect(late.parts[0].detail).toMatch(/capped at 50/);
+    // the cap can only take back the share that is inside the number being scored
+    expect(dupCapLoss({ stats: { rogueDuplicated: 0.175, damageCap: 200 } }, 25, 0.1, 'rogue')).toBeLessThanOrEqual(0.1);
+    expect(accessoryGroup({ noStack: 'Guides' })).toBe('nostack:Guides'); // only one Guide at a time
   });
   test('the diminishing-returns curve: slope 1 near zero, flat at the cap', () => {
     expect(soft(1, 10)).toBeCloseTo(0.97, 2);

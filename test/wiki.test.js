@@ -24,6 +24,18 @@ test('wiki links', () => {
   expect(wikiImg({ mod: 'HypnosMod', name: 'Whatever' })).toBeNull();
 });
 
+test('items the mod renamed keep the wiki\'s old name', () => {
+  // the Weapons DLC gave its Healer/Bard weapons equipment codes; the wiki still files both the
+  // article and the sprite under the old name, so link and icon follow it (md5 checked live)
+  expect(wikiUrl({ mod: 'InfernalEclipseWeaponsDLC', name: 'C-TSL Defibrillator' }))
+    .toBe('https://terrariamods.wiki.gg/wiki/Infernal_Eclipse_of_Ragnarok/Defibrillanator');
+  expect(wikiImg({ mod: 'InfernalEclipseWeaponsDLC', name: 'C-PMA Ripper', icon: 'c/ce' }))
+    .toBe('https://terrariamods.wiki.gg/images/c/ce/Neon_Ripper_(Infernal_Eclipse_of_Ragnarok).png');
+  // a name with no override is left alone
+  expect(wikiUrl({ mod: 'InfernalEclipseWeaponsDLC', name: 'Storm Carver' }))
+    .toBe('https://terrariamods.wiki.gg/wiki/Infernal_Eclipse_of_Ragnarok/Storm_Carver');
+});
+
 test('looked-up sprite file wins over the guessed one', () => {
   // the boss article files its sprite under a phase name, so no rule over "Nameless Deity" finds it;
   // tools/wiki-icons.mjs looks it up and the hashed guess is skipped (see data/wiki-icons.json)

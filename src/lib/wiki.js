@@ -18,21 +18,55 @@ const WIKIS = {
   CalamityHunt: { base: 'https://terrariamods.wiki.gg/', page: 'Hunt_of_the_Old_God/', file: ' (Hunt of the Old God)' },
   CatalystMod: { base: 'https://terrariamods.wiki.gg/', page: 'Catalyst/', file: ' (Catalyst)' },
   NoxusBoss: { base: 'https://terrariamods.wiki.gg/', page: 'Wrath_of_the_Gods/', file: ' (Wrath of the Gods)' },
-  CalValEX: { base: 'https://terrariamods.wiki.gg/', page: "Calamity's_Vanities/", file: " (Calamity's Vanities)" }, // 61/77, the misses are undocumented vanity
+  CalValEX: { base: 'https://terrariamods.wiki.gg/', page: "Calamity's_Vanities/", file: " (Calamity's Vanities)" }, 
+  CalamitySimpleWhipAddon: { base: 'https://terrariamods.wiki.gg/', page: "Calamity_Simple_Whip_Addon/", file: " (Calamity Simple Whip Addon)" }, 
+  InfernalEclipseWeaponsDLC: { base: 'https://terrariamods.wiki.gg/', page: "Infernal_Eclipse_of_Ragnarok/", file: " (Infernal Eclipse of Ragnarok)" }, 
+};
+
+/**
+ * Items the mod renamed after the wiki was written: the article and the sprite file still carry the
+ * old name, so both the link and the icon 404 on the in-game name the miner reads. Keyed
+ * `<mod>:<name>` like data/wiki-icons.json, since the article follows the name, not the id.
+ *
+ * The Weapons DLC did most of this at once, giving its Healer and Bard weapons equipment codes
+ * (`Neon Ripper` → `C-PMA Ripper`); the rest are a respelling the wiki never picked up. Verified
+ * against https://terrariamods.wiki.gg/wiki/Infernal_Eclipse_of_Ragnarok/Weapons_(Weapons_DLC):
+ * the four `Gamma Knife`-style names below still have no article, but their sprite is filed under
+ * the old name, so the icon resolves even where the link is a red one.
+ */
+export const WIKI_NAMES = {
+  'InfernalEclipseWeaponsDLC:Sulphur Spitter': 'Acid Belcher',
+  'InfernalEclipseWeaponsDLC:C-TSL Defibrillator': 'Defibrillanator',
+  'InfernalEclipseWeaponsDLC:C-PMA Ripper': 'Neon Ripper',
+  'InfernalEclipseWeaponsDLC:I-LSR Infrariff': 'Infrariff',
+  'InfernalEclipseWeaponsDLC:I-PLS Ocarina': 'Plasma Ocarina',
+  'InfernalEclipseWeaponsDLC:Triggerblade': 'TriggerBlade',
+  // sprite only — the wiki lists these but has never written the article
+  'InfernalEclipseWeaponsDLC:C-GSS Gamma Knife': 'Gamma Knife',
+  'InfernalEclipseWeaponsDLC:I-PMA Mechamatone': 'Mechamatome',
+  'InfernalEclipseWeaponsDLC:Tetherblade': 'TetherBlade',
+  'InfernalEclipseWeaponsDLC:Thunderbolt-Action Sniper Rifle': 'Thunderbolt Action Sniper Rifle',
 };
 
 const enc = (s) => encodeURIComponent(s.replace(/ /g, '_'));
+/**
+ * The name the wiki files a record under, which is not always the name the game shows.
+ * `wikiName` is the mined one: the mod's own DisplayName, where a later mod's localization
+ * renamed the item out from under it (Ragnarok's "Rogue 101" is Thorium's Guide to Expert
+ * Throwing, and only the latter has an article).
+ */
+const wikiName = (it) => WIKI_NAMES[`${it.mod}:${it.name}`] ?? it.wikiName ?? it.name;
 
 /** Base name (no extension) of an item's sprite file on its wiki, or null when it has no wiki. */
 export const wikiFile = (it) => {
   const w = WIKIS[it?.mod];
-  return w && it.name ? it.name + (w.file ?? '') : null;
+  return w && it.name ? wikiName(it) + (w.file ?? '') : null;
 };
 
 /** Article URL for an item/material, or null when the mod has no known wiki. */
 export function wikiUrl(it) {
   const w = WIKIS[it?.mod];
-  return w && it.name ? `${w.base}wiki/${w.page ?? ''}${enc(it.name)}` : null;
+  return w && it.name ? `${w.base}wiki/${w.page ?? ''}${enc(wikiName(it))}` : null;
 }
 
 /**

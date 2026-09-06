@@ -7,6 +7,7 @@
  *   ModifyWeaponDamage(…, ref StatModifier) damage multipliers / additive percentages
  *   ModifyWeaponCrit(…, ref float)          crit additions
  *   UseTimeMultiplier / UseSpeedMultiplier  use-time factors
+ *   ModifyTooltips(…)                       tooltip lines another mod adds to the item
  *
  * Every record carries the *matchers* it applies to (item id, class name, mod, namespace
  * prefix, `is` type, damage class, item property, id range) and the difficulty flags it was
@@ -17,6 +18,8 @@ import { normalizeEffects, playerHooks } from './effects.js';
 import { TYPE_ABSTRACT, derivesFromTml, findInherited, refId } from './util.js';
 
 const ITEMARG = Object.freeze({ k: 'itemarg', slot: 0 });
+/** The `List<TooltipLine>` argument of ModifyTooltips, so a call that gets handed it is visible. */
+const TIPS = Object.freeze({ k: 'tips' });
 const FIELDS = new Set(['damage', 'defense', 'useTime', 'useAnimation', 'reuseDelay', 'crit', 'knockBack', 'mana', 'rare', 'value', 'shootSpeed', 'accessory', 'DamageType', 'ArmorPenetration']);
 
 /** Case keys → matcher objects the overlay can apply to items. */
@@ -64,7 +67,7 @@ function gatedOff(asm, td, enabledMods) {
   return false;
 }
 
-function makeMachine(asm, td, { tml, enabledMods, cfg, linear, onStore, onLoad, onCall, onReturn, budget = 300000 }) {
+function makeMachine(asm, td, { tml, enabledMods, cfg, statics, linear, onStore, onLoad, onCall, onNew, onReturn, budget = 300000 }) {
   return new Machine(asm, {
     tml,
     concreteType: td,
@@ -72,24 +75,26 @@ function makeMachine(asm, td, { tml, enabledMods, cfg, linear, onStore, onLoad, 
     enabledMods,
     maxDepth: 3,
     budget,
+    loadFields: statics, // ids another mod's content fills in at load time (`throwingGuideType`)
     onStaticLoad: (f) => cfg?.onStaticLoad(f) ?? tmlStaticLoadHook(f),
     onLoad: (recv, name, ctx) => cfg?.onLoad(recv, name) ?? onLoad?.(recv, name, ctx),
     onCall: (callee, args, ctx) => cfg?.onCall(callee, args, ctx) ?? tmlStaticHook(callee, args, ctx) ?? onCall?.(callee, args, ctx),
     onStore: onStore ?? (() => {}),
+    onNew: onNew ?? (() => undefined),
     onReturn: onReturn ?? (() => {}),
   });
 }
 
 /**
  * @param {import('../clr/metadata.js').Assembly} asm
- * @param {{ tml, modId, enabledMods: Set<string>, cfg?: ReturnType<typeof import('../config.js').configHooks> }} opts
- * @returns {Array<{ mod, hook, kind, matchers, field?, value?, add?, mul?, effects?, cond: string[], conditional: boolean }>}
+ * @param {{ tml, modId, loc, statics, enabledMods: Set<string>, cfg?: ReturnType<typeof import('../config.js').configHooks> }} opts
+ * @returns {Array<{ mod, hook, kind, matchers, field?, value?, add?, mul?, effects?, text?, from?, cond: string[], conditional: boolean }>}
  */
-export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
+export function extractGlobalOverrides(asm, { tml, modId, loc, statics, enabledMods, cfg }) {
   const out = [];
   const seen = new Set();
   const emit = (rec) => {
-    const key = JSON.stringify([rec.hook, rec.kind, rec.matchers, rec.field, rec.value, rec.add, rec.mul, rec.effects, rec.cond]);
+    const key = JSON.stringify([rec.hook, rec.kind, rec.matchers, rec.field, rec.value, rec.add, rec.mul, rec.effects, rec.mode, rec.find, rec.text, rec.from, rec.cond]);
     if (seen.has(key)) return;
     seen.add(key);
     out.push({ mod: modId, ...rec });
@@ -111,7 +116,7 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
       const no = []; // paths that bail out: what the hook does *not* apply to
       let unresolved = false;
       const m = makeMachine(asm, td, {
-        tml, enabledMods, cfg, linear: true,
+        tml, enabledMods, cfg, statics, linear: true,
         onReturn(v, ctx) {
           // a `return true` we cannot pin to an item (a shared `return true` several branches jump to)
           // means "some items, unknown which" — narrowing to nothing would drop the whole GlobalItem
@@ -174,7 +179,7 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
     const sd = td.methods.find((m) => m.name === 'SetDefaults' && asm.methodBody(m));
     if (sd) {
       const m = makeMachine(asm, td, {
-        tml, enabledMods, cfg, linear: true,
+        tml, enabledMods, cfg, statics, linear: true,
         onStore(recv, name, value, ctx) {
           if (recv?.k !== 'itemarg' || !FIELDS.has(name)) return;
           if (value?.k === 'adj' && value.field === name) base(ctx, 'adjust', { hook: 'SetDefaults', field: name, add: value.add, mul: value.mul });
@@ -200,7 +205,19 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
           e.origins.add(ctx.offset);
         }
       });
-      const m = makeMachine(asm, td, { tml, enabledMods, cfg, linear: true, onStore: hooks.onStore, onLoad: hooks.onLoad, onCall: hooks.onCall });
+      // `scuttlersJewel.UpdateAccessory(player, hideVisual)`: a merged crafting tree hands one item
+      // another item's whole effect instead of restating it, so record what it copies from.
+      const onCall = (callee, args, ctx) => {
+        if (/^Update(Accessory|Equip)$/.test(callee.name) && ctx.recv?.k === 'type' && ctx.recv.id) {
+          for (const matchers of scope(withCases(ctx))) {
+            if (!matchers.some((m) => m.id || m.className || m.displayName)) continue; // as above
+            emit({ hook, kind: 'copy', matchers, from: ctx.recv.id, cond: ctx.condTags ?? [], conditional: !!ctx.conditional && !(ctx.condTags?.length), origin: `${td.name}:${hook}:copy:${ctx.offset}` });
+          }
+          return UNKNOWN;
+        }
+        return hooks.onCall(callee, args, ctx);
+      };
+      const m = makeMachine(asm, td, { tml, enabledMods, cfg, statics, linear: true, onStore: hooks.onStore, onLoad: hooks.onLoad, onCall });
       m.run(md, THIS, [ITEMARG, PLAYER, ...extra]);
       for (const e of deltas.values()) {
         const fx = normalizeEffects(e.list);
@@ -208,14 +225,70 @@ export function extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg }) {
       }
     }
 
+    // ---- tooltip edits ----------------------------------------------------------------------
+    // What another mod does to an item's tooltip — a merged crafting tree or a rebalance says so
+    // in the tooltip before it says so anywhere else. Text is anything that carries a string the
+    // mod's own localization holds (so `"12.5% " + Language.GetTextValue(…)` counts), and the edit
+    // is read from the helper's name or from the line it writes to.
+    const mt = td.methods.find((x) => x.name === 'ModifyTooltips' && asm.methodBody(x));
+    if (mt && loc) {
+      const texts = new Set();
+      const mined = (v) => typeof v === 'string' && [...texts].some((t) => v.includes(t));
+      let find = null; // the last `line.Text.Contains("…")` — which line a following write replaces
+      const note = (rec, ctx) => {
+        for (const matchers of scope(withCases(ctx))) {
+          // only where the code names the item: a line keyed by mod or damage class alone is as
+          // often a bail-out the case tracker read the wrong way round as it is a real blanket line
+          if (!matchers.some((m) => m.id || m.className || m.displayName)) continue;
+          emit({ hook: 'ModifyTooltips', kind: 'tooltip', matchers, cond: ctx.condTags ?? [], conditional: !!ctx.conditional && !(ctx.condTags?.length), ...rec, origin: `${td.name}:ModifyTooltips:${rec.text}` });
+        }
+      };
+      const m = makeMachine(asm, td, {
+        tml, enabledMods, cfg, statics, linear: true,
+        onCall(callee, args, ctx) {
+          if (/^GetText(Value)?$/.test(callee.name) && typeof args[0] === 'string') {
+            const v = loc.get(args[0]);
+            if (!v) return UNKNOWN;
+            texts.add(v);
+            return v;
+          }
+          // `if (line.Text.Contains("duplicated")) line.Text = …` — the needle says which line
+          if (callee.name === 'Contains' && callee.declaringType?.fullName === 'System.String' && typeof args[0] === 'string') { find = args[0]; return undefined; }
+          // the list reaching a helper along with mined text is an edit to it; the helper's own
+          // loop over the list is not worth interpreting, its name already says what it does
+          if (ctx.recv !== TIPS && !args.includes(TIPS)) return undefined;
+          const found = args.filter(mined);
+          if (!found.length) return undefined;
+          const n = callee.name;
+          // `FullTooltipOveride(tooltips, text)` rewrites the whole thing; `ReplaceTooltip(tooltips,
+          // find, text, …)` swaps the one line holding `find`; `AddTooltip` / `List.Add` append.
+          if (/overrid|fulltooltip/i.test(n)) note({ mode: 'all', text: found[0] }, ctx);
+          else if (/replace|edit/i.test(n)) { if (found.length > 1 && found[0] !== found[1]) note({ mode: 'sub', find: found[0], text: found[1] }, ctx); }
+          else if (/^(add|insert)/i.test(n)) for (const a of found) note({ mode: 'add', text: a }, ctx);
+          return undefined;
+        },
+        // `line.Text = "12.5% " + …`: a line rewritten in place, found by the needle above
+        onStore(recv, name, value, ctx) {
+          if (name !== 'Text' || ctx.field?.declaringType?.name !== 'TooltipLine' || !mined(value)) return;
+          // the condition the write sits under is the needle itself, not a gate to record
+          if (find) note({ mode: 'sub', find, text: value, conditional: false }, ctx);
+        },
+        onNew(callee, args, ctx) {
+          if (callee.declaringType?.name === 'TooltipLine' && mined(args[2])) note({ mode: 'add', text: args[2] }, ctx);
+          return undefined;
+        },
+      });
+      m.run(mt, THIS, [ITEMARG, TIPS]);
+    }
+
     // ---- weapon modifiers -------------------------------------------------------------------
-    runWeaponModifiers(asm, td, { tml, enabledMods, cfg, linear: true, thisVal: THIS, itemVal: ITEMARG, scope, withCases, emit });
+    runWeaponModifiers(asm, td, { tml, enabledMods, cfg, statics, linear: true, thisVal: THIS, itemVal: ITEMARG, scope, withCases, emit });
   }
   return out;
 }
 
 /** ModifyWeaponDamage / ModifyWeaponCrit / UseTimeMultiplier / UseSpeedMultiplier of a type. */
-function runWeaponModifiers(asm, td, { tml, enabledMods, cfg, linear, thisVal, itemVal, scope, withCases, emit, fixedMatchers }) {
+function runWeaponModifiers(asm, td, { tml, enabledMods, cfg, statics, linear, thisVal, itemVal, scope, withCases, emit, fixedMatchers }) {
   const groupsOf = (ctx) => (fixedMatchers ? [fixedMatchers] : scope(withCases(ctx)));
   const rec = (ctx, kind, extra, hook) => {
     for (const matchers of groupsOf(ctx)) emit({ hook, kind, matchers, cond: ctx.condTags ?? [], conditional: !!ctx.conditional && !(ctx.condTags?.length), origin: `${td.name}:${hook}:${ctx.offset ?? '?'}`, ...extra });
@@ -231,7 +304,7 @@ function runWeaponModifiers(asm, td, { tml, enabledMods, cfg, linear, thisVal, i
     });
     let cur = { k: 'stat', kind: 'damage', cls: 'all' };
     const ref = { k: 'ref', get: () => cur, set: (v) => { if (v?.k === 'stat') cur = v; } };
-    const m = makeMachine(asm, td, { tml, enabledMods, cfg, linear, onStore: hooks.onStore, onLoad: hooks.onLoad, onCall: hooks.onCall });
+    const m = makeMachine(asm, td, { tml, enabledMods, cfg, statics, linear, onStore: hooks.onStore, onLoad: hooks.onLoad, onCall: hooks.onCall });
     m.run(mwd, thisVal, args([ref]));
   }
   const mwc = findInherited(asm, td, 'ModifyWeaponCrit');
@@ -239,14 +312,14 @@ function runWeaponModifiers(asm, td, { tml, enabledMods, cfg, linear, thisVal, i
     let cur = 0;
     let machine;
     const ref = { k: 'ref', get: () => cur, set: (v) => { if (isNum(v)) { cur = 0; rec({ cases: machine.cases, caseGroups: machine.caseGroups, condTags: machine.condTags, conditional: machine.conditional }, 'crit', { add: v }, 'ModifyWeaponCrit'); } } };
-    machine = makeMachine(asm, td, { tml, enabledMods, cfg, linear });
+    machine = makeMachine(asm, td, { tml, enabledMods, cfg, statics, linear });
     machine.run(mwc, thisVal, args([ref]));
   }
   for (const hook of ['UseTimeMultiplier', 'UseSpeedMultiplier']) {
     const md = findInherited(asm, td, hook);
     if (!md) continue;
     const m = makeMachine(asm, td, {
-      tml, enabledMods, cfg, linear: true,
+      tml, enabledMods, cfg, statics, linear: true,
       onReturn(v, ctx) { if (isNum(v) && v > 0 && v !== 1) rec(ctx, hook === 'UseTimeMultiplier' ? 'useTime' : 'useSpeed', { mul: v }, hook); },
     });
     m.run(md, thisVal, args([]));
@@ -254,14 +327,14 @@ function runWeaponModifiers(asm, td, { tml, enabledMods, cfg, linear, thisVal, i
 }
 
 /** The same modifier hooks declared on ModItems themselves (`Murasama.ModifyWeaponDamage`). */
-export function extractModItemModifiers(asm, { tml, modId, enabledMods, cfg }) {
+export function extractModItemModifiers(asm, { tml, modId, statics, enabledMods, cfg }) {
   const out = [];
   const emit = (rec) => out.push({ mod: modId, ...rec });
   for (const td of asm.types) {
     if (td.flags & TYPE_ABSTRACT || td.name.includes('`') || !derivesFromTml(asm, td, 'ModItem')) continue;
     if (!['ModifyWeaponDamage', 'ModifyWeaponCrit', 'UseTimeMultiplier', 'UseSpeedMultiplier'].some((h) => findInherited(asm, td, h))) continue;
     runWeaponModifiers(asm, td, {
-      tml, enabledMods, cfg, linear: true, thisVal: THIS, itemVal: null,
+      tml, enabledMods, cfg, statics, linear: true, thisVal: THIS, itemVal: null,
       scope: (g) => g, withCases: () => [[]], emit, fixedMatchers: [{ id: `${modId}:${td.name}` }],
     });
   }

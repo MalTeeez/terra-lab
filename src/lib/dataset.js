@@ -10,7 +10,7 @@ export const CLASS_LABELS = {
   thrower: 'Thrower', bard: 'Bard', healer: 'Healer', void: 'Void', classless: 'Classless', other: 'Other',
 };
 
-export const SLOT_LABELS = { weapon: 'Weapon', head: 'Head', body: 'Body', legs: 'Legs', accessory: 'Accessory' };
+export const SLOT_LABELS = { weapon: 'Weapon', head: 'Head', body: 'Body', legs: 'Legs', accessory: 'Accessory', potion: 'Potion' };
 
 /**
  * Weapon types (`item.arch`, mined in `miner/extract/items.js`), as the wiki names them. The tag is

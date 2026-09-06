@@ -697,12 +697,13 @@ export function inferStages({ items, recipes, disabledRecipes = new Map(), drops
           let p = 0;
           let ok = true;
           const chain = [];
-          const push = (q, label) => { if (q > p) { p = q; chain.length = 0; chain.push(label); } else if (q === p) chain.push(label); };
+          const gate = []; // the deciding ingredients' ids, for picking a stage among ties
+          const push = (q, label, id) => { if (q > p) { p = q; chain.length = 0; gate.length = 0; chain.push(label); if (id) gate.push(id); } else if (q === p) { chain.push(label); if (id) gate.push(id); } };
           for (const ing of r.ingredients) {
             if (!ing.item) { ok = false; break; }
             const q = progOfIngredient(ing.item, relaxed);
             if (q === null) { ok = false; break; }
-            push(q, byId.get(ing.item)?.name ?? ing.item);
+            push(q, byId.get(ing.item)?.name ?? ing.item, ing.item);
           }
           if (!ok) return;
           for (const g of r.groups) {
@@ -711,7 +712,7 @@ export function inferStages({ items, recipes, disabledRecipes = new Map(), drops
             let best = null;
             for (const m of members) { const q = progOfIngredient(m, relaxed); if (q !== null && (best === null || q < best.q)) best = { q, id: m }; }
             if (!best) continue;
-            push(best.q, `${groupLabel(g)} (${byId.get(best.id)?.name ?? best.id})`);
+            push(best.q, `${groupLabel(g)} (${byId.get(best.id)?.name ?? best.id})`, best.id);
           }
           for (const t of r.tiles) {
             const tp = stationProg(t, relaxed);
@@ -724,7 +725,7 @@ export function inferStages({ items, recipes, disabledRecipes = new Map(), drops
           // exhume list is only usable at Calamitas's enchantment table, and the table itself does
           // not say so. The rarity stands as a floor there, the way an unplaceable chest's does.
           if (r.soft) { const rp = byId.has(result) ? rarityProg(byId.get(result)) : null; if (rp !== null && rp > p) p = rp; }
-          if (better(result, p, { kind: 'craft', from: chain.slice(0, 3), recipe: index })) changed = true;
+          if (better(result, p, { kind: 'craft', from: chain.slice(0, 3), gatedBy: gate.slice(0, 4), recipe: index })) changed = true;
         });
       }
       if (!changed) break;
@@ -859,7 +860,36 @@ export function inferStages({ items, recipes, disabledRecipes = new Map(), drops
   }
 
   const byItem = new Map();
-  for (const [id, { p, src }] of prog) byItem.set(id, { progression: p, stage: stageOf(p), source: src });
+  // Several stages can share one progression value — the Pillars, Ravager and Lux all sit at 16.5 —
+  // and `stageOf` answers with the last of them, which parked every lunar-fragment weapon under
+  // SOTS's Lux and left the Lunar Events showing nothing at all. An item belongs to the earliest
+  // stage of the tie it is really reachable at: the one its own source names, or, for a craft, the
+  // latest stage its deciding ingredients need.
+  const stageByLabel = new Map(stages.map((s) => [s.label, s.index]));
+  const firstAtProg = new Map();
+  for (const s of stages) if (!firstAtProg.has(s.progression)) firstAtProg.set(s.progression, s.index);
+  const stageAt = (q) => { const idx = stageOf(q); return firstAtProg.get(stages[idx].progression) ?? idx; };
+  for (const [id, { p, src }] of prog) {
+    const named = src?.boss ? stageByLabel.get(src.boss) : undefined;
+    const stage = named !== undefined && Math.abs(stages[named].progression - p) < 1e-6 ? named : stageAt(p);
+    byItem.set(id, { progression: p, stage, source: src });
+  }
+  // …and a craft is no earlier than the stage its gating ingredient lands on (settles chains:
+  // fragment → bar → weapon), which is what keeps a Ravager drop's craft off the Pillars.
+  for (let pass = 0; pass < 4; pass++) {
+    let moved = false;
+    for (const [id, rec] of byItem) {
+      for (const g of rec.source?.gatedBy ?? []) {
+        const from = byItem.get(g);
+        if (!from || from.stage === null || from.stage <= rec.stage) continue;
+        if (Math.abs((from.progression ?? -1) - rec.progression) > 1e-6) continue; // only ties
+        rec.stage = from.stage;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  for (const rec of byItem.values()) if (rec.source?.gatedBy) delete rec.source.gatedBy;
   // no stage at all, on purpose: the mod removed it or left it unreachable, and saying so is an
   // answer — it keeps the item out of every pool without it coming back as an open question
   for (const [id, via] of unobtainable) byItem.set(id, { progression: null, stage: null, source: { kind: 'unobtainable', via } });

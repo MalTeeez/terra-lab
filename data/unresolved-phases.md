@@ -5,130 +5,217 @@ the miner has not read the real one. Ranked inside each reason by the weapon's o
 gap matters far more on a weapon holding a stage's top slot than on one scoring 12/s.
 
 ## archetype uptime constant — 518 weapons
-Stands in for: lifetime, cooldown and max-concurrent evidence. 503 of them score above zero.
+Stands in for: lifetime, cooldown and max-concurrent evidence. 502 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
-| Sword of the Zenith | InfernalEclipseAPI | truemelee | 178659 | truemelee 85% |
+| Sword of the Zenith | InfernalEclipseAPI | truemelee | 434815 | truemelee 85% |
 | kevin | InfernumMode | held | 139973 | held 85% |
-| Storm Maiden's Retribution | InfernumMode | held | 98416 | held 85% |
 | Goozmaga | CalamityHunt | placed | 85802 | placed 30% |
+| Storm Maiden's Retribution | InfernumMode | held | 77938 | held 85% |
 | Murasama | CalamityMod | truemelee | 55764 | truemelee 85% |
-| Death's Ascension | CalamityMod | truemelee | 23990 | truemelee 85% |
-| Universe Splitter | CalamityMod | minion | 21935 | minion 90% |
-| Earth | CalamityMod | truemelee | 20957 | truemelee 85% |
+| First Fractal | YouBoss | held | 25118 | held 85% |
+| Star of Destruction | CalamityMod | placed | 22121 | placed 30% |
+| Universe Splitter | CalamityMod | minion | 21955 | minion 90% |
+| Earth | CalamityMod | truemelee | 20954 | truemelee 85% |
 | Vehemence | CalamityMod | held | 19992 | held 85% |
-| First Fractal | YouBoss | held | 14653 | held 85% |
-| Crescent Moon | CalamityMod | held | 13506 | held 85% |
-| Exoblade | CalamityMod | held | 10258 | held 85% |
+| Crescent Moon | CalamityMod | held | 12772 | held 85% |
+| Exoblade | CalamityMod | held | 10263 | held 85% |
 
-## child spawns on a clock nobody read — 339 weapons
-Stands in for: a real rate instead of "at most one extra hit". 338 of them score above zero.
+## child spawns on a clock nobody read — 342 weapons
+Stands in for: a real rate instead of "at most one extra hit". 341 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
-| Ark of the Cosmos | CalamityMod | spear | 48107 | CalamityMod:EonBolt from CalamityMod:ArkoftheCosmosSwungBlade |
+| Ark of the Cosmos | CalamityMod | spear | 50585 | CalamityMod:EonBolt from CalamityMod:ArkoftheCosmosSwungBlade |
 | Irradiant Infinity | RagnarokMod | shot | 35150 | RagnarokMod:IrradiantPurple from RagnarokMod:IrradiantRed |
-| Oneirophobia | ThoriumRework | spear | 32643 | ThoriumRework:OneirophobiaSlice from ThoriumRework:Oneirophobia |
-| The Pack | CalamityMod | launcher | 32272 | CalamityMod:ThePackMinissile from CalamityMod:ThePackMissile |
-| Triactis' True Paladinian Mage-Hammer of Might | CalamityMod | shot | 27503 | CalamityMod:TriactisHammerExplosion from CalamityMod:TriactisHammerProj |
-| Universe Splitter | CalamityMod | minion | 21935 | CalamityMod:UniverseSplitterSmallBeam from CalamityMod:UniverseSplitterField |
-| Vermilion Riposte | StarsAbove | spear | 20729 | StarsAbove:ResolutionProjectile from StarsAbove:ResolutionMagicCircle |
-| Helium Flash | CalamityMod | shot | 19415 | CalamityMod:VolatileStarcore from CalamityMod:HeliumFlashHoldout |
-| Plasmilegion | CatalystMod | flamethrower | 15155 | CatalystMod:PlasmilegionFlamethrower from CatalystMod:PlasmilegionProj |
-| Planetarium | HypnosMod | shot | 14855 | HypnosMod:PlanetariumExplosion from HypnosMod:PlanetariumLaser |
-| Flamsteed Ring | CalamityMod | shot | 14060 | CalamityMod:AndromedaDeathRay from CalamityMod:GiantIbanRobotOfDoom |
-| Crescent Moon | CalamityMod | held | 13506 | CalamityMod:CrescentMoonProj from CalamityMod:CrescentMoonFlail |
+| Oneirophobia | ThoriumRework | spear | 32614 | ThoriumRework:OneirophobiaSlice from ThoriumRework:Oneirophobia |
+| The Pack | CalamityMod | launcher | 32270 | CalamityMod:ThePackMinissile from CalamityMod:ThePackMissile |
+| Triactis' True Paladinian Mage-Hammer of Might | CalamityMod | shot | 27513 | CalamityMod:TriactisHammerExplosion from CalamityMod:TriactisHammerProj |
+| Universe Splitter | CalamityMod | minion | 21955 | CalamityMod:UniverseSplitterSmallBeam from CalamityMod:UniverseSplitterField |
+| Helium Flash | CalamityMod | shot | 19440 | CalamityMod:VolatileStarcore from CalamityMod:HeliumFlashHoldout |
+| Photoviscerator | CalamityMod | flamethrower | 18269 | CalamityMod:ExoFlareCluster from CalamityMod:PhotovisceratorHoldout |
+| Plasmilegion | CatalystMod | flamethrower | 15244 | CatalystMod:PlasmilegionFlamethrower from CatalystMod:PlasmilegionProj |
+| Planetarium | HypnosMod | shot | 14853 | HypnosMod:PlanetariumExplosion from HypnosMod:PlanetariumLaser |
+| Vermilion Riposte | StarsAbove | spear | 14601 | StarsAbove:ResolutionProjectile from StarsAbove:ResolutionMagicCircle |
+| Crescent Moon | CalamityMod | held | 12772 | CalamityMod:CrescentMoonProj from CalamityMod:CrescentMoonFlail |
 
-## spawned projectiles hit the blanket cap — 288 weapons
-Stands in for: the cap of +1.5 hits, which is doing the scoring here. 288 of them score above zero.
+## spawned projectiles hit the blanket cap — 269 weapons
+Stands in for: the cap of +1.5 hits, which is doing the scoring here. 269 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
-| Sword of the Zenith | InfernalEclipseAPI | truemelee | 178659 |  |
-| Oneirophobia | ThoriumRework | spear | 32643 |  |
-| Triactis' True Paladinian Mage-Hammer of Might | CalamityMod | shot | 27503 |  |
-| Destiny Weaver | ThoriumMod | shot | 24542 |  |
-| Event Horizon | CalamityMod | shot | 24145 |  |
-| Death's Ascension | CalamityMod | truemelee | 23990 |  |
-| Omni-Cannon | ThoriumMod | gun | 23939 |  |
-| Celestus | CalamityMod | dagger | 21067 |  |
-| Helium Flash | CalamityMod | shot | 19415 |  |
-| Comet Kunai | CalamityHunt | shot | 18979 |  |
-| Vega | CalamityMod | dagger | 16490 |  |
-| Planetarium | HypnosMod | shot | 14855 |  |
+| Sword of the Zenith | InfernalEclipseAPI | truemelee | 434815 |  |
+| Oneirophobia | ThoriumRework | spear | 32614 |  |
+| Triactis' True Paladinian Mage-Hammer of Might | CalamityMod | shot | 27513 |  |
+| Destiny Weaver | ThoriumMod | shot | 24491 |  |
+| Omni-Cannon | ThoriumMod | gun | 24391 |  |
+| Star of Destruction | CalamityMod | placed | 22121 |  |
+| Celestus | CalamityMod | dagger | 20220 |  |
+| Helium Flash | CalamityMod | shot | 19440 |  |
+| Comet Kunai | CalamityHunt | shot | 19052 |  |
+| Photoviscerator | CalamityMod | flamethrower | 18269 |  |
+| Vega | CalamityMod | dagger | 15561 |  |
+| Planetarium | HypnosMod | shot | 14853 |  |
+
+## a guarded shot with no else branch — 165 weapons
+Stands in for: the no-op complement: today the guarded shot is paid on every use. 164 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Sword of the Zenith | InfernalEclipseAPI | truemelee | 434815 | 1 of 1 |
+| Goozmaga | CalamityHunt | placed | 85802 | 2 of 2 |
+| Destinary | InfernalEclipseAPI | shot | 43476 | 1 of 1 |
+| Catalyst's Memory | StarsAbove | spear | 33152 | 1 of 1 |
+| Oneirophobia | ThoriumRework | spear | 32614 | 1 of 1 |
+| The Chicken Wing | InfernalEclipseAPI | shot | 23195 | 1 of 1 |
+| Star of Destruction | CalamityMod | placed | 22121 | 1 of 1 |
+| Cosmic Destroyer | StarsAbove | shot | 20363 | 1 of 1 |
+| Comet Kunai | CalamityHunt | shot | 19052 | 2 of 2 |
+| Photoviscerator | CalamityMod | flamethrower | 18269 | 1 of 1 |
+| Nanoblack Reaper | CalamityMod | dagger | 16819 | 1 of 1 |
+| Vermilion Riposte | StarsAbove | spear | 14601 | 2 of 3 |
 
 ## contact weapon with no hit cooldown of its own — 126 weapons
-Stands in for: the player's 10-tick window standing in for the projectile's. 125 of them score above zero.
+Stands in for: the player's 10-tick window standing in for the projectile's. 124 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
 | Goozmaga | CalamityHunt | placed | 85802 | placed |
 | Vehemence | CalamityMod | held | 19992 | held |
 | The Sevens Striker | CalamityMod | held | 4121 | held |
-| Dreamtastic | InfernumMode | placed | 3192 | placed |
+| Dreamtastic | InfernumMode | placed | 3771 | placed |
 | Illusioner's Reverie | InfernumMode | held | 2609 | held |
-| Gruesome Eminence | CalamityMod | held | 2036 | held |
+| Super Plasma Cannon | ThoriumMod | held | 2340 | held |
+| Soul Reaver | StarsAbove | held | 2018 | held |
 | Eye of Madness | InfernumMode | held | 1746 | held |
 | Spirit Scissors | SOTS | held | 1370 | held |
 | Mirror Blade | CalamityMod | placed | 1285 | placed |
-| Soul Reaver | StarsAbove | held | 1098 | held |
-| Bow of Light | ThoriumMod | held | 1066 | held |
-| Starmageddon | CalamityMod | held | 1049 | held |
+| Gruesome Eminence | CalamityMod | held | 1235 | held |
+| Shroomite Rocket-Drill | ThoriumMod | held | 1210 | held |
 
-## child's damage share unread — 67 weapons
-Stands in for: the median guess of 0.5 of the parent's damage. 67 of them score above zero.
+## if/else in Shoot whose condition nobody read — 113 weapons
+Stands in for: the counter, roll or player state that decides which branch fires — the branches are averaged. 112 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Sword of the Zenith | InfernalEclipseAPI | truemelee | 434815 | 1 branch, 1 shot: ai[] |
+| Goozmaga | CalamityHunt | placed | 85802 | 2 branches, 2 shots: ModLoader.HasMod, Player.vortexStealthActive |
+| Catalyst's Memory | StarsAbove | spear | 33152 | 1 branch, 1 shot: UnifiedRandom.Next |
+| The Chicken Wing | InfernalEclipseAPI | shot | 23195 | 1 branch, 1 shot: Int32.Equals |
+| Universe Splitter | CalamityMod | minion | 21955 | 1 branch, 2 shots: CalamityUtils.HasCooldown |
+| Cosmic Destroyer | StarsAbove | shot | 20363 | 1 branch, 1 shot: WeaponPlayer.CosmicDestroyerRounds |
+| Comet Kunai | CalamityHunt | shot | 19052 | 2 branches, 1 shot: Player.itemAnimationMax |
+| Photoviscerator | CalamityMod | flamethrower | 18269 | 1 branch, 1 shot: Player.altFunctionUse |
+| Nanoblack Reaper | CalamityMod | dagger | 16819 | 1 branch, 1 shot: CalamityPlayer.focusFlurryAttackCount |
+| Vermilion Riposte | StarsAbove | spear | 14601 | 3 branches, 13 shots: Player.HasBuff |
+| Catastrophic Longblade | InfernalEclipseWeaponsDLC | shot | 12741 | 1 branch, 1 shot: Int32.Equals |
+| to be determined | CalamityHunt | spear | 8797 | 1 branch, 1 shot: ai[] |
+
+## child's damage share unread — 68 weapons
+Stands in for: the median guess of 0.5 of the parent's damage. 68 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
 | Irradiant Infinity | RagnarokMod | shot | 35150 | RagnarokMod:IrradiantPurple |
-| The Dance of Light | CalamityMod | shot | 18801 | CalamityMod:BlindingLight |
-| Plasmilegion | CatalystMod | flamethrower | 15155 | CatalystMod:PlasmilegionFlamethrower |
-| Planetarium | HypnosMod | shot | 14855 | HypnosMod:PlanetariumExplosion |
-| Flamsteed Ring | CalamityMod | shot | 14060 | CalamityMod:AndromedaDeathRay |
-| Photoviscerator | CalamityMod | flamethrower | 12145 | CalamityMod:ExoFlareCluster |
-| Repentance | CatalystMod | flamethrower | 9576 | CatalystMod:RepentanceFlamethrower |
-| Dragon Rage | CalamityMod | truemelee | 6895 | CalamityMod:FuckYou |
+| Photoviscerator | CalamityMod | flamethrower | 18269 | CalamityMod:ExoFlareCluster |
+| Plasmilegion | CatalystMod | flamethrower | 15244 | CatalystMod:PlasmilegionFlamethrower |
+| Planetarium | HypnosMod | shot | 14853 | HypnosMod:PlanetariumExplosion |
+| The Dance of Light | CalamityMod | shot | 12534 | CalamityMod:BlindingLight |
+| Repentance | CatalystMod | flamethrower | 9581 | CatalystMod:RepentanceFlamethrower |
+| Flamsteed Ring | CalamityMod | shot | 9469 | CalamityMod:AndromedaDeathRay |
+| Banshee Hook | CalamityMod | held | 7448 | CalamityMod:BansheeHookBoom |
+| Dragon Rage | CalamityMod | truemelee | 6889 | CalamityMod:FuckYou |
 | Voidragon | CalamityMod | gun | 6619 | CalamityMod:AbyssalFire |
-| Banshee Hook | CalamityMod | held | 5102 | CalamityMod:BansheeHookBoom |
-| Miniaturized Requiem Engine | InfernalEclipseWeaponsDLC | shot | 4063 | InfernalEclipseWeaponsDLC:MiniaturizedRequiemEngineTheBigOnePro2 |
-| Dreamtastic | InfernumMode | placed | 3192 | InfernumMode:DreamtasticEnergyBolt |
+| Miniaturized Requiem Engine | InfernalEclipseWeaponsDLC | shot | 4053 | InfernalEclipseWeaponsDLC:MiniaturizedRequiemEngineTheBigOnePro2 |
+| Dreamtastic | InfernumMode | placed | 3771 | InfernumMode:DreamtasticEnergyBolt |
 
-## damage multiplier over ×4 read as a branch — 21 weapons
-Stands in for: a probability, instead of dropping the multiplier. 21 of them score above zero.
+## a holdout spawned at 0 damage whose shots were not read — 64 weapons
+Stands in for: the holdout AI's spawn cadence and damage — assumed one hit of the weapon's damage per use. 64 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
-| Vermilion Riposte | StarsAbove | spear | 20729 | StarsAbove:Scorch ×5 |
-| Galaxy Smasher | CalamityMod | shot | 5549 | CalamityMod:GalaxySmasherEcho ×9 |
+| Catalyst's Memory | StarsAbove | spear | 33152 | StarsAbove:CatalystStabEffect at 0 |
+| Sunset of the Sun God | StarsAbove | spear | 18539 | StarsAbove:KarnaWhip at 0 |
+| Photoviscerator | CalamityMod | flamethrower | 18269 | CalamityMod:PhotovisceratorHoldout at 0 |
+| Vermilion Riposte | StarsAbove | spear | 14601 | StarsAbove:RedMageRapierFast at 0 |
+| Condemnation | CalamityMod | repeater | 9036 | CalamityMod:CondemnationHoldout at 0 |
+| The Javelin | ThoriumMod | launcher | 7263 | ThoriumMod:SluggerCloud at 0 |
+| Barren Garden | InfernalEclipseWeaponsDLC | shot | 7065 | InfernalEclipseWeaponsDLC:BarrenGardenHealingPro at 0 |
+| Quake Gauntlet | ThoriumMod | shot | 5316 | ThoriumMod:QuakeGauntletPro2 at 0 |
+| Drataliornus | CalamityMod | repeater | 4100 | CalamityMod:DrataliornusBow at 0 |
+| Orbital Expressway Plush | StarsAbove | specialsword | 2220 | StarsAbove:ExpresswayPlushActive at 0 |
+| Gloves of the Black Silence | StarsAbove | spear | 1949 | StarsAbove:MookHeldBlade at 0 |
+| Nova Rifle | ThoriumMod | gun | 1917 | ThoriumMod:NovaRiflePro at 0 |
+
+## a shot or spawn behind a buff, flag, ammo or world the loadout does not carry — 28 weapons
+Stands in for: the loadout telling the model what it wears and what is active — scored as never, until then. 27 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Monsoon | CalamityMod | repeater | 9657 | call:1: ammo special |
+| Alluvion | CalamityMod | repeater | 7543 | call:1: ammo special |
+| The Storm | CalamityMod | repeater | 6380 | call:1: ammo special |
+| Pearl God | CalamityMod | gun | 2084 | call:0: world zenithWorld |
+| Spyker | CalamityMod | gun | 1733 | call:1: ammoType v:14 |
+| Planetary Annihilation | CalamityMod | repeater | 1298 | call:1: ammo special |
+| Realm Ravager | CalamityMod | gun | 972 | call:1: ammoType v:14 |
+| Pestilent Defiler | CalamityMod | gun | 735 | call:1: ammoType v:14 |
+| Astral Blaster | CalamityMod | gun | 581 | call:1: ammoType v:14 |
+| Spectre Rifle | CalamityAmmo | gun | 453 | call:1: ammoType v:14 |
+| Slag Magnum | CalamityMod | gun | 385 | call:1: ammoType v:14 |
+| The Ballista | CalamityMod | repeater | 310 | call:1: ammo special |
+
+## damage multiplier over ×4 read as a branch — 20 weapons
+Stands in for: a probability, instead of dropping the multiplier. 20 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Vermilion Riposte | StarsAbove | spear | 14601 | StarsAbove:Scorch ×5 |
+| Galaxy Smasher | CalamityMod | shot | 5544 | CalamityMod:GalaxySmasherEcho ×9 |
 | Omicron | CalamityMod | shot | 3565 | CalamityMod:WingmanGrenade ×14 |
 | Arc Nova Diffuser | CalamityMod | shot | 2411 | CalamityMod:NovaChargedShot ×9 |
-| The Omnigun | CalamityMod | gun | 1815 | CalamityMod:OmniSniperShot ×6 |
-| Molten Amputator | CalamityMod | dagger | 1712 | CalamityMod:DirectStrike ×7 |
-| Exalted Horizon | CatalystMod | shot | 1678 | CatalystMod:NebulaHitbox ×5 |
-| Stellar Contempt | CalamityMod | shot | 1357 | CalamityMod:StellarContemptEcho ×6 |
+| Exalted Horizon | CatalystMod | shot | 1704 | CatalystMod:NebulaHitbox ×5 |
+| Stellar Contempt | CalamityMod | shot | 1344 | CalamityMod:StellarContemptEcho ×6 |
+| Molten Amputator | CalamityMod | dagger | 1306 | CalamityMod:DirectStrike ×7 |
+| The Omnigun | CalamityMod | gun | 1269 | CalamityMod:OmniSniperShot ×6 |
 | Wingman | CalamityMod | shot | 862 | CalamityMod:WingmanGrenade ×6 |
-| R-PMA: Holofibre Immolator | CalamityMod | shot | 490 | CalamityMod:ImmolationArrow ×4.5 |
-| Naganadel | StarsAbove | spear | 431 | StarsAbove:NaganadelProjectileFinal1 ×10 |
-| Wyvern's Call | CalamityMod | shot | 289 | call:0 ×15 |
+| R-PMA: Holofibre Immolator | CalamityMod | shot | 497 | CalamityMod:ImmolationArrow ×4.5 |
+| Wyvern's Call | CalamityMod | shot | 276 | call:0 ×15 |
+| Opal Striker | CalamityMod | shot | 198 | CalamityMod:OpalChargedStrike ×5 |
 
-## gate read from the tooltip, not the code — 15 weapons
-Stands in for: the AI timer, link counter or hit counter the interpreter did not follow. 15 of them score above zero.
+## a shot's damage share unread — 17 weapons
+Stands in for: the damage argument the machine could not follow — assumed to be the weapon's damage. 17 of them score above zero.
 
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
-| Bury The Light | StarsAbove | spear | 7716 | ;  |
-| Galaxy Smasher | CalamityMod | shot | 5549 | every 8 hits |
-| Wolvesbane Awakened | StarsAbove | spear | 2041 | ; ; ;  |
-| Genocide | StarsAbove | shot | 855 | ; ; ; ;  |
-| Wolvesbane Rearmed | StarsAbove | spear | 627 |  |
-| Boltstorm Axe | StarsAbove | spear | 563 |  |
-| Gloves of the Black Silence | StarsAbove | spear | 499 | ;  |
-| Pwnagehammer | CalamityMod | shot | 354 | every 4 hits; every 4 hits |
-| Salivation | ThoriumMod | yoyo | 202 | every 5 hits |
-| Head Spinner | ThoriumMod | yoyo | 199 | every 5 hits |
+| Ontological Despoiler | CalamityMod | shot | 2929 | call:0 |
+| Orbital Expressway Plush | StarsAbove | specialsword | 2220 | call:1 |
+| El Capitan's Hardware | StarsAbove | spear | 1318 | call:1 |
+| Viscera | CalamityMod | shot | 805 | call:0 |
+| Tetherblade | InfernalEclipseWeaponsDLC | shot | 620 | call:0 |
+| The Swarmer | CalamityMod | shot | 510 | call:1 |
+| Shadowflame Reaper | InfernalEclipseWeaponsDLC | shot | 480 | call:0 |
+| The Dark Master | CalamityMod | swing | 426 | call:0 |
+| Abandoned Slime Staff | CalamityMod | minion | 256 | call:0 |
+| Manifestation | StarsAbove | shot | 246 | call:1 |
+| Atlas Munitions Beacon | CalamityMod | sentry | 226 | call:0 |
+| The Blood Blade | StarsAbove | shot | 182 | call:0 |
+
+## gate read from the tooltip, not the code — 9 weapons
+Stands in for: the AI timer, link counter or hit counter the interpreter did not follow. 9 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Galaxy Smasher | CalamityMod | shot | 5544 | every [object Object] hits |
+| Gloves of the Black Silence | StarsAbove | spear | 1949 | ;  |
+| Wolvesbane Rearmed | StarsAbove | spear | 1021 |  |
+| Boltstorm Axe | StarsAbove | spear | 604 |  |
 | Luminant Tether | InfernalEclipseWeaponsDLC | shot | 182 | tick 60, max 3 |
-| Devoted Havoc | StarsAbove | spear | 129 | ; ;  |
+| Wolvesbane | StarsAbove | spear | 169 |  |
+| Suspended Shotgun Shell Launcher | CalamityAmmo | shot | 169 | every [object Object] hits |
+| Sanguine Despair | StarsAbove | shot | 70 |  |
+| The Morning Star | StarsAbove | spear | 58 |  |
 
 ## summon whose hit cooldown is negative — 5 weapons
 Stands in for: "hits once, ever" read as a rate — this one is a bug, not a gap. 5 of them score above zero.
@@ -136,7 +223,49 @@ Stands in for: "hits once, ever" read as a rate — this one is a bug, not a gap
 | weapon | mod | archetype | DPS | detail |
 | --- | --- | --- | --- | --- |
 | Warloks' Moon Fist | CalamityMod | minion | 424 | local -1 |
-| The Kiss of Death | StarsAbove | minion | 328 | local -1 |
+| The Kiss of Death | StarsAbove | minion | 351 | local -1 |
 | Terraprisma | v | minion | 294 | local -1 |
 | Arachnid Needlepoint | StarsAbove | minion | 169 | local -1 |
 | Sanguine Staff | v | minion | 87 | local -1 |
+
+## a tooltip counter with no single child to attach to — 5 weapons
+Stands in for: a mined counter on the child it gates — the text is read onto nothing. 5 of them score above zero.
+
+| weapon | mod | archetype | DPS | detail |
+| --- | --- | --- | --- | --- |
+| Universe Splitter | CalamityMod | minion | 21955 | 30 second cooldown |
+| Seaborn Apalistik | StarsAbove | minion | 1264 | 30 second cooldown |
+| Chronoclock | StarsAbove | minion | 56 | 20 second cooldown |
+| Kifrosse | StarsAbove | minion | 42 | 40 second cooldown |
+| Adornment of the Chaotic God | StarsAbove | minion | 6 | 12 second cooldown |
+
+## What the unread branches test on
+The residual after the classified guards (rolls, counters, requirements, owner and target checks) are taken out. Each name is a reader still to be written, ranked by the shots behind it.
+
+| condition | shots |
+| --- | --- |
+| Player.HasBuff | 31 |
+| ai[] | 22 |
+| bge.un | 11 |
+| Utils.RotatedBy | 7 |
+| ThoriumPlayer.itemWondrousWandStage | 5 |
+| Player.statMana | 5 |
+| Player.altFunctionUse | 4 |
+| Player.GetTotalCritChance | 4 |
+| ThoriumPlayer.itemRocketChoice | 4 |
+| Projectile>.MoveNext | 3 |
+| Vector2.Length | 3 |
+| NullificationPistol.mult | 3 |
+| Vector2.Y | 3 |
+| UnifiedRandom.Next | 3 |
+| ThoriumPlayer.itemSnowWhiteStage | 3 |
+| ThoriumPlayer.itemUselessStaffStage | 3 |
+| CalamityUtils.HasCooldown | 2 |
+| RubicoPrime.ShotsToReset | 2 |
+| % | 2 |
+| Tile.get_HasTile | 2 |
+| SoundEngine.PlaySound | 2 |
+| Player.vortexStealthActive | 2 |
+| Item.createTile | 2 |
+| bge | 2 |
+| ThoriumPlayer.itemMoonlight | 2 |

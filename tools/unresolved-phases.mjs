@@ -17,7 +17,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { indexDataset } from '../src/lib/dataset.js';
 import { ARCHETYPE, CHILD_CAP, DMG_MUL_MAX } from '../src/lib/dps.js';
-import { deliveryPhases, spawnPhases } from '../src/lib/phases.js';
+import { deliveryPhases, spawnPhases, textGates } from '../src/lib/phases.js';
 import { weaponDps } from '../src/lib/score.js';
 
 const args = process.argv.slice(2);
@@ -39,9 +39,17 @@ const REASONS = {
   noContactClock: { label: 'contact weapon with no hit cooldown of its own', fixes: "the player's 10-tick window standing in for the projectile's" },
   negativeLocal: { label: 'summon whose hit cooldown is negative', fixes: '"hits once, ever" read as a rate — this one is a bug, not a gap' },
   textGate: { label: 'gate read from the tooltip, not the code', fixes: 'the AI timer, link counter or hit counter the interpreter did not follow' },
+  unreadBranch: { label: 'if/else in Shoot whose condition nobody read', fixes: 'the counter, roll or player state that decides which branch fires — the branches are averaged' },
+  oneSided: { label: 'a guarded shot with no else branch', fixes: 'the no-op complement: today the guarded shot is paid on every use' },
+  unreadDelivery: { label: "a shot's damage share unread", fixes: "the damage argument the machine could not follow — assumed to be the weapon's damage" },
+  carrier: { label: 'a holdout spawned at 0 damage whose shots were not read', fixes: "the holdout AI's spawn cadence and damage — assumed one hit of the weapon's damage per use" },
+  requires: { label: 'a shot or spawn behind a buff, flag, ammo or world the loadout does not carry', fixes: 'the loadout telling the model what it wears and what is active — scored as never, until then' },
+  textAmbiguous: { label: "a tooltip counter with no single child to attach to", fixes: 'a mined counter on the child it gates — the text is read onto nothing' },
 };
 
 const found = new Map(Object.keys(REASONS).map((k) => [k, []]));
+/** what the unread branches test on, by name: the readers still to be written, ranked */
+const conds = new Map();
 const ctx = (it) => ({ conds: new Set(), uncertain: false, prefix: null, calibration: null, ds, stage: it.stage ?? 0, targets: 'auto' });
 
 for (const it of ds.items) {
@@ -53,7 +61,20 @@ for (const it of ds.items) {
 
   const primaryId = it.shoot ?? null;
   const { phases } = deliveryPhases(it.fire ?? null, { variant: 'spam', primaryId });
+  const regions = new Map();
+  for (const ph of phases) if (ph.region && ph.region !== 'top' && ph.region !== 'default') { const r = regions.get(ph.region) ?? new Set(); r.add(ph.branch ? ph.branch.side : ph.id); regions.set(ph.region, r); }
+  const unread = phases.filter((ph) => ph.evidence?.gates?.branch === 'assumed');
+  if (unread.length) hit('unreadBranch', `${regions.size} branch${regions.size > 1 ? 'es' : ''}, ${unread.length} shot${unread.length > 1 ? 's' : ''}: ${[...new Set(unread.map((ph) => ph.branch?.cond).filter(Boolean))].join(', ')}`);
+  for (const ph of unread) if (ph.branch?.cond) conds.set(ph.branch.cond, (conds.get(ph.branch.cond) ?? 0) + 1);
+  // one arm only: the other arm is a no-op nobody has represented yet
+  const lone = [...regions].filter(([, sides]) => sides.size === 1);
+  if (lone.length) hit('oneSided', `${lone.length} of ${regions.size}`);
+  for (const ph of [...phases, ...(graded.phases ?? [])]) if (ph.evidence?.gates?.requires === 'unmet') { hit('requires', `${ph.id}: ${ph.requires?.what} ${ph.requires?.id ?? ''}`); break; }
+  if (graded.parts?.some((p) => /needs .* the loadout does not carry/.test(p.label ?? ''))) hit('requires', graded.parts.find((p) => /needs .* the loadout does not carry/.test(p.label ?? '')).label);
+  if (it.tooltip) { const t = textGates(it.tooltip); if ((t.threshold || t.cooldown) && !(graded.phases ?? []).some((p) => p.threshold?.from === 'text' || p.cooldown)) hit('textAmbiguous', t.evidence.threshold ?? t.evidence.cooldown ?? ''); }
   for (const ph of phases) {
+    if (ph.dmgAbs != null && ph.dmgAbs <= 1) hit('carrier', `${ph.projId} at ${ph.dmgAbs}`);
+    else if (ph.evidence?.gates?.damage === 'assumed') hit('unreadDelivery', ph.id);
     if (ph.dmgMul > DMG_MUL_MAX) hit('branchMul', `${ph.id} ×${ph.dmgMul}`);
     // what that delivery spawns in turn
     for (const kid of spawnPhases(ds.projectiles?.[ph.projId], { variant: 'spam', parentId: ph.projId })) {
@@ -96,6 +117,14 @@ for (const [k, rows] of ranked) {
   for (const r of rows.sort((a, b) => b.value - a.value).slice(0, top)) {
     say(`| ${r.name} | ${r.mod} | ${r.arch ?? '?'} | ${Math.round(r.value)} | ${r.detail} |`);
   }
+  say('');
+}
+if (conds.size) {
+  say('## What the unread branches test on');
+  say('The residual after the classified guards (rolls, counters, requirements, owner and target checks) are taken out. Each name is a reader still to be written, ranked by the shots behind it.\n');
+  say('| condition | shots |');
+  say('| --- | --- |');
+  for (const [k, n] of [...conds].sort((a, b) => b[1] - a[1]).slice(0, 25)) say(`| ${k} | ${n} |`);
   say('');
 }
 if (mdOut) { writeFileSync(mdOut, lines.join('\n')); console.log(`→ ${mdOut}`); }

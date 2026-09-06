@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { fitCalibration } from '../src/lib/calibration.js';
 import { indexDataset } from '../src/lib/dataset.js';
-import { W, pieceScore, setBonusScore, weaponDps } from '../src/lib/score.js';
+import { W, defenseScale, pieceScore, setBonusScore, weaponDps } from '../src/lib/score.js';
 import { solveLoadout } from '../src/lib/solver.js';
 import { bestPrefix, effectiveStats, prefixesFor } from '../src/lib/stats.js';
 
@@ -137,5 +137,53 @@ describe('set bonus', () => {
     const score = setBonusScore(head, 'ranged');
     expect(score.parts.find((p) => p.label === 'dodges attacks')?.value).toBe(W.dodge);
     expect(score.parts.find((p) => /movement speed/.test(p.label))?.value).toBeGreaterThan(0);
+  });
+
+  test('an older mined record still separates conditional damage reduction from its total', () => {
+    const breastplate = {
+      slot: 'body',
+      tooltip: '5% increased damage reduction\n+5 defense and 10% increased damage reduction while submerged in liquid',
+      effects: { endurance: 0.15 },
+      stats: { damageReduction: 0.05 },
+    };
+    const score = pieceScore(breastplate, 'rogue');
+    expect(score.parts.find((p) => p.label === '+5% damage reduction')).toBeTruthy();
+    expect(score.parts.find((p) => /10% damage reduction/.test(p.label))?.label).toContain('⅙');
+  });
+
+  test('printed and conditional defense are separate score parts', () => {
+    const breastplate = {
+      slot: 'body', defense: 5,
+      tooltip: '+5 defense while submerged in liquid',
+      effects: { defense: { all: 5 } }, stats: { condDefense: 5 }, condStats: ['defense'],
+    };
+    const score = pieceScore(breastplate, 'rogue', {}, { progression: 2.7 });
+    expect(score.parts.find((p) => p.label === '+5 defense')?.value).toBeCloseTo(5 * W.defense * defenseScale(2.7), 1);
+    expect(score.parts.find((p) => p.label === '+5 defense ⅙')?.value).toBeCloseTo(5 * 0.15 * W.defense * defenseScale(2.7), 1);
+  });
+
+  test('text-only set jumps, named debuffs, and maximum stealth all affect the score', () => {
+    const victide = setBonusScore({
+      slot: 'head', setBonus: '+60 maximum stealth', setStats: { stealthFlat: 60 },
+      setEffects: { mod: { rogueStealthMax: 0.6 } },
+    }, 'rogue');
+    const sulphurous = setBonusScore({
+      slot: 'head',
+      setBonus: '+65 maximum stealth\nAttacking and being attacked by enemies inflicts Poisoned for 1 second\nGrants an additional jump that summons a sulphurous bubble',
+      setStats: { stealthFlat: 65 },
+      setEffects: { mod: { rogueStealthMax: 0.65 } },
+    }, 'rogue');
+    const desert = setBonusScore({
+      slot: 'head',
+      setBonus: '+50 maximum stealth\nSandsmoke Bomb - Armor Set Bonus to shroud yourself in a small cloud of sand\nUsing a rogue weapon instantly dispels the sand cloak, but guarantees a supercrit for 200% damage',
+      setStats: { stealthFlat: 50 }, setEffects: { mod: { rogueStealthMax: 0.5 } },
+    }, 'rogue');
+    expect(sulphurous.parts.find((p) => p.label === 'extra jump')?.value).toBe(W.jump);
+    expect(sulphurous.parts.find((p) => p.label === 'inflicts Poisoned on hit')?.value).toBe(W.onHitDebuff);
+    expect(victide.parts.some((p) => /set bonus/.test(p.label))).toBe(false); // numeric stats were already scored
+    expect(desert.parts.some((p) => /set bonus/.test(p.label))).toBe(true); // the active ability is still unread
+    expect(desert.score).toBeGreaterThan(victide.score);
+    expect(sulphurous.parts.find((p) => p.label === '65 maximum stealth')?.value).toBeGreaterThan(victide.parts.find((p) => p.label === '60 maximum stealth')?.value);
+    expect(sulphurous.score).toBeGreaterThan(victide.score);
   });
 });

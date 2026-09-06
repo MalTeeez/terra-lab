@@ -148,6 +148,12 @@ metric actually lost.
 | Houndius Shootius | v:5119 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
 | P-PMA: Aqueous Hunter Drone | CalamityMod:AqueousHunterDrone | CalamityMod | 20 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
 
+## ieor · Pre-Skeletron · healer (guide stage 20)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Defibrillanator | InfernalEclipseWeaponsDLC:Defibrillanator | InfernalEclipseWeaponsDLC | 20 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
+
 ## ieor · Pre-Skeletron · magic (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
@@ -185,6 +191,12 @@ metric actually lost.
 | --- | --- | --- | --- | --- | --- | --- |
 | Houndius Shootius | v:5119 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
 
+## ieor · Pre-Slime_God · healer (guide stage 26)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Defibrillanator | InfernalEclipseWeaponsDLC:Defibrillanator | InfernalEclipseWeaponsDLC | 26 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
+
 ## ieor · Pre-Slime_God · summon (guide stage 26)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
@@ -196,6 +208,12 @@ metric actually lost.
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
 | Thundershock Shortbow | SOTS:ThundershockShortbow | SOTS | 28 | 31 Wall of Flesh | enemy: Wall of Flesh | yes |
+
+## ieor · Pre-Wall_of_Flesh · healer (guide stage 30)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Defibrillanator | InfernalEclipseWeaponsDLC:Defibrillanator | InfernalEclipseWeaponsDLC | 30 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
 
 ## ieor · Pre-Wall_of_Flesh · summon (guide stage 30)
 
@@ -357,7 +375,7 @@ metric actually lost.
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Hematemesis | CalamityMod:Hematemesis | CalamityMod | 62 | 66 Lux | drop: Ravager | yes |
+| Hematemesis | CalamityMod:Hematemesis | CalamityMod | 62 | 65 Ravager | drop: Ravager | yes |
 
 ## calamity · pre-lunar · melee (guide stage 62)
 
@@ -375,15 +393,15 @@ metric actually lost.
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Corpus Avertor | CalamityMod:CorpusAvertor | CalamityMod | 62 | 66 Lux | drop: Ravager | yes |
-| Cranium Smasher | CalamityMod:CraniumSmasher | CalamityMod | 62 | 66 Lux | drop: Ravager | yes |
+| Corpus Avertor | CalamityMod:CorpusAvertor | CalamityMod | 62 | 65 Ravager | drop: Ravager | yes |
+| Cranium Smasher | CalamityMod:CraniumSmasher | CalamityMod | 62 | 65 Ravager | drop: Ravager | yes |
 | System Bane | CalamityMod:SystemBane | CalamityMod | 62 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
 
 ## calamity · pre-lunar · summon (guide stage 62)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Spikecrag Staff | CalamityMod:SpikecragStaff | CalamityMod | 62 | 66 Lux | drop: Ravager | yes |
+| Spikecrag Staff | CalamityMod:SpikecragStaff | CalamityMod | 62 | 65 Ravager | drop: Ravager | yes |
 
 ## calamity · pre-moonlord · magic (guide stage 66)
 

@@ -72,6 +72,14 @@
     "after": "EaterOfWorlds",
     "via": "the Cursed Pyramid"
   },
+  "SOTS:PhotonGeyser": {
+    "after": "EaterOfWorlds",
+    "via": "the Archaeologist, once a Refracting Crystal from the Cursed Pyramid has cracked the Coconut Island keystone"
+  },
+  "SOTS:PyramidCrate": {
+    "after": "EaterOfWorlds",
+    "via": "fishing inside the Cursed Pyramid"
+  },
   "SOTS:WonderEgg": {
     "after": "start",
     "via": "found from the start"

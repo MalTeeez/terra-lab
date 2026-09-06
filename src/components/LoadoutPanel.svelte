@@ -7,6 +7,7 @@
   import { ui } from '../lib/state.svelte.js';
   import { SLOT_MODES } from '../lib/dps.js';
   import { MODE_TAG, matches } from '../lib/traits.js';
+  const MODE_ORDER = Object.keys(MODE_TAG); // the order they are declared in reads best: the pair, then the three slots
   import { fmtFull, fmtNum } from '../lib/fmt.js';
   import TraitFilter from './TraitFilter.svelte';
 
@@ -14,13 +15,26 @@
   let tab = $state('accessories'); // 'accessories' | 'wings' | 'boots'
   // per-section filters: free text and the traits picked from the dropdown
   let armorQ = $state(''); let armorT = $state([]);
-  let weaponQ = $state(''); let weaponT = $state([]);
+  let weaponQ = $state(''); let weaponT = $state([]); let weaponM = $state([]);
   let accQ = $state(''); let accT = $state([]);
   const armorShown = $derived(loadout.armorAlternatives.filter((s) => matches(s, armorQ, armorT)));
   // how much score trying on a runner-up set costs against the solver's own pick
   const armorDelta = $derived(loadout.armorPicked ? Math.round((loadout.armor.score - loadout.armorBestScore) * 10) / 10 : 0);
   const setName = (s) => s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
-  const weaponsShown = $derived(loadout.weapons.filter((w) => matches(w, weaponQ, weaponT)));
+  // The grade chips. Rogue's spam and stealth are two ways to use one weapon and summon's whip,
+  // minion and sentry are three slots worn at once, but either way the grade is the one cut worth
+  // making without opening a menu — so it sits in the header rather than inside the trait list.
+  // Counted over what the *other* filters leave, so picking one never empties the row it sits in.
+  const modeCounts = $derived.by(() => {
+    const m = new Map();
+    // only the five grades `MODE_TAG` names: a weapon's `mode` also carries plain archetypes for
+    // the classes that have no grade to choose, and those are not a cut anyone wants as a chip
+    for (const w of loadout.weapons) if (MODE_TAG[w.mode] && matches(w, weaponQ, weaponT)) m.set(w.mode, (m.get(w.mode) ?? 0) + 1);
+    return [...m].sort((a, b) => MODE_ORDER.indexOf(a[0]) - MODE_ORDER.indexOf(b[0]));
+  });
+  const toggleMode = (k) => (weaponM = weaponM.includes(k) ? weaponM.filter((x) => x !== k) : [...weaponM, k]);
+  $effect(() => { void loadout.cls; weaponM = []; }); // another class grades on different modes
+  const weaponsShown = $derived(loadout.weapons.filter((w) => matches(w, weaponQ, weaponT) && (!weaponM.length || weaponM.includes(w.mode))));
   const maxDps = $derived(Math.max(1, ...loadout.weapons.map((w) => w.value)));
   // every scoring accessory, ranked: the solver's picks first (one per exclusive group), then the rest
   const rankedAcc = $derived([...loadout.accessories, ...loadout.accessoryAlternatives]);
@@ -55,6 +69,15 @@
     .map(([cat, label]) => [label, (ds.prefixes ?? []).filter((p) => p.category === cat).sort((a, b) => a.name.localeCompare(b.name))])
     .filter(([, list]) => list.length));
   let pick = $state(ui.reforge === 'none' ? 'best' : ui.reforge); // what the toggle turns back on
+
+  // potions: the ones that do something in a fight, then a few utility ones to round the list out.
+  // A potion with parts and no score left is a trade that does not pay (Purple Haze costs a rogue
+  // more stealth strike damage than it gives back) — that is not a recommendation, so it is out.
+  const potionsShown = $derived([
+    ...loadout.potions.filter((p) => p.score > 0),
+    ...loadout.potions.filter((p) => !p.parts.length).slice(0, 4),
+  ].slice(0, 12));
+  const fmtDuration = (s) => (s >= 60 ? `${Math.round(s / 60)} min` : `${s} s`);
 </script>
 
 {#snippet tags(p)}
@@ -167,9 +190,17 @@
   <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>{CLASS_LABELS[loadout.cls]} weapons</h2>
+      {#if modeCounts.length > 1}
+        <span class="inline-flex items-center gap-1 font-normal normal-case tracking-normal">
+          {#each modeCounts as [k, n] (k)}
+            <button type="button" class="lab-chip py-0.5 {weaponM.includes(k) ? MODE_TAG[k].color : ''}" aria-pressed={weaponM.includes(k)}
+                    onclick={() => toggleMode(k)} title={MODE_TAG[k].tip}>{k} <span class="num {weaponM.includes(k) ? 'opacity-70' : 'text-dim'}">{n}</span></button>
+          {/each}
+        </span>
+      {/if}
       <TraitFilter entries={loadout.weapons} bind:query={weaponQ} bind:selected={weaponT} placeholder="Filter weapons…" />
       <span class="lab-meta">
-        <span>{#if weaponsShown.length !== loadout.weapons.length}<span class="num font-semibold text-ink">{weaponsShown.length}</span> of {/if}top <span class="num font-semibold text-ink">{loadout.weapons.length}</span> of <span class="num font-semibold text-ink">{loadout.weaponCount}</span> {loadout.source === 'owned' ? 'owned' : 'obtainable'}</span>
+        <span>{#if weaponsShown.length !== loadout.weapons.length}<span class="num font-semibold text-ink">{weaponsShown.length}</span> of{/if} top <span class="num font-semibold text-ink">{loadout.weapons.length}</span> of <span class="num font-semibold text-ink">{loadout.weaponCount}</span> {loadout.source === 'owned' ? 'owned' : 'obtainable'}</span>
       </span>
     </header>
     {#if !loadout.weapons.length}
@@ -194,12 +225,12 @@
                     target boss is not immune to.
                   </p>
                   <p>
-                    Hits per second come from how the weapon works — a swing, a spear, a yoyo, a held beam, a shot —
-                    and from how much of what it fires lands on that boss at the distance the class fights from:
+                    Hits per second come from how the weapon works — a swing, a spear, a yoyo, a held beam, a shot.
+                    Then how much of what it fires lands on that boss at the distance the class usually fights from, determined by:
                     its spread against the target's width, the lead a moving boss forces on a slow projectile,
                     the drop of an arc, the range it reaches, and how much of that homing undoes.
-                    Damage per hit is the weapon's damage (plus the plain ammo of its kind — a Musket Ball,
-                    a Wooden Arrow) minus half the boss's defense.
+                    Damage per hit is the weapon's damage (plus the plain ammo of its kind — a Musket Ball &
+                    Wooden Arrow) minus half the boss's defense.
                   </p>
                   <p>
                     A gun and its ammo are two picks, so they are ranked apart: the ammo below is graded by
@@ -317,8 +348,8 @@
           <span class="flex items-center gap-1">
             one per group
             <Info label="Exclusive groups" w={340}>
-              <p>Boots, shields and dashes don't stack, so the solver equips only the best item from each of those groups; the others follow in the ranking.</p>
-              <p>Wings and boots have their own tabs. The group is named under each accessory that belongs to one.</p>
+              <p>Boots, shields and dashes don't stack, so the solver equips only the best item from each of those groups. The rest follows in the ranking.</p>
+              <p>Wings and boots have their own tabs, the group is named under each accessory that belongs to one.</p>
               <p>Options → <em>Accessory rows</em> sets how many rows show before the list scrolls.</p>
             </Info>
           </span>
@@ -351,6 +382,47 @@
           </button>
         {/each}
       </div>
+      </div>
+    {/if}
+  </div>
+
+  <!-- potions: what to drink before the fight, graded the same way gear is -->
+  <div class="lab-panel overflow-hidden xl:col-span-2">
+    <header class="lab-head">
+      <h2>Potions</h2>
+      <span class="lab-meta">
+        <span>what to drink at <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={ui.stage} size={14} />{ds.stages[ui.stage]?.label}</span>, best first</span>
+        <Info label="Potions" w={340}>
+          <p>Every potion, flask and dish obtainable at this stage, scored for {CLASS_LABELS[loadout.cls] ?? loadout.cls} like a piece of gear.</p>
+          <p>A buff whose effect the score model reads nothing into (a spelunker, a fishing potion) scores nothing and is tagged with <em>utility</em>.</p>
+        </Info>
+      </span>
+    </header>
+    {#if !potionsShown.length}
+      {@render empty('potions')}
+    {:else}
+      <div class="grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {#each potionsShown as p}
+          <button class="lab-cell" onclick={() => onselect(p.item.id)}>
+            <div class="flex items-start gap-2">
+              <WikiIcon item={p.item} />
+              <div class="min-w-0 flex-1">
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="font-medium">{p.item.name}{@render tags(p)}{#if !p.parts.length}<span class="lab-tag ml-1" title="Nothing the score model reads — useful outside a fight">utility</span>{/if}</span>
+                  {#if p.parts.length}<span class="num text-[12px] font-semibold" style="color:{accent}">{p.score}</span>{/if}
+                </div>
+                <div class="mb-1.5 text-[11px] text-dim">
+                  {modName(p.item)} · <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={p.item.stage} size={14} />{p.item.stageLabel}</span>{p.item.buffTime ? ` · ${fmtDuration(p.item.buffTime)}` : ''}
+                </div>
+                {#if p.parts.length}
+                  <ScoreParts parts={p.parts} max={3} />
+                {:else}
+                  <span class="line-clamp-2 text-[11.5px] text-dim">{p.item.tooltip}</span>
+                {/if}
+              </div>
+            </div>
+          </button>
+        {/each}
       </div>
     {/if}
   </div>

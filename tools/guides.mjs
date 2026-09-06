@@ -24,6 +24,7 @@
  *   Ω  use together with `with`       Δ  its set bonus changed (Calamity)
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { WIKI_NAMES } from '../src/lib/wiki.js';
 
 const cacheDir = new URL('../data/guides/', import.meta.url);
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36';
@@ -495,6 +496,8 @@ async function vanillaGuide(refresh) {
 // ---- dataset resolution ----------------------------------------------------------------------
 const HEAD_WORDS = /\b(helmet|hat|mask|hood|headgear|helm|visage|cowl|crown|cap|facemask|head|circlet|garland|goggles|headpiece|tiara|veil|skull|plume)\b/i;
 const norm = (s) => s.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
+/** Wiki article name → the name the mod ships today, the reverse of `WIKI_NAMES`. */
+const RENAMED = new Map(Object.entries(WIKI_NAMES).map(([k, wiki]) => [norm(wiki), norm(k.slice(k.indexOf(':') + 1))]));
 
 /** Resolve a pick's name against the dataset. Exported so guide-check can re-resolve alternatives. */
 export function findItem(ds, pick, name = pick.name) {
@@ -512,8 +515,13 @@ export function findItem(ds, pick, name = pick.name) {
   // the one you can actually have at the tier it lists, so the earliest wins
   const exact = ds.items.filter((it) => norm(it.name) === n).sort((a, b) => Number(modMatch(b)) - Number(modMatch(a)) || (a.stage ?? 99) - (b.stage ?? 99));
   if (exact.length) return exact.find((it) => (pick.kind === 'weapon' ? it.slot === 'weapon' : pick.kind === 'accessory' ? it.slot === 'accessory' : true)) ?? exact[0];
-  if (pick.kind === 'ammo') return (ds.ammo ?? []).filter((a) => norm(a.name) === n).sort((a, b) => Number(modMatch(b)) - Number(modMatch(a)))[0] ?? null;
-  return null;
+  if (pick.kind === 'ammo') {
+    const a = (ds.ammo ?? []).filter((x) => norm(x.name) === n).sort((x, y) => Number(modMatch(y)) - Number(modMatch(x)))[0];
+    if (a) return a;
+  }
+  // a guide names an item as its wiki article does, and the article lags the mod's own renames
+  const now = RENAMED.get(n);
+  return now && now !== n ? findItem(ds, pick, now) : null;
 }
 
 /**

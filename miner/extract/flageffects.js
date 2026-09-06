@@ -10,7 +10,10 @@ import { Machine, PLAYER, THIS, UNKNOWN } from './interp.js';
 import { TYPE_ABSTRACT, derivesFromTml } from './util.js';
 import { normalizeEffects, playerHooks } from './effects.js';
 
-const HOOK_RE = /^(PostUpdate|UpdateEquips|PostUpdateEquips|PostUpdateMiscEffects|PostUpdateRunSpeeds|UpdateLifeRegen|ModifyWeaponDamage|ModifyWeaponCrit|UpdateBadLifeRegen|PreUpdateMovement|UpdateDead|OtherBuffEffects|.*Effects?|Update\w*)$/;
+// …and the on-hit helpers a mod calls out of its hit hooks (Calamity's `SummonOnHit`, where the
+// Spirit Glyph's buffs live): walked here rather than inlined, because a nested call is not read
+// linearly and the `if (sGlyph)` region a delta sits in would be lost.
+const HOOK_RE = /^(PostUpdate|UpdateEquips|PostUpdateEquips|PostUpdateMiscEffects|PostUpdateRunSpeeds|UpdateLifeRegen|ModifyWeaponDamage|ModifyWeaponCrit|UpdateBadLifeRegen|PreUpdateMovement|UpdateDead|OtherBuffEffects|.*Effects?|Update\w*|\w*OnHit\w*)$/;
 
 /**
  * @returns {Map<string, object>} bool field name → effects object (normalizeEffects form)
@@ -39,16 +42,18 @@ export function extractFlagEffects(asm, { tml }) {
       const deltas = [];
       const hooks = playerHooks((d, ctx) => {
         if (process.env.TL_TRACE_FLAGS && md.name === process.env.TL_TRACE_FLAGS) console.log('  delta', md.name, JSON.stringify(d), 'tags', JSON.stringify(ctx?.condTags));
-        const tags = (ctx?.condTags ?? []).filter((t) => t.startsWith('mf:'));
-        if (!tags.length) return;
-        const key = tags[tags.length - 1];
-        const name = boolFields.get(key);
-        if (!name) return;
-        if (process.env.TL_TRACE_FLAGS === name) console.log('  delta', md.name, name, JSON.stringify(d), 'untagged', JSON.stringify(ctx?.untagged), 'tags', JSON.stringify(ctx?.condTags));
+        const all = ctx?.condTags ?? [];
+        const tags = all.filter((t) => t.startsWith('mf:'));
+        // `if (Destabilized || conflagrate) { … }` tags the block with every alternative (`any:mf:…`):
+        // each flag on its own is enough to reach it, so each one gets the deltas.
+        const keys = tags.length ? [tags[tags.length - 1]] : all.filter((t) => t.startsWith('any:mf:')).map((t) => t.slice(4));
+        const names = keys.map((k) => boolFields.get(k)).filter(Boolean);
+        if (!names.length) return;
+        if (names.includes(process.env.TL_TRACE_FLAGS)) console.log('  delta', md.name, names, JSON.stringify(d), 'untagged', JSON.stringify(ctx?.untagged), 'tags', JSON.stringify(all));
         // an unnamed condition nested inside the flag region gates this stat too — Laudanum's
         // "+15 defense" is one arm of a walk over the buffs you happen to have, not a stat the
         // accessory carries. The solver halves what is marked conditional.
-        deltas.push({ flag: name, d: ctx?.untagged?.length ? { ...d, cond: true } : d });
+        for (const name of names) deltas.push({ flag: name, d: ctx?.untagged?.length ? { ...d, cond: true } : d });
       });
       const machine = new Machine(asm, {
         tml,

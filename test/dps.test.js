@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  ARCHETYPE, BOSS_DEFAULT, CHILD_CAP, CROWD, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, PIERCE_KEEP, REACH, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
-  asTarget, bladeLanding,
-  boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages, unknownDebuffDps,
+  ARCHETYPE, BOSS_DEFAULT, CHILD_CAP, CROWD, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, PIERCE_KEEP, REACH, LIFE_FLOOR, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
+  asTarget, bladeCoverage, bladeLanding,
+  boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, lifeRegen, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages, unknownDebuffDps,
 } from '../src/lib/dps.js';
 import { indexDataset } from '../src/lib/dataset.js';
 
@@ -39,8 +39,13 @@ const raw = {
     'v:14p': { pen: 1, updates: 1, life: 600 },
     'v:arrow': { ai: 1, gravity: true, gravityK: 0.1, life: 600 },
     'M:fan': { pen: 1, life: 600 },
+    // one immunity window for every projectile of the type at once (`usesIDStaticNPCImmunity`)
+    'M:sharedFan': { pen: 1, life: 600, local: 10, shared: true },
     'M:knife': { pen: 1, stealth: true, life: 600 },
-    'M:stealthSpear': { pen: -1, life: 600, debuffs: ['Bleeding'] }, // no arc: it is thrown flat
+    // no arc: it is thrown flat. `local` because a Calamity strike that throws several and means
+    // them gives its projectile `usesLocalNPCImmunity` — Scourge of the Desert's javelins carry
+    // `local: 50` — and without it the six share one window and land a single hit between them
+    'M:stealthSpear': { pen: -1, life: 600, local: 20, debuffs: ['Bleeding'] },
     'M:spear': { pen: -1, gravity: true, gravityK: 0.1, life: 600, debuffs: ['Bleeding'] },
     'M:bomb': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:boom', count: 1, where: 'kill', dmgMul: 1 }] },
     'M:dud': { pen: 1, gravity: true, gravityK: 0.1, life: 120, children: [{ type: 'M:pebble', count: 1, where: 'kill', dmgMul: 1 }] },
@@ -101,7 +106,7 @@ const raw = {
       fire: { calls: [{ type: 'shoot', count: 3, spread: 0.5 }], defaultShot: { spam: false, stealth: false } } },
     { id: 'M:dropper', mod: 'M', name: 'Dropper', slot: 'weapon', class: 'thrower', arch: 'dagger', damage: 20, useTime: 25, useAnimation: 25, crit: 4, shoot: 'M:dropKnife', shootSpeed: 9.6, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:rogue', mod: 'M', name: 'Knife', slot: 'weapon', class: 'thrower', arch: 'shot', damage: 30, useTime: 20, useAnimation: 20, crit: 4, shoot: 'M:knife', shootSpeed: 12, noMelee: true, useStyle: 1, stage: 0, stageSource: { kind: 'rarity' },
-      fire: { calls: [{ type: 'M:stealthSpear', count: 6, variant: 'stealth', region: 50 }], defaultShot: { spam: true, stealth: false }, stealthMods: { dmgMul: 1.5 }, stealth: true } },
+      fire: { calls: [{ type: 'M:stealthSpear', count: 3, variant: 'stealth', region: 50 }], defaultShot: { spam: true, stealth: false }, stealthMods: { dmgMul: 1.5 }, stealth: true } },
     { id: 'M:staff', mod: 'M', name: 'Staff', slot: 'weapon', class: 'summon', arch: 'minion', damage: 12, useTime: 30, useAnimation: 30, shoot: 'M:minion', stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:tome', mod: 'M', name: 'Tome', slot: 'weapon', class: 'magic', arch: 'shot', damage: 40, useTime: 6, useAnimation: 6, crit: 4, mana: 10, shoot: 'M:missile', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
     { id: 'M:blindTome', mod: 'M', name: 'Blind Tome', slot: 'weapon', class: 'magic', arch: 'shot', damage: 40, useTime: 6, useAnimation: 6, crit: 4, mana: 10, shoot: 'M:blind', shootSpeed: 12, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } },
@@ -463,7 +468,15 @@ describe('realDps', () => {
     expect(blade.f).toBeLessThan(1);
     expect(blade.f).toBeGreaterThan(0);
     expect(part(r, /contact swing/).label).toMatch(/blade .*reaches 100 px of 100/);
-    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * 0.85 * blade.f * risk, 0); // `risk` is the rounded part
+    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * blade.f * risk, 0); // `risk` is the rounded part
+  });
+  test('a four-tile blade has a much smaller contact window than a normal sword', () => {
+    const normal = dps('v:sword');
+    const short = realDps({ ...ds.byId.get('v:sword'), scale: 0.64 }, ctx());
+    expect(bladeCoverage(64)).toBeCloseTo(0.64 ** 3, 5);
+    expect(bladeCoverage(REACH.swing)).toBe(1);
+    expect(short.value).toBeLessThan(normal.value * 0.35);
+    expect(part(short, /melee reach 64 px vs 100 px standard/)).toBeTruthy();
   });
   test('a sword that also fires splits its score between blade and shot by what each lands', () => {
     // a sword with a projectile: the blade is a phase like the shot, and the split is not a share
@@ -495,6 +508,19 @@ describe('realDps', () => {
     expect(part(r, /mana\/s/).mul).toBeCloseTo(SUSTAIN_FLOOR, 5); // 100 mana/s against ~9.5 regen
     expect(manaRegen(0)).toBeCloseTo(9.5);
   });
+  test('a weapon paid for in health is charged for it, and the tightest of its pools governs', () => {
+    const tome = ds.byId.get('M:tome');
+    // 10 mana a cast at 10 casts/s already floors this one; a health cost the bar cannot keep up
+    // with is the harder limit, and the part says which pool it is
+    const bleeds = realDps({ ...tome, lifeCost: 5 }, ctx());
+    expect(part(bleeds, /health\/s vs .* regen/).mul).toBeCloseTo(LIFE_FLOOR, 5);
+    expect(bleeds.value).toBeLessThan(dps('M:tome').value);
+    // …and one the regen covers costs nothing: mana is still the pool that binds
+    const nick = realDps({ ...tome, lifeCost: 0.1 }, ctx());
+    expect(part(nick, /mana\/s/).mul).toBeCloseTo(SUSTAIN_FLOOR, 5);
+    expect(nick.value).toBeCloseTo(dps('M:tome').value, 5);
+    expect(lifeRegen(0)).toBeCloseTo(2);
+  });
   test('a shot that dies before it arrives scores nothing', () => {
     expect(dps('M:popgun').value).toBe(0); // 4 px/tick for 4 ticks: not even MIN_ENGAGE away
   });
@@ -507,7 +533,7 @@ describe('realDps', () => {
   test('a shot with no readable velocity is flown slowly, not exempted from landing', () => {
     const r = dps('M:mystery'); // same projectile as M:randGun, no shootSpeed
     expect(part(r, /px\/tick over/)).toBeDefined();
-    expect(r.value).toBeLessThan(dps('M:fanGun').value / 2 * 3); // no free pass
+    expect(r.value).toBeLessThan(dps('M:randGun').value * 1.5); // no free pass
     expect(r.value).toBeLessThan(realDps({ ...ds.byId.get('M:mystery'), shootSpeed: 20 }, ctx()).value);
   });
   test('a child the code only spawns on a stealth strike is not counted on a normal throw', () => {
@@ -561,11 +587,19 @@ describe('realDps', () => {
   test('a burst behind a hit counter is paid once per that many landed hits, not once per shot', () => {
     const r = dps('M:counterGun');
     const every = realDps({ ...ds.byId.get('M:counterGun'), tooltip: undefined }, ctx());
+    // the text is about the burst — the one child with a count above one — and not about the
+    // ordinary explosion, which fires on every death whatever the tooltip counts
     expect(part(r, /pebble on death, once per 8 landed hits/)).toBeTruthy();
-    expect(part(r, /boom on death, once per 8 landed hits/)).toBeTruthy();
+    expect(part(r, /boom on death, once per 8/)).toBeUndefined();
     const kids = r.phases.filter((p) => p.kind === 'split');
     expect(kids).toHaveLength(2);
-    for (const k of kids) expect(k).toMatchObject({ threshold: 8, confidence: 'text', parent: 'default' });
+    expect(kids.find((k) => /pebble/.test(k.projId))).toMatchObject({ threshold: { n: 8, event: 'hit', from: 'text' }, confidence: 'text', parent: 'default' });
+    expect(kids.find((k) => /boom/.test(k.projId)).threshold).toBeNull();
+    // a mined counter on the child outranks the text, and the text with nothing to attach to attaches to nothing
+    const mined = { ...raw, projectiles: { ...raw.projectiles, 'M:counterShell': { ...raw.projectiles['M:counterShell'], children: raw.projectiles['M:counterShell'].children.map((c) => (/pebble/.test(c.type) ? { ...c, threshold: { n: 4, event: 'hit', reset: true, reached: true } } : c)) } } };
+    expect(part(realDps(ds.byId.get('M:counterGun'), { ...ctx(), ds: indexDataset(mined) }), /pebble on death, once per 4 hits/)).toBeTruthy();
+    const twoBursts = { ...raw, projectiles: { ...raw.projectiles, 'M:counterShell': { ...raw.projectiles['M:counterShell'], children: [...raw.projectiles['M:counterShell'].children, { type: 'M:fan', count: 3, where: 'kill', dmgMul: 0.3 }] } } };
+    expect(part(realDps(ds.byId.get('M:counterGun'), { ...ctx(), ds: indexDataset(twoBursts) }), /once per 8/)).toBeUndefined();
     // the counter does the scoring, so the blanket cap no longer has to: it was hiding the 8× error
     expect(part(every, /capped at/)).toBeTruthy();
     expect(part(r, /capped at/)).toBeUndefined();
@@ -581,9 +615,14 @@ describe('realDps', () => {
     expect(blast).toMatchObject({ kind: 'split', trigger: 'death', parent: 'default', projId: 'M:fieldBoom' });
     expect(field).toMatchObject({ kind: 'split', trigger: 'death', parent: 'default:child:0', projId: 'M:acid' });
     // each with its own rate and share of the score, the three adding up to it — the spam grade,
-    // which is the graph a rogue weapon carries; the stealth strike sits on top of `value`
+    // which is the graph a rogue weapon carries: both grades, each phase priced in its own, summing to the value
     for (const id of ['default', 'default:child:0', 'default:child:0:child:0']) expect(r.phases.find((p) => p.id === id).contribution).toBeGreaterThan(0);
-    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.spam, 0);
+    expect(r.phases.filter((p) => p.grade === 'spam').reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.spam, 0);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
+    // a phase's id is what its children name as parent, so the two grades cannot share one: the
+    // graph drew `default` twice under the root and hung each grade's children off the other's
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(r.phases.filter((p) => p.grade === 'stealth' && p.parent && p.parent !== 'primary').every((p) => p.parent.startsWith('stealth:'))).toBe(true);
   });
   // ---- debuffs: unread is not immune, unread is not nothing, and nothing lands nothing --------
   test('an immunity table the miner could not walk is not an immunity', () => {
@@ -682,6 +721,31 @@ describe('realDps', () => {
     expect(part(r, /hits\/s in contact/).mul).toBeCloseTo(10, 5); // 60 / 6-tick immunity
     expect(part(r, /of the time on the boss/).mul).toBeCloseTo(ARCHETYPE.held.uptime, 5);
   });
+  test('a volley of beams held on the boss is charged the player immunity window once, not twice', () => {
+    // Last Prism: six beams with no immunity of their own, held on the target. The window is the
+    // *rate* the contact clock charges (6 hits/s), so collapsing the volley to one arrival as well
+    // charged it twice and paid the weapon a quarter of the beam it is. What the volley buys instead
+    // is bodies to be on and losses it can absorb, both of them in `on the boss at once`.
+    const beams = structuredClone(raw);
+    beams.projectiles['M:prismBeam'] = { pen: -1, life: 60, walls: true }; // no local: the player's window
+    beams.items.push({ id: 'M:prism', mod: 'M', name: 'Prism', slot: 'weapon', class: 'magic', arch: 'held', damage: 20, useTime: 10, useAnimation: 10, crit: 4, mana: 2, shoot: 'M:prismBeam', shootSpeed: 30, channel: true, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' },
+      fire: { calls: [{ type: 'shoot', count: 6, spread: 0.2 }], defaultShot: { spam: false, stealth: false } } });
+    const six = indexDataset(beams);
+    const one = structuredClone(beams);
+    one.items.at(-1).fire.calls[0].count = 1;
+    const r = realDps(six.byId.get('M:prism'), ctx({ ds: six }));
+    const solo = realDps(indexDataset(one).byId.get('M:prism'), ctx({ ds: indexDataset(one) }));
+    expect(part(r, /hits\/s in contact/).mul).toBeCloseTo(6, 5);   // 60 / the 10-tick player window
+    expect(part(r, /get through/)).toBeFalsy();                    // the window is charged there, not here
+    expect(r.value).toBeGreaterThanOrEqual(solo.value);            // six of them are never worth less than one
+    expect(r.value).toBeLessThan(solo.value * 2);                  // …and never six times more: one window
+  });
+  test('a piercing beam is not spent on one body of a crowd; a blade in your hands is', () => {
+    const crowd = (id) => realDps(ds.byId.get(id), ctx({ targets: 'multi' })).parts.some((p) => /reaches one body/.test(p.label));
+    expect(crowd('M:rod')).toBe(false);   // a magic field that pierces lies across the crowd
+    expect(crowd('M:drill')).toBe(true);  // the same record, melee: a drill is a point at one of them
+    expect(crowd('M:yoyoItem')).toBe(true);
+  });
   test('a yoyo out of its range spends less of the fight on the boss', () => {
     const near = realDps(ds.byId.get('M:yoyoItem'), ctx());
     expect(near.arch).toBe('yoyo');
@@ -720,18 +784,28 @@ describe('realDps', () => {
     // 60/20 = 3 hits/s, defense 10, and a minion is not on the boss every second of the fight
     expect(r.value).toBeCloseTo((12 * playerDamage(0) - 5) * 3 * ARCHETYPE.minion.uptime, 5);
   });
-  test('the stealth strike lands on top of the spam, and names the grade', () => {
+  test('a rogue weapon is worth the better of its two loops, never their sum, and that loop names the grade', () => {
     const r = dps('M:rogue', { stealthMax: 1 });
     expect(stealthMultiplier(20, 1, 1.5)).toBeGreaterThan(3);
-    expect(r.value).toBeCloseTo(r.spam + r.stealth, 5); // stealth builds while you throw
-    expect(r.mode).toBe('stealth'); // …and here it is the bigger half
-    expect(dps('M:rogue', { stealthMax: 0.05 }).mode).toBe('spam');
+    // stealth does not build while throwing: throw-pause-strike and continuous throwing are two
+    // loops the player is in one of, so the value is the better one
+    expect(r.value).toBeCloseTo(Math.max(r.spam, r.stealth), 5);
+    expect(r.mode).toBe('stealth');
+    expect(r.value).toBe(r.stealth);
+    // the fill time is the update's own constant (max × gen / 120 a tick): 2 s still, 4 s moving
+    expect(part({ parts: r.stealthParts }, /one strike per [\d.]+ s: the bar refills in 2 s standing still, 4 s moving/)).toBeTruthy();
+    const low = dps('M:rogue', { stealthMax: 0.05 });
+    expect(low.mode).toBe('spam');
+    expect(low.value).toBe(low.spam);
+    // the loop not taken contributes nothing, so the graph still adds up to the value
+    expect(r.phases.filter((p) => p.grade === 'spam').every((p) => p.contribution === 0)).toBe(true);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
   });
   test('a rogue weapon with no coded stealth branch is still graded', () => {
     const r = dps('M:bomb', { stealthMax: 1 }); // no `fire` at all
     expect(r.mode).toBe('spam'); // the generic strike does not beat spamming it
     expect(r.stealth).toBeGreaterThan(0);
-    expect(r.value).toBeCloseTo(r.spam + r.stealth, 5);
+    expect(r.value).toBeCloseTo(r.spam, 5);
   });
   test('the two rogue grades are scored at their own engagement distances', () => {
     const r = dps('M:rogue', { stealthMax: 1 });
@@ -846,7 +920,9 @@ describe('realDps', () => {
     const plain = part(dps('M:whipItem'), /summon tag/).mul;
     const spray = part(dps('M:sprayWhip'), /summon tag/).mul;
     expect(plain).toBeCloseTo(1 + ARCHETYPE.whip.tag / 2, 1); // 2 lashes/s, one hit each
-    expect(spray).toBeLessThan(plain); // eight extra projectiles do not make the mark eight times as good
+    // eight extra projectiles do not make the mark eight times as good — and since the lash sets no
+    // immunity of its own, the eight arrive inside one window on the body and add nothing at all
+    expect(spray).toBeLessThanOrEqual(plain);
   });
   test('a launch speed too slow to be one is treated as unread', () => {
     // 0.1 or 1 px/tick is a projectile whose AI takes over, not a cruising speed
@@ -907,5 +983,266 @@ describe('realDps', () => {
       expect(ARCHETYPE[a]).toBeDefined();
       expect(['use', 'flight', 'contact', 'slot']).toContain(ARCHETYPE[a].cycle);
     }
+  });
+});
+
+describe('damage provenance', () => {
+  // the whole-shot term ModifyShootStats writes and the share a Shoot call takes of the argument it
+  // is handed multiply: Astral's End is 1.5 on the shot and 0.667 on each call, ×1.0 in play.
+  // Against a target with no defense, so the shares stay the whole story (defense comes off each
+  // phase's own damage, see 'phase damage')
+  const DUMMY = { ...BOSS_DEFAULT, defense: 0, name: 'Dummy', progression: 0, still: true };
+  const fanGun = ds.byId.get('M:fanGun');
+  const withFire = (fire) => realDps({ ...fanGun, fire: { ...fanGun.fire, ...fire } }, ctx({ boss: DUMMY }));
+  const call = (extra) => [{ type: 'shoot', count: 3, spread: 0.5, fan: true, ...extra }];
+  test('ModifyShootStats ×1.5 and a Shoot call at ×0.667 compose to ×1.0, not to the call alone', () => {
+    const plain = withFire({});
+    expect(withFire({ dmgMul: 1.5, calls: call({ dmgMul: 0.667 }) }).value / plain.value).toBeCloseTo(1, 1);
+    expect(withFire({ calls: call({ dmgMul: 0.667 }) }).value / plain.value).toBeCloseTo(0.667, 1);
+    expect(withFire({ dmgMul: 1.5 }).value / plain.value).toBeCloseTo(1.5, 1);
+  });
+  test('an absolute call damage stays that number, as a share of the printed damage', () => {
+    expect(withFire({ calls: call({ dmgAbs: 5 }) }).value).toBeCloseTo(withFire({ calls: call({ dmgMul: 0.5 }) }).value, 1);
+    // …past the multiplier ceiling it is evidence of something else, and the printed damage stands
+    expect(withFire({ calls: call({ dmgAbs: 500 }) }).value).toBeCloseTo(withFire({}).value, 1);
+  });
+  test('a holdout spawned at 0 damage is a carrier: an unread delivery, not a zero', () => {
+    const r = withFire({ calls: call({ dmgAbs: 0 }) });
+    expect(r.value).toBeCloseTo(withFire({}).value, 1);
+    expect(part(r, /carrier whose shots the miner did not read/)).toBeTruthy();
+    expect(r.phases.find((p) => p.id === 'call:0').evidence).toMatchObject({ carrier: true, gates: { damage: 'assumed' } });
+  });
+  test('the whole-shot term reaches the default shot and not the blade', () => {
+    // a slow sword whose shot only just outreaches its (enlarged) blade, so there is one stance and
+    // the two clocks stay under the shared immunity window together
+    const sword = { ...ds.byId.get('v:sword'), useTime: 40, useAnimation: 40, shoot: 'M:midrange', shootSpeed: 12, scale: 2.5 };
+    const a = realDps(sword, ctx({ boss: DUMMY }));
+    const b = realDps({ ...sword, fire: { dmgMul: 2 } }, ctx({ boss: DUMMY }));
+    const of = (r, id) => r.phases.find((p) => p.id === id).contribution;
+    expect(of(a, 'default')).toBeGreaterThan(0);
+    expect(of(b, 'default') / of(a, 'default')).toBeCloseTo(2, 1);
+    expect(of(b, 'swing')).toBeCloseTo(of(a, 'swing'), 0);
+  });
+  test('the stealth cut is applied once, on the strike\'s deliveries', () => {
+    const rogue = ds.byId.get('M:rogue');
+    const cut = realDps(rogue, ctx({ boss: DUMMY }));
+    const flat = realDps({ ...rogue, fire: { ...rogue.fire, stealthMods: {} } }, ctx({ boss: DUMMY }));
+    expect(cut.stealth / flat.stealth).toBeCloseTo(1.5, 1);
+    expect(cut.stealthParts.filter((p) => /150% damage/.test(p.label))).toHaveLength(1);
+    // …and a strike with no cut of its own takes the ordinary whole-shot term instead
+    const shot = realDps({ ...rogue, fire: { ...rogue.fire, stealthMods: {}, dmgMul: 2 } }, ctx({ boss: DUMMY }));
+    expect(shot.stealth / flat.stealth).toBeCloseTo(2, 1);
+    // Calamity's StealthDamageMultiplier property and the branch it is applied in are one number
+    // read two ways: a weapon carrying both (Spadefish: 2 and 2) is ×2, not ×4
+    const both = realDps({ ...rogue, fire: { ...rogue.fire, stealthMods: { dmgMul: 2 }, stealthMult: 2 } }, ctx({ boss: DUMMY }));
+    expect(both.stealth / flat.stealth).toBeCloseTo(2, 1);
+    // …and the property alone stands in for the branch the machine did not read
+    const prop = realDps({ ...rogue, fire: { ...rogue.fire, stealthMods: {}, stealthMult: 2 } }, ctx({ boss: DUMMY }));
+    expect(prop.stealth / flat.stealth).toBeCloseTo(2, 1);
+  });
+  test('a child is worth its share of the projectile that spawned it, not of the weapon', () => {
+    const gun = ds.byId.get('M:splitGun');
+    const full = realDps(gun, ctx({ boss: DUMMY }));
+    const half = realDps({ ...gun, fire: { calls: [{ type: 'shoot', dmgMul: 0.5 }], defaultShot: { spam: false, stealth: false } } }, ctx({ boss: DUMMY }));
+    const kid = (r) => r.phases.filter((p) => p.kind === 'impact').reduce((s, p) => s + p.contribution, 0);
+    expect(kid(full)).toBeGreaterThan(0);
+    expect(kid(half) / kid(full)).toBeCloseTo(0.5, 1);
+  });
+});
+
+describe('mined gates', () => {
+  const fanGun = ds.byId.get('M:fanGun');
+  const withCalls = (calls, extra = {}) => realDps({ ...fanGun, fire: { calls, defaultShot: { spam: false, stealth: false } }, ...extra }, ctx());
+  const shot = (extra) => ({ type: 'shoot', count: 3, spread: 0.5, fan: true, ...extra });
+  test('a counter in Shoot: the arm that fires every Nth use and the arm that fires the rest add up to one shot', () => {
+    const plain = withCalls([shot()]).value;
+    const nth = withCalls([shot({ threshold: { n: 4, event: 'use', reset: true, reached: true } })]);
+    const rest = withCalls([shot({ threshold: { n: 4, event: 'use', reset: true, reached: false } })]);
+    expect(nth.value / plain).toBeCloseTo(0.25, 1);
+    expect(rest.value / plain).toBeCloseTo(0.75, 1);
+    expect(part(nth, /every 4th use/)).toBeTruthy();
+    // priced, so it is a concurrent shot in the top region, not an alternative to be averaged
+    expect(nth.phases.find((p) => p.id === 'call:0')).toMatchObject({ region: 'top', relation: 'concurrent', evidence: { gates: { threshold: 'exact' } } });
+  });
+  test('a hit-charged alternate attack pays for its release use as well as the hits that armed it', () => {
+    const plain = withCalls([shot({ alt: true })]).value;
+    const charged = withCalls([shot({ alt: true, threshold: { n: 3, event: 'hit', reset: true, reached: true } })]);
+    // Three normal hits fill the charge and a fourth action spends it. This is distinct from a
+    // modulo branch that fires automatically on every third use.
+    expect(charged.value / plain).toBeCloseTo(1 / 4, 1);
+    expect(part(charged, /successful hits, release costs one more use/)).toBeTruthy();
+  });
+  test('a zero-velocity custom delivery cannot earn free-flight infinite-pierce hits', () => {
+    const p = { pen: -1, local: 20, life: 600 };
+    const free = hitsPerProjectile(p, { boss: boss(ds, 1), velocity: 12, arch: 'shot' });
+    const anchored = hitsPerProjectile(p, { boss: boss(ds, 1), velocity: 0, arch: 'shot' });
+    expect(free.hits).toBeGreaterThan(1);
+    expect(anchored.hits).toBe(1);
+    expect(anchored.label).toMatch(/zero velocity/);
+  });
+  test('a requirement the loadout cannot meet is a shot that does not happen; the arm without it is the ordinary one', () => {
+    const plain = withCalls([shot()]).value;
+    const needs = withCalls([shot({ requires: { what: 'ammo', id: 'special', negated: false } })]);
+    const without = withCalls([shot({ requires: { what: 'ammo', id: 'special', negated: true } })]);
+    expect(needs.value).toBe(0);
+    expect(part(needs, /needs special ammo the loadout does not carry/)).toBeTruthy();
+    expect(needs.phases.find((p) => p.id === 'call:0').evidence.gates.requires).toBe('unmet');
+    expect(without.value).toBeCloseTo(plain, 1);
+  });
+  test('an unread if/else names itself and is worth its weaker arm; a one-sided guard keeps its shot', () => {
+    const a = shot({ spread: 0, branch: { id: 40, side: true, cond: 'X.mystery' } });
+    const b = shot({ count: 1, branch: { id: 40, side: false, cond: 'X.mystery' } });
+    const r = withCalls([a, b]);
+    const ph = r.phases.filter((p) => p.kind === 'travel');
+    expect(ph.map((p) => p.region)).toEqual(['branch:40', 'branch:40']);
+    expect(ph.every((p) => p.relation === 'alternative' && p.evidence.gates.branch === 'assumed')).toBe(true);
+    expect(part(r, /if\/else nobody read \(branch 40\): the weaker arm/)).toBeTruthy();
+    expect(r.value).toBeCloseTo(withCalls([shot({ count: 1 })]).value, 1);
+    // the arm not taken contributes nothing, so the graph still adds up to the score. Which of the
+    // two is the weaker one is a tie here now that a volley collapses into one arrival — three
+    // shots and one land the same on a single body — so the invariant is that exactly one is unused
+    expect(ph.filter((p) => p.contribution === 0)).toHaveLength(1);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
+    expect(withCalls([a]).value).toBeCloseTo(withCalls([shot({ spread: 0 })]).value, 1);
+    // a guard that always holds with two arms is a mirror (facing left / facing right): one shot
+    const l = shot({ count: 1, branch: { id: 7, side: true, cond: 'Entity.direction', known: true } });
+    const rr = shot({ count: 1, branch: { id: 7, side: false, cond: 'Entity.direction', known: true } });
+    const m = withCalls([l, rr]);
+    expect(m.value).toBeCloseTo(withCalls([shot({ count: 1 })]).value, 1);
+    expect(part(m, /mirrored if\/else/)).toBeTruthy();
+    expect(m.phases.find((p) => p.id === 'call:0').evidence.gates.branch).toBe('exact');
+  });
+  test('a child on a clock the miner read is spawned once per tick of it while the parent is there', () => {
+    // a held carrier whose AI fires a fan every 10 ticks; the weapon is used every 10 ticks
+    // the shots carry a hit cooldown of their own, so the player's immunity window does not cap them
+    const hold = (child) => ({ ...raw, projectiles: { ...raw.projectiles, 'M:tick': { ...raw.projectiles['M:fan'], local: 10 }, 'M:hold': { held: true, life: 600, children: [{ type: 'M:tick', count: 1, where: 'ai', dmgMul: 1, ...child }] } } });
+    const with10 = hold({ threshold: { n: 10, event: 'tick', reset: true, reached: true } });
+    const with5 = hold({ threshold: { n: 5, event: 'tick', reset: true, reached: true } });
+    const unread = hold({});
+    const item = { ...fanGun, shoot: 'M:hold', fire: { calls: [{ type: 'M:hold', dmgAbs: 0 }], defaultShot: { spam: false, stealth: false } } };
+    const grade = (d) => realDps(item, { ...ctx(), ds: indexDataset(d) });
+    const kid = (r) => r.phases.filter((p) => p.kind === 'split').reduce((s, p) => s + p.contribution, 0);
+    expect(kid(grade(with5)) / kid(grade(with10))).toBeCloseTo(2, 0);
+    // one spawn per use is exactly what the unread rule already assumed; two is what the clock buys
+    expect(kid(grade(with10))).toBeCloseTo(kid(grade(unread)), 1);
+    expect(kid(grade(with5))).toBeGreaterThan(kid(grade(unread)));
+    expect(part(grade(with10), /every 10 ticks \(1 per use\)/)).toBeTruthy();
+    expect(grade(with10).phases.find((p) => p.kind === 'split').evidence.gates.cadence).toBe('exact');
+    // …a transition without a reset is the old "at most one" rule, and a counter in OnHitNPC is a hit counter
+    const once = hold({ threshold: { n: 10, event: 'tick', reset: false, reached: true } });
+    expect(kid(grade(once))).toBeCloseTo(kid(grade(unread)), 1);
+  });
+  test('a child only on a crit is worth the crit chance of itself', () => {
+    const gun = ds.byId.get('M:splitGun');
+    const crit = { ...raw, projectiles: { ...raw.projectiles, 'M:splitter': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1, crit: true }] } } };
+    const kid = (r) => r.phases.filter((p) => p.kind === 'impact').reduce((s, p) => s + p.contribution, 0);
+    const full = realDps(gun, { ...ctx(), loadout: { damage: 0, crit: 20 } });
+    const onCrit = realDps(gun, { ...ctx(), ds: indexDataset(crit), loadout: { damage: 0, crit: 20 } });
+    expect(kid(onCrit) / kid(full)).toBeCloseTo(0.2, 1);
+  });
+});
+
+describe('phase damage', () => {
+  const DUMMY = { ...BOSS_DEFAULT, defense: 0, name: 'Dummy', progression: 0, still: true };
+  const ARMOURED = { ...BOSS_DEFAULT, defense: 10, name: 'Armoured', progression: 0 };
+  const kidOf = (r, kind = 'impact') => r.phases.filter((p) => p.kind === kind);
+  test('defense comes off each phase\'s own damage: a 30% child against armour is not 30% of the hit', () => {
+    // 10 damage, a child at 30%: 3 raw against defense 10 is the 1-damage floor, not 0.3 × (10 − 5)
+    expect(hitDamage(3, ARMOURED)).toBe(1);
+    expect(hitDamage(3, ARMOURED)).toBeLessThan(0.3 * hitDamage(10, ARMOURED));
+    const weak = { ...raw, projectiles: { ...raw.projectiles, 'M:splitter': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 0.3 }] } } };
+    const gun = ds.byId.get('M:splitGun');
+    const r = realDps(gun, { ...ctx(), ds: indexDataset(weak), boss: ARMOURED });
+    const [kid] = kidOf(r);
+    expect(kid.share).toBeCloseTo(0.3, 2);
+    expect(kid.hitDmg).toBe(1);
+    expect(kid.contribution).toBeCloseTo(kid.eventsSec * 1 * r.critMult, 0);
+    expect(part(r, /defense taken off each phase's own damage/)?.mul).toBeLessThan(1);
+    // …and against nothing, the share is the whole story and the correction part does not appear
+    const flat = realDps(gun, { ...ctx(), ds: indexDataset(weak), boss: DUMMY });
+    expect(part(flat, /defense taken off each phase/)).toBeUndefined();
+    expect(flat.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(flat.value, 0);
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
+  });
+  test('the immunity window caps hit events, not damage-weighted hits', () => {
+    // three shots at ×3 damage are three hits on the clock, the same three as at ×1
+    const fanGun = ds.byId.get('M:fanGun');
+    // fast enough to reach the cap: it is a *rate* limit, and a three-shot volley on its own now
+    // collapses into one arrival before it ever gets there (they share the player's window)
+    const withMul = (dmgMul) => realDps({ ...fanGun, useTime: 6, useAnimation: 6, fire: { calls: [{ type: 'shoot', count: 3, spread: 0, dmgMul }], defaultShot: { spam: false, stealth: false } } }, ctx({ boss: DUMMY }));
+    const one = withMul(1);
+    const three = withMul(3);
+    expect(part(one, /share the player's 10-tick immunity window/)).toBeTruthy();
+    expect(three.value / one.value).toBeCloseTo(3, 1);
+    expect(three.phases.find((p) => p.id === 'call:0').eventsSec).toBeCloseTo(one.phases.find((p) => p.id === 'call:0').eventsSec, 3);
+  });
+  test('a volley sharing one immunity window lands once, unless it is spread out in time', () => {
+    const gun = ds.byId.get('M:fanGun');
+    const volley = (extra) => realDps({ ...gun, shoot: 'M:sharedFan', fire: { calls: [{ type: 'shoot', count: 5, ...extra }], defaultShot: { spam: false, stealth: false } } }, ctx({ boss: DUMMY }));
+    // fired in one instant (a spread says so): the first to arrive shuts the window on the other four
+    const fan = volley({ spread: 0.05, fan: true });
+    expect(part(fan, /one immunity window shared by every one of them/)).toBeTruthy();
+    // …while the same five with a window of their own each keep their five arrivals
+    const own = realDps({ ...gun, shoot: 'M:fan2', fire: { calls: [{ type: 'shoot', count: 5, spread: 0.05, fan: true }] } }, { ...ctx({ boss: DUMMY }), ds: indexDataset({ ...raw, projectiles: { ...raw.projectiles, 'M:fan2': { pen: 1, life: 600, local: 10 } } }) });
+    expect(part(own, /immunity window shared/)).toBeUndefined();
+    expect(own.value).toBeGreaterThan(fan.value);
+    // …and a group with no spread is not one volley: Blood Bath's beams rain down one after another
+    expect(part(volley({}), /immunity window shared/)).toBeUndefined();
+  });
+  test('a projectile\'s own armour penetration reaches only its own hits, and the loadout\'s reaches all of them', () => {
+    const gun = ds.byId.get('M:splitGun');
+    const pierce = { ...raw, projectiles: { ...raw.projectiles, 'M:pebble': { ...raw.projectiles['M:pebble'], armorPen: 10 } } };
+    const plain = realDps(gun, { ...ctx(), boss: ARMOURED });
+    const kidPen = realDps(gun, { ...ctx(), ds: indexDataset(pierce), boss: ARMOURED });
+    expect(kidOf(kidPen)[0].hitDmg).toBeGreaterThan(kidOf(plain)[0].hitDmg);
+    expect(kidPen.phases.find((p) => p.id === 'default').hitDmg).toBeCloseTo(plain.phases.find((p) => p.id === 'default').hitDmg, 3);
+    const worn = realDps(gun, { ...ctx(), boss: ARMOURED, loadout: { damage: 0, crit: 0, armorPen: 10 } });
+    expect(worn.phases.find((p) => p.id === 'default').hitDmg).toBeGreaterThan(plain.phases.find((p) => p.id === 'default').hitDmg);
+    expect(worn.value).toBeGreaterThan(plain.value);
+  });
+  test('a debuff is kept up by the phase that applies it, and a debuff only a child carries is seen', () => {
+    const gun = ds.byId.get('M:splitGun');
+    const DUMMY = { ...BOSS_DEFAULT, defense: 0, name: 'Dummy', progression: 0, immuneAll: false, immune: new Set() };
+    const burning = (chance) => ({ ...raw, projectiles: { ...raw.projectiles, 'M:ember': { pen: 1, width: 8, life: 5, debuffs: ['v:24'] }, 'M:splitter': { pen: 1, life: 600, children: [{ type: 'M:ember', count: 1, where: 'hit', dmgMul: 1, ...(chance ? { chance } : {}) }] } } });
+    const always = realDps(gun, { ...ctx(), ds: indexDataset(burning(null)), boss: DUMMY });
+    const rare = realDps(gun, { ...ctx(), ds: indexDataset(burning(0.05)), boss: DUMMY });
+    const fire = (r) => r.phases.find((p) => p.kind === 'debuff' && p.buffId === 'v:24');
+    expect(fire(always).contribution).toBeCloseTo(4, 0);
+    expect(fire(rare).contribution).toBeLessThan(4);
+    expect(fire(rare).contribution).toBeGreaterThan(0);
+    expect(part(rare, /kept up \d+% of the time by the phases that apply it/)).toBeTruthy();
+    expect(rare.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(rare.value, 0);
+    // …and it hangs off that phase, not off the use clock: use → ember → burning
+    const ember = always.phases.find((p) => p.projId === 'M:ember');
+    expect(fire(always).parent).toBe(ember.id);
+    expect(always.phases.find((p) => p.id === ember.parent).projId).toBe('M:splitter');
+  });
+  test('a minion whose AI clock was read fires on that clock', () => {
+    const staff = ds.byId.get('M:staff');
+    const shooter = (threshold) => ({ ...raw, projectiles: { ...raw.projectiles, 'M:minion': { minion: true, slots: 1, local: 20, children: [{ type: 'M:fan', count: 1, where: 'ai', dmgMul: 1, ...(threshold ? { threshold } : {}) }] } } });
+    const unread = realDps(staff, { ...ctx(), ds: indexDataset(shooter(null)), boss: DUMMY });
+    const read = realDps(staff, { ...ctx(), ds: indexDataset(shooter({ n: 10, event: 'tick', reset: true, reached: true })), boss: DUMMY });
+    expect(part(read, /every 10 ticks \(6 per use\)/)).toBeTruthy();
+    expect(read.value).toBeGreaterThan(unread.value);
+  });
+  test('the terrain penalty reaches every phase, so the graph still adds up', () => {
+    const r = realDps({ ...ds.byId.get('M:bomb'), shoot: 'M:digBomb' }, ctx());
+    expect(part(r, /destroys tiles/)).toBeTruthy();
+    expect(r.phases.reduce((s, p) => s + (p.contribution ?? 0), 0)).toBeCloseTo(r.value, 0);
+  });
+});
+
+describe('vanilla ammo swap', () => {
+  test('a bow that turns the plain ammo into its own projectile is graded with that projectile', () => {
+    // a gun whose musket balls become fire shots: the fire is the shot the model sees
+    const gun = ds.byId.get('v:gun');
+    const swapped = realDps({ ...gun, ammoSwap: { from: 'v:14p', to: 'M:fire' } }, ctx());
+    const plain = realDps(gun, ctx());
+    expect(swapped.phases.find((p) => p.id === 'default').projId).toBe('M:fire');
+    expect(swapped.phases.some((p) => p.kind === 'debuff' && p.buffId === 'v:24')).toBe(true);
+    expect(plain.phases.some((p) => p.kind === 'debuff')).toBe(false);
+    // …and only the ammo it names: other ammo fires as itself
+    const other = realDps({ ...gun, ammoSwap: { from: 'v:arrow', to: 'M:fire' } }, ctx());
+    expect(other.phases.find((p) => p.id === 'default').projId).toBe('v:14p');
   });
 });

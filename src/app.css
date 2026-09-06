@@ -10,7 +10,7 @@
 
 @theme {
   /* surfaces — warm paper, white panels */
-  --color-paper: #eef2ea;
+  --color-paper: #f3f4ec;
   --color-panel: #ffffff;
   --color-panel2: #f4f8f2;
   --color-line: #e1e8dd;
@@ -48,31 +48,27 @@
   --radius-lab: 0px;
   --radius-chip: 0px;
 
-  /* tight, close-to-the-surface shadows + an inner top highlight for depth */
-  --shadow-panel: inset 0 1px 0 #fff, 0 1px 2px rgb(22 40 26 / 0.07);
-  --shadow-raise: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 1px 2px rgb(22 40 26 / 0.14);
+  /* close-to-the-surface shadows + an inner top highlight for depth: a contact shadow that reads at
+     the edge, and a wider, softer one that lifts the whole thing off the backdrop */
+  --shadow-panel: inset 0 1px 0 #fff, 0 1px 2px rgb(22 40 26 / 0.1), 0 6px 14px -8px rgb(22 40 26 / 0.28);
+  --shadow-raise: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 1px 2px rgb(22 40 26 / 0.18), 0 4px 9px -5px rgb(22 40 26 / 0.28);
   --shadow-sunk: inset 0 1px 2px rgb(22 40 26 / 0.1), inset 0 0 0 1px rgb(22 40 26 / 0.04);
-  --shadow-pop: 0 1px 3px rgb(22 40 26 / 0.14), 0 8px 20px -8px rgb(22 40 26 / 0.3);
+  --shadow-pop: 0 1px 3px rgb(22 40 26 / 0.18), 0 14px 30px -10px rgb(22 40 26 / 0.38);
   /* a band sitting a hair above what follows it */
-  --shadow-lift: 0 3px 5px -3px rgb(22 40 26 / 0.22);
+  --shadow-lift: 0 4px 8px -3px rgb(22 40 26 / 0.28);
   /* a badge sitting on the surface rather than printed into it */
-  --shadow-badge: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 1px 1px -1px rgb(22 40 26 / 0.4);
+  --shadow-badge: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 1px 2px -1px rgb(22 40 26 / 0.5);
 }
 
 @layer base {
-  html {
-    /* faint drafting grid under a soft wash of light */
-    background:
-      radial-gradient(1200px 600px at 15% -8%, rgb(255 255 255 / 0.9) 0%, transparent 60%),
-      radial-gradient(900px 500px at 95% 0%, var(--color-green-soft) 0%, transparent 55%),
-      repeating-linear-gradient(0deg, rgb(30 122 60 / 0.045) 0 1px, transparent 1px 32px),
-      repeating-linear-gradient(90deg, rgb(30 122 60 / 0.045) 0 1px, transparent 1px 32px),
-      var(--color-paper);
-    background-attachment: fixed;
-  }
+  /* the flat base the `.lab-bg` layers sit on; on the root so overscroll shows it too */
+  html { background: var(--color-paper); }
   body {
     @apply m-0 text-ink font-sans text-[13.5px] leading-normal;
     font-feature-settings: 'tnum' 1, 'cv11' 1;
+    /* nearly everything here is a click target, so a double click was landing on a text selection
+       instead of the row/chip under it. Selection is opt-in, below. */
+    user-select: none;
   }
   h1, h2, h3 {
     @apply m-0 font-semibold;
@@ -93,6 +89,10 @@
   ::selection {
     background: var(--color-green-mid);
   }
+  /* the parts people actually copy */
+  input, textarea, [contenteditable], .lab-pop, .lab-detail, .selectable {
+    user-select: text;
+  }
   /* Svelte's fly/fade compile to CSS animations, so this kills those too */
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after, ::backdrop {
@@ -103,6 +103,34 @@
 }
 
 @layer components {
+  /* ---------- backdrop ----------
+     Three blurred blobs, a sweep of light shafts and a dot grain over the paper base. `fixed` rather
+     than `relative` so it stays put while the page scrolls (what `background-attachment: fixed` did
+     for the grid before it) and `overflow: hidden` clips the layers that hang off the edges. Only
+     `transform` animates, so the whole thing rides the compositor.
+     Sizes are in `vmin`: the sample was drawn at 640×360, and a blob is a little over half the
+     shorter side whatever the viewport is. */
+  .lab-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .lab-bg > * { position: absolute; pointer-events: none; will-change: transform; }
+  .lab-bg .blob-a { left: -12vmin; top: -18vmin; width: 55vmin; height: 46vmin; background: #8bbf6f; opacity: 0.45; filter: blur(70px); animation: drift-a 40s ease-in-out infinite alternate; }
+  .lab-bg .blob-b { right: -9vmin; top: 6vmin; width: 46vmin; height: 40vmin; background: #4a8f5c; opacity: 0.3; filter: blur(80px); animation: drift-b 55s ease-in-out infinite alternate; }
+  .lab-bg .blob-c { left: 28vmin; bottom: -21vmin; width: 52vmin; height: 37vmin; background: #c9d98a; opacity: 0.5; filter: blur(70px); animation: drift-c 47s ease-in-out infinite alternate; }
+  .lab-bg .shafts {
+    inset: -200px;
+    filter: blur(14px);
+    background: repeating-linear-gradient(115deg, transparent 0 90px, rgb(255 255 255 / 0.55) 90px 130px, transparent 130px 210px, rgb(255 255 255 / 0.35) 210px 235px);
+    animation: shafts 90s linear infinite alternate;
+  }
+  /* the only static layer: grain that moved would read as noise rather than as paper */
+  .lab-bg .grain { inset: 0; will-change: auto; background-image: radial-gradient(rgb(26 33 25 / 0.09) 1px, transparent 1px); background-size: 6px 6px; }
+  @keyframes drift-a { to { transform: translate(60px, 40px) scale(1.15); } }
+  @keyframes drift-b { to { transform: translate(-50px, 30px) scale(0.9); } }
+  @keyframes drift-c { to { transform: translate(-40px, -50px) scale(1.1); } }
+  @keyframes shafts { to { transform: translateX(120px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .lab-bg > * { animation: none; will-change: auto; }
+  }
+
   /* ---------- surfaces ---------- */
   .lab-panel {
     @apply border border-line bg-panel;
@@ -461,7 +489,7 @@
     z-index: 0;
   }
   .lab-tab {
-    @apply relative z-[1] cursor-pointer border-0 bg-transparent px-4 py-1.5 text-[12.5px] font-semibold text-ink2 transition-colors;
+    @apply relative z-[1] inline-flex cursor-pointer items-center justify-center gap-1.5 border-0 bg-transparent px-4 py-1.5 text-[12.5px] font-semibold text-ink2 transition-colors;
     min-width: 92px;
   }
   .lab-tab:hover:not([aria-pressed='true']) { color: var(--color-green-deep); }

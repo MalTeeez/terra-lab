@@ -42,7 +42,8 @@ import { extractSpawnPools, extractVanillaSpawns } from './extract/spawns.js';
 import { extractAnglerRewards, extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
 import { extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
 import { extractVanilla, constMap } from './extract/vanilla.js';
-import { extractDebuffs } from './extract/effects.js';
+import { VANILLA_BEHAVIOUR, applyAmmoSwaps } from './extract/vanilla-behaviour.js';
+import { extractDebuffs, extractModBuffs } from './extract/effects.js';
 import { deCamel } from './extract/localization.js';
 import { loadOrder } from './loadorder.js';
 import { defaultPaths, readEnabled, resolveMods } from './resolve.js';
@@ -112,6 +113,25 @@ for (const m of modsIn) {
   }
 }
 const ordered = loadOrder(loaded);
+// tModLoader merges every mod's localization into one dictionary, so a mod shipping keys under
+// *another* mod's namespace renames that mod's content — Ragnarok reads Thorium's throwing gear as
+// rogue gear and ships `Mods.ThoriumMod.Items.ThrowingGuide.DisplayName` to say so. Later in the
+// load order wins; fold the winners back into every mod's own table before anything reads a name.
+const wikiNames = new Map(); // `<mod>:<the new name>` → the name that mod's own wiki still uses
+{
+  const winner = new Map();
+  for (const m of ordered) for (const [k, v] of m.loc.keys) winner.set(k, v);
+  let n = 0;
+  for (const m of ordered) for (const k of m.loc.keys.keys()) {
+    const own = m.loc.keys.get(k);
+    const v = winner.get(k);
+    if (v === own) continue;
+    m.loc.keys.set(k, v);
+    n++;
+    if (k.endsWith('.DisplayName')) wikiNames.set(`${k.split('.')[1]}:${v}`, own);
+  }
+  console.log(`localization: ${n} keys another mod overrides (${wikiNames.size} renames, the rest reworded text)`);
+}
 // an addon's content class derives from the mod it extends, whose base class lives in that mod's
 // assembly: let the base walk cross over into it
 {
@@ -146,6 +166,7 @@ const allFish = [];       // fishing catches
 const allGrants = [];     // items an id-keyed reward table hands over under a gate
 const allCompanions = []; // vanity pieces that appear only while another item is equipped
 const allWorldgen = [];   // chest contents placed at world generation
+const allBuffs = [];      // every buff, with what it does to the player — a potion is worth its buff
 const worldgenTiles = new Set();
 const groupFields = new Map(); // static field → recipe group name (RecipeGroupID.Wood, a mod's AnyGoldBar)
 const vanillaGroups = flag('--no-vanilla') ? [] : vanillaRecipeGroups(tml, groupFields);
@@ -166,7 +187,7 @@ for (const m of ordered) {
       const vals = Object.fromEntries([...evalStatics(asm, td, tml)].filter(([, v]) => isNumber(v)));
       if (Object.keys(vals).length) balance[modId] = { ...(balance[modId] ?? {}), ...vals };
     }
-    const items = extractItems(asm, { tml, loc, modId, ammoIds });
+    const items = extractItems(asm, { tml, loc, modId, ammoIds, cfg });
     const projectiles = extractProjectiles(asm, { tml, modId });
     allProjectiles.push(...projectiles);
     const npcs = extractNpcs(asm, { tml, loc, modId });
@@ -193,8 +214,8 @@ for (const m of ordered) {
     const wg = extractModWorldgen(asm, { modId });
     allWorldgen.push(...wg.items.map((w) => ({ ...w, estimated: w.locked || undefined })));
     for (const t of wg.tiles) worldgenTiles.add(t);
-    const overrides = extractGlobalOverrides(asm, { tml, modId, enabledMods, cfg });
-    const itemMods = extractModItemModifiers(asm, { tml, modId, enabledMods, cfg });
+    const overrides = extractGlobalOverrides(asm, { tml, modId, loc, statics, enabledMods, cfg });
+    const itemMods = extractModItemModifiers(asm, { tml, modId, statics, enabledMods, cfg });
     const prefixes = extractModPrefixes(asm, { tml, loc, modId });
     allRecipeEdits.push(...extractRecipeEdits(asm, { tml, modId, enabledMods, cfg, groupFields }));
     // …and the changes this mod ships as tPackBuilder data rather than code
@@ -203,6 +224,7 @@ for (const m of ordered) {
     if (!process.env.TL_NO_PACK_ITEMS) allPackItems.push(...pack.items);
     for (const [k, v] of pack.skipped) packSkipped.set(k, (packSkipped.get(k) ?? 0) + v);
     allItems.push(...items);
+    allBuffs.push(...extractModBuffs(asm, { tml, loc, modId }));
     allNpcs.push(...npcs);
     allBossLogs.push(...bossLogs);
     allRecipes.push(...recipes);
@@ -226,7 +248,9 @@ let vanilla = null;
 if (!flag('--no-vanilla')) {
   const tv = Date.now();
   vanilla = extractVanilla(tml);
+  applyAmmoSwaps(tml, vanilla.items);
   allItems.push(...vanilla.items);
+  allBuffs.push(...vanilla.buffs);
   allRecipes.push(...vanilla.recipes);
   allRecipes.push(...extractShimmerRecipes(tml, { tml })); // vanilla's own Shimmer transmutations
   allDrops.push(...vanilla.drops);
@@ -331,6 +355,15 @@ for (let pass = 0; pass < 4; pass++) {
   }
 }
 
+// A potion is worth exactly what its buff does, so the buff's mined effects become the item's own —
+// before the flag fold below, since most of a mod's buffs only set a flag its ModPlayer reads.
+const buffById = new Map(allBuffs.map((b) => [b.id, b]));
+for (const it of allItems) {
+  if (it.slot !== 'potion' || it.effects) continue;
+  const fx = buffById.get(it.buff)?.effects;
+  if (fx) it.effects = structuredClone(fx);
+}
+
 // ModPlayer flag effects: what the mod's player code does when an item's flag is set
 // (Calamity's Mollusk set slows the player in CalamityPlayer, not in the item) → fold into the item
 {
@@ -362,16 +395,44 @@ for (let pass = 0; pass < 4; pass++) {
     if (it.setEffects) it.setEffects = fold(it.setEffects, it);
     if (it.effects?.cond) { it.effectsCond = it.effects.cond; delete it.effects.cond; }
     if (it.setEffects?.cond) { it.setEffectsCond = it.setEffects.cond; delete it.setEffects.cond; }
-    // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
-    for (const s of it.effects?.onHit ?? []) {
+  }
+  // A buff the item's own code puts on you is worth what that buff does — the same rule a potion
+  // gets. Calamity's Spirit Glyph grants one of three stat buffs on a minion hit, and without this
+  // the accessory reads as `flags: [sGlyph]` and scores nothing at all. Conditional by construction:
+  // you have it only after a hit, and only one of the three at a time.
+  {
+    const buffByName = new Map(allBuffs.map((b) => [b.id.split(':').pop(), b]));
+    for (const it of allItems) {
+      for (const name of it.effects?.selfBuffs ?? []) {
+        const bfx = buffByName.get(name)?.effects;
+        if (!bfx || debuffRefs.has(name)) continue;
+        it.effects = mergeEffects(it.effects, bfx);
+        (it.effects.via ??= []).push(name);
+        for (const k of Object.keys(bfx)) if (k !== 'flags' && k !== 'via') (it.effectsCond ??= []).push(k);
+        applied++;
+      }
+    }
+  }
+
+  // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
+  // (`spawns` is the permanent kind — a minion an accessory or set bonus keeps out — and reads the
+  // same). Every item, vanilla included: Stardust's guardian comes out of `Player.UpdateArmorSets`.
+  const projNames = new Map(); // vanilla id → ProjectileID constant ("StardustGuardian", not "623")
+  for (const [name, id] of vanilla?.ids.projectile ?? []) if (typeof id === 'number' && id > 0 && !projNames.has(id)) projNames.set(id, name);
+  for (const it of allItems) {
+    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.spawns ?? [])]) {
       const p = projById.get(s.type);
-      s.name = s.type.split(':').pop().replace(/([a-z])([A-Z])/g, '$1 $2');
+      const raw = s.type.split(':').pop();
+      s.name = (s.type.startsWith('v:') ? projNames.get(Number(raw)) ?? raw : raw).replace(/([a-z])([A-Z])/g, '$1 $2');
       if (!p) continue;
       if (p.pen !== undefined) s.pen = p.pen;
       if (p.local !== undefined) s.local = p.local;
       if (p.life !== undefined) s.life = p.life;
       const kids = (p.children ?? []).reduce((n, c) => n + (c.count ?? 1), 0);
       if (kids) s.kids = kids;
+      // does it go to the enemy, or does it sit on the player? A permanent spawn is only a minion if
+      // it seeks — the Marnite Repulsion Shield's hitbox is a body the boss has to walk into
+      if (p.minion || p.homing) s.seeks = true;
     }
   }
   console.log(`flag effects: ${[...flagEffects.values()].reduce((n, m) => n + m.size, 0)} player flags with effects, ${applied} folded into items`);
@@ -441,6 +502,32 @@ const conds = new Set();
         (it.base ??= {})[field] ??= from;
         (it.changes ??= []).push({ ...note, field, from, to });
         it[field] = to;
+        applied++;
+      } else if (rec.kind === 'copy') {
+        // the item is handed another item's whole effect (a merged crafting tree): take what that
+        // item has rather than re-reading the code that grants it
+        const src = byId.get(rec.from);
+        // two balancing mods shipping the same merge would otherwise grant the effect twice
+        if (!src?.effects || (it.copied ??= new Set()).has(rec.from)) continue;
+        it.copied.add(rec.from);
+        const cp = { ...note, source: src.name, effects: src.effects };
+        if (rec.conditional) { (it.maybe ??= []).push(cp); continue; }
+        if (rec.cond.length) { (it.variants ??= []).push(cp); continue; }
+        it.effects = mergeEffects(it.effects, src.effects);
+        (it.changes ??= []).push(cp);
+        applied++;
+      } else if (rec.kind === 'tooltip') {
+        const text = rec.text.trim();
+        if (!text || (it.tooltipEdits ?? []).some((e) => e.text === text && e.mode === rec.mode)) continue;
+        // both arms of an `if (mod loaded) … else …` get walked, so one item can collect two full
+        // overrides; the fuller text is the one that says more, not whichever came last
+        const prevAll = rec.mode === 'all' ? (it.tooltipEdits ?? []).find((e) => e.mode === 'all' && e.mod === rec.mod) : null;
+        if (prevAll) { if (text.includes(prevAll.text)) prevAll.text = text; continue; }
+        const edit = { mod: rec.mod, mode: rec.mode, find: rec.find, text };
+        if (rec.conditional) { (it.maybe ??= []).push({ ...note, text }); continue; }
+        if (rec.cond.length) { (it.variants ??= []).push({ ...note, text }); continue; }
+        (it.tooltipEdits ??= []).push(edit);
+        (it.changes ??= []).push({ ...note, mode: rec.mode, text });
         applied++;
       } else if (rec.kind === 'effect') {
         if (rec.conditional) { (it.maybe ??= []).push({ ...note, effects: rec.effects }); continue; }
@@ -581,6 +668,8 @@ if (stageResult.unresolvedFlags.length) console.log(`unresolved gates (evidence 
 
 // ---- assemble dataset ----------------------------------------------------------------------
 const EQUIP_SLOTS = new Set(['weapon', 'head', 'body', 'legs', 'accessory']);
+/** …and the consumables the dataset carries next to the gear: what you drink before the fight. */
+const KEEP_SLOTS = new Set([...EQUIP_SLOTS, 'potion']);
 const nameOf = new Map(allItems.map((i) => [i.id, i.name]));
 const npcNameOf = new Map(allNpcs.map((n) => [n.id, n.name]));
 const recipesByResult = new Map();
@@ -624,11 +713,39 @@ function foldSelfDebuffs(fx) {
 
 const items = [];
 for (const it of allItems) {
-  if (!EQUIP_SLOTS.has(it.slot)) continue;
-  if (it.slot !== 'weapon' && it.slot !== 'accessory' && !(it.defense > 0) && !it.setEffects && !it.effects) continue; // vanity armor
+  if (!KEEP_SLOTS.has(it.slot)) continue;
+  if (it.slot !== 'weapon' && it.slot !== 'accessory' && it.slot !== 'potion' && !(it.defense > 0) && !it.setEffects && !it.effects) continue; // vanity armor
   if (it.slot === 'accessory' && it.createTile) continue; // music boxes
   const st = stageResult.byItem.get(it.id);
-  const tooltip = cleanText(formatText(resolveRefs(it.tooltip, it.mod), it.tooltipArgs));
+  // A potion is worth what its buff does, and the item itself usually says nothing: the buff's own
+  // description is part of its text (so the same tooltip parse reads it), and the effects mined off
+  // the buff stand in for the equip effects a piece of gear would have.
+  const buff = it.slot === 'potion' ? buffById.get(it.buff) : null;
+  let own = cleanText(formatText(resolveRefs(it.tooltip, it.mod), it.tooltipArgs));
+  const desc = buff?.desc ? cleanText(resolveRefs(buff.desc, it.mod)) : '';
+  // …but not a description whose magnitudes never got filled in, where the item's own text already
+  // says the same thing with numbers in it ("{0}% increased wing flight time")
+  const keepDesc = desc && !own.includes(desc) && !(own && /\{\d+\}/.test(desc));
+  // what another mod's ModifyTooltips did to the text, resolved against *that* mod's localization
+  const added = [];
+  for (const e of it.tooltipEdits ?? []) {
+    const t = cleanText(resolveRefs(e.text, e.mod));
+    if (!t) continue;
+    if (e.mode === 'all') { own = t; added.length = 0; }
+    // a substitution names the line by a fragment of it, and replaces that line whole
+    else if (e.mode === 'sub') {
+      const f = cleanText(resolveRefs(e.find, e.mod));
+      if (!f) continue;
+      if (own.includes(f) && f.includes('\n')) own = own.split(f).join(t);
+      else own = own.split('\n').map((l) => (l.includes(f) ? t : l)).join('\n');
+    }
+    else if (!own.includes(t)) added.push(t);
+  }
+  const tooltip = [keepDesc ? [own, desc].filter(Boolean).join('\n') : own, ...added].filter(Boolean).join('\n');
+  // "Effect does not stack with other Guides": the family the game lets you wear only one of, so
+  // the solver cannot equip all three volumes at once. Only a *named* family counts — "does not
+  // stack with downgrades" is every upgrade line in the pack and groups nothing.
+  const noStack = /does not stack with (?:any )?other ([A-Z][\w']*)/.exec(tooltip)?.[1];
   const parsed = parseTooltipStats(tooltip); // the formatted text: `{0}` filled in is a real magnitude, not a guess
   // a set bonus is a tooltip too: the same parse fills in what the set's code did not say
   const setBonus = cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs));
@@ -639,11 +756,14 @@ for (const it of allItems) {
     sources.push({ kind: 'craft', from: r.ingredients.map((g) => `${g.n > 1 ? g.n + '× ' : ''}${nameOf.get(g.item) ?? g.item ?? '?'}`).concat(r.groups.map((g) => `any ${g.replace(/^any/, '')}`)).join(', ') });
   }
   const name = resolveRefs(it.name, it.mod);
+  const wikiName = wikiNames.get(`${it.mod}:${name}`);
   items.push(compact({
     id: it.id,
     mod: it.mod,
     name,
-    icon: iconHash(it.mod, name),
+    icon: iconHash(it.mod, name, wikiName),
+    // the wiki was written before the rename, so link and sprite still follow the old name
+    wikiName,
     className: it.mod === 'v' ? undefined : it.className,
     slot: it.slot,
     class: cls,
@@ -659,7 +779,15 @@ for (const it of allItems) {
     // and what one use costs off the void bar
     subclass: it.subclass ? classOf(it.subclass) : undefined,
     voidCost: it.voidCost,
+    // …and what one use costs off the health bar, for the weapons that are paid for in it
+    lifeCost: it.lifeCost,
+    // …and whether it is on Thorium's thrower exhaustion bar (`ThoriumItem.isThrowerNon`), which
+    // is a third pool of the same shape: spend it faster than it comes back and the class stops
+    exhaust: it.exhaust,
+    // …and what one use costs off a bard's inspiration bar (`BardItem.InspirationCost`)
+    inspiration: it.inspiration,
     shoot: it.shoot,
+    ammoSwap: it.ammoSwap,
     shootSpeed: it.shootSpeed,
     useAmmo: it.useAmmo,
     channel: it.channel,
@@ -668,6 +796,8 @@ for (const it of allItems) {
     useStyle: it.useStyle,
     useLimit: it.useLimit,
     maxOut: it.maxOut,
+    cooldown: it.cooldown,
+    altCooldown: it.altCooldown,
     armorPen: it.armorPen,
     scale: it.scale !== 1 ? it.scale : undefined,
     // every projectile the weapon spawns when it is used, the default shot first: what a weapon *is*
@@ -685,15 +815,23 @@ for (const it of allItems) {
     setBonus,
     setStats: Object.keys(setParsed.stats ?? {}).length ? setParsed.stats : undefined,
     setCondStats: condKeys(setParsed, { effectsCond: it.setEffectsCond }),
+    setFlags: setParsed.flags?.length ? setParsed.flags : undefined,
+    setDebuffs: setParsed.debuffs?.length ? setParsed.debuffs : undefined,
     setPlaceholders: setParsed.placeholders || undefined,
     set: it.set?.length ? it.set : undefined,
     effects: foldSelfDebuffs(it.effects),
     setEffects: foldSelfDebuffs(it.setEffects),
+    // the buff it grants and how long one of them lasts, in seconds. Two potions granting the same
+    // buff are the same pick made twice, which is what the recommendation folds them together by.
+    buff: it.slot === 'potion' ? it.buff : undefined,
+    buffTime: it.buffTime ? Math.round(it.buffTime / 60) : undefined,
     stats: Object.keys(parsed.stats).length ? parsed.stats : undefined,
+    noStack,
     placeholders: parsed.placeholders || undefined,
     condStats: condKeys(parsed, it),
     textClasses: parsed.classes.length ? parsed.classes : undefined,
     flags: parsed.flags.length ? parsed.flags : undefined,
+    debuffs: parsed.debuffs?.length ? parsed.debuffs : undefined,
     wings: it.wings || undefined,
     boots: it.boots || undefined,
     wingStats: it.wingStats,
@@ -726,8 +864,9 @@ const projectiles = {};
     if (it.shoot) want.push(it.shoot);
     for (const c of it.fire?.calls ?? []) if (c.type && c.type !== 'shoot') want.push(c.type);
     if (it.fire?.typeOverride) want.push(it.fire.typeOverride);
+    if (it.ammoSwap?.to) want.push(it.ammoSwap.to);
     if (it.fire?.stealthMods?.type) want.push(it.fire.stealthMods.type);
-    for (const s of it.effects?.onHit ?? []) if (s.type) want.push(s.type);
+    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.spawns ?? [])]) if (s.type) want.push(s.type);
   }
   for (const a of ammo) if (a.shoot) want.push(a.shoot);
   const seen = new Set();
@@ -826,6 +965,7 @@ const groupsOut = {};
 
 const dataset = {
   generatedAt: new Date().toISOString(),
+  vanillaBehaviour: { game: VANILLA_BEHAVIOUR.game, source: VANILLA_BEHAVIOUR.source, projectiles: Object.keys(VANILLA_BEHAVIOUR.projectiles).length, ammoSwaps: Object.keys(VANILLA_BEHAVIOUR.ammoSwap).length },
   tml: tml.runtimeVersion,
   mods: modInfo,
   loadOrder: ordered.map((m) => m.name),
@@ -867,8 +1007,8 @@ console.log(`projectiles: ${allProjectiles.length} mined, ${Object.keys(projecti
  * Precomputed here so the site links the image directly — `Special:Redirect/file/` is a special
  * page and wiki.gg answers a page full of those with 429s.
  */
-function iconHash(mod, name) {
-  const file = wikiFile({ mod, name });
+function iconHash(mod, name, wikiName) {
+  const file = wikiFile({ mod, name, wikiName });
   if (!file) return undefined;
   const h = createHash('md5').update(`${file.replace(/ /g, '_')}.png`, 'utf8').digest('hex');
   return `${h[0]}/${h.slice(0, 2)}`;
@@ -878,13 +1018,22 @@ function isNumber(v) { return typeof v === 'number' && Number.isFinite(v); }
 function fireRecord(f) {
   if (!f) return undefined;
   const r3 = (v) => (isNumber(v) ? Math.round(v * 1000) / 1000 : v ?? undefined);
-  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, fan: c.fan, variant: c.variant !== 'both' ? c.variant : undefined, alt: c.alt, chance: r3(c.chance), region: c.region }));
+  // a call's damage: `dmgMul` omitted is ×1 of the argument, `dmgAbs` is a flat number, and
+  // `dmg: 'unread'` says the machine could not follow it — the absence used to mean both
+  const calls = (f.calls ?? []).map((c) => compact({ type: c.type ?? 'shoot', count: c.count !== 1 ? c.count : undefined, dmgMul: c.dmgMul !== undefined && c.dmgMul !== 1 ? r3(c.dmgMul) : undefined, dmgAbs: r3(c.dmgAbs), dmg: c.dmgMul === undefined && c.dmgAbs === undefined ? 'unread' : undefined, velMul: c.velMul !== 1 ? r3(c.velMul) : undefined, abs: r3(c.abs), spread: c.spread ? r3(c.spread) : undefined, fan: c.fan, variant: c.variant !== 'both' ? c.variant : undefined, alt: c.alt, chance: r3(c.chance), region: c.branch ? c.region : undefined, threshold: c.threshold, requires: c.requires, branch: c.branch }));
   const out = compact({
     calls: calls.length ? calls : undefined,
     defaultShot: f.defaultShot && (!f.defaultShot.spam || !f.defaultShot.stealth) ? f.defaultShot : undefined,
     velMul: f.velMul !== undefined && f.velMul !== 1 ? r3(f.velMul) : undefined,
     dmgMul: f.dmgMul !== undefined && f.dmgMul !== 1 ? r3(f.dmgMul) : undefined,
+    // A `Shoot` whose only extra shot sits behind a *world seed* — Yharim's Crystal fires a Get
+    // Fixed Boi prism and returns false, and returns true everywhere else — still fires the
+    // weapon's own shot in an ordinary world. Without saying so the seed branch was the whole
+    // weapon and a Yharon-tier magic weapon scored zero.
+    returnsTrue: f.defaultShot?.spam && calls.length && calls.every((c) => c.requires?.what === 'world' && !c.requires.negated) ? true : undefined,
     typeOverride: f.typeOverride,
+    // …and the swap that belongs to the right click alone, which `typeOverride` must not carry
+    altMods: f.altMods && Object.keys(f.altMods).length ? f.altMods : undefined,
     stealthMods: f.stealthMods && Object.keys(f.stealthMods).length ? f.stealthMods : undefined,
     stealthMult: f.stealthMult !== undefined && f.stealthMult !== 1 ? r3(f.stealthMult) : undefined,
     stealth: f.stealthMult !== undefined || (f.calls ?? []).some((c) => c.variant !== 'both') || (f.defaultShot && f.defaultShot.spam !== f.defaultShot.stealth) ? true : undefined,
@@ -900,7 +1049,9 @@ function statSize(p) {
 }
 /** Stats the tooltip only mentions conditionally, plus what an aura projectile applies: the solver halves them. */
 function condKeys(parsed, it) {
-  const k = [...new Set([...(parsed.conditional ?? []), ...(it.effectsCond ?? [])])];
+  // `selfBuff:SpiritPower` marks *which* buff was conditional; the stat keys it folded in are what
+  // the solver discounts, and the marker itself is not one of them
+  const k = [...new Set([...(parsed.conditional ?? []), ...(it.effectsCond ?? [])])].filter((x) => !x.includes(':'));
   return k.length ? k : undefined;
 }
 function mergeEffects(a, b) {
@@ -909,13 +1060,15 @@ function mergeEffects(a, b) {
   for (const [k, v] of Object.entries(b)) {
     if (k === 'flags') out.flags = [...new Set([...(out.flags ?? []), ...v])];
     else if (k === 'cond') out.cond = [...new Set([...(out.cond ?? []), ...v])];
-    else if (k === 'onHit') out.onHit = [...(out.onHit ?? []), ...v];
+    else if (k === 'onHit' || k === 'spawns') out[k] = [...(out[k] ?? []), ...v];
     else if (k === 'via') out.via = [...new Set([...(out.via ?? []), ...v])];
     else if (k === 'selfBuffs') out.selfBuffs = [...new Set([...(out.selfBuffs ?? []), ...v])];
     else if (k === 'velocityDrag') out.velocityDrag = Math.round((out.velocityDrag ?? 1) * v * 10000) / 10000;
     else if (typeof v === 'object') { out[k] ??= {}; for (const [c, n] of Object.entries(v)) out[k][c] = Math.round(((out[k][c] ?? 0) + n) * 10000) / 10000; }
     else out[k] = Math.round(((out[k] ?? 0) + v) * 10000) / 10000;
   }
+  // (a merged zero stays: an overlay that cancels what the item had is a fact about the item, and
+  // dropping it took Feral Claws' deliberate ±12% attack speed with it)
   return out;
 }
 /** `{$Mods.X.Key}` / `{$Common.Key}` references in tooltips → the referenced text. */

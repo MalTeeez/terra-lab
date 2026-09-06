@@ -173,3 +173,25 @@ describe('contactPhase', () => {
     expect(contactPhase(null, 'held').cooldown).toBe(null);
   });
 });
+
+describe('deliveryPhases damage provenance', () => {
+  test('a share read, a flat number read and nothing read are three facts, and the gates are rated apart', () => {
+    const fire = { calls: [{ type: 'a', dmgMul: 0.5 }, { type: 'b', dmgAbs: 20 }, { type: 'c', dmg: 'unread' }, { type: 'd', region: 7 }, { type: 'e' }], defaultShot: { spam: false, stealth: false } };
+    const { phases } = deliveryPhases(fire, { variant: 'spam', primaryId: 'p' });
+    expect(phases[0]).toMatchObject({ dmgMul: 0.5, dmgAbs: null, confidence: 'exact' });
+    expect(phases[0].evidence.gates).toEqual({});
+    expect(phases[1]).toMatchObject({ dmgMul: null, dmgAbs: 20, confidence: 'exact' });
+    expect(phases[2]).toMatchObject({ dmgMul: null, dmgAbs: null });
+    expect(phases[2].evidence.gates).toEqual({ damage: 'assumed' });
+    // the projectile is exact; which branch fires is what nobody read
+    expect(phases[3]).toMatchObject({ relation: 'alternative', confidence: 'exact' });
+    expect(phases[3].evidence.gates.branch).toBe('assumed');
+    // the dataset drops a ×1 to save bytes: omitted is ×1, not unread
+    expect(phases[4]).toMatchObject({ dmgMul: 1, dmgAbs: null });
+    expect(phases[4].evidence.gates).toEqual({});
+    // a child on a clock nobody read says so on its cadence, not on its identity
+    const [timer, onHit] = spawnPhases({ children: [{ type: 'x', where: 'ai', dmgMul: 1 }, { type: 'y', where: 'hit', dmgMul: 1 }] }, { variant: 'spam', parentId: 'p' });
+    expect(timer.evidence.gates).toEqual({ cadence: 'assumed' });
+    expect(onHit.evidence.gates).toEqual({});
+  });
+});

@@ -164,7 +164,7 @@ export function solveLoadout(ds, opts) {
   const stealthMax = armor ? worn.reduce((s, w) => s + stealthOf(w?.item), 0) : undefined;
   // …and what it carries for another class, for a void weapon that is a melee or ranged weapon
   // underneath (SOTS's VoidMelee inherits every melee modifier along with the void ones)
-  const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases), loadoutFor: (c) => loadoutBonus(worn, c, aliases) };
+  const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases, progression), loadoutFor: (c) => loadoutBonus(worn, c, aliases, progression) };
   const weapons = pool
     .filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0)
     .map((it) => { const prefix = reforgeOf(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
@@ -223,6 +223,24 @@ export function solveLoadout(ds, opts) {
   const weaponSingle = bestByTarget('single');
   const weaponMulti = bestByTarget('multi');
 
+  // ---- potions ------------------------------------------------------------------------------
+  // What to drink before the fight, graded exactly like a piece of gear: a buff is a stat bonus
+  // that happens to run out. The ones whose buff does nothing the score model reads (a spelunker,
+  // a fishing potion) score 0 and fall to the end of the list, where the panel calls them utility.
+  const rankedPotions = pool
+    .filter((it) => it.slot === 'potion' && !foreignClass(it, cls, aliases))
+    .map((it) => ({ item: it, ...scoreOf(it) }))
+    // …the earliest of equals first: eight fruits granting the same Well Fed are one pick, and the
+    // one worth naming is the one you can already get
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.score - a.score || a.item.stage - b.item.stage || a.item.name.localeCompare(b.item.name));
+  const seenBuff = new Set();
+  const potions = rankedPotions.filter((p) => {
+    if (!p.item.buff) return true;
+    if (seenBuff.has(p.item.buff)) return false;
+    seenBuff.add(p.item.buff);
+    return true;
+  }).slice(0, 30);
+
   return {
     cls,
     stage,
@@ -245,6 +263,7 @@ export function solveLoadout(ds, opts) {
     accessoryCount: accs.length,
     wings,
     boots,
+    potions,
   };
 }
 
@@ -309,6 +328,7 @@ export function packTimeline(rows) {
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(packPiece),
       wings: r.loadout.wings.map(packPiece),
       boots: r.loadout.boots.map(packPiece),
+      potions: r.loadout.potions.map(packPiece),
     },
   }));
 }
@@ -330,6 +350,7 @@ export function unpackTimeline(ds, packed) {
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(piece),
       wings: r.loadout.wings.map(piece),
       boots: r.loadout.boots.map(piece),
+      potions: r.loadout.potions.map(piece),
     },
   }));
 }

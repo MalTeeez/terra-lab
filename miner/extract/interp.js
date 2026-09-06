@@ -50,7 +50,9 @@ export const PLAYER = Object.freeze({ k: 'player' });
 /** An NPC out of `Main.npc[i]`, so a hook can tell "reads an enemy" from "reads the player". */
 export const NPC = Object.freeze({ k: 'npc' });
 
-export const isNum = (v) => typeof v === 'number';
+// NaN/Infinity are not values: they come out of arithmetic on stand-ins the machine could not
+// resolve (`statLife / statLifeMax2` is `0 / 0`), and one of them poisons every stat downstream.
+export const isNum = (v) => Number.isFinite(v);
 export const isKnown = (v) => v !== UNKNOWN && v !== undefined;
 
 const BINOPS = {
@@ -269,6 +271,27 @@ export class Machine {
     let x0 = { offset: 0 };
     // `if (key == N) { … }` compiles to `bne.un END`: at END the key condition is over.
     const releaseAt = caseMap ? new Map() : null;
+    // `type == A || type == B` compiles to `beq BODY; <B test>; bne END; BODY:`. The fall-through
+    // key (B) is released at END by its own `bne`, but the one the `beq` carries in arrives at BODY
+    // through `caseMap` with no end at all — so it stayed keyed on every block after the chain.
+    // Ocram's Roar, added several blocks later under `TryGetMod("Consolaria")`, was read as loot of
+    // the crate the chain had tested. A jump target's key belongs to the block that target opens.
+    const keyAt = caseMap ? new Map() : null; // jump target → the keys a `beq`-shaped branch carried there
+    /**
+     * Where the block opened at `from` ends: the nearest offset something already jumps to. Only
+     * jumps read before `from` are recorded, so a nested `if` inside the block cannot end it early,
+     * and a block that runs to the end of the method reports 0 (nothing to release).
+     */
+    const endOfBlock = (from) => {
+      let end = Infinity;
+      for (const t of stackAt.keys()) if (t > from && t < end) end = t;
+      if (!Number.isFinite(end)) return 0;
+      // …unless the block leaves a value on the stack, which makes it a ternary arm and not a
+      // statement block: `Add(npc.type == EvilConstruct ? DeathSpiral : StreetCleaner)` picks the
+      // item under the key and adds it *after* the join, so there the key is the value's, not the
+      // block's, and letting it go loses the drop entirely.
+      return stackAt.get(end)?.length ? 0 : end;
+    };
     const releaseKey = (offset, key) => {
       const list = releaseAt.get(offset) ?? [];
       list.push(key);
@@ -280,8 +303,14 @@ export class Machine {
     /** A key comparison decided the branch: bne-like (fallthrough = match) or beq-like (target = match). */
     const applyKeyBranch = (k, target, targetIsMatch) => {
       const groups = this.caseGroups.length ? this.caseGroups : [[]];
-      if (targetIsMatch) for (const g of groups) addGroup(target, [...others(g, k), k]);
-      else { setGroups(groups.map((g) => [...others(g, k), k])); if (target > 0) releaseKey(target, k); }
+      if (targetIsMatch) {
+        for (const g of groups) addGroup(target, [...others(g, k), k]);
+        // …and remember that this key is the *branch's* own, not the block's: it has to be let go
+        // again where the block the jump opens ends (see `endOfBlock`)
+        const list = keyAt.get(target) ?? [];
+        if (!list.some((c) => sameKey(c, k))) list.push(k);
+        keyAt.set(target, list);
+      } else { setGroups(groups.map((g) => [...others(g, k), k])); if (target > 0) releaseKey(target, k); }
     };
 
     for (pc = 0; pc < ins.length; pc++) {
@@ -328,7 +357,14 @@ export class Machine {
           // (`(y < surface || (remix && deep)) && eclipse`: the remix check sits between the jump and
           // here) cannot gate what follows
           const via = new Set(regionsAt.get(x.offset).list);
-          for (let i = regions.length - 1; i >= 0; i--) if (!regions[i].dead && !via.has(regions[i])) regions.splice(i, 1);
+          // …except the region an `A || B` chain opens on its last test (see `orAlternatives`). Its
+          // body is entered *both* ways — by A's jump and by falling through B — and its tags
+          // already say "any of these", so the jump that arrives here is one of its alternatives
+          // rather than a path that missed it. Dropping it lost the whole block's guard:
+          // `if (Destabilized || conflagrate) lifeRegen -= 5` read as an unconditional −5.
+          const prevOff = ins[pc - 1].offset;
+          const isOrChain = (r) => r.at === prevOff && r.tags?.length && r.tags.every((t) => t.startsWith('any:'));
+          for (let i = regions.length - 1; i >= 0; i--) if (!regions[i].dead && !via.has(regions[i]) && !isOrChain(regions[i])) regions.splice(i, 1);
           this.conditional = regions.some((r) => !r.dead);
           this.condTags = regions.flatMap((r) => r.tags ?? []);
         }
@@ -354,8 +390,21 @@ export class Machine {
           }
         }
         const mapped = caseMap.get(x.offset);
-        if (mapped) setGroups(TERMINATORS.has(prev) ? [...mapped] : [...this.caseGroups, ...mapped]);
-        else if (TERMINATORS.has(prev)) setGroups(groupsAt.get(x.offset) ?? []);
+        if (mapped) {
+          setGroups(TERMINATORS.has(prev) ? [...mapped] : [...this.caseGroups, ...mapped]);
+          const end = endOfBlock(x.offset);
+          if (end) for (const k of keyAt.get(x.offset) ?? []) releaseKey(end, k);
+        }
+        else if (TERMINATORS.has(prev)) {
+          // A loop body sitting after a `br` over it — the same shape the regions above keep — is
+          // reached only by the backward jump at its end, which the linear walk has not read yet.
+          // The key block the `br` jumps *within* still encloses it, and clearing the keys made
+          // every store in such a loop unkeyed: `if (item.type == X) foreach (line in tooltips) …`
+          // lost the item it was about.
+          const brTo = /^br(\.s)?$/.test(prev) ? ins[pc - 1].operand : null;
+          const inBlock = brTo > x.offset && [...releaseAt.keys()].some((t) => t > brTo);
+          setGroups(groupsAt.get(x.offset) ?? (inBlock ? this.caseGroups : []));
+        }
         // (a terminator keeps its groups while it executes — `ret value` reports them — and
         // the next instruction starts from what its own jump sources carried)
       }
@@ -535,6 +584,13 @@ export class Machine {
         // `len * Math.Sin(angle ± d)`: the length turned back into a component at an angle — the
         // offset rides along so `new Vector2(x, y)` can read the fan it makes
         else if (op === 'mul' && ((a?.k === 'adj' && b?.k === 'trig') || (a?.k === 'trig' && b?.k === 'adj'))) { const adj = a.k === 'adj' ? a : b; const t = a.k === 'trig' ? a : b; push({ ...adj, trig: t.off, jitter: (adj.jitter ?? 0) + (t.jitter ?? 0) }); }
+        // A marker its owner declared `taint` survives being computed with. "This number came from
+        // the player's position" is a fact about *where the value came from*, not about its value,
+        // so `player.Center.X - Center.X`, its square, its length and the unit vector built out of
+        // it are all still that fact — and a boomerang spells its return exactly that way, one
+        // component at a time. Without this the marker died at the first `sub` and Calamity's
+        // boomerangs read as fire-and-forget daggers thrown on the use timer.
+        else if (a?.taint || b?.taint) push(a?.taint ? a : b);
         else push(UNKNOWN);
         continue;
       }
@@ -696,7 +752,10 @@ export class Machine {
           push({ k: 'ref', get: () => (isNum(idx) ? arr.items[idx] : undefined), set: (v) => { if (isNum(idx)) arr.items[idx] = v; if (arr.tag && !this.dead) this.onArrayStore(arr, idx, v, ctx()); } });
           continue;
         }
-        if (arr?.k === 'arr' && isNum(idx)) push(arr.items[idx]);
+        // an array whose every element *is* the key the case tracker keys on: `player.buffType[i]`
+        // in `Player.UpdateBuffs`, where the whole buff table is one if-chain over that element
+        if (arr?.k === 'arr' && arr.tag === 'keys') push({ k: 'key', slot: arr.slot ?? 0 });
+        else if (arr?.k === 'arr' && isNum(idx)) push(arr.items[idx]);
         else if (arr?.k === 'arr' && arr.tag === 'players') push(PLAYER); // Main.player[i]
         else if (arr?.k === 'arr' && arr.tag === 'npcs') push(NPC); // Main.npc[i]
         else if (arr?.k === 'slots' && isNum(idx)) push({ k: 'obj', name: 'armorSlot', slot: idx, props: {} });
@@ -766,7 +825,7 @@ export class Machine {
           if (recv.get() === undefined || recv.get() === UNKNOWN) recv.set({ k: 'obj', name: 'struct', props: {} });
           recv = recv.get();
         }
-        const result = this.call(callee, recv, args, { ...ctx(), recv });
+        const result = this.call(callee, recv, args, { ...ctx(), recv, virt: op === 'callvirt' });
         if (callee.sig.ret.et !== 0x01) push(result);
         continue;
       }
@@ -834,15 +893,32 @@ export class Machine {
   staticValue(f, owner) {
     const hooked = this.onStaticLoad(f);
     if (hooked !== undefined) return hooked;
+    // a static the mod fills in at load time — `evalLoadStatics` reads exactly these `stsfld`
+    // stores, and a `Load` that caches another mod's item ids is where the keys of its balancing
+    // hooks come from (`ItemBalancer.throwingGuideType = thorium.Find<ModItem>("ThrowingGuide")`)
+    const lf = this.loadFields?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`);
+    if (lf !== undefined) return lf;
     if (FLAG_NAMES.test(f.name)) return { k: 'flag', name: f.name };
-    const td = f.declaringType?.def;
-    if (!td || owner !== this.asm) return UNKNOWN;
+    let td = f.declaringType?.def;
+    let asm = this.asm;
+    // …and a constant an addon reads out of the mod it extends. Ragnarok's rebalancing takes
+    // Thorium's own `TheRing.FlatDamage` back off the ring before granting a percentage instead;
+    // leaving that `ldsfld` unknown dropped the subtraction and kept a flat bonus the rework had
+    // just removed — the overcount, in the one place it would not show up as a missing effect.
+    // (not gated on `crossAsm`: reading a constant out of a sibling is a `.cctor` under a length
+    // cap, nothing like inlining that mod's methods, and every extractor wants the right number)
+    if (!td && f.declaringType?.kind === 'typeRef' && this.asm.siblings) {
+      const other = this.asm.siblings.get(f.declaringType.assembly);
+      const def = other && other !== this.asm ? other.typeByName.get(f.declaringType.fullName) : null;
+      if (def) { td = def; asm = other; }
+    }
+    if (!td || (asm === this.asm && owner !== this.asm)) return UNKNOWN;
     let map = this.statics.get(td);
     if (!map) {
       map = new Map();
       this.statics.set(td, map);
       const cctor = td.methods.find((m) => m.name === '.cctor');
-      if (cctor && this.asm.methodBody(cctor)?.il.length < 20000) {
+      if (cctor && asm.methodBody(cctor)?.il.length < 20000) {
         const saved = this._staticCapture;
         const savedLinear = this.linear;
         const savedCases = this.cases;
@@ -850,7 +926,7 @@ export class Machine {
         this._staticCapture = map;
         this.linear = false;
         try {
-          this.run(cctor, undefined, [], this.asm, this.maxDepth - 1);
+          this.run(cctor, undefined, [], asm, this.maxDepth - 1);
         } finally {
           this._staticCapture = saved;
           this.linear = savedLinear;
@@ -881,6 +957,10 @@ export class Machine {
     if (NUMERIC.test(declName)) {
       const nv = numberOp(name, recv, args);
       if (nv !== undefined) return nv;
+    }
+    if (MATHY.test(declName)) {
+      const mv = mathOp(name, args);
+      if (mv !== undefined) return mv;
     }
     if (this.dead && ctx.depth === 0) return UNKNOWN; // dead block of a keyed method: no hooks, no inlining
     const hooked = this.onCall(callee, args, ctx);
@@ -917,7 +997,7 @@ export class Machine {
     // a random pick out of a list is one of the things in it, wherever it is asked for
     if (/^(NextFromList|SelectRandom)$/.test(name)) {
       const arr = args.find((a) => a?.k === 'arr');
-      if (arr) return { k: 'oneof', items: arr.items.filter((v) => isNum(v)) };
+      if (arr) return { k: 'oneof', items: arr.items.filter((v) => isNum(v) || v?.k === 'type') };
     }
     if (recv?.k === 'type' && name === 'get_Type') return recv;
     if (recv?.k === 'mod' && name === 'get_Name') return recv.name;
@@ -959,11 +1039,18 @@ export class Machine {
     }
     if (tracked && name.startsWith('get_') && args.length === 0) {
       const v = this.onLoad(recv, name.slice(4), ctx);
-      if (v !== undefined) return v;
-      if (recv?.k === 'obj') return recv.props[name.slice(4)] ?? UNKNOWN;
+      // …but UNKNOWN from a hook on `this` is "I have no opinion", not an answer: the fall-through
+      // below inlines the real getter, which is where the value actually is. Thorium's gem rings
+      // add `GetDamage(cls).Flat += this.StatIncrease`, a two-instruction `return 1` on their base
+      // class, and taking the hook's UNKNOWN as final made the whole flat bonus unreadable.
+      if (v !== undefined && !(recv === THIS && v === UNKNOWN)) return v;
+      // a property the object does not carry is UNKNOWN — unless its concrete type is known, in
+      // which case the getter itself is the answer (a sheath's `DamageMultiplier` is a `return 12f`)
+      if (recv?.k === 'obj' && (recv.props[name.slice(4)] !== undefined || !recv.td)) return recv.props[name.slice(4)] ?? UNKNOWN;
       if (recv?.k === 'itemarg') return { k: 'prop', slot: recv.slot, path: [name.slice(4)] };
-      // a getter on `this` may be a real (virtual) method — fall through and inline it
-      if (recv !== THIS) return UNKNOWN;
+      // a getter on `this` — or on an object whose concrete type is known — may be a real
+      // (virtual) method: fall through and inline it
+      if (recv !== THIS && !recv?.td) return UNKNOWN;
     }
 
     // a getter over a field the mod filled in at load time (`CalValEX.Calamity` is the `calamity`
@@ -993,12 +1080,29 @@ export class Machine {
     let def = callee.def ?? callee.method?.def;
     const declTd = callee.declaringType?.def ?? callee.method?.declaringType?.def;
     if (!def && declTd) def = this.findMethod(declTd, name, args.length, ctx.owner);
-    if (def && ctx.owner === this.asm) {
-      if (callee.sig.hasThis && recv === THIS && this.concreteType && (def.flags & 0x40)) {
-        def = this.findOverride(this.concreteType, def) ?? def;
+    // …and, once the walk has already crossed into the extended mod, its own methods too: Thorium's
+    // `BardItem.SetDefaults` calls `SetBardDefaults` calls the virtual `SafeSetBardDefaults`, all
+    // three inside ThoriumMod, and the addon's item only ever overrides the last one. Reading only
+    // same-assembly calls stopped at the first hop and left every such weapon with no stats at all.
+    if (def && (ctx.owner === this.asm || (this.crossAsm && ctx.owner !== this.asm))) {
+      let owner = ctx.owner;
+      // …but only for a *virtual* call. `base.Tooltip` inside an override compiles to a plain
+      // `call` on the base, and sending that back to the override is infinite recursion: Thorium's
+      // sheaths (`TitanSlayerSheath.Tooltip => base.Tooltip.WithFormatArgs(…)`) ran themselves down
+      // to the depth limit and every one of them came out with raw `{0}` placeholders.
+      if (ctx.virt !== false && callee.sig.hasThis && recv === THIS && this.concreteType && (def.flags & 0x40)) {
+        const ov = this.findOverride(this.concreteType, def, owner);
+        if (ov) { def = ov; owner = this.asm; }
       }
-      const body = this.asm.methodBody(def);
-      if (body && body.il.length < 30000) return this.runNested(def, recv, args, this.asm, ctx.depth + 1, (callee.typeArgs ?? []).map((t) => this.typeArg(t, ctx)));
+      // …and a virtual call on a value whose concrete type is known dispatches there too: Thorium's
+      // sheaths read their numbers off `SheathDataLoader.Get<LeatherSheathData>()`, and stopping at
+      // the abstract `SheathData` getter left every sheath's tooltip as raw `{0}` placeholders
+      if (callee.sig.hasThis && recv?.k === 'obj' && recv.td && (def.flags & 0x40)) {
+        const ov = this.findOverride(recv.td, def, owner);
+        if (ov) { def = ov; owner = this.asm; }
+      }
+      const body = owner.methodBody(def);
+      if (body && body.il.length < 30000) return this.runNested(def, recv, args, owner, ctx.depth + 1, (callee.typeArgs ?? []).map((t) => this.typeArg(t, ctx)));
     }
     // …and into the assembly of the mod an addon extends: Ragnarok's scythes are set up by
     // `ThoriumMod.ScytheItem.SetDefaultsToScythe`, which is where their healer damage class, their
@@ -1079,11 +1183,11 @@ export class Machine {
   }
 
   /** Walk from the concrete type up to (not including) the declaring type looking for an override. */
-  findOverride(concrete, def) {
-    const sig = this.asm.methodSig(def);
+  findOverride(concrete, def, owner = this.asm) {
+    const sig = owner.methodSig(def);
     let cur = concrete;
     for (let i = 0; i < 32 && cur; i++) {
-      if (cur === def.declaringType) return null;
+      if (owner === this.asm && cur === def.declaringType) return null;
       const m = cur.methods.find((x) => x.name === def.name && this.asm.methodSig(x).params.length === sig.params.length && this.asm.methodBody(x));
       if (m) return m;
       const base = this.asm.baseOf(cur);
@@ -1119,6 +1223,29 @@ function numberOp(name, recv, args) {
   return /[Nn]/.test(m[1])
     ? recv.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
     : recv.toFixed(d);
+}
+
+const MATHY = /^(System\.Math[F]?|Microsoft\.Xna\.Framework\.MathHelper|.*\.MathHelper)$/;
+/**
+ * `Math.Round(cooldown / 60.0, 2)` — the arithmetic a tooltip's own numbers are built from.
+ * Constants only: anything with an unknown in it stays unknown.
+ */
+function mathOp(name, args) {
+  if (!args.length || !args.every((a) => isNum(a))) return undefined;
+  const [a, b, c] = args;
+  switch (name) {
+    case 'Round': return b === undefined ? Math.round(a) : Math.round(a * 10 ** b) / 10 ** b;
+    case 'Floor': return Math.floor(a);
+    case 'Ceiling': return Math.ceil(a);
+    case 'Truncate': return Math.trunc(a);
+    case 'Abs': return Math.abs(a);
+    case 'Sqrt': return Math.sqrt(a);
+    case 'Pow': return a ** b;
+    case 'Min': return Math.min(a, b);
+    case 'Max': return Math.max(a, b);
+    case 'Clamp': return Math.min(Math.max(a, b), c);
+    default: return undefined;
+  }
 }
 
 /** String operations on constants and on key property chains. */

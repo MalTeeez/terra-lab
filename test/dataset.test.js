@@ -7,6 +7,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { applySeeds, indexDataset } from '../src/lib/dataset.js';
 import { weaponDps } from '../src/lib/score.js';
+import { solveLoadout } from '../src/lib/solver.js';
 import { craftTree, gatingChain } from '../src/lib/sources.js';
 import { ARCHETYPE } from '../src/lib/dps.js';
 
@@ -17,6 +18,13 @@ const ds = has ? JSON.parse(readFileSync(path, 'utf8')) : null;
 const byName = (n) => ds.items.find((i) => i.name === n);
 
 describe('dataset.json', () => {
+  it(has && !!ds?.items.some((i) => i.id === 'CalamityMod:VictideHeadRogue'))('Desert Prowler beats Victide before Eye of Cthulhu on their actual set bonuses', () => {
+    const indexed = indexDataset(JSON.parse(readFileSync(path, 'utf8')));
+    const stage = indexed.stages.find((s) => s.key === 'DesertScourge')?.index ?? 3;
+    const loadout = solveLoadout(indexed, { cls: 'rogue', stage, slots: 6 });
+    expect(loadout.armor.head.item.id).toBe('CalamityMod:DesertProwlerHat');
+    expect(loadout.armorAlternatives.find((a) => a.head.item.id === 'CalamityMod:VictideHeadRogue')?.score).toBeLessThan(loadout.armor.score);
+  });
   test('a recipe group added by another mod lands on the recipe', () => {
     // InfernalEclipseAPI parks its `EvilSkinRecipeGroup` in a static field, registers it, then adds
     // it to SOTS's Frigid Pickaxe in `PostAddRecipes` — so the pickaxe costs 12 Frigid Bar *and* 6
@@ -28,6 +36,73 @@ describe('dataset.json', () => {
     const pick = ds.items.find((i) => i.id === 'SOTS:FrigidPickaxe');
     expect(ds.stages[pick.stage].label).toMatch(/Eater of Worlds/);
   });
+
+  test('an OR-ed key does not leak onto the blocks after its chain', () => {
+    // `TreasureBagDropChanges::ModifyItemLoot` tests `type == AquaticDepthsCrate || type ==
+    // AbyssalCrate`, fills that block, and only then adds Ocram's Roar under a `TryGetMod
+    // ("Consolaria")` guard for Ocram's own bag. The `beq` arm of the OR used to carry the crate
+    // key past the end of its block, so the Roar read as pre-hardmode crate loot at stage 11.
+    const roar = ds.items.find((i) => i.id === 'InfernalEclipseWeaponsDLC:Legacy');
+    expect(roar.sources.some((s) => s.kind === 'bag')).toBe(false);
+    expect(ds.stages[roar.stage].label).not.toMatch(/Eater of Worlds|Brain of Cthulhu/);
+    // …while the block's own drops keep both crates and their gates
+    const shard = ds.items.find((i) => i.id === 'InfernalEclipseWeaponsDLC:DeepSeaDrawlShard1');
+    if (shard) expect(shard.sources.some((s) => /Crate/.test(s.from ?? ''))).toBe(true);
+  });
+
+  test('a contract reward waits for the NPC that hands it out', () => {
+    // Thorium's Whip pays for a Doctor Bones contract, and Doctor Bones spawns from the start — but
+    // the Tracker who takes the contract only moves in once the Eye of Cthulhu is down
+    // (`CanTownNPCSpawn` is a bare `return NPC.downedBoss1`), so the Whip cannot be pre-boss.
+    const whip = ds.items.find((i) => i.id === 'ThoriumMod:Whip');
+    expect(whip.stageSource.kind).toBe('quest');
+    expect(whip.stageSource.gate).toBe('downedBoss1');
+    expect(ds.stages[whip.stage].label).toMatch(/Eye of Cthulhu/);
+  });
+
+  test('a keyed ternary arm keeps its key at the rule the value reaches', () => {
+    // `NPCLoot.Add(npc.type == EvilConstruct ? DeathSpiral : StreetCleaner)`: the key guards which
+    // item is chosen and the rule is built after the join, so the arm's key has to outlive the arm.
+    // Releasing it with the block (the fix above) dropped both weapons to a rarity guess.
+    for (const id of ['SOTS:DeathSpiral', 'SOTS:StreetCleaner']) {
+      const it = ds.items.find((i) => i.id === id);
+      expect(it.stageSource.kind).toBe('enemy');
+    }
+  });
+  test('a potion carries what its buff does, not what the item itself sets', () => {
+    // A potion sets nothing but a buff id: its stats come from that buff — vanilla's out of the
+    // `Player.UpdateBuffs` if-chain (keyed on `buffType[i]`), a mod's out of `ModBuff.Update`.
+    const potions = ds.items.filter((i) => i.slot === 'potion');
+    expect(potions.length).toBeGreaterThan(50);
+    expect(potions.every((p) => p.stage !== null)).toBe(true);
+    const ironskin = ds.items.find((i) => i.id === 'v:292');
+    expect(ironskin.effects.defense).toEqual({ all: 8 });
+    expect(ds.items.find((i) => i.id === 'v:2349').effects.damage).toEqual({ all: 0.1 }); // Wrath
+    // a mod's buff usually only sets a ModPlayer flag, and what that flag does is folded in
+    const potion = ds.items.find((i) => i.id === 'CalamityMod:BoundingPotion');
+    expect(potion.effects.jumpBoost).toBeGreaterThan(0);
+    // "50% increased damage taken from debuffs" is not a damage bonus
+    expect(ds.items.find((i) => i.name === 'Tequila Sunrise')?.stats?.allDamage).toBeUndefined();
+    // vanilla food sets its defaults in `Item.SetFoodDefaults`, a dispatch of its own: without it
+    // every fruit in the game is missing, and the alcohols that are brewed from one had an
+    // ingredient nothing could name
+    expect(byName('Plum').slot).toBe('potion');
+    expect(ds.recipes['CalamityMod:PurpleHaze'][0][0]).toContainEqual(['v:4295', 1]);
+  });
+
+  test('a potion that trades something away carries the drawback too', () => {
+    // Conflagration's damage-over-time is `if (Destabilized || conflagrate) lifeRegen -= 5` in
+    // ThoriumPlayer — an OR-guarded block reached by a jump *and* by falling through, which used to
+    // lose its guard entirely, and behind a `GetThoriumPlayer(player)` helper rather than
+    // `GetModPlayer<T>()`. Both halves have to work for the −5 to land on the potion.
+    expect(byName('Conflagration Potion').effects.lifeRegen).toBe(-5);
+    // "…all damage increased by 25%, but stealth strike damage reduced by 25%": the clause after
+    // the turn is what the item takes back, not a second bonus
+    expect(byName('Purple Haze').stats.rogueStealthDamage).toBeCloseTo(-0.25);
+    expect(byName('Glove of Recklessness').stats.rogueCrit).toBeUndefined(); // "decreases … crit by 5%"
+    expect(byName('Whiskey').stats.allDamage).toBe(0); // "between -15% and 15% damage"
+  });
+
   test('every weapon type the miner emits is one the model knows how to score', () => {
     // `ARCHETYPE` is the only thing the DPS model branches on, so a type it has no entry for would
     // quietly fall back to "fires once per use" — this is the check that a new tag cannot do that
@@ -145,6 +220,31 @@ describe('dataset.json', () => {
       expect(wk.fire.stealthMods.dmgMul).toBeCloseTo(1.5);
       expect(ds.projectiles['CalamityMod:ContaminatedBileFlask']).toMatchObject({ gravity: true, stealth: true });
       expect(ds.projectiles['CalamityMod:ContaminatedBileFlask'].children[0]).toMatchObject({ type: 'CalamityMod:BileExplosion', where: 'kill' });
+    }
+    // `velocity / N` is only steering when it goes back into the velocity: the Acid Gun's stream
+    // divides its velocity to space out a dust trail and homes at nothing (its AI never reads an NPC)
+    if (ds.projectiles['CalamityMod:AcidGunStream']) expect(ds.projectiles['CalamityMod:AcidGunStream'].homing).toBeUndefined();
+    // …while the real blend — something added to the velocity, then divided back into it — still reads
+    expect(Object.values(ds.projectiles).filter((p) => p.homing?.inertia).length).toBeGreaterThan(50);
+    // the vanilla behaviour table: what the shared Projectile.AI does, keyed by ProjectileID name
+    expect(ds.vanillaBehaviour).toMatchObject({ game: '1.4.4.9' });
+    expect(ds.projectiles['v:183']).toMatchObject({ tabled: true, children: [{ type: 'v:181', count: 5, where: 'kill', dmgMul: 1 }] }); // Beenade → bees
+    expect(ds.projectiles[byName('Molten Fury').ammoSwap.to].debuffs).toEqual(['v:24']); // Flaming Arrow → On Fire!
+    expect(ds.projectiles['v:373'].children[0]).toMatchObject({ where: 'ai' }); // Hornet → stinger
+    expect(ds.projectiles['v:374'].debuffs).toEqual(['v:20']); // stinger → Poisoned
+    expect(byName("The Bee's Knees").ammoSwap).toEqual({ from: 'v:1', to: 'v:469' });
+    expect(ds.projectiles['v:469'].children[0]).toMatchObject({ type: 'v:181', where: 'kill' }); // Bee Arrow → bees
+    // a Molotov is fire, not a bare lob: its cocktail spawns flames that burn
+    const molotov = ds.items.find((i) => i.mod === 'v' && i.name === 'Molotov Cocktail');
+    expect(ds.projectiles[molotov.shoot].children[0]).toMatchObject({ where: 'kill' });
+    expect(ds.projectiles[ds.projectiles[molotov.shoot].children[0].type].debuffs).toEqual(['v:24']);
+    if (ds.items.some((i) => i.id === 'CatalystMod:AstralsEnd')) {
+      // ModifyShootStats scales the damage ×1.5 and each of the five Shoot calls takes 2/3 of that
+      // argument: the record keeps both terms, and the model multiplies them
+      const ae = byName("Astral's End");
+      expect(ae.fire.dmgMul).toBeCloseTo(1.5);
+      expect(ae.fire.calls.length).toBeGreaterThan(0);
+      for (const c of ae.fire.calls) expect(c.dmgMul).toBeCloseTo(0.667, 2);
     }
   });
 

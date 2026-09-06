@@ -15,7 +15,10 @@
  * melee counts everything that keeps it alive — defense, damage reduction, life, regen, a dodge —
  * at `tank`×, because it is the only class that has to stand in the boss's hitbox to do its damage.
  */
-import { STEALTH_RECHARGE, realDps } from './dps.js';
+import { STEALTH_RECHARGE, hitDamage, realDps, stealthMultiplier } from './dps.js';
+
+/** Share of a fight a minion spends in range of the boss — dps.js's minion model, the same number. */
+const MINION_UPTIME = 0.9;
 
 /**
  * Crit chance a player actually carries into a boss fight — the yardstick crit *damage* is worth
@@ -37,6 +40,11 @@ export const TYPICAL_CRIT = 0.15;
  */
 export const STEALTH_SHARE = 1;
 
+// Maximum stealth changes only the stealth-strike slice of sustained rogue DPS. Unlike an explicit
+// stealth-build bonus (kept at full above to match the guides), this is a mechanical marginal gain:
+// the DPS model's median strike share across rogue weapons is 13%.
+const MAX_STEALTH_DPS_SHARE = 0.13;
+
 /**
  * Seconds between triggers of a retaliation proc (`OnHitByNPC`, `PostHurt`): you take a hit a
  * handful of times in a boss fight, not three times a second, and every trigger cost you health.
@@ -53,9 +61,21 @@ export const W = {
   selfDebuff: 4, // a drawback that puts a debuff on you: near enough the mirror of debuff immunity
   whipRange: 5, // summon: +100% whip range = 5 (the lash reaches further, the minions do the damage)
   onHitUnknown: 2, // it spawns something on hit whose damage the miner could not read: not nothing
+  onHitDebuff: 2, // a named debuff from tooltip prose whose duration/effect is not available here
   iframes: 3, // a longer window of invincibility after a hit
   meleeSize: 2, // melee: a bigger weapon hitbox
-  potionHeal: 6, // +100% out of a healing potion, or half the wait between two of them
+  // Potions are priced in the currency they give back, not as a flavour bonus. A Greater Healing
+  // Potion returns 150 life and a fight that is won swallows about two of them (potion sickness is
+  // a minute), so +100% potion healing — or a cooldown cut that buys the same extra drinks — is
+  // ~300 life over the fight, at W.maxLife. Mana the same way: dps.js's `manaRegen` credits potions
+  // 8 mana/s, which over a 60 s fight is 480 mana at +100%, at W.maxMana.
+  //
+  // Two drinks, not the three or four a long Calamity fight allows: the pessimistic end is the
+  // honest one. At three, `guide-check` lost 13 of its accessory picks out of the lab's top 6 —
+  // Glow Jelly and Royal Jelly outranked Bloody Worm Scarf for melee, and no guide agrees that a
+  // potion trinket beats damage reduction that applies to every hit of the fight.
+  // ponytail: flat numbers for every stage; potions, life pools and fights all grow.
+  potionHeal: 2 * 150 * 0.05, potionMana: 8 * 60 * 0.03,
   healerHealing: 1.5, // healer: +1 life on every heal they cast
   // void (SOTS) is a resource class: its weapons spend void the way a mage spends mana, so what a
   // piece gives the bar is what it gives the class. Gain is the strongest of the three — it is how
@@ -133,6 +153,16 @@ export const minionSlotScale = (progression) => 1 / (3 + Math.max(0, progression
 export const typicalDps = (progression) => 60 * 1.22 ** Math.max(0, progression ?? 7);
 
 /**
+ * The armour a boss at a progression value is wearing, for grading damage an accessory deals on its
+ * own where there is no boss in hand (`pieceScore` only gets a progression). Fitted to the biggest
+ * NPC of every stage in the dataset: ~10 at the Eye of Cthulhu, 17 at Cryogen, 30 at the Lich, 50 at
+ * Providence, 150 at the Nameless Deity. It matters because a spawned minion hits for a flat 10 or
+ * 20 — half the boss's defense comes off *every one* of those hits, and against a yardstick
+ * (`typicalDps`) that already had its own armour subtracted, ignoring it doubled what they scored.
+ */
+export const typicalDefense = (progression) => 6 * 1.13 ** Math.max(0, progression ?? 7);
+
+/**
  * Diminishing returns for stats that stop helping past a point: slope 1 near zero, an ease-out
  * cubic that flattens to `cap` by three times it. Damage stays linear (it adds to the total);
  * crit flattens (nothing above 100% helps), movement, damage reduction, regen, defense and
@@ -177,6 +207,16 @@ function forClass(table, cls, aliases, { generic = true } = {}) {
   return v;
 }
 
+/** Conditional damage reduction named in an older mined tooltip record. */
+function textCondEndurance(item) {
+  for (const line of (item.tooltip ?? '').split('\n')) {
+    if (!/\b(?:while|when|if|during|below|above)\b/i.test(line)) continue;
+    const m = line.match(/(\d+(?:\.\d+)?)% (?:increased )?damage reduction/i);
+    if (m) return Number(m[1]) / 100;
+  }
+  return 0;
+}
+
 /**
  * One stat of a piece for a class. The IL-mined effects are the truth when they have the key; the
  * tooltip-parsed stats only fill in what the miner could not read (an effect applied elsewhere,
@@ -193,6 +233,11 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'damage':
       a = forClass(fx?.damage, cls, aliases) + forClass(fx?.damageMult, cls, aliases);
       b = (st.allDamage ?? 0) + (st.classlessDamage ?? 0) + (st[`${cls}Damage`] ?? 0) + Object.entries(aliases ?? {}).reduce((s, [f, t]) => s + (t === cls ? st[`${f}Damage`] ?? 0 : 0), 0);
+      // "10% increased rogue damage" and "17.5% of your rogue damage is duplicated" are two
+      // different mechanics — the code answers for the increase only, and dropping the tooltip
+      // for it left Volume III scoring less than the Volume I it upgrades from. Where the
+      // tooltip's own total wins, it already counts the share.
+      { const dup = condStat(st, 'Duplicated', cls, aliases); if (dup) a = Math.max(a + dup, b); }
       c = forClass(extraFx?.damage, cls, aliases);
       break;
     case 'crit':
@@ -226,10 +271,18 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'sentrySlots': a = fx?.sentrySlots ?? 0; b = st.sentrySlots ?? 0; c = extraFx?.sentrySlots ?? 0; break;
     case 'moveSpeed': a = fx?.moveSpeed ?? 0; b = st.moveSpeed ?? 0; c = extraFx?.moveSpeed ?? 0; break;
     // a percentage of max life is that share of the life a player has when they meet the boss
-    case 'maxLife': a = fx?.maxLife ?? 0; b = (st.maxLife ?? 0) + (st.maxLifePct ?? 0) * TYPICAL_MAX_LIFE; c = extraFx?.maxLife ?? 0; break;
+    case 'maxLife': a = fx?.maxLife ?? 0; b = st.maxLife ?? 0; c = extraFx?.maxLife ?? 0; break;
+    // scored apart from flat life on purpose: SOFT.maxLife is the cap on one accessory piling on
+    // hit points, and a percentage is not piling on — it is a share of a pool that grows with it
+    case 'maxLifePct': b = st.maxLifePct ?? 0; break;
     case 'maxMana': a = fx?.maxMana ?? 0; b = st.maxMana ?? 0; c = extraFx?.maxMana ?? 0; break;
     case 'lifeRegen': a = fx?.lifeRegen ?? 0; b = st.lifeRegen ?? 0; c = extraFx?.lifeRegen ?? 0; break;
-    case 'endurance': a = fx?.endurance ?? 0; b = st.damageReduction ?? 0; c = extraFx?.endurance ?? 0; break;
+    // When text splits an always-on amount from a conditional one, the IL value is their total.
+    case 'endurance': {
+      const conditional = st.condEndurance ?? textCondEndurance(item);
+      a = conditional ? 0 : fx?.endurance ?? 0; b = st.damageReduction ?? 0; c = extraFx?.endurance ?? 0;
+      break;
+    }
     case 'manaCost': a = -(fx?.manaCost ?? 0); b = -(st.manaCost ?? 0); c = -(extraFx?.manaCost ?? 0); break;
     // the void bar: SOTS keeps it on its own ModPlayer fields, and the tooltip says the same thing
     case 'voidGain': a = fx?.mod?.bonusVoidGain ?? 0; b = st.voidGain ?? 0; break;
@@ -246,8 +299,9 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'condAccel': b = st.condAccel ?? 0; break;
     case 'condDefense': b = st.condDefense ?? 0; break;
     case 'condLifeRegen': b = Math.max(0, (st.condLifeRegen ?? 0) - (fx?.lifeRegen ?? 0)); break;
-    case 'condEndurance': b = Math.max(0, (st.condEndurance ?? 0) - (fx?.endurance ?? 0)); break;
+    case 'condEndurance': b = st.condEndurance ?? textCondEndurance(item); break;
     case 'potionHeal': b = st.potionHeal ?? 0; break;
+    case 'potionMana': b = st.potionMana ?? 0; break;
     case 'healerHealing': b = st.healerHealing ?? 0; break;
     // class mechanics in prose ("Stealth strikes deal 8% more damage"), keyed by the class the text
     // names; only what the mined effects do not already cover, since the same line often is that effect
@@ -307,7 +361,27 @@ export function accessoryGroup(item) {
   // a "flight" flag alone is a booster (Soaring Insignia, Aero Stone): it stacks with wings, no group
   if (has(item, 'dash') || has(item, 'dashType')) return 'dash';
   if (has(item, 'noKnockback') || has(item, 'knockbackImmune')) return 'shield';
+  // "Effect does not stack with other Guides": a family the game lets you wear only one of
+  if (item.noStack) return `nostack:${item.noStack}`;
   return null;
+}
+
+/**
+ * What a *duplicated* share of your damage is really worth at a stage. "12.5% of your rogue damage
+ * is duplicated" with "Duplication damage caps at 50" is a copy of your hit that stops growing at
+ * 50: past 400 damage a hit the copy is a flat 50, so the share is worth `cap ÷ a typical hit`, not
+ * its printed percentage. Below the cap it costs nothing — which is how the mod tuned it for the
+ * stage it drops at, and why the item quietly decays every stage you keep wearing it.
+ * @returns {number} the part of the damage stat the cap takes back
+ */
+export function dupCapLoss(item, progression, damage, cls, aliases) {
+  const cap = item?.stats?.damageCap;
+  const dup = item?.stats ? condStat(item.stats, 'Duplicated', cls, aliases) : 0;
+  if (!cap || !dup || progression === undefined || progression === null) return 0;
+  // only the share actually inside the number being scored can be capped: where the code answered
+  // for the item, the damage stat is the code's and may not carry the duplication at all
+  const share = Math.min(dup, Math.max(0, damage ?? dup));
+  return Math.max(0, share - Math.min(share, cap / (typicalDps(progression) / 3)));
 }
 
 /**
@@ -324,17 +398,21 @@ export function accessoryGroup(item) {
  * whose loadout actually carries 21. The solver has already picked the gear by the time it grades
  * weapons, so the real number is right there.
  */
-export function loadoutBonus(pieces, cls, aliases = {}) {
+export function loadoutBonus(pieces, cls, aliases = {}, progression) {
   let damage = 0;
   let crit = 0;
+  let armorPen = 0;
   for (const p of pieces) {
     const item = p?.item ?? p;
     if (!item) continue;
     const fx = p?.prefix?.effects ?? null;
-    damage += mergedStat(item, 'damage', cls, aliases, fx);
+    const d = mergedStat(item, 'damage', cls, aliases, fx);
+    damage += d - Math.min(dupCapLoss(item, progression, d, cls, aliases), Math.max(0, d));
     crit += mergedStat(item, 'crit', cls, aliases, fx);
+    // …and the armour penetration, which every phase's own hit takes off the boss's defense
+    armorPen += mergedStat(item, 'armorPen', cls, aliases, fx);
   }
-  return { damage, crit };
+  return { damage, crit, armorPen };
 }
 
 export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression, cond = COND } = {}) {
@@ -363,8 +441,13 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   const condMark = cond === COND ? ' ½' : ' ¼';
   const PART_TIME = `Class mechanic read from the tooltip text; it applies part of the time (stealth strikes, after a hit, for a few seconds${cond < COND ? ', and the ability it hangs off is usually on a long cooldown' : ''}), so points count for ${Math.round(cond * 100)}%.`;
 
-  const dmg = stat('damage');
-  if (dmg) add(`${pct(dmg)} ${cls} damage${condLabel('damage')}`, scaled('damage') * W.damage, condDetail('damage'));
+  // the cap only takes back a *positive* share; an item whose damage line is a drawback
+  // ("Decreases true melee damage by 15%") keeps its sign
+  const capOff = (v) => v - Math.min(dupCapLoss(item, progression, stat('damage'), cls, aliases), Math.max(0, v));
+  const capLoss = stat('damage') - capOff(stat('damage'));
+  const dmg = capOff(stat('damage'));
+  const capDetail = capLoss ? `A duplicated share of your damage, capped at ${item.stats.damageCap}: against a typical ${Math.round(typicalDps(progression) / 3)}-damage hit at this stage the copy is worth ${pct(item.stats.damageCap / (typicalDps(progression) / 3))}, not the ${pct(condStat(item.stats, 'Duplicated', cls, aliases))} printed. The cap costs nothing at the stage it drops at and more every stage after.` : undefined;
+  if (dmg) add(`${pct(dmg)} ${cls} damage${condLabel('damage')}`, capOff(scaled('damage')) * W.damage, notes(condDetail('damage'), capDetail));
   const crit = stat('crit');
   if (crit && cls !== 'summon') add(`${sgn(crit)}% crit chance${condLabel('crit')}`, ease('crit', scaled('crit')) * W.crit * pref(cls, 'crit'), notes(condDetail('crit'), easeNote('crit', scaled('crit'), (v) => `${round1(v)}%`)));
   const cdm = stat('critDamage');
@@ -408,6 +491,8 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     if (mc) add(`${pct(-mc)} mana cost${dynLabel}`, mc * W.manaCost * dyn);
     const mm = stat('maxMana');
     if (mm) add(`${sgn(mm)} max mana${condLabel('maxMana')}`, ease('maxMana', scaled('maxMana')) * W.maxMana, notes(condDetail('maxMana'), easeNote('maxMana', scaled('maxMana'))));
+    const pm = stat('potionMana');
+    if (pm) add(`${pct(pm)} mana from potions`, pm * W.potionMana * dyn, `Potions are most of what the bar gets back in a fight (8 mana/s of it in the DPS model), so ${pct(pm)} is about ${Math.round(pm * 8 * 60)} mana across one.`);
   }
   if (cls === 'bard') {
     const ins = stat('inspiration');
@@ -432,12 +517,17 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     if (s.cls && s.cls !== cls && aliases[s.cls] !== cls) continue;
     // the spawn is real even when its damage is not readable (the projectile sets it in AI): worth
     // a token, never the full grade a numbered proc gets
-    const trig = s.hurt ? 'when you take damage' : 'on hit';
+    const trig = s.hurt ? 'when you take damage' : s.shoot ? 'on every attack' : 'on hit';
     // a hurt spawn scaled off the hit is a share of the damage *taken*, which says nothing about
     // what it deals: token it like an unreadable proc
     if (!s.damage && (!s.share || s.hurt)) { add(`spawns ${s.name} ${trig}`, W.onHitUnknown, `The item spawns ${s.name} ${trig}, but the miner could not read what it hits for, so it counts for a flat ${W.onHitUnknown}.`); continue; }
     const hits = onHitHits(s);
-    const every = s.hurt ? HURT_EVERY : Math.max(s.stealth ? STEALTH_RECHARGE * 1.6 : 3, (s.cooldown ?? 0) / 60, item.stats?.cooldown ?? 0);
+    // a projectile the weapon *fires* (Thorium's spear tips add one to every thrust) is not a proc:
+    // it comes out on every attack, ~3 a second, and what limits it is its own per-target immunity
+    // window rather than a hidden proc cooldown
+    const every = s.hurt ? HURT_EVERY
+      : s.shoot ? Math.max(1 / 3, (s.cooldown ?? 0) / 60, (s.local ?? 0) / 60, item.stats?.cooldown ?? 0)
+      : Math.max(s.stealth ? STEALTH_RECHARGE * 1.6 : 3, (s.cooldown ?? 0) / 60, item.stats?.cooldown ?? 0);
     // a weapon lands about 3 hits a second: a share of one hit is that share ÷ 3 of its DPS; a proc
     // that needs a critical hit fires on ~15% of hits, a random one on its chance
     const trigger = (s.crit ? 0.15 : 1) * (s.chance ?? 1);
@@ -445,13 +535,41 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     if (s.stealth) stealth = true;
     const what = s.damage ? `${s.damage} base damage` : `${Math.round(s.share * 100)}% of the hit's damage`;
     const capPts = s.hurt ? W.onHurtCap : W.onHitCap;
-    const points = Math.min(capPts, share * 100 * dyn);
-    const when = s.hurt ? 'when you take damage' : s.stealth ? 'on each stealth strike' : s.crit ? 'on a critical hit (~15% of hits)' : 'on hit';
-    const gate = s.chance ? ` with a ${Math.round(s.chance * 100)}% chance` : '';
+    // a fired projectile the code gates on the weapon (a spear tip only fires off spears) is
+    // worth half: the piece scorer has no weapon in hand to check which you are holding
+    const points = Math.min(capPts, share * 100 * dyn) * (s.gated ? COND : 1);
+    const when = s.hurt ? 'when you take damage' : s.shoot ? 'on every attack' : s.stealth ? 'on each stealth strike' : s.crit ? 'on a critical hit (~15% of hits)' : 'on hit';
+    const gate = (s.chance ? ` with a ${Math.round(s.chance * 100)}% chance` : '') + (s.gated ? ', and only on the weapons the accessory is for' : '');
     const detail = `Spawns ${s.name} ${when}${gate}: ${what} × ${round1(hits)} hit${hits > 1 ? 's' : ''} per spawn (pierce ${s.pen === -1 ? '∞' : s.pen ?? 1}${s.kids ? `, ${s.kids} child projectiles` : ''}), ${s.hurt ? `about once every ${round1(every)} s — you only get hit a handful of times a fight, and taking the hit is the price` : s.stealth ? `one stealth strike every ${round1(every)} s` : `at most every ${round1(every)} s${s.cooldown || item.stats?.cooldown ? ' (its cooldown)' : ' (immunity frames, hidden cooldowns)'}`}`
       + (s.damage ? ` = ${round1((s.damage * hits) / every)} DPS against a typical ${Math.round(typicalDps(progression))} DPS weapon at this stage` : ` against a weapon landing ~3 hits/s`)
       + ` ≈ ${pct(share)} of the weapon's DPS${points < share * 100 * dyn ? `, capped at ${capPts}` : ''}.`;
-    add(`${s.name} ${s.hurt ? 'when hit' : s.stealth ? 'per stealth strike' : s.crit ? 'on crit' : 'on hit'}`, points, detail);
+    add(`${s.name} ${s.hurt ? 'when hit' : s.shoot ? 'per attack' : s.stealth ? 'per stealth strike' : s.crit ? 'on crit' : 'on hit'}`, points, detail);
+  }
+  // Projectiles the item keeps out for as long as it is worn — the Fungal Clump's clump, the free
+  // minion a summoner set bonus spawns — graded like the summon weapon they are: each one's damage
+  // through the boss's armour, at the rate its immunity frames allow (dps.js caps a minion at 3
+  // hits/s and has it on the boss 90% of the time), as a share of a typical weapon's DPS.
+  //
+  // The ceiling is what a minion slot is worth at this stage: a free permanent minion is at most a
+  // slot the summoner did not have to buy, and it is a *fixed* minion — 10 flat damage forever —
+  // where the slot holds whatever the best staff of the moment puts in it. That is also the
+  // pessimism the model needs, since nothing here reads how often a minion's own AI actually fires.
+  // Only the ones that go to the enemy (`seeks`): a hitbox parked on the player — the Marnite
+  // Repulsion Shield's — is a body the boss has to walk into, which is not a minion's uptime.
+  const spawns = (item.effects?.spawns ?? []).filter((s) => s.damage && s.seeks && (!s.cls || s.cls === cls || aliases[s.cls] === cls));
+  if (spawns.length) {
+    const def = typicalDefense(progression);
+    // its immunity frames, read the way dps.js reads them: a negative hit cooldown is not a rate, it
+    // means the thing hits a given enemy once and never again — so it lands one hit per life on the boss
+    const rate = (s) => (s.local < 0 ? 60 / Math.max(60, s.life ?? 300) : Math.min(s.local > 0 ? 60 / s.local : 2, 3));
+    const dps = spawns.reduce((n, s) => n + hitDamage(s.damage, { defense: def }) * rate(s) * MINION_UPTIME, 0);
+    const share = dps / typicalDps(progression);
+    const capPts = W.minionSlot * minionSlotScale(progression);
+    const points = Math.min(capPts, share * 100 * dyn);
+    const each = spawns.map((s) => `${s.name} (${s.damage} damage × ${round1(rate(s))} hits/s)`).join(', ');
+    add(spawns.length > 1 ? `${spawns.length} minions while equipped` : `${spawns[0].name} while equipped`,
+      points,
+      `Keeps ${each} out for as long as it is worn: ${round1(dps)} DPS against ${Math.round(def)} defense at this stage — ${Math.round(MINION_UPTIME * 100)}% of the time on the boss — against a typical ${Math.round(typicalDps(progression))} DPS weapon ≈ ${pct(share)}${points < share * 100 * dyn ? `, capped at ${round1(capPts)}: what a minion slot is worth here` : ''}.`);
   }
   // stealth strike bonuses, and the item is marked. They only touch the strike, so they are worth
   // the share of a rogue's damage the strike is (STEALTH_SHARE) — a rate bonus (a strike that
@@ -476,20 +594,33 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     }
   }
 
-  // the item's own defense field is unconditional; only the code's delta can be
+  // The item's printed defense is unconditional. A conditional code delta must be shown apart from
+  // it: Victide used to say "+10 defense conditional = 3.8" even though 5 of that defense was the
+  // breastplate itself and only the other 5 belonged to the underwater condition.
   const effDef = stat('defense');
-  const def = (item.defense ?? 0) + effDef;
-  // the curve is for accessories: an armor piece's defense is its job, and defenseScale already
-  // says what a point is worth at the stage
-  const defPts = (item.defense ?? 0) + scaled('defense');
+  const ownEffDef = mergedStat(item, 'defense', cls, aliases, null);
   const isAcc = item.slot === 'accessory';
   // survivability is the class's own: melee stands in the hitbox, everyone else kites (CLASS_PREF.tank)
   const tankNote = pref(cls, 'tank') !== 1 ? `${cls} counts what keeps it alive at ${pref(cls, 'tank')}×: it fights inside the boss's hitbox, so a hit absorbed is a swing it does not spend retreating.` : undefined;
-  if (def) add(`${def > 0 ? '+' : ''}${round1(def)} defense${condLabel('defense')}`, (isAcc ? ease('defense', defPts) : defPts) * W.defense * defenseScale(progression) * tank(cls, 'defense'), notes(condDetail('defense'), isAcc ? easeNote('defense', defPts) : undefined, tankNote));
+  const defensePoints = (n) => (isAcc ? ease('defense', n) : n) * W.defense * defenseScale(progression) * tank(cls, 'defense');
+  if (isCond('defense') && ownEffDef) {
+    // Prefix defense is unconditional and remains with the item's base. The gated contribution is
+    // marginal after applying its 15% uptime, so accessory diminishing returns see the same total.
+    const baseDef = (item.defense ?? 0) + (effDef - ownEffDef);
+    if (baseDef) add(`${sgn(baseDef)} defense`, defensePoints(baseDef), notes(isAcc ? easeNote('defense', baseDef) : undefined, tankNote));
+    const effective = ownEffDef * half('defense');
+    add(`${sgn(ownEffDef)} defense${COND_MARK}`, defensePoints(baseDef + effective) - defensePoints(baseDef), notes(condDetail('defense'), isAcc ? easeNote('defense', baseDef + effective) : undefined, tankNote));
+  } else {
+    const def = (item.defense ?? 0) + effDef;
+    const defPts = (item.defense ?? 0) + scaled('defense');
+    if (def) add(`${sgn(def)} defense${condLabel('defense')}`, defensePoints(defPts), notes(condDetail('defense'), isAcc ? easeNote('defense', defPts) : undefined, tankNote));
+  }
   const cdef = stat('condDefense');
   if (cdef && !stat('defense')) add(`${sgn(cdef)} defense${COND_MARK}`, cdef * COND_STATE * W.defense * defenseScale(progression) * tank(cls, 'defense'), CONDMSG);
   const life = stat('maxLife');
   if (life) add(`${sgn(life)} max life${condLabel('maxLife')}`, ease('maxLife', scaled('maxLife')) * W.maxLife * tank(cls), notes(condDetail('maxLife'), easeNote('maxLife', scaled('maxLife')), tankNote));
+  const lifePct = stat('maxLifePct');
+  if (lifePct) add(`${pct(lifePct)} max life${condLabel('maxLifePct')}`, scaled('maxLifePct') * TYPICAL_MAX_LIFE * W.maxLife * tank(cls), notes(condDetail('maxLifePct'), `A share of the whole pool (${TYPICAL_MAX_LIFE} life at a boss fight), so ${pct(lifePct)} is ${Math.round(lifePct * TYPICAL_MAX_LIFE)} life — and it is not softened the way a flat "+20 life" accessory is, because a percentage grows with the pool instead of piling onto it.`, tankNote));
   const regen = stat('lifeRegen');
   if (regen) add(`${sgn(regen)} life regen${condLabel('lifeRegen')}`, ease('lifeRegen', scaled('lifeRegen')) * W.lifeRegen * tank(cls), notes(condDetail('lifeRegen'), easeNote('lifeRegen', scaled('lifeRegen')), tankNote));
   const cregen = stat('condLifeRegen');
@@ -499,7 +630,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   const cdr = stat('condEndurance');
   if (cdr) add(`${pct(cdr)} damage reduction${COND_MARK}`, ease('endurance', cdr) * W.endurance * tank(cls) * COND_STATE, CONDMSG);
   const ph = stat('potionHeal');
-  if (ph) add(`${pct(ph)} healing from potions`, ph * W.potionHeal * dyn, 'More life back per potion, or less time between two of them.');
+  if (ph) add(`${pct(ph)} healing from potions`, ph * W.potionHeal * dyn * tank(cls), notes(`More life back per potion, or less time between two of them: a fight swallows about two potions of 150 life, so ${pct(ph)} is ${Math.round(ph * 2 * 150)} life across it.`, tankNote));
   if (cls === 'healer') { const hh = stat('healerHealing'); if (hh) add(`${sgn(hh)} life per heal cast`, hh * W.healerHealing); }
   // square root: the first aggro points matter most (a rogue's stealth only buys about −10)
   // square root, then the curve: the first aggro points matter most (a rogue's stealth only buys about −10),
@@ -510,6 +641,9 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   // a drawback the item puts on the player ("Receiving damage has a 50% chance to bleed you"): the
   // chance is never in the code, so every one of them counts as if it lands
   for (const d of item.effects?.selfDebuffs ?? []) add(`self-inflicted debuff (${d})`, -W.selfDebuff, `The item puts ${d} on you. The odds are not in its code, so the drawback counts at full weight.`);
+
+  // A named ailment is useful even when its exact effect/uptime cannot be priced from armour code.
+  for (const d of item.debuffs ?? []) add(`inflicts ${d} on hit`, W.onHitDebuff, `The tooltip names ${d}, but the effect and uptime are not available to the armour scorer, so it counts for a conservative flat ${W.onHitDebuff}.`);
 
   if (utility) {
     const mv = stat('moveSpeed');
@@ -572,14 +706,54 @@ export function sprintFactor(drag) {
 /** Score of a head piece's set bonus (setEffects + set bonus text). */
 export function setBonusScore(head, cls, aliases = {}, { progression } = {}) {
   if (!head.setEffects && !head.setBonus) return { score: 0, parts: [] };
-  const pseudo = { effects: head.setEffects, stats: head.setStats, condStats: head.setCondStats, placeholders: head.setPlaceholders, defense: 0, flags: [] };
+  const text = head.setBonus ?? '';
+  // Backward-compatible text fallbacks make an already-mined dataset benefit immediately; future
+  // mining stores these as setFlags / setDebuffs directly.
+  const textFlags = /(?:extra|additional|double) jump/i.test(text) ? ['jump'] : [];
+  const textDebuff = text.match(/\binflicts?\s+(.+?)(?=\s+(?:for\b|on\b|when\b|while\b|after\b|and\s+(?:deals?|grants?|causes?|reduces?|increases?|inflicts?)\b)|[,.]|$)/i)?.[1]
+    ?.replace(/^(?:enemies?|targets?)\s+with\s+/i, '').replace(/^(?:the|a|an)\s+/i, '').trim();
+  const pseudo = {
+    effects: head.setEffects,
+    stats: head.setStats,
+    condStats: head.setCondStats,
+    placeholders: head.setPlaceholders,
+    defense: 0,
+    flags: [...new Set([...(head.setFlags ?? []), ...textFlags])],
+    debuffs: [...new Set([...(head.setDebuffs ?? []), ...(textDebuff ? [textDebuff] : [])])],
+  };
   const r = pieceScore(pseudo, cls, aliases, { progression, cond: SET_COND });
   // Every set bonus does something beyond what the miner can read — a proc, an aura, a dodge — so
   // wearing a full set is worth a flat base on top of whatever came out numbered.
   const t = head.setBonus?.toLowerCase() ?? '';
   const names = { melee: /melee/, ranged: /ranged/, magic: /magic/, summon: /summon|minion|sentry/, rogue: /rogue|stealth/, thrower: /throw/, bard: /symphonic|bard|inspiration|empower/, healer: /radiant|heal/ };
   const classSpecific = !!head.setBonus && !!names[cls]?.test(t);
-  r.parts.unshift({ label: classSpecific ? 'set bonus (class-specific)' : 'set bonus', value: classSpecific ? W.setBonusClass : W.setBonus });
+  // …unless the unreadable part is exactly what was just read: a set whose bonus is "summons a sea
+  // snail to protect you" has had its snail graded above, and paying the flat again on top is the
+  // same minion twice.
+  const read = head.setEffects?.spawns?.length ? 0.5 : 1;
+  // The flat allowance is for an ability the scorer could not quantify, not an automatic reward
+  // for completing any set. A bonus made entirely of numeric stats (Victide) is already fully paid
+  // by the parts above; an actual prose ability (Desert Prowler's Sandsmoke Bomb) keeps the allowance.
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+  const statOnly = lines.length > 0 && lines.every((line) =>
+    (/\d/.test(line) && /\b(?:damage|crit(?:ical)?|defense|life regen|hp\/s|stealth|minions?|sentries|movement speed|mana|inspiration|armor penetration)\b/i.test(line))
+    || /enemies? (?:are )?(?:more|less) likely to target/i.test(line));
+  if (!statOnly) r.parts.unshift({ label: classSpecific ? 'set bonus (class-specific)' : 'set bonus', value: (classSpecific ? W.setBonusClass : W.setBonus) * read });
+  // Maximum stealth directly raises Calamity's stealth-strike multiplier. Compare it with the
+  // 50-point baseline of the earliest functional set using a representative 20-tick weapon.
+  if (cls === 'rogue' || cls === 'thrower') {
+    const max = head.setEffects?.mod?.rogueStealthMax || (head.setStats?.stealthFlat ?? 0) / 100;
+    if (max > 0) {
+      const baseline = 0.5;
+      const strikeGain = stealthMultiplier(20, max) / stealthMultiplier(20, baseline) - 1;
+      const gain = strikeGain * W.damage * MAX_STEALTH_DPS_SHARE;
+      r.parts.push({
+        label: `${Math.round(max * 100)} maximum stealth`,
+        value: round1(gain),
+        detail: `At a representative 20-tick use time, ${Math.round(max * 100)} maximum stealth makes a stealth strike ${pct(strikeGain)} stronger than the 50-stealth baseline. Stealth strikes are about ${Math.round(MAX_STEALTH_DPS_SHARE * 100)}% of sustained rogue DPS, so the armour score counts that share.`,
+      });
+    }
+  }
   r.score = r.parts.reduce((s, p) => s + p.value, 0);
   return r;
 }

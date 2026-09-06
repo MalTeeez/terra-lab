@@ -1800,6 +1800,540 @@ stealth. Three picks leave the top 3 and three enter the top 8. The model is now
 documents and four readings confirm, so the ordering it produces is the honest one; the trade is
 noted rather than tuned away.
 
+## Next pass — making the phases score (planned 2026-09-05, revised after review)
+
+Two reviews of the attack-phase pass reached the same verdict, and a third reviewed the first
+draft of this plan. All three agree on the diagnosis: the phase graph *describes* the score but
+does not *produce* it. `variantHits`, `group()` and `childHits` still do the arithmetic; the phase
+records mirror what they computed; and the gates that were meant to change the answer almost never
+carry a value (travel 3.5 % gated, impact 0.9 %, split 4.6 %) while 98 % of those phases are tagged
+`exact`, because `exact` describes count and spread, not how often.
+
+Where the primary-weapon misses actually lose, as pick ÷ lab #1 per factor bucket: damage 0.93,
+rate 0.83, **hits 0.33**, **landing 0.57**. The picks are not weaker on paper; they lose on the
+model's own multipliers. The #1 slots are held by high-multiplier types (held 32 wins / 4 losses,
+spear 25 / 7, flamethrower 17 / 6); the misses are swings, boomerangs, bows and bombs (boomerang
+0 / 14, bow 0 / 13, bomb 0 / 17).
+
+### Verified before planning
+
+- `fire.dmgMul` (the `ModifyShootStats` adjustment, `shoot.js:255`) is mined for 13 weapons and read
+  nowhere in `dps.js`. It **multiplies** with a call's own `dmgMul`, because `Shoot` is run afresh
+  with the bare `DMG` argument (`shoot.js:263-289`): Astral's End carries 1.5 on the whole shot and
+  0.667 on each of its five calls, which is ×1.0 at runtime. Whether a call was adjusted
+  (`c.dmg.k === 'adj'`) is not serialised, and an absolute call damage becomes `dmgMul: null`, which
+  `deliveryPhases` turns back into ×1 (`phases.js:256`). None of that is fixable model-side.
+- 0 of 386 vanilla projectiles carry `children` or `debuffs`; 1144 / 1279 of 3339 mod projectiles
+  do. Molotov Cocktail is a bare lob with no fire. 137 of 454 pre-hardmode primary picks are vanilla.
+- 437 items have if/else regions in `Shoot`; every region group is averaged as `sum / N`
+  (`dps.js:897`). But `ctx.region` is only the innermost region *end* (`interp.js:207-225`): 249 of
+  the 437 have a single region and 631 of 727 groups hold one call. A guarded call with no `else`
+  has no represented no-op sibling, so both the average and any `min` pay it at full value. The
+  representation has to be completed before the weighting rule matters.
+- The tooltip's `threshold` / `cooldown` are handed to every delivery (`dps.js:857-858`) and from
+  there to every first-generation child (`dps.js:976-983`); `test/dps.test.js:561-573` pins that.
+- `guide-check --vs` prints deltas and never fails; `data/guide-baseline.json` was written with
+  `pre: false`; every run rewrites `data/guide-late-weapons.md`, filtered or not.
+- `loadoutBonus` returns `{ damage, crit }` only (`score.js:319-338`): no worn ids, buffs or flags
+  reach weapon scoring, so a `requires` gate has nothing to join against yet.
+- `tools/observed.mjs` compares a stealth sample against `v.value`, which is already spam + strike,
+  so the four samples do not test additivity; and every vanilla yoyo has an explicit 10-tick local
+  (`projectiles.js:564-577`), so a yoyo cannot test the no-local fallback.
+
+### Rules this pass runs under
+
+From `data/guide-scoring-implementation-progress.md`: guide agreement is the **check, not the
+goal**. A change is kept on its mechanical story; a change without one is not kept because the
+aggregate moved, and a class regression is a diagnostic that must be explained, not a veto. When
+the miner cannot read a detail the model assumes the worse case, and the choice between two
+fallbacks is made on that rule, not on top-k.
+
+### Step 0 — evaluator first (tools only, no scoring change)
+
+1. `guide-check`: a `--no-write` mode so a filtered run does not rewrite `guide-late-weapons.md`;
+   `--vs` refuses a snapshot whose `filters` differ; `--vs` compares per guide × class × family on
+   top-3, top-8, recall@K, section hit, MRR and the rankable denominator, and exits non-zero on a
+   regression unless `--waive "<reason>"` records why. Freeze matching pre-hardmode guide and
+   `dps-snapshot` baselines.
+2. The per-archetype **over/under table** in `--summary`: per archetype, sections where it holds
+   #1 over a guide pick of another type, and guide picks of that type outside the top 8. The slot
+   table at `guide-check.mjs:588` is the pool side; this adds the guide side.
+3. `unresolved-phases.mjs` gains a reason for unread alternative regions and for one-sided
+   conditionals, so the worklist below is visible before any of it is fixed.
+
+### Step 1 — damage provenance in the miner (re-mine)
+
+The one correctness defect that is purely extraction, and the schema everything later reads:
+
+- Serialise a call's damage as `{ kind: 'relative' | 'absolute' | 'unread', mul, abs }` instead of
+  a bare `dmgMul`; keep `fire.dmgMul` as the `ModifyShootStats` term and let the model compose
+  `raw × fire.dmgMul × call.mul`. Pin with a test on the Astral's End shape: 1.5 × 0.667 ≈ 1.0.
+- The blade never takes `fire.dmgMul`; the default shot does.
+- `stealthMods.dmgMul` is applied once, on the strike (`dps.js:1440`); a miner test states whether
+  it *replaces* or *stacks on* the ordinary adjustment, and the model reads it that way.
+- `dmgAbs` for direct calls, so an absolute call damage stops being ×1.
+
+Model-side this is one line in `deliveryPhases` once the field exists. Its *score* is still wrong
+against defense until step 3, so the acceptance here is the phase record, not the ranking.
+
+### Step 2 — guards with a domain (miner, re-mine)
+
+`guards.js` finds the branch (`guardRanges`), prices `NextBool` (`chanceRanges`) and reads the
+ownership cap (`ownedCapOf`). Syntax alone does not give the gate: `ai[n] % N` in `AI` is ticks, in
+`OnHitNPC` hits, in `Shoot` uses, and `localAI[n] > N` is as often a homing delay as a counter. So:
+
+In this order, because the weaker-arm rule applied to an incomplete representation is the
+generic rule paying for facts the reader could have supplied:
+
+- **Counters ⇒ `{ kind: 'threshold', n, event: 'use' | 'hit' | 'tick', reset }`**, with `event`
+  from the method the compare sits in, and the compare shape (`%`, `>=`, `>`, reset value) read
+  rather than assumed. Off-by-one is decided by the reader, not the model.
+- **Player state ⇒ `{ kind: 'requires', what, id, negated }`** for `HasBuff`, `ModPlayer` bools
+  and player fields. Difficulty, target, owner and initialisation guards are *not* requirements
+  and are left as unread conditions. Until the loadout carries worn ids and buffs (`loadoutBonus`
+  only returns damage and crit), a `requires` phase scores 0 and is **reported as unresolved**, not
+  as solved.
+- **Count the residual.** After counters, rolls and requirements are classified, the groups left
+  are *unread control flow*. That count — out of the 727 groups today — goes in this document,
+  because it is the number that says what the generic rule below costs and what a further reader
+  would buy back.
+- **Branch groups and complements**, on the residual only. Emit the full if/else group id and an
+  implicit no-op arm for a guarded call with no `else`, so a region is a complete set of
+  alternatives. This is what makes "one of them runs" mean anything.
+- **Relations.** `alternative` splits into `conditional` (unread control flow, pessimistic: the
+  weaker complete arm) and `choice` (player-selectable, the better arm — what left/right click
+  already does at `dps.js:1397-1408`). A `threshold` arm scores `1/N` and its complement
+  `(N−1)/N`, which is the "finisher" shape; a proc with no complement is additive at `1/N`.
+- **Tooltip fallback becomes phase-local.** A text `threshold` / `cooldown` attaches during phase
+  construction to the one child it can name; ambiguous text attaches to nothing and shows up in
+  `unresolved-phases`. The counter-gun test changes to expect only the burst gated, not the
+  explosion. A mined gate on a phase overrides text on that phase only.
+
+### Step 3 — the minimal compiler (model)
+
+Moved ahead of the vanilla table, because child debuffs and per-phase defense cannot score
+correctly without it, and the reviews are right that per-phase armour is not a contained change:
+`CHILD_CAP`, the shared-immunity cap, pierce falloff, link maintenance, summons, the stealth grade
+and the contribution reconciliation all live in parent-hit units today.
+
+What it keeps separate, per phase: **event rate** (hits/s, what immunity caps operate on) and
+**damage per event** (raw → armour pen → defense → crit eligibility). The score is the sum of
+`rate × postDefense × crit` over phases, and every existing cap keeps working on rates:
+
+- the shared player-immunity cap scales rates, then each phase's own damage applies;
+- `CHILD_CAP` becomes a cap on cascade *rate* where no cadence was read, lifted per child when
+  step 2 supplied one; depth limit stays as cycle protection only;
+- direct-call and child `armorPen` apply to their own hits; loadout armour pen is added to
+  `loadoutBonus` and reaches the phases;
+- absolute-damage children are scored as flat damage or classified non-damaging, never dropped;
+- a debuff belongs to the phase that applies it and is kept up by *that* phase's landing rate and
+  gate, not by the weapon's total hits (`debuffPhases` today scans only the primary and direct
+  calls, and promotes a rare branch's debuff to a permanent one);
+- summons go through the same path with their timer children as real phases;
+- the rogue grade is expressed as a schedule — spam-active fraction × spam, plus strike rate over
+  recharge × strike payload — with the additive total kept as the **fitted interim** until the
+  observations in step 5 fix the fractions. It is debt, recorded here, not a settled invariant.
+
+Acceptance: `hitDamage(raw × 0.3) ≠ hitDamage(raw) × 0.3` under positive defense with the 1-damage
+floor per phase; two phases sharing immunity but differing in damage keep the right proportions; a
+local-immunity child stays outside the shared group; normal, summon, stealth and cascade
+contributions reconcile with the score after every modifier.
+
+### Step 4 — vanilla projectile table (miner, versioned)
+
+Feasible and the largest data gap, authored any time but **scored only after step 3**. The tmod
+carries no vanilla AI, so a table is game data of the same kind as `VANILLA_HOMING`, with the
+maintenance made explicit:
+
+- keyed by `ProjectileID` *symbolic name*, resolved against the installed assembly at mine time;
+  a row that does not resolve fails the mine, so a Terraria/tML upgrade cannot leave stale ids;
+- every row carries source and supported game version; runtime-mined facts merge over table facts
+  the way `projectiles.js:632-638` merges sets;
+- rows carry the same phase facts as mined projectiles (children with `where`, `dmgMul` /
+  `dmgAbs`, chance, debuffs, `local`, `explode`, `sticks`), not a reduced shape;
+- coverage is measured on the **effective** projectile path — ammo weapons fire the standard
+  ammo's projectile (`dps.js:1074`), not `item.shoot` — so the list is built from what the scorer
+  actually resolves for the vanilla picks plus their children. A raw `item.shoot` count gives 71
+  distinct ids over 219 pre-WoF vanilla rows; the effective list will differ and is what gets filled.
+- golden cases pin complete mechanics for a few rows (Molotov, Beenade / Bee's Knees, one debuff
+  projectile) and check a child-applied debuff inherits the child's gate.
+
+Not table rows: Minishark-class cadence (item facts), penetration defaults already mined, ammo
+behaviour (belongs to the ammo's projectile).
+
+### Step 5 — observations that isolate one term each (in-game, parallel to 3–4)
+
+The current four samples share one player block, store DPS only, and compare stealth against a
+total that already contains spam. `observed.mjs` grows to store per trial: item and prefix,
+target and its defense, distance, shown damage and crit, duration, raw event count or non-crit
+total, time channelled, time overlapping the target, projectile count, single vs crowd. Three to
+five runs each. Then:
+
+- **contact clock**: a held projectile with *no* local or static immunity on a stationary dummy
+  (not a yoyo; those carry a 10-tick local), against a known-`local` control that must reproduce
+  `60 / local`;
+- **uptime**: the same weapons on a moving boss, separately;
+- **rogue**: continuous spam, one isolated strike, recharge while idle / moving, and an alternating
+  schedule, which is what turns the step-3 schedule from fitted into measured;
+- **broadsword**: vary reach / scale with shown damage and use time held, to separate arc coverage
+  from the generic `RANGE_EDGE` band.
+
+Until these exist nothing in `IMMUNITY`, `held.uptime` or the swing band is retuned.
+
+### Knob registry — how each constant retires
+
+A knob without a retirement rule is an archetype rule under another name. Each one below names
+the phase fields that supersede it (the model reads the field when present and the knob only when
+not) and the step-5 observation that calibrates it until then. `RISK`, `ENGAGE` and
+`PLAYSTYLE` are not on the list: they are the class's preferences, user-tunable by design, not
+facts the miner could read.
+
+| knob | stands in for | retires on (phase fields) | calibrated by |
+| --- | --- | --- | --- |
+| `ARCHETYPE[*].uptime` (held .85, flail .7, placed .3, spikyball .25, minion .9, sentry .55) | share of the fight the thing is on the boss | `duration` + `maxActive` + a boss-dwell term from `vb` and the phase's reach | moving-boss trials, uptime measured apart from the contact clock |
+| `REACH[arch]` | how far a held or swung thing extends | a mined hitbox extension (`width`/`height` × `scale`, the projectile's own travel before it stops) | broadsword reach/scale series |
+| `IMMUNITY` as the contact fallback (6 hits/s) | a held projectile with no `local` | a read `local` or static-immunity flag; the player-window rule stays only for phases the reader says set none | no-local held projectile on a dummy, with a known-`local` control |
+| `capN = 4` | how many of a held thing are out at once | `maxActive` (`ownedCapOf`, already mined where the code states it) | none needed: it is a read or it is not |
+| `RANGE_EDGE = 0.5` and the blade's ×0.85 swing factor | a shot dying at its own range; a blade's arc not all on the boss | expiry read off `life` × speed (already), plus the swing's arc coverage as a phase reach term | broadsword series; returning-weapon series |
+| `THROW_OUT`, `FLIGHT_CAP` | where a returning weapon turns round, and the longest wait | the mined `returns` distance / deceleration per projectile | returning-weapon trials at fixed distances |
+| `CHILD_CAP`, `CHILD_DMG_UNREAD` | an unread spawn cadence; an unread damage share | a mined `threshold` / `cooldown` / timer cadence (step 2); `damage.kind` (step 1) | none: replaced by reads, and the residual is listed by `unresolved-phases` |
+| summon hits/s defaults (1.5 sentry, 2 minion, 3 cap) | a minion with no readable clock | the summon's own `local` and its timer children as phases (step 3) | minion on a dummy, event count over duration |
+| `whip.tag = 1.5` | what the mark is worth in minion hits | the mined tag damage × the loadout's minion hit rate (step 3 has the rate) | whip + fixed minion set on a dummy |
+| `unknownDebuffDps` | a debuff with no record | the debuff record; failing that, listed as unresolved | none: it is a read or it is not |
+| `WINDUP_TICKS = 60` | how long a charge weapon is held before its shot arms | the charge counter's own cap, read out of the AI (`Charge >= 120` at `extraUpdates` speed) | a charge weapon on a dummy: time from button-down to first hit |
+| `EXHAUSTION_REGEN = 60` | what Thorium's thrower bar gives back per second | nothing: it is `throwerExhaustionMax / 1200` per tick, read straight out of `ThoriumPlayer.PostUpdateEquips`, and the knob only exists so the pool can be turned off | a Thorium thrower held down until the bar caps, timed |
+| `FIGHT_SECONDS = 60` | how long the fight a reservoir has to last through is | a fight length derived from the boss's health against the loadout's own DPS, which the model already computes | a timed boss kill at a known stage |
+| `GRAVITY_MAX = 1.5` (miner) | the largest per-update `velocity.Y +=` that is still an arc | the axis rule below already takes the steering blends that push both X and Y; what is left for the bound is a Y-only write whose addend the interpreter bounded, which retires on following the local instead of bounding it | none: it separates two kinds of read, and the pack's own distribution sets it |
+
+The model's rule for every row is the same: read the field, fall back to the knob, and report the
+fallback through `unresolved-phases`. A knob whose row cannot name a superseding field is a
+preference, and moves to the preference list.
+
+### Small mechanical corrections, each with a test
+
+- **Returning weapons and the edge band.** The round trip is a cadence cost and the band is a
+  landing probability, so charging both is not double counting in itself; but the generic band
+  floors a 300 px boomerang at 0.5 from 150 px out, on a deceleration the miner never read. Skip the
+  *expiry* band for a returning projectile inside its turnaround, keep the round trip, keep the
+  second pass conditioned on landing (`dps.js:657-659`), keep zero past turnaround, and key it on
+  the mined `returns` fact (`projectiles.js:501-504`) rather than the archetype. Already measured
+  as a gain; kept on the story, not the gain.
+- **Confidence.** One field is too coarse once cadence comes from text and identity from code:
+  `evidence` gains per-gate confidence (`cadence`, `maxActive`, `threshold`), `confidence` keeps
+  describing identity and damage, and `unresolved-phases` reads the gates.
+- **The case-tracker leaked an OR-ed key past its chain (fixed, 2026-09-05).** An `if (type == A
+  || type == B)` compiles to `beq →body` / `bne →after`. `applyKeyBranch` installed B on the
+  fall-through *with* `releaseKey(after, B)`, but installed A through `addGroup` at the jump
+  target with no release offset at all, so A stayed on every block after the chain.
+  `InfernalEclipseWeaponsDLC.TreasureBagDropChanges::ModifyItemLoot` was the case in hand: the
+  crate chain ends at IL 613 and the next block, guarded by `TryGetMod("Consolaria")` and Ocram's
+  own bag, still carried `bag:ThoriumMod:AquaticDepthsCrate` — Ocram's Roar staged at 11 off a
+  pre-hardmode crate instead of post-mech and topped pre-hardmode bard. (`noDead: true` is why
+  the absent mod does not prune the block; the key leak is why it was misattributed rather than
+  merely ungated.) A jump target's key now belongs to the block that target opens: `keyAt` records
+  what the `beq` arm carried and `endOfBlock` releases it at the nearest already-recorded forward
+  jump target. Only jumps read *before* the target count, so a nested `if` cannot end the block
+  early. **A ternary arm is not a statement block** and the first cut got this wrong: `NPCLoot.Add
+  (npc.type == EvilConstruct ? DeathSpiral : StreetCleaner)` picks under the key and adds after the
+  join, so releasing with the block dropped both SOTS weapons to a rarity guess. The discriminator
+  is the stack recorded at the block end — non-empty means a value flows out and the key travels
+  with it. Both shapes are pinned in `test/dataset.test.js`. Cost: Ocram's Roar 11 → 53 and
+  Cape of the Survivor 54 → 45 (it had picked up a spurious `3× Beetle Husk` from a neighbouring
+  block; its `AddRecipes` is Cursed Cloth + Darksteel Alloy and nothing else). Guide gate: IEoR
+  bard +1 top-3, no regressions — the one real loss in the coverage waiver above, given back.
+
+### Order and gates
+
+| step | changes | re-mine | done when |
+| --- | --- | --- | --- |
+| 0 | guide-check, unresolved-phases | no | frozen pre-hardmode baselines; `--vs` fails on regression |
+| 1 | shoot.js, phases.js, tests | yes | Astral's End composes to ×1.0; absolute damage survives |
+| 2 | guards.js, shoot.js, projectiles.js, interp.js, dps.js | yes | one-sided conditionals have a complement; gates carry an event domain; tooltip no longer broadcast |
+| 3 | dps.js compiler, score.js loadout | no | rates and damage separate; contributions reconcile; debuffs phase-local |
+| 4 | projectiles.js table | yes | every row resolves; golden cases pass; scored only after 3 |
+| 5 | observed.mjs, in-game trials | no | contact clock and uptime measured apart; rogue schedule measured |
+
+Each step ends with `guide-check --pre --summary --json <after> --vs <before>`. A class that
+regresses is explained in this document before the step is called done; a mechanically justified
+regression is waived with the reason recorded.
+
+### Done so far (2026-09-05): steps 0, 1 and 2
+
+**Step 0.** `guide-check` no longer rewrites `guide-late-weapons.md` on a filtered run (`--no-write`
+for the rest), `--vs` refuses a snapshot taken under other filters, compares every guide × class
+and guide × family tuple on top-3, top-8, recall@K, section hits, MRR and the rankable denominator,
+exits 1 on a regression, and `--waive "reason"` records the reason into the snapshot. The
+over/under table prints on every run. `unresolved-phases` gained the residual: unread branches by
+what they test on, one-sided guards, carriers, unmet requirements, unattached tooltip counters.
+
+**Step 1.** The miner's compaction had been dropping `dmgMul: 1` to save bytes, so "×1" and
+"unread" were the same absence. A call now carries `dmgMul` (omitted: ×1 of the argument),
+`dmgAbs` (a flat number) or `dmg: 'unread'`. The whole-shot term and the call's share multiply
+(Astral's End: 1.5 × 0.667 ≈ 1). `stealthMods.dmgMul` and `stealthMult` are one number read two
+ways (identical on all 60 weapons carrying both) and are applied once, on the strike's deliveries,
+children included. Children are spawned at the parent's share, not the weapon's (Death's Ascension
+23,990 → 12,912; Naganadel 431 → 93). Of 111 absolute call damages 107 are holdouts spawned at 0:
+they are *carriers*, and scoring them at zero was a data hole, so a carrier is an unread delivery
+(one hit of the weapon's damage per use, flagged on the record and listed) until its AI's cadence
+is read. Guide gate: Calamity +1 top-3 / +1 top-8, IEoR recall +2, one waived MRR shift (Blink
+Blade's right-click children inherit its ×3).
+
+**Step 2.** In `guards.js`: a backward conditional jump is a loop, never an if — reading it as one
+had marked every `for` body as a guarded region (149 calls, 517 children); an inner `else` is
+clamped to the block enclosing it; comparison branches (`blt`, `bge`, …) are conditions.
+Readers, each emitting a gate with its domain from the method it was read in:
+
+| reader | reads | gate |
+| --- | --- | --- |
+| counter | `x % N == 0`, `x >= K`, `x == K` on `ai[]`, `localAI[]` or a field of the mod's own type, through locals; a reset of the counter on the reached side | `threshold { n, event: use / hit / death / tick, reset, reached }` |
+| alternation | a bool field of the item, branched on and flipped anywhere in the type (Thorium's `altSwing`, Hypothermia's `throwTwo`) — `use` domain only | `threshold { n: 2 }` |
+| state machine | `field == K` on a field the type advances: one arm per constant it is compared against | `threshold { n: states }` |
+| roll | `NextBool` through a local; `rand.Next(N)` compared to a constant, at the roll or through a local | `chance` |
+| alt click | every spelling of `altFunctionUse` (`== 2`, `!= 2`, `== 1`, bare, through a local) | `alt` |
+| ammo | `type == ProjectileID.X` in `Shoot` (the plain ammo fires one arm, anything else the other); `CheckWoodenAmmo` | `requires { what: 'ammoType' \| 'ammo' }` — the model decides with the ammo it grades with |
+| world | `Main.zenithWorld` and the other seeds | `requires { what: 'world' }` — never met |
+| crit | `hit.Crit` in `OnHitNPC` | `crit: true \| false` — the crit chance's worth |
+| mirror | owner, netcode, facing and target-validity checks (`myPlayer`, `whoAmI`, `direction`, `CanHit`, `active`, `type`, …) | `branch { known: true }` — a two-armed one is a mirror: one of two symmetric shots |
+| residual | everything else | `branch { id, side, cond }` — one id for both arms of an if/else, named by what it tested |
+
+Buffs and flags on a mod's player class (`ThoriumPlayer.itemMoonlight`, a Red Mage enchantment)
+were tried as requirements and reverted: they are nearly always the weapon's own state, set by the
+weapon itself, and scoring them as unmet zeroed Moonlight and Fungicide-class weapons outright.
+They stay in the residual under their names.
+
+**Residual, counted.** After the readers: 213 unread calls on 136 items (from 773 on 435), 145
+one-sided branch ids and 18 two-sided; 765 unread child spawns (from 1,785), mostly `ai[]` state
+and Thorium's bard instrument dispatch. What the residual tests on is printed by
+`unresolved-phases` every run.
+
+**The model.** A priced call (roll, counter, requirement) is concurrent in `top`; an unread branch
+is an alternative named by its id. A two-sided unread if/else is worth its **weaker arm** (the
+rule for anything unread; the coin flip handed the rare arm half the weight); the losing arm's
+phases contribute nothing, so the graph still reconciles. A **one-sided** guard keeps its shot at
+full value and is listed, on purpose: measured, adding a no-op complement to the residual's
+one-sided guards — mostly state and aim checks that hold far more often than not — assumes the
+opposite of what they do, and the plan's "implicit no-op arm" is therefore not applied. A mirror
+takes one arm. A counter in the `use` domain weights the arm `1/n` or `(n−1)/n`; in `OnHitNPC`
+it gates a child once per n hits; in the AI with a reset it is the child's **cadence**: spawns per
+tick of that clock for as long as the parent is there — the use for a held, placed or contact
+parent, `SPAWN_WINDOW` (one second) for one that flies past. Children with a read cadence are
+outside `CHILD_CAP`. A contact weapon's timer children are on their own clock rather than a second
+instance on the boss (Riptide 165 → 51). The tooltip's counter attaches to the one child it can be
+about — the only on-hit/on-death child, else the only burst — and to nothing when ambiguous; a
+mined counter on a child outranks the text.
+
+**Guide gate after step 2** (pre-hardmode, against the step-1 baseline): Calamity −1 top-3 (Sahara
+Slicers' combo), MRR .261 → .263; IEoR +2 top-3, MRR .174 → .175; vanilla unchanged. Waived and
+recorded: the Sahara combo, Spirit Blast Wand's timer child, the Thorium spear carriers, Blink
+Blade. Tests: 297 pass.
+
+**Knob added to the registry.** `SPAWN_WINDOW = 60`: how long a projectile flying past the boss is
+near enough for its timer children to count. Retires on the parent's own time-on-target from
+`hitsPerProjectile`; calibrated by a flying-spawner trial at fixed distance. And the carrier rule
+(a 0-damage holdout as one hit per use) retires on the holdout AI's read cadence — the same counter
+reader, once it walks the holdout's `AI` for spawns the case tracker does not see.
+
+### Done (2026-09-05): steps 3, 4 and 5
+
+**Step 3 — the minimal compiler.** Every damaging phase now carries its hit *events* and its
+*share* of the weapon's raw damage apart (`events`, `share`, then `eventsSec` and `hitDmg` on the
+graded record), and the model prices the two separately:
+
+- the player's immunity window caps **events** — three shots at ×3 damage are three hits on the
+  clock, a spray of 30 % children is a full hit each;
+- **defense comes off each phase's own damage** through the armour pen it carries (the weapon's,
+  the loadout's — `loadoutBonus` now returns `armorPen` — and the projectile's own): a 30 % child
+  against a real boss is worth less than 30 % of the hit and can be worth the 1-damage floor. The
+  correction is one part on the card, "defense taken off each phase's own damage", so the factors
+  still multiply out; the stealth grade gets its own at strike damage;
+- a **debuff is kept up by the phases that apply it** (uptime = their landing rate, capped at one a
+  second), and the sources now include children two generations down — Contaminated Bile's
+  Irradiated, carried by its explosion, was never seen before; bard "empowerment" allowances that
+  only a rare crit-gated note applies are no longer paid at 100 %;
+- a **summon** whose timer child has a read cadence goes through the same child path at one "use"
+  a second instead of the `1.5 × n × landing` heuristic;
+- the **terrain penalty** and the **rogue strike** reach the graph: every phase carries `grade`
+  and a contribution priced in its own grade, and the contributions sum to the value for every
+  weapon, rogue included (checked by test).
+- `ROGUE_SPAM_SHARE = 1` names the fitted additive schedule (registry row below).
+
+Pre-hardmode gate against the step-2 baseline: Calamity −3 top-3 / +1 top-8 (Turbulance's three
+wind slashes are three events on the clock; Goobow's 25 % streams and Fungicide's spores meet the
+armour), IEoR +1 top-3 / +1 top-8, vanilla −1 top-3 (Demon Scythe and Thunder Zapper swap a tie
+once the loadout's armour pen reaches both). Waived with those reasons. 303 tests.
+
+**Step 4 — the vanilla table.** `miner/extract/vanilla-behaviour.js`: 62 projectile rows and 6
+ammo swaps, keyed by `ProjectileID` / `BuffID` / `ItemID` *name* and resolved against the
+installed assembly at mine time — an unknown name fails the mine (it caught three of mine:
+`ExplosiveBullet`, `TheDaoofPow`, `BulletHighVelocity`). A mined fact wins; the table fills what
+the case tracker could not read. The dataset records the table's game version and row counts in
+`vanillaBehaviour`, and every filled projectile carries `tabled: true`. The `ammoSwap` rows are the
+other vanilla fact of the same kind — `Player.ItemCheck_Shoot` turning Wooden Arrows into Bee
+Arrows for The Bee's Knees — attached to the item and honoured where the model picks the shot.
+Coverage was built from the projectiles the scorer actually walks for the 80 vanilla pre-hardmode
+picks (63 distinct, ammo and children included), not from `item.shoot`. Golden tests: Beenade's
+bees, Molotov's flames and their On Fire!, the Hornet's stinger and its Poisoned, the Bee's Knees
+swap. One row was wrong in kind and reverted: Water Bolt, Flower of Fire and the Zapinator bounce
+off *tiles*; the model's `bounces` means off enemies.
+
+Gate against the step-3 baseline: vanilla +7 top-8, recall +4, MRR .300 → .315 (Beenade 6 → 57,
+Molotov 8 → 35, Bee's Knees 10 → 43); Calamity +1 top-3 ranged. Vanilla and Calamity summons −1/−2
+top-3: Hornet, Imp and the DD2 sentries now carry their timer children and take the ranged-minion
+rate (`1.5 × landing` per minion) instead of the flat 2 hits/s. Both numbers are knobs; the one that
+retires them is the vanilla `aiStyle 62` attack timer, which belongs in the table once read.
+
+**Step 5 — the observation protocol.** `tools/observed.mjs` now reads `data/observed.json`, whose
+`protocol` field states what a trial records (item and prefix, target, distance, seconds, raw hit
+count or non-crit total, overlap time, projectiles out, single vs crowd; three to five runs per
+mechanic) and whose trials unlock one comparison per raw field: hit events per second, uptime,
+the contact clock against `60 / local` or the 10-tick fallback, projectiles out against the cap
+of 4. The four existing aggregate samples are migrated; none carries raw fields yet, and the tool
+says so. The knobs stay where they are until the trials exist.
+
+**Against the step-0 baseline, pre-hardmode:**
+
+| guide | top-3 | top-8 | MRR |
+| --- | --- | --- | --- |
+| Calamity | 33 → 30 | 61 → 63 | .259 → .257 |
+| IEoR | 66 → 69 | 141 → 143 | .175 → .175 |
+| vanilla | 44 → 43 | 63 → 70 | .303 → .315 |
+
+Eleven more picks in the top 8 and one fewer in the top 3, every move carrying a mechanical reason
+recorded in the baseline's waivers. The point of the pass was never the aggregate: the model now
+reads 281 use counters, 265 child counters, 133 requirements, 250 mirrors and 62 vanilla rows it
+used to guess at, prices events and damage apart, and lists what it still guesses.
+
+**Registry additions.**
+
+| knob | stands in for | retires on | calibrated by |
+| --- | --- | --- | --- |
+| `STEALTH_LOOP_STILL = 0.5` | how much of a rogue's refill pause is spent standing still (4 s still, 8 s moving) | the rogue schedule trial (an alternating throw/pause loop, timed) | that trial |
+| summon `1.5 × landing` per ranged minion; flat 2 / 1.5 hits/s | a minion's attack timer | the vanilla `aiStyle 62` / `DD2` attack timers as table rows with `threshold { event: 'tick', reset }` | a minion on a dummy, event count over duration |
+| the vanilla table's counts and shares (Beenade 5 bees, Molotov 3 flames at 50 %) | what `Projectile.AI` rolls | reading `Projectile.AI` per aiStyle in the tracker | the wiki's numbers where it states them |
+
+**Leads found, not chased.**
+
+- ~~**`maxOut` is not applied as a sustained rate limit except to returning weapons.**~~ **Done** — see the row above. The blanket form really was as unsafe as measured (it zeroed ten weapons on the first attempt and cut a boomerang the player had measured at ~100/s to 16); what made it safe was reading three facts already in the record instead of naming the weapons to skip.
+- ~~**Bard is ranked on the wrong axis.**~~ **Corrected by the pack's own player: this pack rebalances bard to roughly standard damage**, so the empowerment story does not excuse the gap and the mismatch is a scoring one. What the numbers say, best-available weapon per class at a +20% loadout:
+
+  ```
+  stage   melee  ranged   magic  summon   rogue    bard
+      0     121     202      58      90      90     334
+      6     110     204      64      93      92     321
+     12     163     207     137     120     128     374
+  ```
+
+  Bard is 2–3× every other class through pre-Hardmode, and it is **one weapon**: Riveting Tadpole.
+  It is the only bard weapon in the pack with a pierce multiplier above 3 (×5.15; the class mean is
+  1.13). Drop it and bard's best at Pre-boss is Panflute at 191, level with ranged's 202.
+  The mechanism is not a bug in any one term — it is a slow homing bubble, `pen -1`, `life 120`,
+  no local immunity, that reaches the boss with 63 ticks left and is credited a hit per 10-tick
+  window for all of them. The shared-immunity cap *does* fire (×0.62, 9.6 hits/s down to 6), so the
+  weapon sits at the theoretical ceiling for a shared-window weapon and everything above follows.
+  The knob under it is `RECONNECT_SEEK`, which lets a seeker hold the target for its whole
+  remaining life; nothing else in the pool reaches the ceiling, which is why bard alone stands out.
+  Wants an in-game reading of one Riveting Tadpole bubble — hits landed per throw — before the knob
+  is touched, because every other seeker in the pack rides on the same number.
+
+- **`BardItem.InspirationCost` is mined but deliberately not priced.** 192 weapons carry one,
+  spread 1–10 and mostly 1–2. It is not priced because it does not bind: `ThoriumPlayer` regenerates
+  one point per 8 ticks, ramping to one per 2 as `inspirationRegenBase` climbs to 5 — 7.5 to 30 a
+  second against costs of 1–2 at two or three uses a second. The field is in the dataset as
+  evidence for whoever measures the bar; pricing it on a guessed steady state would be a new
+  error, not a fix.
+
+- **Fishbone Boomerang is tagged `spear`, and is right by accident.** Its AI sets
+  `Owner.heldProj` inside `if (ChargeProgress < 1f)`, the wind-up branch — but the machine
+  resolves that progress to 0 at the first tick, so the store reads as *unconditional* and
+  `held` is set on a ricocheting boomerang. `ATTACHED` then exempts it from travel lead, arc
+  and range altogether. Only 7 projectiles carry `held` together with `bounces` or `returns`,
+  and two of those (Fishbone, Equanimity) are the mis-tag; the rest include a laser drill
+  where clearing `held` would be its own error. Left alone deliberately: the one number that
+  can be checked says the current answer is right — ~100/s reported from play against 94–103
+  from the model — and re-tagging it would pay a round trip and a landing it currently skips,
+  moving it away from the measurement. Wants a `held`-in-a-wind-up-branch reader, not a patch.
+
+- **`stealthMultiplier` against a fifth in-game reading.** Harpy's Barrage post-Crabulon shows
+  60 at an empty stealth bar and 200 at a full one — a ratio of 3.33×, which is loadout-free.
+  The model gives 3.70 at Max Stealth 100 and 3.16 at 80, so the reading pins the formula only
+  as far as the player's Max Stealth is known, and it was not recorded. Both rows are in
+  `data/observed.json`; re-taking them with the Stat Meter's Max Stealth written down would
+  settle it. The model's *spam* damage for the same weapon is 60 on the nose, so the damage
+  side of that chain is confirmed.
+
+- ~~**`CHILD_CAP` bounds the children's hits but not their multiplier.**~~ **Chased, and the lead was wrong.** The "net child multiplier" it was raised on is the weapon's total over its *parent's own* contribution, and that ratio is naturally enormous for anything whose damage lives in its children — a bomb, a detonator, a burst horn — which is a description, not a defect. The ranks are sane where it mattered: Arclight Orbs #4/159, Cadaver's Cornet #9/125, 24-Carat Tuba #40/103. The one case that looked unambiguous, Vorpal Knife reaching 44 px of the 60 it needs and still being paid for what it drops on death, turns out to be correct: `drag 0.725` stops the blade at 44 px because it *"lingers in the air"*, and the 200% detonation children are the attack. Making the blast a widening of the parent's landing rather than a floor was tried and is wrong — a bomb's blast *is* meant to reach back, and two tests say so.
+
+- Seven vanilla items resolve their `shoot` to the wrong projectile in `vanillaItemDefaults`
+  (Abigail's Flower, Crimson Rod, Flinx Staff and Houndius Shootius read `FairyQueenRangedItemShot`;
+  Light's Bane, Night's Edge and the Paintball Gun read `DD2BetsyArrow`) — a case-tracker slip in
+  `Item.SetDefaults`, visible in `vanilla-cover`'s list.
+- Thorium's bard instruments dispatch on `BardProjectile.get_InstrumentType` (87 child spawns):
+  the instrument is a fact about the item, readable as a requirement met by construction.
+- The residual's remaining named conditions — `WeaponPlayer.manaStack`, `StarsAbovePlayer.*Aspect`,
+  `Player.maxMinions` — are resource and loadout state the model does not carry yet.
+- A holdout's own `AI` spawns (the 64 carriers) are the next counter-reader target: the same
+  `counterRanges` on the holdout's `AI` for `NewProjectile` calls the case tracker does not see.
+
+### Modes are loops, not a sum (2026-09-05)
+
+Raised on Scourge of the Desert, labelled `[spam]` at a rank that only makes sense for its strike.
+The general defect: a rogue weapon's two grades were priced as *continuous throwing* and *one
+strike per recharge with nothing thrown between*, then summed, and the label went to the larger.
+A strike-only grade is a payload over a recharge and is small against any sustained rate by
+construction, so every one of the 38 pre-hardmode weapons the miner sees a stealth branch or
+stealth-only child on was labelled spam, 33 of them with a stealth grade under a fifth of the spam.
+Calamity's code says the two cannot add: `UpdateStealthGenStats` returns 0 while the item animates,
+`ProvideStealthStatBonuses` turns the current bar into the next attack's damage bonus, and
+`ConsumeStealthByAttacking` empties it on the strike. The player is in one loop or the other.
+
+**Now.** Spam is throwing with no strikes. Stealth is the throw-pause-strike loop: one strike per
+pause plus throw, the pause being the bar's refill at `STEALTH_LOOP_STILL` standing still (4 s
+still, 8 s moving; 0.5 → 6 s), its debuffs kept up at the loop's landing rate. The weapon is worth
+the better loop, that loop names the grade, and the loop not taken contributes nothing to the graph.
+The additive schedule and `ROGUE_SPAM_SHARE` are gone. Measured (pre-hardmode): Calamity rogue
++2 top-3, MRR .257 → .267; IEoR stealth family −1 (a pick the sum used to carry). At a full
+standing pause (`STEALTH_LOOP_STILL = 1`) Scourge flips to stealth (53 against 51) but Calamity's
+gain vanishes: every strike loop grows by half and unlisted rogue weapons overtake guide picks.
+Kept at 0.5, on the measurement.
+
+**Where Scourge lands, and why it does not double.** Spam 46, stealth loop 35. Both grades sit at
+their pierce caps: the spam javelin gets both of its 2 hits and each strike javelin its 4, because
+the same unread homing record (the 300 px default, no speed read) earns both the seeker's twelve
+reconnects. What makes it a stealth weapon in play — the strike javelins landing all twelve on a
+moving worm while the spam javelin stalls and whiffs — is a *landing* fact the model has no read
+for, and it cuts both ways: taking the seeker credit away pessimistically hurts the strike more.
+The strike multiplier is Calamity's own arithmetic (transcribed from `ProvideStealthStatBonuses`:
+`stealth × 0.42 × (0.75 + 0.75·log₄(useTime+2)) × max((genTime/gen)^⅔, 1.5)`), and the 15 % it sits
+under the shown damage is the player's stealth-gen gear, not the formula. The trial that settles
+it is in `data/observed.json`'s protocol: hits landed per throw for the spam javelin and per strike
+for the three, over a fixed window against the same target. Until then the label follows the
+arithmetic and says so.
+
+**The factor of two, found.** With exclusive loops Scourge still read spam (46 against 35) and no
+rogue weapon at post-Eye of Cthulhu read stealth. The recharge was wrong by exactly two:
+`CalamityPlayer.UpdateRogueStealth` adds `rogueStealthMax × gen / 120` every tick, with `gen` = 1
+standing still and `MovingStealthGenRatio` (0.5) moving — the bar fills in **2 s still, 4 s
+moving**. `BaseStealthGenTime = 4`, which the model had built its recharge on, feeds only the bar's
+on-screen regen figure and the strike damage formula. `STEALTH_FILL_TICKS = 120` is that read;
+`stealthRecharge` blends it by the share of the pause spent still (3.6 s at the 20 % fight blend,
+3 s at the loop's 50 %). Confirmed at the same time: `UpdateStealthGenStats` returns 0 while the
+item animates, and a normal throw on a partial bar sets it to 0 (`UpdateRogueStealth`, the
+`!StealthStrikeAvailable` arm) — the loops are exclusive in the code, not only in the model.
+
+Result: Scourge of the Desert reads **stealth** at its own stage (64: 12 hits per strike every
+3.4 s against 46 of throwing), 6 of the 38 strike-designed pre-hardmode rogue weapons flip and
+none of the 46 plain ones do — a plain weapon's generic strike (one throw at ×2.33 per 3.4 s) is
+about a fifth of throwing it, which is right. Two things the post-Eye of Cthulhu list still shows:
+the stealth stance stands at 420 px (the class preference), and against a small fast boss like the
+Glowmoth Scourge's javelins keep only 32 % on target from there, so it reads spam at that stage —
+a distance preference, not a fact. And Mycoroot's 12-spore strike now leads three Calamity rogue
+tiers (107–150): mechanically read (12 homing spores at weapon damage per strike), named a top
+pick by IEoR, not listed by Calamity's guide — a disagreement, recorded, not tuned. Gate: Calamity
+rogue gives back the two top-3 the exclusive loops had gained, MRR .258; waived with the fact.
+`observed.mjs` now compares a stealth trial against the stealth loop: Scourge 128 against 300
+measured, Contaminated Bile 66 against 230 — the loop is still short by half against the meter,
+and the meter is a burst reading until a trial records the window.
+
 ## Disagreements
 
 Guide picks the model still ranks low after the rules are right, and why. Written down rather
@@ -1924,3 +2458,39 @@ staging, is why the guides' summoner picks scatter.
 | 2026-09-04 | *revert:* the pass-9c chest heuristic, now that the real recipe explains the gate | **61 / 135** | **0.126** | 126 / 151 | exactly neutral on weapons, −7 staged later, and the three `craft: Obsidian` guide picks come back |
 | 2026-09-04 | *pass 12:* a weapon is graded with the damage **and crit** its own loadout carries, not a progression curve and its printed crit | **64 / 130** | **0.123** | 126 / 151 | full run 125/266 → **127/267**. Scourge of the Desert 108 → 208 DPS against ~300 observed; 26.6 × stealth 2.47 = 65.7 against the 67 in the tooltip |
 | 2026-09-04 | *pass 13:* miner: a mod's `BalancingConstants` into `dataset.balance`; the stealth formula uses Calamity's own 0.42 / 4 s / ½ | 125 / 268 | 0.069 | 126 / 151 | `stealthGenFactor` 3.54 → 4^(2/3); `dmgMul` out of the `1 +`; recharge 5 → 7.2 s. Four in-game readings solve the factor to 2.47–2.58. Printed damage now within a few % except the Flawless stealth bonus the miner cannot see |
+| 2026-09-05 | miner: `item.lifeCost` — `player.statLife -= N` in a weapon's own use hooks; priced as a pool beside mana and void, and the tightest pool governs | 61 / 135 | 0.126 | 126 / 151 | 5 weapons pay in health and none of them was being charged for it: Sanguine Despair 70 → 40/s, Der Freischütz 39 → 29/s. Pre-hardmode metrics flat (only Sanguine Despair is pre-hardmode, and no guide names it). Knobs: `lifeRegen` (2 + 0.8·prog) and `LIFE_FLOOR` 0.2, under mana's 0.35 because a health bar running dry ends the fight. Gaps: a cost that is a share of max life, and one behind `altFunctionUse == 2` (Butcher's Bloodmaker), stay unread |
+| 2026-09-05 | miner: `projectile.windup` — a projectile that assigns its own `friendly` in `AI` is harmless for part of its life, so the use time is not the clock; it pays `WINDUP_TICKS` in front of every shot | 142 → 141 / 284 → 285 | 0.247 → 0.248 | 16/16 | the complaint that opened this: Gel Glove was throwing 3.3 fully-armed balls a second at a weapon whose ball is parked on the player, doing nothing, until you let go. 97 → 21/s. Two other projectiles carry the flag (Yharim's Crystal, Mage Hand) and neither is a ranked guide pick, so the metric does not move on this alone. Gap: the counter's cap is not read, so every wind-up is priced at the same second |
+| 2026-09-05 | miner: `item.exhaust` — Thorium's thrower exhaustion as a pool beside mana, void and health | 142 → 141 / 284 → 285 | 0.247 → 0.248 | 16/16 | `ThoriumGlobalItem.Shoot` charges `useTime * 2` against a bar of 1200 regenerating at 1/tick, so **every** non-consumable Thorium thrower spends 120/s against 60/s whatever its use time — a flat ×0.5 duty cycle on all 41 of them, and the model had been charging them nothing. This is the whole cost of the pass: ieor rogue top-3 8 → 4, ieor spam top-3 5 → 1. The guides rank these picks *within* a class that all pays the tax; the lab ranks them against Calamity rogue weapons that do not, which is the comparison the tax makes real. The lockout on top of the duty cycle (`throwerExhaustionPenalty`: −0.2 damage per shot to zero, cleared only when the bar drains) is not priced, so the reading is still generous |
+| 2026-09-05 | `gravityK` is a pull per *update*, and the flight it was squared against was in ticks | 142 → 141 / 284 → 285 | 0.247 → 0.248 | 16/16 | a projectile with `extraUpdates` was being handed a flat arc: the drop is `(1+updates)²` times what `landing` charged, which is 4× for the commonest case. `reachOf` had the units right all along. Net positive against the guides (calamity top-3 +1, calamity rogue recall@K +1, vanilla top-8 +1) against ieor stealth −1 and calamity melee recall@K −1. Costs one observed trial: Scourge of the Desert 0.50× → 0.41× of its meter reading, inside a model already sitting at a 0.61× median |
+| 2026-09-05 | miner: a `velocity.Y +=` above `GRAVITY_MAX` is a steering blend, not an arc | 142 → 141 / 284 → 285 | 0.247 → 0.248 | 16/16 | found by the row above amplifying it: Valediction's `gravityK` of 5 is the Y half of a boomerang's turn-around, and squaring it against 4 updates dropped the thing 300 px inside three ticks. 18 projectiles lose an arc they never had (Calamity's boomerangs, a whip, a trombone laser) and 4 fall back to a real read (Titanium Shuriken 3.2 → 0.1, ×2.6 on the weapon). Gating on `ctx.conditional` the way `noteDrag` does was tried first and cost 213 genuine arcs — mods apply gravity inside `if (!sticking)` — so the bound is on the value, not the branch |
+| 2026-09-05 | miner: gravity only ever touches Y — the same constant pushed along **both** axes is a seeker's turn rate | 142 → 141 / 284 → 285 | 0.247 → 0.248 | 16/16 | the `GRAVITY_MAX` bound cannot reach a turn rate that is itself a plausible pull. Scourge of the Desert arcs at `+= 0.15` before it burrows and turns at `+= 0.2` in its chase block; `Math.max` took the 0.2, and the correct-unit drop then charged a javelin that launches itself at enemies a 123 px parabola — it fell #2 → #4 and 89 → 54/s, which is what raised the complaint. 32 projectiles turn out to have had no Y-only write at all (bees, homing pets, `AstrealArrow`, `GhoulishGougerBoomerang`) and 5 fall back to their real arc (Calamity's hammers 1.1 → 0.43–0.6). Scourge back to #3 / 72 /s and 0.41× → 0.44× of its meter reading; the gravity pass is now net-positive against the guides on its own (calamity top-3 +1, calamity rogue recall@K +1, vanilla top-8 +1, against calamity melee recall@K −1). Failure mode: a real arc whose constant coincides with an unrelated X add is lost |
+| 2026-09-05 | one steering budget, against the *largest* of the three misses rather than the drift alone | **142 → 141 / 284 → 285** | **0.247 → 0.248** | 16/16 | `landing` priced a seeker's correction against the boss's movement only, and the spread was settled before homing was even computed — so a fan of homing javelins was billed "1 of 3 land" for an angle they steer out in a couple of ticks, and the arc was charged in full beside it. Summing the three misses was tried first and made every seeker *worse*: they do not add, because one heading correction removes all three at once, so the budget has to cover the largest and not the total. 93 weapons move, 92 of them up, median ×1.12. Scourge of the Desert #4 → **#2** at 111/s and its observed trial 0.44× → **0.54×**, past the 0.50× it started at — the one weapon here with an in-game reading moves toward it. The calamity rogue top-3 losses are Scourge climbing *over other guide picks in its own sections* (Contaminated Bile #2→#3, Feather Knife #2→#3, Ashen Stalactite #4→#5), which the gate counts as a regression and a player would not. Standing gap: 361 of the 408 seekers carry the pessimistic default range and no read turn rate, so "heavy homing" is still a guess |
+| 2026-09-05 | miner: the third homing shape — a per-axis accelerator — read as `homing.turn`, in px per update² | 141 / 288 | 0.248 | 16/16 | the reader knew `HomeInOnNPC(range, speed, inertia)` and the `(v·(N−1) + dir·s)/N` blend, and nothing else: 408 of 646 seekers carried the pessimistic default range and a turn rate that was the *item's* shot speed over `HOMING_INERTIA`, a number with no projectile in it. `if (velocity.X < to.X) velocity.X += k` is the shape neither reader sees, and it is the same both-axes write the gravity rule already collects — so the fact was on the floor. 12 projectiles now state their turn, Scourge of the Desert at 0.2 a update, which is 0.8 a tick² once its extra update is counted against the 0.6 that was being invented for it |
+| 2026-09-05 | the homing line says which half of it was read (`rangeGuess`) | 141 / 288 | 0.248 | 16/16 | score-neutral, verified. `turn 0.6/tick` printed next to a mined one as if the two were the same fact; the fallback range was baked into the dataset where `speed` and `inertia` were honestly absent. Now: `homing (300 px, turn 0.8/tick — range assumed)` |
+| 2026-09-05 | a pool that states a `cap` is a reservoir, not a rate; and the stealth loop pays at *its* rate | **142 → 141 / 284 → 288** | **0.247 → 0.247** | 16/16 | two bugs in the exhaustion pass, both found by the complaint that a thrower should not be halved. (a) The bar holds 1200 and a spammed thrower overdraws it by 60 a second, so the first twenty seconds are free and the penalty has not happened yet — priced as a bare rate it was a flat ×0.5, and over `FIGHT_SECONDS` it is ×0.67. (b) The stealth grade was copying the *spam* rate's sustain into its parts list and showing a ×0.5 the value never applied: the card said the strike was taxed and the number said it was free. The stealth loop casts once per ~3 s through a pause the strike requires, and the bar regains 60 a second across it, so exhaustion never builds there at all — which is exactly what the report said. Both now agree. Vibrant Tomahawk 32 → 43/s spam, and the false ×0.5 is gone from its strike |
+| 2026-09-05 | interpreter: a marker declared `taint` survives being computed with; miner: per-axis steering *toward the owner* is a return | 141 / 288 | 0.247 | 16/16 | `carriesOwner` was written for `velocity = <owner vector>` and Calamity's boomerangs never do that — they nudge each component toward the player a step at a time, and the marker died at the first `sub` anyway. So Kylie, Valediction, Valari, Butcher Knife, Ghoulish Gouger, Celestus and Calamity's returning hammers all read as fire-and-forget daggers thrown on the use timer: 24 projectiles gain `returns`. The discriminator against the seek shape above is what the steering is aimed at — the owner direction taken apart into components, versus an NPC. Kylie 81 → 32/s, the loss being the round trip it has to wait out (×0.58, one out at a time) rather than anything about its damage |
+| 2026-09-05 | a boomerang's two passes *multiply* what one pass lands rather than replacing it | **141 / 289** | **0.247** | 16/16 | the `passes` branch short-circuited before the crowd model ran, so a returning projectile threw its pierce away with everything else: Kylie carries `pen −1` through six bodies and came out at 1.4 hits, worse than a dagger that pierces nothing. Restricted to boomerangs — a spear's two passes are one thrust returning along the same line, on the same body, and a test says so. Kylie lands at 32/s instead of the 6/s the short-circuit gave it |
+| 2026-09-06 | miner: `ModifyShootStats` respects the right-click guard (`fire.altMods.type`) | 141 / 288 | 0.247 | 16/16 | `if (player.altFunctionUse == 2) type = WulfrumManaDrain;` was read without the guard, so **18 weapons** had their right click's projectile scored on their left: Wulfrum Prosthesis fired a 36 px mana drain instead of its bolt and scored a flat **0.00/s**, Crackshot Colt shot Ricoshot coins. The stealth branch already had this treatment in the same walk (`stealthCells`); the alt branch is the same shape one `altRanges` away. Prosthesis 0.00 → 21.7/s. Also fixed the assembler dropping the new field, the same whitelist that ate `item.exhaust` |
+| 2026-09-06 | a `Shoot` that was read and says this click fires nothing is believed | 141 / 288 | 0.247 | 16/16 | Bellerose opens with `if (player.altFunctionUse != 2) return false;` — its left click throws nothing, and the tornado `item.shoot` names is a right-click payload gated on three successful attacks. The `!calls.length` fallback filled that in with `item.shoot` anyway and handed the tornado out every 17 ticks. Gated on the weapon's attack demonstrably living on the other click: refusing the fallback on `defaultShot` alone stranded 60 weapons with no phase at all, past the coverage pin of 30 |
+| 2026-09-06 | miner: `projectile.ownAi`; a zero-damage spawn with no AI is a prop, not a carrier | **142 → 141 / 284 → 288** | **0.247 → 0.247** | 16/16 | the carrier rule assumes "its AI fires the real shots and the miner could not read them", true of 107 of the 111 in the pool. Bellerose's held umbrella is not one of them: `aiStyle 19`, `hide`, zero damage, `SetDefaults` and nothing else — and it was being paid a full 57-damage hit 3.7 times a second. `ownAi` is `false` where the walk looked and found none and *absent* where nothing looked (vanilla, synthetic), because "we looked and there is nothing" and "we did not look" want opposite answers — a test pins the second. Bellerose 350 → 118/s at Pre-boss, into the 121 / 118 / 115 / 114 cluster it belongs in |
+| 2026-09-06 | interpreter: `player.position` reached as a *field* is the owner, the same as `player.Center` reached as a property | **142 → 141 / 284 → 288** | **0.247 → 0.247** | 16/16 | only the property call was recognised, so a projectile that returns by `player.position.X + player.width * 0.5f - Center.X` read as one that simply flies away. Thorium's Whip is `useStyle 5`, `maxOut 1` and out-and-back in its own AI, and was being scored as a fire-and-forget shot on a 12-tick use timer: **265.7 → 94.3/s**, top of Pre-boss melee to sixth, and tagged `boomerang` instead of `shot`. 10 more projectiles come with it — Volt Hatchet, Shade Kusarigama, Omen, Heartstriker, Bat Scythe, both tambourines, Calamity's Enchanted Axe — the same family whose return acceleration was being read as gravity two passes ago |
+| 2026-09-06 | a volley shares the player's immunity window: `n` thrown at once land **one** hit between them, `min(n, bodies)` in a crowd | **142 → 144 / 284 → 288** | **0.247 → 0.253** | 16/16 | vanilla checks `else if (npc.immune[projectile.owner] != 0) continue;` — the first pellet of a blast sets the window and the rest of it finds the target immune, and `usesLocalNPCImmunity` is the only thing that buys a projectile out. The rate cap below already stated this fact *per second* and its own comment says so; what it cannot see is simultaneity, so Harpy's Barrage slipped under a 6 hits/s ceiling throwing three feathers in the same instant and was paid for all three. `1 − (1−L)^(n/bodies)` per body: one body collapses the volley to a single arrival, bodies to spare return `n·L` and nothing moves. **152 weapons** fire a volley with no local immunity — 61 ranged, 39 magic, 15 healer. Harpy's Barrage 362 → 181/s and #1 → #2 through pre-hardmode; Aquashard Shotgun 103/s single against 184 multi, which is what a shotgun is. First pass this run to beat the original baseline on all three pre-hardmode metrics, and it fixed the two rogue-grade tests that had been red since before any of it — **313 pass, 0 fail**. Cost: calamity recall@K −3, concentrated in ranged, where the guides pick shotguns for crowds and the lab scores a single target |
+| 2026-09-06 | miner: `effects.spawns` — an equip hook that spawns a projectile keeps a minion out, and it is graded like the summon weapon it is | 141 / 290 | 0.210 | 122/142 | the complaint that opened this: the Fungal Clump's whole tooltip is "summons a fungal clump to fight for you" and it scored **0**. `UpdateAccessory` / `UpdateArmorSet` run every tick, so a `NewProjectile` in one is a companion the item keeps out (`ownedProjectileCounts` guards all 18 of them); `GetBestClassDamage(player).ApplyTo(10)` is its damage. Scored as damage through `typicalDefense(progression)` (new, fitted to every stage's biggest NPC: 10 at the Eye of Cthulhu, 50 at Providence) × the rate its immunity frames allow × 0.9 uptime ÷ `typicalDps`, capped at what a minion slot is worth at the stage — a free minion is at most a slot the summoner did not have to buy, and it is a *fixed* minion where the slot holds the best staff of the moment. Fungal Clump 0 → 15.3 at Crabulon, 0.3 by Duke Fishron. Two conditions that cost 12 of the 13 accessory picks the first cut lost: a **negative** hit cooldown is one hit per life, not 2/s (the Frozen Cube's Elumphant), and a spawn that neither `minion`s nor homes is a body the boss walks into, not a minion (the Marnite Repulsion Shield's hitbox) — those are skipped. A set bonus whose spawn *was* read pays half the flat "does something unreadable" base, since the sea snail is no longer unread. Vanilla plays the same trick one level down: Stardust's guardian is a `NewProjectile` inside `Player.UpdateArmorSets`, keyed to the head/body/legs triple the case tracker was already walking, with `Type` and `Damage` the first two consecutive ints of the call (true of both overloads). Stardust Helmet's set bonus, which is *only* the guardian, now reads it: 30 damage at Moon Lord is 0.9 points, and the flat halves to 2.5 — 5 → 3.4, which is what a set bonus worth one point of DPS should score. Net over the full run: calamity accessories in top-6 232 → **234**, calamity set top-5 170 → 168 and ieor set #1 31 → 30 (Aerospec over Bee, Mollusk over Spider and Crystal Assassin — all ±1 rank), MRR up, weapons and vanilla untouched |
+| 2026-09-06 | a volley's landing is *correlated*, so the collapse is `min(n·spread, bodies) × the rest of the landing` | **142 → 144 / 284 → 288** | **0.247 → 0.253** | 16/16 | the first form of the rule above, `1 − (1−L)^n`, treated the volley as `n` independent chances to connect and flattered every one of them: `land.f` is dominated by the travel lead and the arc, and both are common-mode — if the boss has moved, or the shot drops short, the whole volley misses together. Collapsing *all* of `land.f` was the second try and charged a random spread twice, once in `spreadAt` and again in the collapse, putting a single-shot gun above a three-shot one. The split is the answer: the spread is the independent half and `spreadAt` already prices it; everything else is paid once. Harpy's Barrage 362 → **121/s** and out of the rogue top three at every pre-hardmode stage. Best pre-hardmode agreement of the run |
+| 2026-09-06 | a target flagged `still` is not led | 144 / 288 | 0.253 | 16/16 | `vb` read the stage's boss speed and never looked at `b.still`, so the stationary dummy `observed.mjs` uses to isolate the hit clock was being charged a moving boss's travel lead — every dummy trial was compared against a model paying for something the trial never paid. No stage boss carries the flag, so only the trials and the test fixtures move |
+| 2026-09-06 | …but a *seeker* does not waste itself on a closed window: it comes back | **144 / 287** | **0.247** | 16/16 | arriving inside the player's window only wastes a shot that cannot come back, and a homing projectile can — it turns round and keeps hunting until one opens, which is the same fact `hitsPerProjectile` already reads its time-on-target from. Mycoroot's stealth strike throws twelve spores that live sixty seconds apiece at `pen 1`; collapsing them read a batch as worth one spore when it is worth twelve. Reported from the game as ~1100 damage a batch on a single target, against 1008 from the model at a +100% loadout — the strike goes 41 → 214/s and Mycoroot takes #1 in four of its five Calamity sections. 28 weapons throw seeker volleys with no local immunity (Lunar Kunai ×10, Stellar Knife ×10, Empyrean and Illustrious Knives ×8, Polaris Parrotfish ×30). What bounds the queue is the rate cap: a strike is allowed the windows in its own recharge, and twelve fit inside 2.6 s. Costs 0.006 MRR against the guides, all of it Calamity picks reshuffling above other Calamity picks — an in-game reading outranks a proxy |
+| 2026-09-06 | miner: vanilla bounces every `aiStyle 3` boomerang off the first thing it hits, so its `penetrate` is not a path through a crowd | **142 → 146 / 284 → 288** | **0.247 → 0.249** | 16/16 | the reversal is in `Projectile.Damage`, not in any AI a mod writes — `if (aiStyle == 3) { if (ai[0] == 0f) velocity = -velocity; ai[0] = 1f; }` — so the `bounces` flag, which only fired when a mod's own `OnHitNPC` wrote velocity, missed all of them. 41 of the 47 projectiles on that aiStyle carried a pierce they cannot use: every vanilla boomerang from the Wooden Boomerang to the Light Disc, Bananarang, Possessed Hatchet, and Calamity's Sand Dollar, whose `penetrate = -1` had it sweeping six bodies a throw and topping the multi-target rogue list at post-Crabulon. Reported from play: it turns round on the first enemy. Sand Dollar 152 → 41/s on a crowd; vanilla's top-3 loss for the run closes (−2 → 0) and its recall@K goes positive. Best pre-hardmode top-3 of the run |
+| 2026-09-06 | "faster than the boss" asked in the boss's units | **142 → 145 / 284 → 287** | **0.247 → 0.248** | 16/16 | the gate that switches homing on compared `hs` against `vb`, and where `homing.speed` was not read `hs` falls back to the item's shot speed — a step per *update* — while `vb` is px per *tick*. A seeker with extra updates therefore read as slower than what it was chasing and lost the term outright. **36 seekers** were losing it, every one of them comfortably faster than the boss: Mothwing Dagger steps 4 and moves 16 px/tick on `updates: 3`, Nebula Blaze 6 → 18, Cadaver's Cornet 5 → 40. A *read* `homing.speed` is already a chase speed and still answers directly, which a test pins. Reported from play as "we don't even see that homing, but it's there, it's only slight" — and slight is what it prices, ×1.1 on the dagger. Mothwing 112 → 123/s, and against Fishbone Boomerang at the reporter's own loadout the pair now reads 103 vs 187 where the game gave ~100 vs ~230. Costs 1 top-3 |
+| 2026-09-06 | miner: `projectile.ridesOwner`, and a *ring* is placed on you rather than thrown | **142 → 143 / 284 → 286** | **0.247 → 0.248** | 16/16 | the mirror of the `sticks` rule: a projectile that writes its own centre from the owner's, unconditionally, every tick is anchored to the player. On its own that says almost nothing — 129 projectiles do it and nearly all are held beams, swung blades and minions, which `archetypeOf` has already claimed by the time it asks. It earns its keep in one conjunction: anchored, launched at a `shootSpeed` of nothing, and *several at once*. Thorium's Energy Projector is the only weapon in the pack that is all three — `Center = player.Center + rotVec.RotatedBy(rot + Index * 0.5236f)`, twelve Granite Barriers orbiting 30° apart — and with `shootSpeed 0` read as an unread launch speed the model was flying all twelve 340 px to the boss for 178 DPS and the top of pre-Hardmode magic. Reported from play: they orbit and do not home. As `placed` it is 65/s and off the top five: 4 hits/s in contact on its own 15-tick immunity, 30% of the time on the boss, fighting at 80 px instead of 340. Deliberately narrow — a conjunction that happens to have one member, not a rule looking for customers |
+| 2026-09-06 | miner: a projectile that bounces off what it hits is not one the player holds out | **142 → 147 / 284 → 289** | **0.247 → 0.253** | 16/16 | `held` means the player holds it out and it never travels on its own; `bounces` means it flies into things and comes off them. Both cannot be true, and where they are it is the `heldProj` read that is wrong — a charge weapon sets it inside its wind-up branch, and the walk folds a `ChargeProgress < 1f` guard to true on the first tick, so the store reads as unconditional. Three projectiles carried the contradiction; Fishbone Boomerang and Equanimity were coming out **`spear`** — held, and so exempt from travel lead, arc and range altogether — for weapons that are thrown and ricochet between three enemies. Both are `dagger` now. Fishbone reads 62/s against ~100 reported from play, which is 0.62 of it: the model's own median is 0.61, so it has stopped being accidentally exact and started being wrong by exactly as much as everything else. Best result of the run — the first pass to put **Calamity above baseline** (top-3 +3, top-8 +3, MRR 0.219 against 0.217) as well as ieor +4 / +3 |
+| 2026-09-06 | miner: a child gated on a `ModPlayer` gear flag is a requirement on the *loadout* | 147 / 289 | 0.253 | 16/16 | `if (player.accMixtape) spawn six extra notes` — Thorium routes every bard projectile through one `BardProjectile.OnHitNPC`, so five accessory-gated spawns hang off **123 of the 137** bard weapons that spawn anything, 784 children the model paid for whether or not the player owns one of the accessories. No other class has a single one. `requiresRanges` already had the shape for ammo and world seeds; a gear flag is one more case, and `childHits` already zeroes an unmet requirement. The card now says "needs the Mixtape accessory the loadout does not carry". Score-neutral in practice — `CHILD_CAP` was quietly absorbing them — but the weapon page stops claiming hits nobody has the gear for |
+| 2026-09-06 | miner: `analyzeShoot` reads `BardShoot`, the method bards actually override | **147 → 142 / 289 → 284** | **0.253 → 0.247** | 16/16 | `BardItem.Shoot` is an eighteen-byte forwarder to a virtual `BardShoot` with the identical seven-parameter signature, and the machine was not following it through: of 208 bard weapons only 64 had a `Shoot` read and **34** their projectile calls, against 52–62% for every other class that shoots. Reading the real method takes that to 126 and **116**. **And bard agreement got *worse*** — ieor bard top-3 −2, top-8 −3, MRR 0.123 → 0.117 — which is the finding, not a side effect: a sharper damage read can only move away from a guide that is ranking on a different axis. Kept, at the cost of the run's whole pre-hardmode gain, because the alternative is preferring a wrapper method's silence for scoring better against a proxy. See the bard lead below |
+| 2026-09-06 | passing through bodies and lingering on one *add*; they do not multiply | **142 → 144 / 284** | **0.247 → 0.251** | 16/16 | `(1 + R·rep/(R+rep)) × segments` said a projectile lingers its whole remaining life on *every* segment at once — the same 63 ticks spent four times over. One slow bubble inside the Eater of Worlds came out at 20.6 hits where its pass through four segments plus its own repeats is 8.2, and Riveting Tadpole rode that to 1306 DPS at Pre-Evil on a stage-0 bard weapon. `segments + R·rep/(R+rep)` is identical at one body, so nothing about single-target scoring moves. ieor bard top-3 +1 |
+| 2026-09-06 | a seeker holds its target only as far as it out-paces it | 144 / 283 | 0.250 | 16/16 | `window = alive` gave every homing projectile its whole remaining life on target regardless of whether it could keep up. Riveting Tadpole's bubble does 6 px/tick against a boss doing 5 and was credited a hit every ten ticks for a solid second; what it has left for holding station is the share of its own speed not already spent matching the target's, and a seeker four times the boss's speed still keeps three quarters of its life. **334 → 192/s**, which puts bard level with ranged at Pre-boss (192 against 202) where it had been 2–3× every other class. Neutral against the guides |
+| 2026-09-06 | miner: a bard's projectile cap lives in `CanPlayInstrument`, and `ownedCapOf` takes the *governing* one | 144 / 283 | 0.250 | 16/16 | the same renamed-hook problem as `BardShoot`: `maxOutOf` only looked at `CanUseItem`. And the reader returned the *first* comparison it found, which for Marine Wine Glass is the right click's "is there at least one glass to shatter" (`>= 1`) rather than the left click's cap of six — both spell `bge`, so the opcode cannot tell a minimum from a maximum and the larger number is the cap. 196 weapons now carry a read cap. **Not yet worth anything**: see the lead below |
+| 2026-09-06 | a stockpile of its own projectiles bounds the use rate, by the lifetime instead of a round trip | **142 → 145 / 284 → 283** | **0.247 → 0.252** | 16/16 | `CanUseItem` refuses to fire while `N` are alive, so `N` per lifetime is the ceiling whatever the animation allows. It sits in the same arm as the boomerang round trip it generalises, and is narrowed by three facts the record already carries rather than by a list of names: **`maxOut > 1`** (a cap of one is the “only one at a time” idiom a held beam and a boomerang use, and both are scored elsewhere), **not `useAmmo`** (the cap counts `Item.shoot`, but an ammo weapon's `v.primary` is the round's projectile — Firestorm Cannon went to zero on that mismatch), and **neither `returns` nor `bounces`** (a projectile that comes home or ricochets away frees its slot before its timer does, which is why Fishbone Boomerang went to 16/s against ~100 reported from play). What is left is two weapons and both are genuine stockpiles: Marine Wine Glass throws six glasses that last ten seconds and shatters them on the right click, **402 → 76/s**, and System Bane plants five mines lasting eight seconds each, 443 → 249. Positive on every guide — calamity +1/+1 with recall +2, ieor +1/+2 with recall +2, ieor bard top-3 +1 |
+| 2026-09-06 | interpreter: a field the projectile *moves over its life* is not the constant `SetDefaults` gave it (`MUTATES`) | **142 → 145 / 284 → 287** | **0.247 → 0.257** | 16/16 | handing the spawn number back to an AI that branches on one makes the branch statically decidable, and the linear walk then takes a single arm for ever — whatever the other arm does is invisible. `timeLeft` is how it surfaced: Fungicide's split orb homes inside `if (timeLeft < 150)` and spawns at 180, so the guard folded and the `HomeInOnNPC(450f, 6.5f, 20f)` under it was never seen; **26 of the 107** Calamity projectiles that call the helper carried no homing at all, nearly every one a split or secondary shot that starts seeking partway through (AquashardSplit, ClamorRifleProjSplit, Blood2, Brimlash2, Prismalline3). The set was then picked by *measuring* which fields the AIs read back rather than by guessing: `alpha` and `Opacity` fade, `penetrate` drops on each pierce, `soundDelay` and the frame counters tick, `friendly` and `tileCollide` are switched mid-flight. **`width`, `height` and `scale` are deliberately excluded** — they are read six thousand times over for geometry (dust offsets, hitbox maths, blast radii) and an unknown there loses real arithmetic instead of freeing a branch. Stores are unaffected; this is only what a *load* hands back. Homing 641 → 701, with a **read** speed and inertia rather than the pessimistic knobs 105 → 136; projectiles with children 1,223 → 1,244, with debuffs 1,367 → 1,375, referenced 3,970 → 4,008. Best pre-hardmode agreement of the run; Calamity MRR 0.217 → 0.228 |
+| 2026-09-06 | miner: a `velocity / N` is only a steering blend when it goes **back into the velocity** | 141 → 146 / 290 → 292 (calamity 101 → 106 / 205 → 207) | 0.210 → 0.216 | 122/142 | the complaint that opened this: the Acid Gun reads as homing and does not home in game. Its stream's whole AI is a dust trail — `for (i = 0; i < 3; i++) { var off = velocity / 3f * i; NewDust(position - off, …) }` — and the blend reader took the `/ 3f` for the `(velocity * (N-1) + toTarget * speed) / N` shape, inertia and all. The tell is where the result goes: the real blend is assigned to `Projectile.velocity`, the dust one is not, so the division is now *carried* (`VEL_BLEND`, the same deferral `VEL_MUL` already used for drag) and only becomes homing at the store. A second condition on the same shape: the numerator must be a velocity **something was added to** (`VEL_SUM`), which is what separates a blend from `velocity / MaxUpdates` on the first frame. **26 projectiles** stop homing and none start; 9 of the 11 spot-checked never reference an NPC anywhere in their AI, so they could not have homed under any reading, and the other two divide their velocity to place a child projectile or a dust. 20 weapons are affected — Night's Ray, Auralis, Brimstone Fury, Ichor Spear, Kingsbane, Vesuvius, Thorium's bard instruments — and every one of them is a straight-line shot. The gate move is the largest of the session: calamity top-3 **101 → 106**, top-8 205 → 207, recall@K 147 → 150, MRR up on both guides. Left alone: a bare `velocity / N` stored back into velocity *is* a decay, but reading it as drag charged Spadefish a permanent ×0.5 for a one-frame launch fixup the branch tracker did not mark conditional, so it stays unread |
+| 2026-09-06 | miner: `projectile.shared` — an immunity window that belongs to the *type*, not to the projectile; a spread volley of them lands once | 141 / 289 (calamity 104 → 106 / 208 → 207) | 0.210 → 0.211 | 122/142 | the complaint that opened this: SOTS's Fizzle Star was the **#1 pre-boss magic weapon at 54/s** for a star that fizzles out at shotgun range. Its malfunction fires seven at 200% damage and the model paid all seven, because `usesLocalNPCImmunity` and `usesIDStaticNPCImmunity` were both being flattened into `local` — and the second one gives **one window to every projectile of the type at once**, so a volley of them is in the same position as a volley with no window at all: the first to arrive shuts it on the rest. 278 of 3,938 projectiles carry the flag. Gated on the group having a *spread*, which is what says the volley left the weapon in one instant: Blood Bath's three beams share a window too, but they are spawned 100 px apart above the player and rain down one after another, and collapsing those took a guide pick from 171 to 65/s for a window they never meet inside. Fizzle Star 54 → **23/s**, #1 → #9 of the pre-boss magic pool. Roughly a wash on the gate (calamity top-3 +2, recall@K +1, top-8 −1; ieor top-3 −1, top-8 −1, recall@K +1) — the mechanic is the argument, not the metric. Standing gap: the star also kills itself on a random check against its own age and wobbles its heading every five updates, so the model still flies it 667 px in a straight line on a `timeLeft` of 1200 it never reaches |
+| 2026-09-06 | miner: `item.cooldown` / `item.altCooldown` — the buff a weapon refuses to be used through, read out of `CanUseItem`; and health spent is survival spent, not just a resource | 141 / 289 | 0.210 | 122/142 | the complaint that opened this: Sanguine Despair is not punished enough for what it does to the player. Two things were paying for it. **(a)** It was being graded on its *right click* — Surging Vampirism, 250% damage — at two casts a second, when the code says `CanUseItem` returns false while `HasBuff<SurgingVampirismCooldown>` inside the `altFunctionUse == 2` arm and `Shoot` puts that buff on for `1800` ticks. Both halves are plain IL, so the cooldown is mined rather than read out of the tooltip's prose: **40 right-click cooldowns and 11 plain use cooldowns** across the pack, agreeing exactly with the tooltip wherever the tooltip states one (12/12 s, 8/8, 4/4, 20/20) and finding many it never did. Only the code says *which click* waits, which is why the tooltip regex added first (`stats.altCooldown`, kept as the fallback) could not be trusted on its own. **(b)** The health pool priced how often the weapon can be fired and stopped there — but at that rate it is eating *all* of the player's regeneration, and that regeneration was what kept them alive. The share of the bar it drinks now counts as `exposure`, the same term that prices standing in the boss's hitbox, so the two do not add and whichever is worse governs. Sanguine Despair 40 → **22/s**, #4 → #12 of the 70 magic weapons at its stage; Corpus Avertor 289 → 222, Der Freischütz 29 → 25. Gate-neutral to three decimals — no guide ranks any of the five life-cost weapons or the Stars Above ultimates where it shows, so the mechanic is the whole argument. Known ceiling (`ponytail:`): the drain only counts where health is the pool that *governs*, so Blood Boiler takes 77% of the bar under a tighter mana cost and goes uncharged |
+| 2026-09-06 | a beam held on the boss is charged the player immunity window **once**, and a piercing beam is not spent on one body of a crowd | 145 / 287 | 0.217 | 128/141 | the complaint that opened this: Last Prism is not scored like an infinite-pierce beam. Two things were charging the same fact twice. **(a)** A volley with no immunity of its own is collapsed to one arrival in `group` (`bunched`) — right for a shotgun, wrong for anything the player *holds*, because the contact path then prices that same window again as `60 / IMMUNITY` hits a second with `stacks` capping how many bodies it can be on. The Prism's six beams came out at **1 of 4.6 arriving** and were then rated at 6 hits a second on that one: **203 → 303/s** single-target, and only 3 weapons in the pack move (Vibrant Pistol ×1.56, Rifle Spear ×1.01), because it takes a *held* weapon throwing several windowless projectiles to hit the double charge. **(b)** `CROWD_WASTE` (×0.6, "spent on one body of the six") was charged to every contact weapon in `multi`, beams included. A piercing beam, field or lash lies **along** the crowd, and the mined record cannot tell it from a blade — Terragrim and the Prism's holdout are both `aiStyle 75`, infinite pierce, no immunity of their own — so the class decides: a held *melee* weapon is a drill or a blade in your hands, a held magic or ranged one is the beam it puts across the room (`sweepsCrowd`). 145 weapons move in `multi` only: Vilethorn, Nettle Burst, Crystal Vile Shard, Laser Machinegun, Charged Blaster Cannon, the rain clouds. Freeing the *melee* held weapons too was measured and cost vanilla melee 1 top-3 (Terragrim and Sawtooth Shark over Blade of Grass), which is the rule earning its class test. **(c)** The contact clock is applied to `stacks`, not to what the parts above multiply out to, and that step was never stated: **98 weapons' cards did not multiply out to their own score** (contact archetypes 128 → 30 of the 5,520 graded), Last Prism showing ×6 beams and ×6 hits/s for a number three times smaller. Gate: identical to three decimals, pre-hardmode. Not taken: giving a sweeping beam a clock **per body** (`stacks × segments`, the pierce the shot path already pays) — Vilethorn 16 → 96 in a crowd, and 17 regressions across ieor and vanilla magic for a claim the guides do not make |

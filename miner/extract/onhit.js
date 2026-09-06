@@ -19,6 +19,10 @@ const HIT_HOOKS = /^(OnHitNPC(?:WithProj|WithItem)?|ModifyHitNPC(?:WithProj|With
 // trigger rate — you get hit a handful of times a fight, not three times a second — so spawns from
 // them are tagged and graded as a rare retaliation, not as a proc.
 const HURT_HOOKS = /^(OnHitByNPC|OnHitByProjectile|PostHurt|OnHurt|ModifyHurt)$/;
+// …and the weapon's own shot: `if (spearNormal) NewProjectile(…, SpearExtra, damage * 35 / 100, …)`
+// in a GlobalItem's `Shoot` is an accessory adding a projectile to every attack you make, which is
+// the whole of what Thorium's spear tips and half its sheaths do.
+const SHOOT_HOOKS = /^Shoot$/;
 const GLOBALS = ['GlobalProjectile', 'GlobalItem', 'GlobalNPC'];
 
 /** @returns {Map<string, Array<{ type: string, damage: number|null, cls?: string, stealth?: true, cooldown?: number }>>} flag → spawns */
@@ -35,7 +39,8 @@ export function extractOnHitSpawns(asm, { tml }) {
     if (!kind) continue;
     for (const md of td.methods) {
       const hurt = HURT_HOOKS.test(md.name);
-      if ((!hurt && !HIT_HOOKS.test(md.name)) || !asm.methodBody(md)) continue;
+      const shoot = SHOOT_HOOKS.test(md.name) && kind === 'global';
+      if ((!hurt && !shoot && !HIT_HOOKS.test(md.name)) || !asm.methodBody(md)) continue;
       let statCls = null;
       const spawns = []; // this method's, to receive a cooldown set in the same flag region
       const cooldowns = new Map(); // flag → ticks
@@ -86,6 +91,10 @@ export function extractOnHitSpawns(asm, { tml }) {
                 cls, stealth: tags.some((t) => /stealth/i.test(t)) || undefined,
                 crit: !hurt && tags.includes('hit:crit') || undefined, chance: chance < 1 ? Math.round(chance * 1000) / 1000 : undefined,
                 hurt: hurt || undefined,
+                shoot: shoot || undefined,
+                // `if (ItemID.Sets.Spears[item.type])` around the block: the accessory only fires on
+                // the weapons it is for, and which weapon you hold is not a question this can answer
+                gated: (shoot && ctx.conditional) || undefined,
               };
               statCls = null;
               for (const flag of flags) {

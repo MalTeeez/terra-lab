@@ -47,8 +47,10 @@ export function loadLocalization(tmod) {
     }
   }
 
-  // className → best parent path. Paths under an `Items` segment win over others (buffs, NPCs).
+  // className → best parent path, per kind. Paths under an `Items` segment win for items, ones
+  // under `Buffs` for buffs — a mod that names a buff after the potion that grants it has both.
   const byClass = new Map();
+  const byBuffClass = new Map();
   for (const key of keys.keys()) {
     if (!key.endsWith('.DisplayName')) continue;
     const parent = key.slice(0, -'.DisplayName'.length);
@@ -56,6 +58,9 @@ export function loadLocalization(tmod) {
     const score = /\.Items\./.test(parent) ? 2 : /Items/.test(parent) ? 1 : 0;
     const prev = byClass.get(cls);
     if (!prev || score > prev.score) byClass.set(cls, { parent, score });
+    const bScore = /\.Buffs\./.test(parent) ? 2 : /Buffs/.test(parent) ? 1 : 0;
+    const bPrev = byBuffClass.get(cls);
+    if (!bPrev || bScore > bPrev.score) byBuffClass.set(cls, { parent, score: bScore });
   }
 
   return {
@@ -71,6 +76,12 @@ export function loadLocalization(tmod) {
         tooltip: keys.get(`${p}.Tooltip`),
         setBonus: keys.get(`${p}.SetBonus`),
       };
+    },
+    /** A ModBuff's name and description — what a potion granting it is actually worth. */
+    buff(className) {
+      const hit = byBuffClass.get(className);
+      if (!hit) return {};
+      return { name: keys.get(`${hit.parent}.DisplayName`), desc: keys.get(`${hit.parent}.Description`) };
     },
   };
 }

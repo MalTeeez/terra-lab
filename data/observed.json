@@ -1,0 +1,79 @@
+{
+ "protocol": "Each trial isolates one term. Record what the Stat Meter and the screen show, not a conclusion: the exact item and prefix, the target (a stationary dummy for the hit clock, the stage's boss for uptime), the distance held, the shown damage and crit, the trial length in seconds, the raw hit count or non-crit damage total, how long the projectile visibly overlapped the target, how many projectiles were out, single target or crowd. Three to five runs per mechanic, mean and spread. A held projectile with no local immunity tests the 10-tick fallback; one with a known local cooldown is the control that must reproduce 60/local. Uptime is a moving-boss trial, measured apart from the clock. A rogue is four trials: continuous spam, one isolated strike, recharge while idle and while moving, and an alternating schedule.",
+ "player": {
+  "stage": 4,
+  "loadout": {
+   "damage": 0.8109,
+   "crit": 12
+  },
+  "stealthMax": 0.5,
+  "note": "Stat Meter, post-Giant-Clam: 181.09% thrower damage, 16% crit (the 4% base included), Max Stealth 50"
+ },
+ "trials": [
+  {
+   "name": "Ashen Stalactite",
+   "prefix": "CalamityMod:Flawless",
+   "mode": "spam",
+   "target": "boss",
+   "shown": 202,
+   "crit": 21,
+   "dps": 190,
+   "note": "close range"
+  },
+  {
+   "name": "Contaminated Bile",
+   "prefix": "CalamityMod:Sleek",
+   "mode": "stealth",
+   "target": "boss",
+   "shown": 70,
+   "crit": 16,
+   "dps": 230,
+   "note": "close range"
+  },
+  {
+   "name": "Thorium Dagger",
+   "prefix": "CalamityMod:Sharp",
+   "mode": "spam",
+   "target": "boss",
+   "shown": 141,
+   "crit": 16,
+   "dps": 130,
+   "note": "mid range, stationary"
+  },
+  {
+   "name": "Scourge of the Desert",
+   "prefix": "CalamityMod:Flawless",
+   "mode": "stealth",
+   "target": "boss",
+   "shown": 67,
+   "crit": 21,
+   "dps": 300,
+   "note": "single target"
+  },
+  {
+   "name": "Harpy's Barrage",
+   "mode": "spam",
+   "target": "boss",
+   "stage": 9,
+   "loadout": {
+    "damage": 0.667,
+    "crit": 12
+   },
+   "shown": 60,
+   "note": "post-Crabulon, reported from the tooltip. The loadout was not captured, so it is back-solved from this very reading (36 x 1.667 = 60) and the shown column is circular for this row - what the trial is really worth is the pair with the stealth row below, whose ratio is loadout-free"
+  },
+  {
+   "name": "Harpy's Barrage",
+   "mode": "stealth",
+   "target": "boss",
+   "stage": 9,
+   "loadout": {
+    "damage": 0.667,
+    "crit": 12
+   },
+   "stealthMax": 1,
+   "shown": 200,
+   "note": "the same weapon at a full stealth bar: 200/60 = 3.33x. The model gives 3.70 at Max Stealth 100 and 3.16 at 80, so this pins `stealthMultiplier` only as far as the player's Max Stealth is known - it was not recorded. Worth re-taking with the Stat Meter's Max Stealth written down"
+  }
+ ]
+}

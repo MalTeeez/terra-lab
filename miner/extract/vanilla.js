@@ -6,12 +6,13 @@
  *              Player.UpdateArmorSets (per head/body/legs triple)
  *   recipes    Recipe.SetupRecipes and its furniture helpers
  *   drops      ItemDropDatabase.Register*  (see loot.js)
- *   ids        ItemID / NPCID / TileID constant maps
+ *   ids        ItemID / NPCID / TileID / ProjectileID constant maps
  */
 import Hjson from 'hjson';
 import { classOf } from '../classify.js';
 import { playerHooks, normalizeEffects } from './effects.js';
 import { ITEM, Machine, PLAYER, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
+import { ET } from '../clr/sig.js';
 import { extractVanillaDrops } from './loot.js';
 import { extractRecipes } from './recipes.js';
 import { loopTracker, projTypeArg, vanillaProjectiles } from './projectiles.js';
@@ -47,7 +48,7 @@ export function constMap(tml, typeName) {
   return td ? tml.constants(td) : new Map();
 }
 
-/** Walk Item.SetDefaults1..5 and collect per-type field stores. */
+/** Walk Item.SetDefaults1..5 (and the food block they hand off to) and collect per-type field stores. */
 export function vanillaItemDefaults(tml) {
   const itemTd = tml.typeByName.get('Terraria.Item');
   const byType = new Map();
@@ -86,8 +87,12 @@ export function vanillaItemDefaults(tml) {
     },
     onStaticLoad: tmlStaticLoadHook,
   });
+  // …and `SetFoodDefaults`, which `SetDefaults5` hands every food item off to: a dispatch of its
+  // own, so nothing in the five walked methods sets a single field of it. Without it every fruit,
+  // dish and drink in the game is missing — they are Well Fed potions, and the alcohol recipes that
+  // name one (Purple Haze takes a Plum) had an ingredient the dataset could not name.
   for (const m of itemTd.methods) {
-    if (!/^SetDefaults\d$/.test(m.name)) continue;
+    if (!/^SetDefaults\d$|^SetFoodDefaults$/.test(m.name)) continue;
     machine.run(m, ITEM, [KEY0]);
   }
   // `case 51: type = 52; goto case 52;` — 51 takes 52's defaults, then its own overrides.
@@ -107,6 +112,7 @@ export function vanillaEffects(tml) {
   const playerTd = tml.typeByName.get('Terraria.Player');
   const perItem = new Map(); // type → deltas[]
   const perSet = new Map(); // "h:b:l" → { deltas, bonusKey }
+  const perSetSpawns = new Map(); // "h:b:l" → [{ type, damage }]
   const setKeys = new Map();
   const itemArg = { k: 'obj', name: 'itemArg', props: {} };
 
@@ -139,6 +145,22 @@ export function vanillaEffects(tml) {
         if (callee.name === 'GetTextValue' && typeof cargs[0] === 'string') return { k: 'text', key: cargs[0] };
         if (callee.name === 'GetText' && typeof cargs[0] === 'string') return { k: 'text', key: cargs[0] };
         if (ctx.recv?.k === 'text' && (callee.name === 'Format' || callee.name === 'get_Value' || callee.name === 'FormatWith')) return ctx.recv;
+        // the minion a set bonus keeps out — Stardust's guardian, spawned in `UpdateArmorSets` behind
+        // `ownedProjectileCounts[623] < 1`, the same shape a mod's `UpdateArmorSet` uses. `Type` and
+        // `Damage` are the first two consecutive ints of the call, which holds for both overloads
+        // (the four-float one and the two-Vector2 one).
+        if (target === 'set' && /^NewProjectile(?:Direct)?$/.test(callee.name)) {
+          const ps = callee.sig?.params ?? [];
+          const i = ps.findIndex((p, k) => p.et === ET.I4 && ps[k + 1]?.et === ET.I4);
+          if (i >= 0 && isNum(cargs[i]) && cargs[i] > 0 && isNum(cargs[i + 1]) && cargs[i + 1] > 0) {
+            for (const key of setKeys3(ctx)) {
+              const l = perSetSpawns.get(key) ?? [];
+              if (!l.some((s) => s.type === `v:${cargs[i]}`)) l.push({ type: `v:${cargs[i]}`, damage: Math.round(cargs[i + 1]) });
+              perSetSpawns.set(key, l);
+            }
+          }
+          return UNKNOWN;
+        }
         return hooks.onCall(callee, cargs, ctx);
       },
       onStaticLoad: hooks.onStaticLoad,
@@ -155,7 +177,40 @@ export function vanillaEffects(tml) {
   const sets = new Map();
   for (const [key, deltas] of perSet) sets.set(key, { effects: normalizeEffects(deltas), bonusKey: setKeys.get(key) ?? null });
   for (const [key, text] of setKeys) if (!sets.has(key)) sets.set(key, { effects: null, bonusKey: text });
+  for (const [key, spawns] of perSetSpawns) sets.set(key, { ...sets.get(key), effects: { ...(sets.get(key)?.effects ?? {}), spawns } });
   return { items, sets };
+}
+
+/**
+ * What every vanilla buff does to the player, from `Player.UpdateBuffs` — one long if-chain over
+ * `player.buffType[i]`, walked with the same case tracker the per-item equip effects use. The key
+ * is that array element (the `keys` tag in interp.js), so every store inside a block is filed under
+ * the buff id that block tests for. This is where a vanilla potion's stats come from: the item
+ * itself only names a buff.
+ * @returns {Map<number, object|null>} BuffID → effects
+ */
+export function vanillaBuffs(tml) {
+  const playerTd = tml.typeByName.get('Terraria.Player');
+  const m = playerTd?.methods.find((x) => x.name === 'UpdateBuffs' && tml.methodBody(x));
+  const out = new Map();
+  if (!m) return out;
+  const perBuff = new Map();
+  const hooks = playerHooks((d, ctx) => {
+    for (const c of ctx.cases ?? []) if (c.slot === 0 && isNum(c.value)) push(perBuff, c.value, d);
+  });
+  const machine = new Machine(tml, {
+    tml,
+    linear: true,
+    maxDepth: 2,
+    budget: 2_000_000,
+    onLoad: (recv, name, ctx) => (recv === PLAYER && name === 'buffType' ? { k: 'arr', tag: 'keys', slot: 0, items: [] } : hooks.onLoad(recv, name, ctx)),
+    onStore: hooks.onStore,
+    onCall: hooks.onCall,
+    onStaticLoad: hooks.onStaticLoad,
+  });
+  try { machine.run(m, PLAYER, [0]); } catch { /* keep what it read */ }
+  for (const [id, deltas] of perBuff) out.set(id, normalizeEffects(deltas));
+  return out;
 }
 
 function push(map, key, d) {
@@ -275,7 +330,7 @@ const num = (v) => (isNum(v) ? v : undefined);
 
 /**
  * Everything vanilla the dataset needs.
- * @returns {{ items: object[], recipes: object[], drops: object[], ids: { item: Map, npc: Map, tile: Map }, loc: Map }}
+ * @returns {{ items: object[], recipes: object[], drops: object[], ids: { item: Map, npc: Map, tile: Map, projectile: Map }, loc: Map }}
  */
 export function extractVanilla(tml) {
   const loc = vanillaLocalization(tml);
@@ -292,6 +347,17 @@ export function extractVanilla(tml) {
   const nameById = new Map();
   for (const [name, id] of itemIds) if (isNum(id) && id > 0 && !nameById.has(id)) nameById.set(id, name);
 
+  // the buff table: what a potion grants, by BuffID
+  const buffFx = vanillaBuffs(tml);
+  const buffNameById = new Map();
+  for (const [name, id] of constMap(tml, 'Terraria.ID.BuffID')) if (isNum(id) && id > 0 && !buffNameById.has(id)) buffNameById.set(id, name);
+  const buffs = [...buffNameById].map(([id, internal]) => ({
+    id: `v:${id}`,
+    name: loc.get(`BuffName.${internal}`) ?? internal,
+    desc: loc.get(`BuffDescription.${internal}`) ?? '',
+    effects: buffFx.get(id) ?? null,
+  }));
+
   const items = [];
   for (const [type, rec] of defaults) {
     if (type <= 0) continue;
@@ -305,6 +371,8 @@ export function extractVanilla(tml) {
     else if (f.bodySlot > 0) slot = 'body';
     else if (f.legSlot > 0) slot = 'legs';
     else if (f.accessory === 1) slot = 'accessory';
+    // something you drink or eat for a buff: a potion, a flask, a plate of food
+    else if (f.consumable === 1 && f.buffType > 0 && !(f.createTile > 0)) slot = 'potion';
     else if (f.createTile > 0 || f.createWall > 0 || f.createTile === -1 && f.consumable) slot = 'placeable';
     else if (f.ammo > 0) slot = 'misc';
     else if (f.damage > 0 && !(f.buffType > 0 && !f.useStyle)) slot = 'weapon';
@@ -343,6 +411,8 @@ export function extractVanilla(tml) {
       scale: num(f.scale),
       pick: num(f.pick) > 0 ? f.pick : undefined,
       makeNPC: num(f.makeNPC) > 0 ? `v:${f.makeNPC}` : undefined,
+      buff: num(f.buffType) > 0 ? `v:${f.buffType}` : undefined,
+      buffTime: num(f.buffTime),
       fire: VANILLA_MULTISHOT[internal] !== undefined ? { calls: [{ type: 'shoot', count: VANILLA_MULTISHOT[internal], dmgMul: 1, velMul: 1, abs: null, spread: VANILLA_MULTISHOT[internal] > 1 ? 0.2 : 0, variant: 'both' }], returnsTrue: false, defaultShot: { spam: false, stealth: false }, hasShoot: true } : shots.get(type),
       rarity: num(f.rare) ?? 0,
       value: num(f.value),
@@ -383,10 +453,11 @@ export function extractVanilla(tml) {
 
   return {
     items,
+    buffs,
     recipes: vanillaRecipes(tml),
     drops: extractVanillaDrops(tml),
     projectiles: vanillaProjectiles(tml),
-    ids: { item: itemIds, npc: npcIds, tile: tileIds },
+    ids: { item: itemIds, npc: npcIds, tile: tileIds, projectile: constMap(tml, 'Terraria.ID.ProjectileID') },
     loc,
   };
 }

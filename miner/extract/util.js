@@ -20,6 +20,29 @@ export function findInherited(asm, td, name, paramCount = null) {
   return null;
 }
 
+/**
+ * The same walk, crossing into the assembly of the mod an addon extends when the base chain leaves
+ * this one — an addon's bard instrument overrides `SafeSetBardDefaults` and nothing else, so its
+ * `SetDefaults` is Thorium's, several types up and in Thorium's own assembly.
+ * @returns {{ method: object, owner: import('../clr/metadata.js').Assembly }|null}
+ */
+export function findInheritedIn(asm, td, name, paramCount = null) {
+  let cur = td;
+  let owner = asm;
+  for (let i = 0; i < 32 && cur; i++) {
+    const m = cur.methods.find((x) => x.name === name && owner.methodBody(x) && (paramCount === null || owner.methodSig(x).params.length === paramCount));
+    if (m) return { method: m, owner };
+    const base = owner.baseOf(cur);
+    if (base?.kind === 'typeDef') { cur = base.def; continue; }
+    const other = base?.kind === 'typeRef' ? owner.siblings?.get(base.assembly) : null;
+    const def = other && other !== owner ? other.typeByName.get(base.fullName) : null;
+    if (!def) return null;
+    owner = other;
+    cur = def;
+  }
+  return null;
+}
+
 /** All `ModContent.<fn><T>()` type arguments referenced by a method body (default: ItemType). */
 export function contentRefs(asm, method, fn = 'ItemType') {
   const body = asm.methodBody(method);

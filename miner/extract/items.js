@@ -4,10 +4,10 @@
 import { decodeIL, ldcValue } from '../clr/il.js';
 import { deCamel } from './localization.js';
 import { ITEM, Machine, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
-import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, refId } from './util.js';
+import { TYPE_ABSTRACT, contentRefs, derivesFromTml, findInherited, findInheritedIn, refId } from './util.js';
 import { extractItemEffects } from './effects.js';
-import { ownedCapOf } from './guards.js';
-import { analyzeShoot } from './shoot.js';
+import { buffCooldownOf, ownedCapOf } from './guards.js';
+import { analyzeShoot, lifeCostOf } from './shoot.js';
 import { projRef } from './projectiles.js';
 import { extractWingStats } from './wings.js';
 
@@ -19,7 +19,7 @@ export const isModItemType = (asm, td) => derivesFromTml(asm, td, 'ModItem');
  * Evaluate SetDefaults for one ModItem TypeDef.
  * @returns {{ fields: Record<string, any>, calls: Set<string>, damageClass?: string, cloneOf?: number|string }}
  */
-export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
+export function evalSetDefaults(asm, td, { tml, ammoIds = null, cfg = null }) {
   const rec = { fields: {}, calls: new Set() };
   const machine = new Machine(asm, {
     tml,
@@ -29,6 +29,12 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
     // is where Ragnarok's scythes get their healer damage class and half their stats)
     crossAsm: true,
     onStore(recv, name, value) {
+      // Thorium's thrower class runs on an exhaustion bar, and `ThoriumItem.isThrowerNon` is what
+      // opts a weapon into it: `ThoriumGlobalItem.Shoot` charges `useTime * 2` per shot against a
+      // pool of 1200 that comes back at 1/tick, and `ThoriumItem.ModifyWeaponDamage` multiplies
+      // the weapon's damage down to nothing once the bar caps. Consumable thrown items are not
+      // marked and do not pay it. Read here, priced in `dps.js` next to mana and void.
+      if (recv === THIS && name === 'isThrowerNon' && value === 1) { rec.throwerExhaust = true; return; }
       if (recv !== ITEM) return;
       if (name === 'DamageType') {
         if (value?.k === 'dc') {
@@ -49,12 +55,19 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
     },
     onLoad(recv, name) {
       if (recv === ITEM) return rec.fields[name] ?? UNKNOWN;
-      return undefined;
+      return cfg?.onLoad(recv, name);
     },
     onCall(callee, args, ctx) {
-      const hooked = tmlStaticHook(callee, args, ctx);
+      // a mod's balance config scales its own weapons in SetDefaults: SOTSBardHealer multiplies
+      // every thrower weapon's damage by `BalanceConfig.thrower`, and an unread config left the
+      // damage unknown, which dropped the weapon out of the dataset entirely
+      const hooked = cfg?.onCall(callee, args, ctx) ?? tmlStaticHook(callee, args, ctx);
       if (hooked !== undefined) return hooked;
       const decl = callee.declaringType?.fullName ?? '';
+      // Thorium's bards spend inspiration a use, set through a property on `BardItem` rather than a
+      // field on `Item`, so nothing was reading it and the whole class was swinging for free. It is
+      // the pool `phases.js` already names beside mana, Void and exhaustion.
+      if (callee.name === 'set_InspirationCost' && isNum(args[0]) && args[0] > 0) { rec.inspiration = args[0]; return UNKNOWN; }
       if (decl === 'Terraria.Item' && ctx.recv === ITEM) {
         rec.calls.add(callee.name);
         if (callee.name === 'DefaultToPlaceableTile' || callee.name === 'DefaultToPlaceableWall') {
@@ -73,11 +86,11 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null }) {
     },
     onStaticLoad(f) {
       if (ammoIds && (f.declaringType?.fullName ?? '') === 'Terraria.ID.AmmoID') return ammoIds.get(f.name) ?? UNKNOWN;
-      return tmlStaticLoadHook(f);
+      return cfg?.onStaticLoad(f) ?? tmlStaticLoadHook(f);
     },
   });
-  const sd = findInherited(asm, td, 'SetDefaults');
-  if (sd) machine.run(sd, THIS, []);
+  const sd = findInheritedIn(asm, td, 'SetDefaults');
+  if (sd) machine.run(sd.method, THIS, [], sd.owner);
   return rec;
 }
 
@@ -91,7 +104,12 @@ const num = (v) => (isNum(v) ? v : undefined);
  * @returns {number|undefined}
  */
 export function maxOutOf(asm, td) {
-  return ownedCapOf(asm, findInherited(asm, td, 'CanUseItem'));
+  // …and a bard states it in `CanPlayInstrument`, which is where `BardItem` routes the question —
+  // the same renamed-hook problem as `BardShoot`. Marine Wine Glass caps its glasses at six there
+  // (`ownedProjectileCounts[Item.shoot] < 6`) and that cap *is* the weapon: you throw six, then
+  // right-click to shatter them all. Unread, the model let it throw one every ten ticks for ever,
+  // which is what kept a Pre-Evil bard weapon top of its class for fifteen stages.
+  return ownedCapOf(asm, findInherited(asm, td, 'CanPlayInstrument') ?? findInherited(asm, td, 'CanUseItem'));
 }
 
 /** A format argument as text: 0.05 → "0.05", `ToPercent(0.05, "N1")` → "5.0"; unknown values keep their placeholder. */
@@ -112,6 +130,12 @@ function formatArgsOf(asm, td, { tml }) {
       const name = callee.name;
       const decl = callee.declaringType?.fullName ?? '';
       if ((name === 'get_Tooltip' || name === 'get_DisplayName') && /ModItem$|ModType$/.test(decl)) return { k: 'loc', key: name.slice(4), args: null };
+      // `SheathDataLoader.Get<LeatherSheathData>()`: a singleton of the type asked for, so the
+      // numbers the tooltip formats in (`DamageMultiplier`, `Cooldown`) come off the right class
+      if (name === 'Get' && !callee.sig.hasThis && callee.typeArgs?.length === 1) {
+        const td = asm.typeByName.get(String(callee.typeArgs[0]));
+        if (td) return { k: 'obj', name: td.name, td, props: {} };
+      }
       if (name === 'GetLocalization' && typeof args[1] === 'string') return { k: 'loc', key: args[1], args: null };
       if (name === 'GetLocalization' && typeof args[0] === 'string') return { k: 'loc', key: args[0], args: null };
       if ((name === 'WithFormatArgs' || name === 'Format') && (ctx.recv?.k === 'loc' || args[0]?.k === 'loc')) {
@@ -132,7 +156,7 @@ function formatArgsOf(asm, td, { tml }) {
   const tt = findInherited(asm, td, 'get_Tooltip');
   if (tt) {
     try {
-      const v = new Machine(asm, { tml, concreteType: td, budget: 5000, maxDepth: 3, ...hooks(() => {}) }).run(tt, THIS, []);
+      const v = new Machine(asm, { tml, concreteType: td, budget: 8000, maxDepth: 4, ...hooks(() => {}) }).run(tt, THIS, []);
       if (v?.k === 'loc' && v.args?.length) out.tooltipArgs = v.args;
     } catch { /* keep going */ }
   }
@@ -155,6 +179,9 @@ export function slotOf(rec, equip) {
   if (f.accessory === 1 || f.accessory === true) return 'accessory';
   if (equip.includes('Wings') || f.wingSlot > 0) return 'accessory';
   if (rec.calls.has('DefaultToPlaceableTile') || rec.calls.has('DefaultToPlaceableWall') || f.createTile > 0 || f.createWall > 0) return 'placeable';
+  // something you drink or eat for a buff (`buffType` is a mod's own `BuffType<T>()` as often as it
+  // is an id). A pet or a mount also names a buff, but you keep the item.
+  if (f.consumable === 1 && (f.buffType?.k === 'type' || f.buffType > 0) && !rec.calls.has('DefaultToVanitypet') && !rec.calls.has('DefaultToMount')) return 'potion';
   if (rec.calls.has('DefaultToVanitypet') || rec.calls.has('DefaultToMount') || (f.buffType > 0 && !(f.damage > 0))) return 'misc';
   if (f.ammo > 0 || rec.calls.has('DefaultToFood')) return 'misc';
   if (f.damage > 0) return 'weapon';
@@ -221,7 +248,16 @@ export function archetypeOf(item, ps, cls) {
   // A repeater is a bow that keeps firing while the button is held.
   const byAmmo = AMMO_ARCH[item.useAmmo];
   if (byAmmo) return byAmmo === 'bow' && item.autoReuse ? 'repeater' : byAmmo;
-  if (p?.still || PLACED_AI.has(p?.ai)) return 'placed';
+  // …and a *ring* is placed too, on you rather than on the ground: several projectiles anchored to
+  // the player's own centre (`ridesOwner`) and launched at a `shootSpeed` of nothing. Any one of
+  // those facts alone says little — 129 projectiles anchor to the player, and nearly all are held
+  // beams, swung blades and minions, which the checks above have already claimed — but together
+  // they are a barrier you carry. Thorium's Energy Projector is the one weapon in the pack that is
+  // all three: twelve Granite Barriers orbiting at 30° apart, which the model was flying 340 px to
+  // the boss twelve at a time for 178 DPS and the top of pre-Hardmode magic. Narrow on purpose; it
+  // is a conjunction that happens to have one member, not a rule looking for customers.
+  const ring = p?.ridesOwner && !(item.shootSpeed > 0) && (item.fire?.calls ?? []).some((c) => (c.count ?? 1) > 1);
+  if (p?.still || ring || PLACED_AI.has(p?.ai)) return 'placed';
   // A held projectile the game itself calls *true melee* is a blade in the player's hands, not a
   // beam across the room: `TrueMeleeDamageClass` is Terraria's own word for damage the weapon deals
   // at contact range, and every weapon in the pool carrying it on a held projectile is one — the
@@ -271,14 +307,14 @@ const LINGER_TICKS = 600;
  * @param {import('../clr/metadata.js').Assembly} asm
  * @param {{ tml: import('../clr/metadata.js').Assembly, loc: ReturnType<typeof import('./localization.js').loadLocalization>, modId: string, effects?: boolean }} ctx
  */
-export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = null }) {
+export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = null, cfg = null }) {
   const out = [];
   for (const td of asm.types) {
     if (td.flags & TYPE_ABSTRACT) continue;
     if (td.name.includes('`') || td.name.startsWith('<')) continue;
     if (!isModItemType(asm, td)) continue;
 
-    const rec = evalSetDefaults(asm, td, { tml, ammoIds });
+    const rec = evalSetDefaults(asm, td, { tml, ammoIds, cfg });
     // a void weapon is its vanilla class wearing the void family's coat: keep the class it set
     // itself as the subclass, and name the void class it actually ends up with
     const VOID_OF = { Melee: 'VoidMelee', Ranged: 'VoidRanged', Magic: 'VoidMagic', Summon: 'VoidSummon' };
@@ -331,10 +367,14 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       useStyle: num(f.useStyle),
       useLimit: num(f.useLimitPerAnimation),
       maxOut: maxOutOf(asm, td),
+      // the cooldown the weapon keeps on itself, in seconds, and which click waits it out
+      ...(() => { const cd = buffCooldownOf(asm, td, findInherited, refId); return cd ? { [cd.alt ? 'altCooldown' : 'cooldown']: Math.round((cd.ticks / 60) * 10) / 10 } : {}; })(),
       armorPen: num(f.ArmorPenetration),
       scale: num(f.scale),
       pick: num(f.pick) > 0 ? f.pick : undefined,
       makeNPC: f.makeNPC?.k === 'type' ? refId(asm, f.makeNPC) : num(f.makeNPC) > 0 ? `v:${f.makeNPC}` : undefined,
+      buff: f.buffType?.k === 'type' ? refId(asm, f.buffType) : num(f.buffType) > 0 ? `v:${f.buffType}` : undefined,
+      buffTime: num(f.buffTime),
       rarity: num(f.rare),
       rarityClass: f.rare?.k === 'type' ? simpleName(f.rare.name) : undefined,
       value: num(f.value),
@@ -342,6 +382,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       vanity: f.vanity === 1,
       expert: f.expert === 1,
       consumable: f.consumable === 1,
+      exhaust: rec.throwerExhaust || undefined,
+      inspiration: rec.inspiration,
       maxStack: num(f.maxStack),
       cloneOf: rec.cloneOf === undefined ? undefined : isNum(rec.cloneOf) ? `v:${rec.cloneOf}` : refId(asm, rec.cloneOf),
       createTile: f.createTile?.k === 'type' ? refId(asm, f.createTile) : isNum(f.createTile) && f.createTile >= 0 ? `v:tile:${f.createTile}` : undefined,
@@ -357,6 +399,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
     if (f.wingSlot > 0 || equip.includes('Wings')) { item.wings = true; item.wingStats = extractWingStats(asm, td, { tml }) ?? undefined; }
     if (slot === 'weapon') {
       try { item.fire = analyzeShoot(asm, td, { tml, projRef: (v) => projRef(asm, v) }) ?? undefined; } catch { /* keep the item */ }
+      // what a use costs in health, where the weapon pays in that instead of (or as well as) mana
+      try { item.lifeCost = lifeCostOf(asm, td); } catch { /* unread */ }
       // what a void weapon spends per use: `VoidItem.GetVoid(player)`, which 78 SOTS weapons override
       // with a constant and the base returns 1 for (a minion's cost is per summon, left unread)
       if (/^Void/.test(rec.damageClass ?? '')) {
@@ -369,7 +413,7 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
         }
       }
     }
-    if (isArmor || slot === 'accessory' || slot === 'weapon') Object.assign(item, formatArgsOf(asm, td, { tml }));
+    if (isArmor || slot === 'accessory' || slot === 'weapon' || slot === 'potion') Object.assign(item, formatArgsOf(asm, td, { tml }));
     if (effects && (isArmor || slot === 'accessory')) {
       const fx = extractItemEffects(asm, td, { tml });
       if (fx.equip) item.effects = fx.equip;

@@ -1,10 +1,13 @@
 <script>
-  import { Volume2, VolumeX } from '@lucide/svelte';
+  import { LayoutList, Milestone, Volume2, VolumeX, ClipboardList } from '@lucide/svelte';
   import Info from './Info.svelte';
   import { ui } from '../lib/state.svelte.js';
 
   let { ds } = $props();
   const contentMods = $derived(ds ? ds.mods.filter((m) => m.equipment > 0 && m.id !== 'v') : []);
+  const MODES = [['loadout', 'Loadout', ClipboardList], ['timeline', 'Stages', Milestone], ['items', 'Items', LayoutList]];
+  // where the sliding tab indicator sits; clamped so a stale ui.mode doesn't send it off-track
+  const modeIdx = $derived(Math.max(0, MODES.findIndex(([m]) => m === ui.mode)));
 </script>
 
 <header class="lab-header relative flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 pb-3 pt-5">
@@ -27,6 +30,15 @@
   </div>
 
   {#if ds}
+    <nav class="lab-tabs" style="--idx:{modeIdx}; --n:{MODES.length}" aria-label="View">
+      <span class="lab-tabs-indicator" aria-hidden="true"></span>
+      {#each MODES as [m, label, Icon]}
+        <button class="lab-tab" aria-pressed={ui.mode === m} onclick={() => (ui.mode = m)}>
+          <Icon size={14} strokeWidth={2.25} /> {label}
+        </button>
+      {/each}
+    </nav>
+
     <div class="flex flex-wrap items-center gap-2 text-[12px]">
       {#each [[ds.items.length.toLocaleString(), 'items'], [contentMods.length, 'mods'], [ds.stages.length - 1, 'boss stages']] as [n, label]}
         <span class="lab-stat">

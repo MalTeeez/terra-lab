@@ -25,7 +25,7 @@
   "ElementalMix": { "dot": 100 },
   "SulphuricPoisoning": { "dot": 30 },
   "Irradiated": { "dot": 30, "defense": -15 },
-  "Nightwither": { "dot": 62.5 },
+  "Nightwither": { "dot": 100, "name": "Nightwither" },
   "BurningBlood": { "dot": 12.5 },
   "MiracleBlight": { "dot": 100 },
   "WhisperingDeath": { "dot": 25 },

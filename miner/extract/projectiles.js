@@ -5,7 +5,7 @@
  *
  * Output per projectile (see README "Real DPS"):
  *   { id, pen, tile, updates, ai, aiType, life, local, minion, sentry, slots, width, height,
- *     gravity, gravityK, drag, homing: { range, speed, inertia, delay }, held, still, sticks, returns, explode, digs,
+ *     gravity, gravityK, drag, homing: { range, speed, inertia, delay }, held, windup, still, sticks, returns, explode, digs,
  *     falloff, armorPen, children: [{ type, count, where, stealth, dmgMul, dmgAbs }], debuffs: [...],
  *     stealth, cloneOf }
  *
@@ -15,7 +15,8 @@
  * to. They are what the DPS model needs to say how far a shot reaches and whether it lands.
  */
 import { decodeIL } from '../clr/il.js';
-import { chanceAt, chanceRanges, ownedCapOf } from './guards.js';
+import { alwaysRanges, branchRanges, chanceAt, chanceRanges, counterRanges, critRanges, gatesAt, ownedCapOf, requiresRanges } from './guards.js';
+import { applyVanillaBehaviour } from './vanilla-behaviour.js';
 import { Machine, NPC, PLAYER, THIS, UNKNOWN, isNum, simpleName, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { TYPE_ABSTRACT, derivesFromTml, findInherited, refId } from './util.js';
 
@@ -67,6 +68,8 @@ const STICKY_RE = /isStickingToTarget|StickToTarget|StickingTo/i;
 const HOMING_RE = /Hom(e|ing)|Closest|Nearest|FindTarget|Seek|Track|CanBeChasedBy|GetTarget|TargetNPC|Chase|AcquireTarget|EnemyInRange|ClosestNPC/i;
 /** Per-tick `velocity.Y +=` of the vanilla arc aiStyles, when the AI itself could not be read. */
 export const GRAVITY_K = 0.1;
+/** The largest per-update `velocity.Y +=` that is still an arc and not a misread steering blend. */
+export const GRAVITY_MAX = 1.5;
 /** How far a projectile with no readable search radius is assumed to see (pessimistic). */
 export const HOMING_RANGE = 300;
 
@@ -75,6 +78,25 @@ const PHASES = [
   ['kill', ['OnKill', 'PreKill']],
   ['hit', ['OnHitNPC', 'ModifyHitNPC', 'OnHitEffects']],
 ];
+
+/**
+ * Fields whose `SetDefaults` value is only what they are at *spawn*, because the game or the AI
+ * moves them every update. Handing the spawn number back to an AI that branches on one makes the
+ * branch statically decidable and the linear walk then takes a single arm for ever, so whatever the
+ * other arm does is invisible.
+ *
+ * `timeLeft` was the one that showed it: Fungicide's split orb homes inside `if (timeLeft < 150)`
+ * and spawns at 180, so the guard folded and the `HomeInOnNPC(450f, 6.5f, 20f)` under it was never
+ * seen. Every field here counts down or is toggled the same way — `alpha` and `Opacity` fade,
+ * `penetrate` drops on each pierce, `soundDelay` and the frame counters tick, `friendly` and
+ * `tileCollide` are switched mid-flight (a charge arming, a shot turning off collision).
+ *
+ * Deliberately *not* here: `width`, `height` and `scale`. Those are read six thousand times over for
+ * geometry — dust offsets, hitbox maths, blast radii — and an unknown there loses real arithmetic
+ * rather than freeing a branch. The *stores* to every one of these are still read as before; this is
+ * only about what a load hands back.
+ */
+const MUTATES = new Set(['timeLeft', 'alpha', 'Opacity', 'penetrate', 'soundDelay', 'frame', 'frameCounter', 'friendly', 'tileCollide']);
 
 const makeObj = (name) => ({ k: 'obj', name, props: {} });
 
@@ -178,7 +200,7 @@ function readsStealth(asm, td) {
  * @returns {{ fields: Record<string, any>, aiType?: any, cloneOf?: any, gravity: boolean, homing: boolean, wallPierceInAi: boolean, children: Array, debuffs: string[], stealth: boolean }}
  */
 export function evalProjectile(asm, td, { tml }) {
-  const rec = { fields: {}, children: [], mentions: [], debuffs: [], gravity: false, homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td) };
+  const rec = { fields: {}, children: [], mentions: [], debuffs: [], gravity: false, velYAdds: [], velXAdds: new Set(), homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td) };
   const PROJ = makeObj('projectile');
   const VEL = makeObj('velocity');
   const AI = { k: 'arr', items: [] };
@@ -195,6 +217,32 @@ export function evalProjectile(asm, td, { tml }) {
    */
   const noteDrag = (k, ctx) => { if (isNum(k) && k > 0 && k < 1 && !ctx?.conditional) rec.drag = Math.min(rec.drag ?? 1, k); };
   /**
+   * `velocity.Y += k`: the arc, but only when it is really one. `k` is a pull *per update*, and two
+   * things that are not gravity are spelled the same way.
+   *
+   * The first is a bounded steering delta: 22 projectiles came back with a `k` of 2 to 6, and
+   * Valediction's 5 had the model dropping its boomerang 300 px inside three ticks of flight. Every
+   * genuine pull in the pack is a round number under 1.25 — 0.1 alone accounts for 234 of them,
+   * then 0.4, 0.2, 0.35, 0.5 — so `GRAVITY_MAX` separates them.
+   *
+   * The second is a seeker's turn rate, and it hides inside the plausible range where no bound can
+   * reach it. What gives it away is the axis: **gravity only ever touches Y**, while steering
+   * pushes the same constant along both axes toward the target (`if (velocity.X < to.X)
+   * velocity.X += turn; if (velocity.Y < to.Y) velocity.Y += turn;`). Scourge of the Desert's real
+   * arc is `+= 0.15` in its pre-burrow branch and its turn rate is `+= 0.2` in the chase block;
+   * `Math.max` took the 0.2, and the model then charged a javelin that steers onto the boss a 123 px
+   * parabola. So a `k` also seen added to X is not a pull, and is refused whichever order the two
+   * writes come in — the decision is deferred to the end of the walk.
+   *
+   * Deliberately *not* gated on `ctx.conditional` the way `noteDrag` is: 213 projectiles apply
+   * their gravity inside a branch (`if (!sticking)`, `if (timeLeft < n)`) and every one of them
+   * really does arc, so refusing those trades a handful of bad reads for a much larger, and
+   * optimistic, hole.
+   */
+  const noteGravity = (k) => { if (isNum(k) && k > 0) rec.velYAdds.push(k); };
+  /** …and the same constant on the X axis, which is what marks one of them as steering. */
+  const noteVelX = (k) => { if (isNum(k) && k > 0) rec.velXAdds.add(k); };
+  /**
    * `velocity * k` on its own is not drag yet. The same expression is half of every steering blend
    * in the game — `velocity = velocity * 0.9f + toTarget * 0.1f`, `(velocity * (N-1) + dir) / N` —
    * where the multiplier is a weight and the velocity is put straight back by what is added to it.
@@ -202,6 +250,15 @@ export function evalProjectile(asm, td, { tml }) {
    * turns it back into a plain velocity.
    */
   const VEL_MUL = (mul) => ({ k: 'velMul', mul });
+  /** A velocity something was added to — the numerator of a steering blend, and not a decay. */
+  const VEL_SUM = { k: 'velMul', mul: 1, sum: true };
+  /**
+   * …divided by N: the steering blend's shape, `(velocity * (N-1) + toTarget * speed) / N`. Carried
+   * rather than noted, because the same division is written for reasons that have nothing to do
+   * with a target — the Acid Gun's stream spaces its dust trail with `velocity / 3f` and was read
+   * as a seeker with an inertia of 3. It is only steering if it is put *back into the velocity*.
+   */
+  const VEL_BLEND = (inertia) => ({ k: 'velMul', mul: 1, blend: inertia });
   const isVel = (v) => v === VEL || v?.k === 'velMul';
   const noteHoming = (o) => { rec.homing = true; rec.homingArgs = { ...(rec.homingArgs ?? {}), ...o }; };
   // A projectile that sets its own centre *from* an NPC's is riding that NPC: it stuck into the
@@ -219,7 +276,7 @@ export function evalProjectile(asm, td, { tml }) {
   const fromOwner = (v) => v === OWNER_POS;
   // A weapon that builds that vector one component at a time through a local struct — Thorium's
   // baseball does — would lose the marker, so the components carry it too.
-  const OWNER_AXIS = Object.freeze({ k: 'ownerAxis' });
+  const OWNER_AXIS = Object.freeze({ k: 'ownerAxis', taint: true });
   const carriesOwner = (v) => v === OWNER_POS || v === OWNER_AXIS
     || (v?.k === 'obj' && Object.values(v.props ?? {}).some((x) => x === OWNER_AXIS))
     || (v?.k === 'obj' && (v.args ?? []).some((x) => x === OWNER_AXIS));
@@ -243,9 +300,23 @@ export function evalProjectile(asm, td, { tml }) {
         // the child's damage argument is usually the parent's, scaled: keep it symbolic so the
         // arithmetic that follows lands as a multiplier rather than as UNKNOWN
         if (name === 'damage' && phase !== 'defaults') return DMG;
+        // `timeLeft` counts *down*, so the number `SetDefaults` gave it is only what it is at the
+        // moment it spawns. Handing that back to the AI makes every "later in its life" branch
+        // statically decidable and the walk takes one arm for ever: Fungicide's split orb homes
+        // inside `if (timeLeft < 150)` and its `timeLeft` is 180, so the guard folded to false and
+        // the `HomeInOnNPC(450f, 6.5f, 20f)` under it was never seen. 26 Calamity projectiles that
+        // call the helper carried no homing at all, nearly all of them a split or secondary shot
+        // that starts seeking partway through. Unknown is the truth: it is 180 once and then it is
+        // not.
+        if (MUTATES.has(name) && phase !== 'defaults') return UNKNOWN;
         return rec.fields[name] ?? UNKNOWN;
       }
-      if (recv === OWNER_POS && (name === 'X' || name === 'Y')) return OWNER_AXIS;
+      // `player.position` reached as a *field* is the same fact as `player.Center` reached as a
+      // property, and only the property was being recognised. Thorium's Whip returns by
+      // `player.position.X + player.width * 0.5f - Center.X` and so read as a projectile that
+      // simply flies away — its `maxOut: 1` round trip never got priced.
+      if (recv === PLAYER && (name === 'position' || name === 'Center' || name === 'MountedCenter')) return OWNER_POS;
+      if (recv === OWNER_POS && (name === 'X' || name === 'Y')) { if (phase === 'ai') rec.ownerAxis = true; return OWNER_AXIS; }
       if (recv === VEL) return { k: 'adj', slot: 'vel', field: name, add: 0, mul: 1 };
       return undefined;
     },
@@ -269,6 +340,14 @@ export function evalProjectile(asm, td, { tml }) {
           else if (rec.stealth && rank(value) > rank(rec.fields.penetrate ?? 1)) rec.stealthPen = value;
         }
         if (name === 'tileCollide' && value === 0 && !ctx.conditional) rec.wallPierceInAi = true;
+        // A projectile that decides every tick whether it is friendly is not dealing damage for
+        // part of its life: `Projectile.friendly = DoneCharging` is how a charge weapon holds the
+        // shot on the player until you let go, and the same store is how a mine arms itself after
+        // a delay. Either way the weapon's use time is not its clock — there is a wind-up in front
+        // of every shot that the item's `useTime` says nothing about. `SetDefaults` writing the
+        // constant 1 is the ordinary case and is not this; only an unconditional store of a value
+        // the interpreter could not fold is, which is the flag being read back out of a field.
+        if (name === 'friendly' && phase === 'ai' && !isNum(value)) rec.windup = true;
         // `damage = (int)(damage * 0.8f)` in OnHitNPC: the pierce falloff per successive hit
         if (name === 'damage' && phase === 'hit' && value?.k === 'adj' && value.slot === 'dmg' && value.mul > 0 && value.mul < 1) rec.falloff = Math.min(rec.falloff ?? 1, value.mul);
         // the blast radius a Kill resizes the projectile to
@@ -281,8 +360,17 @@ export function evalProjectile(asm, td, { tml }) {
         // It changes course when it hits something, so it is not passing cleanly through: it
         // bounces off, or turns round and comes home. Either way its pierce is not a pass.
         if (name === 'velocity' && phase === 'hit') { rec.bounces = true; return; }
+        // The mirror of the `sticks` rule two blocks up: a projectile that writes its own centre from
+        // the *owner's*, every tick, is anchored to the player rather than flying anywhere. On its
+        // own this says very little — 129 projectiles do it, and most are held beams, swung blades
+        // and minions, all of which are anchored by design and already tagged. It earns its keep in
+        // one conjunction, in `archetypeOf`: anchored to the player *and* launched at a `shootSpeed`
+        // of nothing is a thing you carry, not a thing you throw.
+        if (name === 'Center' && phase === 'ai' && !ctx.conditional && carriesOwner(value)) { rec.ridesOwner = true; return; }
         if (name === 'velocity' && phase === 'ai') {
-          // …and here is where a scale that survived intact becomes the per-tick drag
+          // …and here is where a scale that survived intact becomes the per-tick drag, and where a
+          // blend that was really put back into the velocity becomes the steering it is
+          if (value?.blend) { noteHoming({ inertia: value.blend }); return; }
           if (value?.k === 'velMul') { noteDrag(value.mul, ctx); return; }
           if (value === VEL) return;
           if (value?.k === 'vecZero' || (value?.k === 'obj' && value.args?.every((a) => a === 0))) rec.still = true;
@@ -298,12 +386,14 @@ export function evalProjectile(asm, td, { tml }) {
       // routes 40-odd of its thrown projectiles through `ProjectileExtras.ThrowingKnifeAI`, so
       // without this their arc and their decay are both invisible and they never pay for either
       if (name === '@ind' && recv?.k === 'adj' && recv.slot === 'vel' && phase === 'ai' && value?.k === 'adj' && value.slot === 'vel') {
-        if (recv.field === 'Y' && value.field === 'Y' && value.add > 0) { rec.gravity = true; rec.gravityK = Math.max(rec.gravityK ?? 0, value.add); }
+        if (recv.field === 'Y' && value.field === 'Y') noteGravity(value.add);
+        if (recv.field === 'X' && value.field === 'X') noteVelX(value.add);
         if (value.mul !== 1 && value.add === 0) noteDrag(value.mul, ctx);
         return;
       }
       if (recv === VEL && phase === 'ai' && value?.k === 'adj' && value.slot === 'vel') {
-        if (name === 'Y' && value.field === 'Y' && value.add > 0) { rec.gravity = true; rec.gravityK = Math.max(rec.gravityK ?? 0, value.add); }
+        if (name === 'Y' && value.field === 'Y') noteGravity(value.add);
+        if (name === 'X' && value.field === 'X') noteVelX(value.add);
         if (value.mul !== 1 && value.add === 0) noteDrag(value.mul, ctx);
       }
     },
@@ -371,8 +461,8 @@ export function evalProjectile(asm, td, { tml }) {
         if (/^op_(Addition|Subtraction|Multiply|Division)$/.test(name) && (carriesOwner(args[0]) || carriesOwner(args[1]))) return OWNER_POS;
         if (name === 'op_Addition' || name === 'op_Subtraction') {
           const other = isVel(args[0]) ? args[1] : isVel(args[1]) ? args[0] : null;
-          if (other?.k === 'obj' && isNum(other.args?.[1]) && other.args[1] > 0 && (other.args[0] === 0 || !isNum(other.args[0]))) { rec.gravity = true; rec.gravityK = Math.max(rec.gravityK ?? 0, other.args[1]); }
-          if (other !== null) return VEL; // something was added to it: a blend, not a decay
+          if (other?.k === 'obj' && isNum(other.args?.[1]) && (other.args[0] === 0 || !isNum(other.args[0]))) noteGravity(other.args[1]);
+          if (other !== null) return VEL_SUM; // something was added to it: a blend, not a decay
         }
         if (name === 'op_Multiply' && (isVel(args[0]) || isVel(args[1]))) {
           const v = isVel(args[0]) ? args[0] : args[1];
@@ -380,8 +470,10 @@ export function evalProjectile(asm, td, { tml }) {
           return isNum(k) ? VEL_MUL((v.mul ?? 1) * k) : VEL;
         }
         // `velocity = (velocity * (N-1) + toTarget * s) / N` and `Vector2.Lerp(velocity, …, 1/N)`
-        if (name === 'op_Division' && isVel(args[0]) && isNum(args[1]) && args[1] >= 2) { noteHoming({ inertia: args[1] }); return VEL; }
-        if (name === 'Lerp' && isVel(args[0]) && isNum(args[2]) && args[2] > 0 && args[2] < 1) { noteHoming({ inertia: Math.round(1 / args[2]) }); return VEL; }
+        // …and a division with nothing added stays a plain velocity: `velocity / MaxUpdates` on the
+        // first frame is a launch fixup, not a decay, so it is not read as drag either
+        if (name === 'op_Division' && isVel(args[0]) && isNum(args[1]) && args[1] >= 2) return args[0]?.sum ? VEL_BLEND(args[1]) : VEL;
+        if (name === 'Lerp' && isVel(args[0]) && isNum(args[2]) && args[2] > 0 && args[2] < 1) return VEL_BLEND(Math.round(1 / args[2]));
       }
       return undefined;
     },
@@ -409,7 +501,7 @@ export function evalProjectile(asm, td, { tml }) {
       // a projectile that refuses to let more than N of itself exist says so in its own AI, the
       // same way a weapon says it in CanUseItem — and for a cloud or a tether that cap *is* the
       // sustained damage, because what it does per second is one instance's rate times how many live
-      if (ph === 'ai') rec.maxActive ??= ownedCapOf(asm, m);
+      if (ph === 'ai') { rec.maxActive ??= ownedCapOf(asm, m); rec.ownAi = true; }
       loops = [];
       AI.items.length = 0;
       LOCAL_AI.items.length = 0;
@@ -420,6 +512,23 @@ export function evalProjectile(asm, td, { tml }) {
       }
     }
   }
+  // Decided once the whole walk is in, because the two facts are the same write seen twice.
+  // A `velocity.Y +=` that was *not* also pushed along X is the arc; one that *was* is the third
+  // homing shape in the game and the one the call-name reader cannot see: a per-axis bang-bang
+  // accelerator, `if (velocity.X < to.X) velocity.X += k; else velocity.X -= k;` and the same on Y.
+  // Scourge of the Desert steers that way at 0.2 a update, and carried nothing but the default
+  // range because neither `HomeInOnNPC` nor the `(v*(N-1) + dir*s)/N` blend is anywhere in it.
+  const pulls = rec.velYAdds.filter((k) => !rec.velXAdds.has(k) && k <= GRAVITY_MAX);
+  if (pulls.length) { rec.gravity = true; rec.gravityK = Math.max(...pulls); }
+  // …and the same per-axis accelerator serves two different jobs, told apart by what it steers
+  // *toward*. Calamity's boomerangs never write `velocity` from the owner vector — the shape
+  // `carriesOwner` was written for — they nudge each component toward it a step at a time, which is
+  // why Kylie read as a fire-and-forget dagger thrown on its use timer. An AI that asks where the
+  // owner is and then accelerates per axis is coming back; one that does it without asking is
+  // seeking whatever its homing call found.
+  const steers = rec.velYAdds.filter((k) => rec.velXAdds.has(k));
+  if (steers.length && rec.ownerAxis) rec.returns = true;
+  else if (steers.length && rec.homing) rec.homingArgs = { ...(rec.homingArgs ?? {}), turn: Math.max(...steers) };
   if (td.methods.some((m) => STICKY_RE.test(m.name))) rec.sticks = true;
   return rec;
 }
@@ -441,7 +550,12 @@ function homingRecord(rec, vanillaId) {
   const seeks = rec.homing || (vanillaId !== null && VANILLA_HOMING.has(vanillaId));
   if (!seeks) return undefined;
   const a = rec.homingArgs ?? {};
+  // `speed` and `inertia` are simply absent when unread, so the model can already tell. `range`
+  // could not: the fallback was baked in and came back out looking like a number somebody read.
   const out = { range: num(a.range) ?? HOMING_RANGE };
+  if (num(a.range) == null) out.rangeGuess = true;
+  // px per update per update, straight off the steering write — no `inertia` guess in front of it
+  if (num(a.turn)) out.turn = a.turn;
   if (num(a.speed)) out.speed = a.speed;
   if (num(a.inertia)) out.inertia = a.inertia;
   if (num(a.delay)) out.delay = a.delay;
@@ -460,10 +574,29 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     if (!rolls.has(c.method)) rolls.set(c.method, chanceRanges(asm, c.method));
     return chanceAt(rolls.get(c.method), c.offset);
   };
+  // …and the counters and requirements, in the domain the method gives them: a counter in `AI`
+  // counts ticks, one in `OnHitNPC` counts hits
+  const domainOf = (m) => (/^(AI|PostAI|PreAI|PostDraw)$/.test(m.name) ? 'tick' : /OnHit/.test(m.name) ? 'hit' : /Kill/.test(m.name) ? 'death' : 'use');
+  const guardSets = new Map();
+  const gatesOf = (c) => {
+    if (!c.method) return {};
+    if (!guardSets.has(c.method)) {
+      const counters = counterRanges(asm, c.method, domainOf(c.method));
+      const reqs = requiresRanges(asm, c.method);
+      const crits = critRanges(asm, c.method);
+      if (!rolls.has(c.method)) rolls.set(c.method, chanceRanges(asm, c.method));
+      const always = alwaysRanges(asm, c.method);
+      guardSets.set(c.method, { counters: counters.filter((r) => r.gate), requires: reqs, crits, always, explained: [...rolls.get(c.method), ...counters, ...reqs, ...crits, ...always], all: branchRanges(asm, c.method) });
+    }
+    return gatesAt(guardSets.get(c.method), c.offset);
+  };
   for (const c of rec.children) {
     const t = projRef(asm, c.type);
     if (!t) continue;
-    const key = `${t}|${c.where}|${c.stealth}`;
+    const gates = gatesOf(c);
+    // one record per spawn site behind a different gate: a burst every eighth hit and the ordinary
+    // shot on every other one are not one child with a count of two
+    const key = `${t}|${c.where}|${c.stealth}|${JSON.stringify(gates)}`;
     const chance = rollAt(c);
     const prev = children.get(key);
     // two spawns merged into one record only keep odds they agree on; disagreeing ones are unread
@@ -472,7 +605,7 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // could not be followed" are opposite facts, and normalising the first to `undefined` made them
     // the same field. The model has to be able to tell them apart — one deserves full damage, the
     // other is a gap, and a gap gets the pessimistic answer.
-    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs, chance });
+    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs, chance, ...gates });
   }
   const aiType = isNum(rec.aiType) ? rec.aiType : rec.aiType?.k === 'type' ? null : undefined;
   const ai = num(f.aiStyle);
@@ -487,6 +620,11 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     life: num(f.timeLeft),
     maxActive: rec.maxActive,
     local: bool(f.usesLocalNPCImmunity) ? num(f.localNPCHitCooldown) ?? 10 : bool(f.usesIDStaticNPCImmunity) ? num(f.idStaticNPCHitCooldown) ?? 10 : undefined,
+    // …and whose window it is. `usesLocalNPCImmunity` gives *each projectile* its own; the ID-static
+    // flag gives one window to **every projectile of the type at once**, so a volley of them cannot
+    // stack the way a volley with local immunity can — it is the player's shared window again, only
+    // on the projectile's cooldown rather than the item's.
+    shared: !bool(f.usesLocalNPCImmunity) && bool(f.usesIDStaticNPCImmunity) ? true : undefined,
     minion: bool(f.minion) || undefined,
     sentry: bool(f.sentry) || undefined,
     whip: rec.whip || undefined,
@@ -498,12 +636,38 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     gravityK: rec.gravityK ?? ((rec.gravity || (ai !== undefined && GRAVITY_AI.has(ai)) || (ai === 1 && bool(f.arrow))) ? GRAVITY_K : undefined),
     drag: rec.drag,
     homing: homingRecord(rec, vanillaId),
-    held: rec.held || undefined,
+    // …but not if it also changes course when it hits something. `held` means the player holds it
+    // out and it never travels on its own; `bounces` means it flies into things and comes off them.
+    // The two cannot both be true, and where they are it is the `heldProj` read that is wrong: a
+    // charge weapon sets it inside its wind-up branch, and the walk folds a `ChargeProgress < 1f`
+    // guard to true on the first tick, so the store reads as unconditional. Fishbone Boomerang and
+    // Equanimity were coming out `spear` — held, and so exempt from travel lead, arc and range
+    // altogether — for a weapon that is thrown and ricochets between three enemies.
+    held: (rec.held && !rec.bounces) || undefined,
+    // Whether the type overrides an AI of its own at all — `false` where the walk looked and found
+    // none, absent where nothing looked (a vanilla projectile, a synthetic record). A projectile
+    // the walk cleared cannot be the "carrier whose shots the miner did not read" the zero-damage
+    // rule assumes: there is no unread AI. Bellerose's held umbrella is that, `SetDefaults` and
+    // nothing else. The distinction has to survive into the dataset, because "we looked and there
+    // is nothing" and "we did not look" call for opposite answers.
+    ownAi: vanillaId === null ? !!rec.ownAi : undefined,
+    // it switches its own damage on partway through its life: a charge held on the player, a mine
+    // that arms after a delay — either way the shot is not free the moment the button goes down
+    windup: rec.windup || undefined,
     sticks: rec.sticks || undefined,
     returns: rec.returns || undefined,
-    bounces: rec.bounces || undefined,
+    // …and vanilla bounces every `aiStyle 3` boomerang off whatever it hits, in `Projectile.Damage`
+    // rather than in any AI a mod writes:
+    //   if (aiStyle == 3) { if (ai[0] == 0f) { velocity = -velocity; } ai[0] = 1f; }
+    // It reverses and heads home on the *first* NPC it touches, so whatever `penetrate` says, it is
+    // not carving a path through a crowd. 41 of the 47 projectiles on that aiStyle carried a pierce
+    // they cannot use — every vanilla boomerang from the Wooden Boomerang to the Light Disc, and
+    // Calamity's Sand Dollar, which `penetrate = -1` had sweeping six bodies a throw.
+    bounces: rec.bounces || ai === 3 || undefined,
     // a projectile that parks itself where it was put: a rain cloud, a mine, a placed trap
     still: rec.still || undefined,
+    // …and one that is pinned to the player instead, wherever the player goes
+    ridesOwner: rec.ridesOwner || undefined,
     explode: rec.explode !== undefined && rec.explode > (num(f.width) ?? 0) ? rec.explode : undefined,
     falloff: rec.falloff,
     armorPen: num(f.ArmorPenetration),
@@ -639,5 +803,7 @@ export function vanillaProjectiles(tml) {
   }
   // yoyos and whips whose SetDefaults the case tracker never reached exist only as set entries
   for (const [id, set] of extra) out.push({ id, ...set });
+  // …and what the shared `Projectile.AI` does that no SetDefaults says: the game's own table
+  applyVanillaBehaviour(tml, out);
   return out;
 }

@@ -106,6 +106,10 @@ export function makePhase(kind, fields = {}) {
     /** ticks one instance stays for, once it has landed */
     duration: fields.duration ?? null,
     requires: fields.requires ?? null,
+    /** an if/else the miner found but could not classify: `{ id, side, cond }` — the residual */
+    branch: fields.branch ?? null,
+    /** spawned only on a crit (true) or only on a non-crit (false) */
+    crit: fields.crit ?? null,
     /**
      * What running this phase costs and out of what pool, as `{ kind, cost }`. Minion slots are the
      * one the model already understands; mana, Void, inspiration and exhaustion come through the
@@ -237,30 +241,62 @@ export function deliveryPhases(fire, { variant, alt = false, primaryId = null } 
     .filter((c) => c.alt !== undefined && c.alt !== alt)
     .map((c) => (c.type === 'shoot' ? primaryId : c.type)));
 
-  const phases = calls.map((c, i) => makePhase('travel', {
+  const phases = calls.map((c, i) => {
+    // A call the miner priced — a roll, a counter, a requirement — is not an alternative to
+    // anything: it happens, with known odds. Only a branch whose condition could not be read has
+    // to be averaged against its siblings, and that branch now names itself (`branch.id`, one id
+    // for both arms of one if/else) instead of borrowing the interpreter's region end.
+    const priced = (c.chance > 0 && c.chance < 1) || !!c.threshold || !!c.requires;
+    const region = c.branch ? `branch:${c.branch.id}` : priced ? 'top' : c.region ?? 'top';
+    return makePhase('travel', {
     id: `call:${i}`,
     parent: 'primary',
-    // A call the miner priced a roll for is not an alternative to anything: it happens, with known
-    // odds. Only a branch whose condition could not be read has to be averaged against its siblings,
-    // and treating a 1-in-10 shot as one of two equally likely branches is the wrong answer twice.
-    region: c.chance > 0 && c.chance < 1 ? 'top' : c.region ?? 'top',
-    // branches of one if/else are alternatives of each other; everything in `top` happens together
-    relation: c.chance > 0 && c.chance < 1 ? 'concurrent' : (c.region ?? 'top') === 'top' ? 'concurrent' : 'alternative',
+    region,
+    relation: region === 'top' ? 'concurrent' : 'alternative',
     chance: c.chance ?? null,
+    threshold: c.threshold ?? null,
+    requires: c.requires ?? null,
+    branch: c.branch ?? null,
     projId: c.type === 'shoot' ? primaryId : c.type,
     count: c.count ?? 1,
     spread: c.spread ?? 0,
     fan: !!c.fan,
     absVelocity: c.abs ?? null,
     velMul: c.velMul ?? 1,
-    dmgMul: c.dmgMul ?? 1,
-    evidence: { from: 'Shoot', call: i, ...(c.variant ? { variant: c.variant } : {}), ...(c.alt !== undefined ? { alt: c.alt } : {}) },
+    // a share the miner read (omitted: ×1 of the argument), a flat number it read, and nothing
+    // read (`dmg: 'unread'`): three facts, kept apart
+    dmgMul: c.dmg === 'unread' || c.dmgAbs != null ? null : c.dmgMul ?? 1,
+    dmgAbs: c.dmgAbs ?? null,
+    evidence: {
+      from: 'Shoot', call: i, ...(c.variant ? { variant: c.variant } : {}), ...(c.alt !== undefined ? { alt: c.alt } : {}),
+      // `confidence` describes what was read — the projectile, its count and spread. The gates are
+      // rated apart, because a branch nobody read the condition of is still an exact projectile.
+      gates: {
+        ...(c.dmg === 'unread' ? { damage: 'assumed' } : {}),
+        ...(region !== 'top' ? { branch: c.branch?.known ? 'exact' : 'assumed' } : {}),
+        ...(c.threshold ? { threshold: 'exact' } : {}),
+        ...(c.requires ? { requires: 'exact' } : {}),
+      },
+    },
     confidence: 'exact',
-  }));
+  }); });
 
-  // the shot the item fires by itself, when `Shoot` did not replace it
+  // The shot the item fires by itself, when `Shoot` did not replace it — and *only* then. The
+  // `!calls.length` fallback is for a weapon whose `Shoot` the miner could not read at all; where
+  // it was read and says the default is suppressed, a variant with no calls of its own fires
+  // nothing, which is a fact and not a gap to fill in with `item.shoot`.
+  //
+  // Bellerose opens `Shoot` with `if (player.altFunctionUse != 2) return false;` — its left click
+  // throws nothing, and the tornado `item.shoot` names is a right-click payload gated on three
+  // successful attacks. The fallback was handing that tornado out on every left click, 232 of the
+  // 350 DPS it was scoring at Pre-boss.
   const hasDefault = fire?.defaultShot ? !!fire.defaultShot[variant] : !fire?.calls?.length || fire?.returnsTrue === true;
-  if (hasDefault || !calls.length) {
+  // …and the suppression only counts where the weapon's attack demonstrably lives somewhere else:
+  // `Shoot` was read, it says this variant fires nothing, and the calls it *did* read belong to the
+  // other click. Refusing the fallback on the strength of `defaultShot` alone stranded 60 weapons
+  // with no phase at all, which is a worse answer than a shot they might not fire.
+  const elsewhere = !!fire?.defaultShot && !!fire?.calls?.length && !calls.length;
+  if (hasDefault || (!calls.length && !elsewhere)) {
     phases.push(makePhase('travel', {
       id: 'default',
       parent: 'primary',
@@ -368,7 +404,20 @@ export function spawnPhases(p, { variant, parentId = null } = {}) {
       dmgMul: c.dmgMul ?? null,
       dmgAbs: c.dmgAbs ?? null,
       chance: c.chance ?? null,
-      evidence: { from: 'projectile children', index: i, where: c.where ?? null },
+      threshold: c.threshold ?? null,
+      requires: c.requires ?? null,
+      branch: c.branch ?? null,
+      crit: c.crit ?? null,
+      evidence: {
+        from: 'projectile children', index: i, where: c.where ?? null,
+        gates: {
+          // a clock nobody read, unless a counter in the AI with a reset is that clock
+          ...((WHERE_TRIGGER[c.where] ?? 'timer') === 'timer' ? { cadence: c.threshold?.event === 'tick' && c.threshold.reset && c.threshold.reached ? 'exact' : 'assumed' } : {}),
+          ...(c.threshold ? { threshold: 'exact' } : {}),
+          ...(c.requires ? { requires: 'exact' } : {}),
+          ...(c.branch ? { branch: 'assumed' } : {}),
+        },
+      },
       confidence: c.dmgMul !== undefined || c.dmgAbs !== undefined ? 'exact' : 'assumed',
     }));
   });

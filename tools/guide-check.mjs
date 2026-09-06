@@ -12,7 +12,12 @@
  *   node tools/guide-check.mjs --why "Scourge of the Desert" --stage 4   # …for any weapon, at any stage
  *   node tools/guide-check.mjs --refresh          # re-parse the guides (tools/guides.mjs --refresh)
  *   node tools/guide-check.mjs --json a.json      # snapshot the metrics; later --json b.json --vs a.json
- *                                                 # prints the deltas per guide, class and mechanic family
+ *                                                 # prints the deltas per guide, class and mechanic family,
+ *                                                 # and exits 1 on a regression unless --waive "reason"
+ *   node tools/guide-check.mjs --no-write         # do not rewrite data/guide-late-weapons.md
+ *
+ * A filtered run (--pre, --cls, --tier, --guide) never rewrites the generated reports, and --vs refuses
+ * a snapshot taken under different filters: the deltas would be the filter, not the model.
  *
  * Every guide is judged inside its own scope (`GUIDE_CONFIG`): a Calamity pick competes with
  * vanilla + Calamity items carrying Calamity's rebalancing, a Terraria pick with vanilla items and
@@ -51,6 +56,8 @@ const onlyTier = opt('--tier', null);
 const onlyGuide = opt('--guide', null);
 const whyName = opt('--why', null);
 const preOnly = flag('--pre');
+const filtered = !!(onlyCls || onlyTier || onlyGuide || preOnly);
+const writeReports = !flag('--no-write') && !filtered;
 
 const ds = indexDataset(JSON.parse(readFileSync(new URL('../data/dataset.json', import.meta.url), 'utf8')));
 const guidesFile = new URL('../data/guides.json', import.meta.url);
@@ -161,7 +168,7 @@ function rankings(guide, cls, stage) {
       const fam = isFamily(family) ? family : SUMMON_KINDS.has(own.v.arch) ? own.v.arch : null;
       const list = listFor(targets, fam);
       const i = list.findIndex((w) => w.it.id === id);
-      return i < 0 ? null : { rank: i + 1, of: list.length, mode: list[i].v.mode, value: list[i].key, family: fam, within: SUMMON_KINDS.has(fam) ? fam : null };
+      return i < 0 ? null : { rank: i + 1, of: list.length, mode: list[i].v.mode, value: list[i].key, family: fam, arch: own.v.arch, within: SUMMON_KINDS.has(fam) ? fam : null };
     },
     ammoRank: (id) => {
       const kind = lo.ammo.find((a) => a.item.id === id)?.kind;
@@ -303,6 +310,14 @@ const lateRows = [];
 const earlyLeads = [];
 const unlisted = new Map(); // `${guide}|${cls}|${id}` → a weapon holding top-8 slots that no guide names
 const sectionRows = [];
+/**
+ * The weapon type as the unit of bias: per archetype, the sections where a weapon of that type
+ * holds #1 over a guide pick of another type (`over`), and the guide picks of that type the model
+ * leaves outside the top 8 (`under`). A lopsided row is one rule wrong for a whole type, which is
+ * what the phase model is meant to surface — so it prints on every run, --summary included.
+ */
+const overUnder = new Map();
+const ouOf = (arch) => { if (!overUnder.has(arch)) overUnder.set(arch, { over: 0, under: 0 }); return overUnder.get(arch); };
 
 // what each guide lists per class and stage, for the EARLY check
 const listedAt = new Map(); // `${guide}|${cls}|${id}` → earliest guide stage
@@ -387,7 +402,7 @@ for (const key of ordered) {
           s.rankable++; s.rrSum += 1 / r.rank; s.poolSum += r.of;
           if (r.rank <= 3) s.top3++;
           if (r.rank <= 8) s.top8++;
-          ranked.push({ p, rank: r.rank });
+          ranked.push({ p, rank: r.rank, arch: r.arch, family: r.family });
           const famKey = `${guide}|${r.family ?? 'primary'}`;
           if (!byFamily.has(famKey)) byFamily.set(famKey, famStat());
           const f = byFamily.get(famKey);
@@ -428,6 +443,18 @@ for (const key of ordered) {
       if (b.p.priority === 'best') continue;
       s.pairs++;
       if (a.rank < b.rank) s.pairsRight++;
+    }
+    // over/under: once per section and family for the type holding #1, once per pick for the misses
+    const guideIds = new Set(list.flatMap(groupIds));
+    const credited = new Set();
+    for (const x of ranked) {
+      if (x.rank > 8) ouOf(x.arch ?? '?').under++;
+      const top = R.listFor(targets, SUMMON_KINDS.has(x.family) ? x.family : null)[0];
+      if (!top || guideIds.has(top.it.id) || top.v.arch === x.arch) continue;
+      const ck = `${top.v.arch}|${x.family ?? ''}`;
+      if (credited.has(ck)) continue;
+      credited.add(ck);
+      ouOf(top.v.arch ?? '?').over++;
     }
     lines.push(`  → best #${bestRank}, recall@${K} ${s.recallK}/${K}, top-3 ${s.top3}/${K}, top-8 ${s.top8}/${K}${s.pairs ? `, priority pairs ${s.pairsRight}/${s.pairs}` : ''}`);
     sectionRows.push({ guide, tier, cls, target, stage, K, bestRank, recallK: s.recallK, top3: s.top3, top8: s.top8 });
@@ -488,8 +515,15 @@ for (const [guide, s] of byGuide) {
   }
 }
 
+if (overUnder.size) {
+  console.log('\n== over/under by archetype  (over: sections its weapon holds #1 above a guide pick of another type · under: guide picks of the type outside the top 8)');
+  for (const [arch, o] of [...overUnder].sort((a, b) => (b[1].over - b[1].under) - (a[1].over - a[1].under))) {
+    console.log(`  ${String(arch).padEnd(14)} over ${String(o.over).padStart(4)}   under ${String(o.under).padStart(4)}`);
+  }
+}
+
 // ---- data/guide-late-weapons.md --------------------------------------------------------------
-{
+if (writeReports) {
   const l = ['# Guide weapons the lab stages late', '',
     `Generated by \`node tools/guide-check.mjs\`${preOnly || onlyCls || onlyTier || onlyGuide ? ' (filtered run — not the full set)' : ''}.`,
     '',
@@ -542,10 +576,14 @@ for (const [guide, s] of byGuide) {
     sections: sectionRows,
   };
   const out = opt('--json', null);
-  if (out) { writeFileSync(out, JSON.stringify(snapshot, null, 1)); console.log(`\n== snapshot → ${out}`); }
   const vs = opt('--vs', null);
+  const waive = opt('--waive', null);
   if (vs) {
     const old = JSON.parse(readFileSync(vs, 'utf8'));
+    if (JSON.stringify(old.filters) !== JSON.stringify(snapshot.filters)) {
+      console.error(`\n! ${vs} was taken under different filters (${JSON.stringify(old.filters)} vs ${JSON.stringify(snapshot.filters)}): the deltas would be the filter, not the model`);
+      process.exit(2);
+    }
     const d = (a, b) => (b === undefined ? ' —' : `${b - a >= 0 ? '+' : ''}${b - a}`);
     console.log(`\n== versus ${vs}`);
     for (const [k, now] of Object.entries(snapshot.guides)) {
@@ -563,7 +601,30 @@ for (const [guide, s] of byGuide) {
         console.log(`  ${k.padEnd(22)} ${String(now[n]).padStart(4)} picks  top-3 ${d(was.top3, now.top3).padStart(5)}  top-8 ${d(was.top8, now.top8).padStart(5)}`);
       }
     }
+    // A regression is a diagnostic that has to be explained, not a veto: any guide × class or
+    // guide × family tuple that lost top-3, top-8, recall@K, a section hit or MRR, or whose rankable
+    // denominator moved at all — a model-only change cannot change what is rankable. The run fails
+    // unless --waive records why, and the reason is written into the snapshot beside the numbers.
+    const mrr = (s) => (s.rankable ? s.rrSum / s.rankable : 0);
+    const regressions = [];
+    for (const group of ['classes', 'families']) {
+      for (const [k, now] of Object.entries(snapshot[group])) {
+        const was = old[group][k];
+        if (!was) continue;
+        const n = group === 'families' ? 'n' : 'rankable';
+        if (was[n] !== now[n]) regressions.push(`${k}: ${n} ${was[n]} → ${now[n]} (the denominator moved)`);
+        for (const m of ['top3', 'top8', 'recallK', 'sectionHit']) if (was[m] !== undefined && now[m] < was[m]) regressions.push(`${k}: ${m} ${was[m]} → ${now[m]}`);
+        if (mrr(now) < mrr(was) - 0.005) regressions.push(`${k}: MRR ${mrr(was).toFixed(3)} → ${mrr(now).toFixed(3)}`);
+      }
+    }
+    if (regressions.length) {
+      console.log(`\n== ${regressions.length} regression${regressions.length > 1 ? 's' : ''} against ${vs}`);
+      for (const r of regressions) console.log(`  ${r}`);
+      if (waive) { console.log(`  waived: ${waive}`); snapshot.waived = { against: vs, reason: waive, regressions }; }
+      else { console.log('  (explain and pass --waive "reason" to accept)'); process.exitCode = 1; }
+    } else console.log(`\n== no regression against ${vs}`);
   }
+  if (out) { writeFileSync(out, JSON.stringify(snapshot, null, 1)); console.log(`\n== snapshot → ${out}`); }
 }
 
 if (unlisted.size) {

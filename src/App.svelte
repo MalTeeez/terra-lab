@@ -133,6 +133,14 @@
   }
 </script>
 
+<div class="lab-bg" aria-hidden="true">
+  <div class="blob-a"></div>
+  <div class="blob-b"></div>
+  <div class="blob-c"></div>
+  <div class="shafts"></div>
+  <div class="grain"></div>
+</div>
+
 <div class="mx-auto flex min-h-screen max-w-[1680px] flex-col">
   <Header {ds} />
 
