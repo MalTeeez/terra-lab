@@ -40,7 +40,7 @@ import { extractFlagEffects } from './extract/flageffects.js';
 import { extractOnHitSpawns } from './extract/onhit.js';
 import { extractSpawnPools, extractVanillaSpawns } from './extract/spawns.js';
 import { extractAnglerRewards, extractModFishing, extractVanillaFishing, extractVanillaFishingEnemies } from './extract/fishing.js';
-import { extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
+import { extractChestLocks, extractModWorldgen, extractVanillaChests } from './extract/worldgen.js';
 import { extractVanilla, constMap } from './extract/vanilla.js';
 import { VANILLA_BEHAVIOUR, applyAmmoSwaps } from './extract/vanilla-behaviour.js';
 import { extractDebuffs, extractModBuffs } from './extract/effects.js';
@@ -168,6 +168,8 @@ const allCompanions = []; // vanity pieces that appear only while another item i
 const allWorldgen = [];   // chest contents placed at world generation
 const allBuffs = [];      // every buff, with what it does to the player — a potion is worth its buff
 const worldgenTiles = new Set();
+const modWorldgen = [];   // mod chest placements, gated once every mod's chest locks are known
+const chestLocks = new Map(); // locked chest tile → the flags that open it
 const groupFields = new Map(); // static field → recipe group name (RecipeGroupID.Wood, a mod's AnyGoldBar)
 const vanillaGroups = flag('--no-vanilla') ? [] : vanillaRecipeGroups(tml, groupFields);
 const debuffRefs = new Set(); // buffs the game marks as debuffs (`Main.debuff[x] = true`)
@@ -188,7 +190,7 @@ for (const m of ordered) {
       if (Object.keys(vals).length) balance[modId] = { ...(balance[modId] ?? {}), ...vals };
     }
     const items = extractItems(asm, { tml, loc, modId, ammoIds, cfg });
-    const projectiles = extractProjectiles(asm, { tml, modId });
+    const projectiles = extractProjectiles(asm, { tml, modId, loc });
     allProjectiles.push(...projectiles);
     const npcs = extractNpcs(asm, { tml, loc, modId });
     const bossLogs = extractBossLog(asm, { tml, modId }).map((b) => ({ ...b, mod: modId }));
@@ -212,7 +214,8 @@ for (const m of ordered) {
     allPools.push(...extractSpawnPools(asm, { tml, modId }));
     allFish.push(...extractModFishing(asm, { tml, modId }));
     const wg = extractModWorldgen(asm, { modId });
-    allWorldgen.push(...wg.items.map((w) => ({ ...w, estimated: w.locked || undefined })));
+    modWorldgen.push(...wg.items);
+    for (const [t, g] of extractChestLocks(asm, { modId })) chestLocks.set(t, g);
     for (const t of wg.tiles) worldgenTiles.add(t);
     const overrides = extractGlobalOverrides(asm, { tml, modId, loc, statics, enabledMods, cfg });
     const itemMods = extractModItemModifiers(asm, { tml, modId, statics, enabledMods, cfg });
@@ -241,6 +244,19 @@ for (const m of ordered) {
     rows.push([modId, tmod.version, '-', '-', '-', '-', '-', '-', '-', '-', `ERROR ${e.message}`]);
     if (flag('--verbose')) console.error(e);
   }
+}
+
+// A chest placement is only as early as the chest opens, and the tile is often another mod's: the
+// Serpentine Fork sits in Calamity's Abyss chest, which unlocks at Skeletron. Gate an item only when
+// every chest the placing method touches is locked — otherwise it may be in the open one — and take
+// several chests as alternatives. A lock whose key the code does not name keeps the rarity floor.
+for (const w of modWorldgen) {
+  const locks = (w.chests ?? []).map((t) => chestLocks.get(t));
+  const flags = locks.length && locks.every(Boolean) ? locks.flat() : [];
+  const gate = locks.length > 1 ? [...new Set(flags)].map((f) => (f.startsWith('any:') ? f : `any:${f}`)) : flags;
+  const cond = [...(w.cond ?? []), ...gate];
+  // no usable gate but a lock in sight: as before, the rarity guess stands as a floor (`estimated`)
+  allWorldgen.push(compact({ ...w, chests: undefined, cond: cond.length ? cond : undefined, estimated: w.locked || (!gate.length && locks.some(Boolean)) || undefined }));
 }
 
 // vanilla
@@ -315,6 +331,18 @@ printTable(['mod', 'version', 'items', 'equip', 'npcs', 'bosses', 'recipes', 'dr
 
 // Projectiles: CloneDefaults / AIType inherit behaviour from the copied projectile
 const projById = new Map(allProjectiles.map((p) => [p.id, p]));
+// What to call one. A mod projectile carries its class name in its id, but a vanilla one is only
+// ever a number — the Crystal Serpent shoots `v:521` — so the name has to come from the game's own
+// tables: the `ProjectileID` constant for the internal name, `ProjectileName.*` in the en-US
+// strings for what the player calls it ("Crystal Charge"). Without it every card, part and phase
+// graph naming a vanilla projectile printed the bare id.
+const vanillaProjNames = new Map(); // vanilla id → ProjectileID constant
+for (const [name, id] of vanilla?.ids.projectile ?? []) if (typeof id === 'number' && id > 0 && !vanillaProjNames.has(id)) vanillaProjNames.set(id, name);
+const projNameOf = (ref) => {
+  const raw = String(ref).split(':').pop();
+  const internal = String(ref).startsWith('v:') ? vanillaProjNames.get(Number(raw)) : null;
+  return (internal && vanilla?.loc.get(`ProjectileName.${internal}`)) || deCamel((internal ?? raw).replace(/Proj(ectile)?$/, ''));
+};
 // A weapon can put its real attack into play through a spawner — Catalyst's Congealed Duo-Whip
 // shoots a `DuoWhipSpawner` that lashes with two whips of its own — so what a projectile hatches
 // travels with it, for the archetype rules that ask.
@@ -368,16 +396,51 @@ for (const it of allItems) {
 // (Calamity's Mollusk set slows the player in CalamityPlayer, not in the item) → fold into the item
 {
   let applied = 0;
-  const fold = (fx, it) => {
+  const buffByName = new Map(allBuffs.map((b) => [b.id.split(':').pop(), b]));
+  /**
+   * One item's effects, expanded until nothing new comes out. Three things chain here and the
+   * chain is the whole point: a flag's effects, a buff the item grants (worth what the buff does —
+   * the same rule a potion gets), and the flag *that* buff sets. Calamity's Bloodflare melee set is
+   * all three links — `bloodflareMelee` grants `BloodflareBloodFrenzy`, the buff sets
+   * `bloodflareFrenzy`, and only that last flag carries the 25% melee damage and crit — so reading
+   * one link deep left the set bonus with nothing but a flag name.
+   *
+   * Anything reached *through* a buff is conditional by construction: you only have it while the
+   * buff is up, and the buff is granted on a hit, a kill or a cooldown.
+   */
+  const expand = (fx, it, cond) => {
     const table = flagEffects.get(it.mod);
     if (!table) return fx;
     let out = fx;
-    for (const flag of fx?.flags ?? []) {
-      const extra = table.get(flag);
-      if (!extra) continue;
-      out = mergeEffects(out, extra);
-      (out.via ??= []).push(flag);
-      applied++;
+    const done = new Set();
+    const gated = new Set(); // flags a buff introduced: their effects are the buff's, not the item's
+    const mark = (extra) => { for (const k of Object.keys(extra)) if (k !== 'flags' && k !== 'via' && k !== 'cond') cond.push(k); };
+    for (let round = 0; round < 3; round++) {
+      let grew = false;
+      for (const flag of [...(out?.flags ?? [])]) {
+        if (done.has(flag)) continue;
+        done.add(flag);
+        const extra = table.get(flag);
+        if (!extra) continue;
+        out = mergeEffects(out, extra);
+        (out.via ??= []).push(flag);
+        if (gated.has(flag)) mark(extra);
+        applied++;
+        grew = true;
+      }
+      for (const name of [...(out?.selfBuffs ?? [])]) {
+        if (done.has(name) || debuffRefs.has(name)) continue;
+        done.add(name);
+        const bfx = buffByName.get(name)?.effects;
+        if (!bfx) continue;
+        out = mergeEffects(out, bfx);
+        (out.via ??= []).push(name);
+        mark(bfx);
+        for (const f of bfx.flags ?? []) gated.add(f);
+        applied++;
+        grew = true;
+      }
+      if (!grew) break;
     }
     // an aura projectile named after the item (SandCloak → SandCloakVeil): what it does to players
     // inside it is the item's effect, conditional on being inside
@@ -391,39 +454,26 @@ for (const it of allItems) {
   };
   for (const it of allItems) {
     if (it.mod === 'v' || !it.className) continue;
-    it.effects = fold(it.effects, it) ?? undefined;
-    if (it.setEffects) it.setEffects = fold(it.setEffects, it);
-    if (it.effects?.cond) { it.effectsCond = it.effects.cond; delete it.effects.cond; }
-    if (it.setEffects?.cond) { it.setEffectsCond = it.setEffects.cond; delete it.setEffects.cond; }
-  }
-  // A buff the item's own code puts on you is worth what that buff does — the same rule a potion
-  // gets. Calamity's Spirit Glyph grants one of three stat buffs on a minion hit, and without this
-  // the accessory reads as `flags: [sGlyph]` and scores nothing at all. Conditional by construction:
-  // you have it only after a hit, and only one of the three at a time.
-  {
-    const buffByName = new Map(allBuffs.map((b) => [b.id.split(':').pop(), b]));
-    for (const it of allItems) {
-      for (const name of it.effects?.selfBuffs ?? []) {
-        const bfx = buffByName.get(name)?.effects;
-        if (!bfx || debuffRefs.has(name)) continue;
-        it.effects = mergeEffects(it.effects, bfx);
-        (it.effects.via ??= []).push(name);
-        for (const k of Object.keys(bfx)) if (k !== 'flags' && k !== 'via') (it.effectsCond ??= []).push(k);
-        applied++;
-      }
-    }
+    const cond = [];
+    const setCond = [];
+    it.effects = expand(it.effects, it, cond) ?? undefined;
+    // the same for the set bonus, which is where a mod keeps the effects worth having
+    if (it.setEffects) it.setEffects = expand(it.setEffects, it, setCond);
+    if (it.effects?.cond) { cond.push(...it.effects.cond); delete it.effects.cond; }
+    if (it.setEffects?.cond) { setCond.push(...it.setEffects.cond); delete it.setEffects.cond; }
+    if (cond.length) it.effectsCond = [...new Set([...(it.effectsCond ?? []), ...cond])];
+    if (setCond.length) it.setEffectsCond = [...new Set([...(it.setEffectsCond ?? []), ...setCond])];
   }
 
   // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
   // (`spawns` is the permanent kind — a minion an accessory or set bonus keeps out — and reads the
   // same). Every item, vanilla included: Stardust's guardian comes out of `Player.UpdateArmorSets`.
-  const projNames = new Map(); // vanilla id → ProjectileID constant ("StardustGuardian", not "623")
-  for (const [name, id] of vanilla?.ids.projectile ?? []) if (typeof id === 'number' && id > 0 && !projNames.has(id)) projNames.set(id, name);
   for (const it of allItems) {
-    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.spawns ?? [])]) {
+    // …a *set bonus's* on-hit spawn too, which this pass used to walk past: the card said "spawns
+    // undefined on every attack" and the proc was graded without its pierce, life or hit cooldown
+    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.onHit ?? []), ...(it.setEffects?.spawns ?? [])]) {
       const p = projById.get(s.type);
-      const raw = s.type.split(':').pop();
-      s.name = (s.type.startsWith('v:') ? projNames.get(Number(raw)) ?? raw : raw).replace(/([a-z])([A-Z])/g, '$1 $2');
+      s.name = p?.name ?? projNameOf(s.type);
       if (!p) continue;
       if (p.pen !== undefined) s.pen = p.pen;
       if (p.local !== undefined) s.local = p.local;
@@ -682,13 +732,15 @@ for (const s of allShops) { let l = shopSources.get(s.item); if (!l) shopSources
 function labelSource(d) {
   const [kind, ...rest] = d.source.split(':');
   const ref = rest.join(':');
-  if (kind === 'npc') return compact({ kind: 'drop', from: npcNameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined });
-  if (kind === 'bag') return compact({ kind: 'bag', from: nameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined });
+  if (kind === 'npc') return compact({ kind: 'drop', from: npcNameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined, chance: d.chance });
+  if (kind === 'bag') return compact({ kind: 'bag', from: nameOf.get(ref) ?? ref, cond: d.cond?.length ? d.cond.map((c) => c.replace(/^downed/i, '')).join(', ') : undefined, chance: d.chance });
   return null;
 }
+/** One row per distinct source: six NPC ids all called "Skeleton" are one line to the reader. */
+const dedupeSources = (list) => [...new Map(list.map((s) => [JSON.stringify(s), s])).values()];
 const condText = (cond) => (cond?.length ? cond.map((c) => c.replace(/^(any:)?(downed|Downed)/, '')).join(', ') : undefined);
 const fishSources = new Map();
-for (const f of allFish) { let l = fishSources.get(f.item); if (!l) fishSources.set(f.item, (l = [])); l.push(compact({ kind: 'fish', from: 'fishing', cond: condText(f.cond) })); }
+for (const f of allFish) { let l = fishSources.get(f.item); if (!l) fishSources.set(f.item, (l = [])); l.push(compact({ kind: 'fish', from: 'Fishing', cond: condText(f.cond) })); }
 const worldgenSources = new Map();
 for (const w of allWorldgen) { let l = worldgenSources.get(w.item); if (!l) worldgenSources.set(w.item, (l = [])); l.push(compact({ kind: 'worldgen', from: w.via, cond: condText(w.cond) ?? (w.after ? `after ${w.after}` : undefined) })); }
 
@@ -709,6 +761,15 @@ function foldSelfDebuffs(fx) {
   delete fx.selfBuffs;
   if (bad.length) fx.selfDebuffs = bad;
   return Object.keys(fx).length ? fx : undefined;
+}
+
+// Every item's own set bonus, formatted with its own arguments. An inherited arm quotes another
+// item's bonus by key (`{$SilvaHeadMagic.SetBonusEffect}`) and the `{0}`s in it are *that* item's
+// arguments, which nothing here can pass along — so the arm takes the text that item already
+// resolved for itself, numbers and all, instead of leaving placeholders on the card.
+const setTextByClass = new Map();
+for (const it of allItems) {
+  if (it.setBonus) setTextByClass.set(`${it.mod}:${it.className}`, cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs)));
 }
 
 const items = [];
@@ -735,23 +796,45 @@ for (const it of allItems) {
     // a substitution names the line by a fragment of it, and replaces that line whole
     else if (e.mode === 'sub') {
       const f = cleanText(resolveRefs(e.find, e.mod));
-      if (!f) continue;
-      if (own.includes(f) && f.includes('\n')) own = own.split(f).join(t);
-      else own = own.split('\n').map((l) => (l.includes(f) ? t : l)).join('\n');
+      if (f && own.split('\n').some((l) => l.includes(f))) {
+        if (own.includes(f) && f.includes('\n')) own = own.split(f).join(t);
+        else own = own.split('\n').map((l) => (l.includes(f) ? t : l)).join('\n');
+      }
+      // …and where the needle matches nothing, the new text used to be dropped with it — taking the
+      // whole description of anything a balance mod rewrites. A mod usually needles the text *it*
+      // wrote in an earlier version (the Wishing Star's own line reads "Temp1" in SOTS and the real
+      // one comes from InfernalEclipseAPI), so the text is kept and the line it restates is taken
+      // out instead: a replacement says the same thing with a different number, so that line is the
+      // one with the same shape.
+      else if (!own.includes(t)) {
+        const shape = (l) => l.replace(/[\d.]+/g, '#').trim();
+        const said = new Set(t.split('\n').map(shape));
+        own = own.split('\n').filter((l) => !said.has(shape(l))).join('\n');
+        added.push(t);
+      }
     }
     else if (!own.includes(t)) added.push(t);
   }
-  const tooltip = [keepDesc ? [own, desc].filter(Boolean).join('\n') : own, ...added].filter(Boolean).join('\n');
+  const printed = [keepDesc ? [own, desc].filter(Boolean).join('\n') : own, ...added].filter(Boolean).join('\n');
+  // …and what a key press reveals, appended: it is text about the item the player cannot see
+  // without holding a key, and the card has no key to hold (`armsOf`)
+  // (a form's arm repeats the item's flavour line: say it once)
+  const more = cleanText(resolveRefs(it.tooltipMore, it.mod)).split('\n').filter((l) => !printed.includes(l)).join('\n');
+  const tooltip = [printed, more].filter(Boolean).join('\n');
   // "Effect does not stack with other Guides": the family the game lets you wear only one of, so
   // the solver cannot equip all three volumes at once. Only a *named* family counts — "does not
   // stack with downgrades" is every upgrade line in the pack and groups nothing.
   const noStack = /does not stack with (?:any )?other ([A-Z][\w']*)/.exec(tooltip)?.[1];
-  const parsed = parseTooltipStats(tooltip); // the formatted text: `{0}` filled in is a real magnitude, not a guess
+  const parsed = armsOf(parseTooltipStats(printed), more); // the formatted text: `{0}` filled in is a real magnitude, not a guess
   // a set bonus is a tooltip too: the same parse fills in what the set's code did not say
-  const setBonus = cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs));
-  const setParsed = setBonus ? parseTooltipStats(setBonus) : {};
+  // …and the arms of one the game hides behind a key press are appended to it, unformatted: the
+  // item's format arguments belong to the line it prints, not to the bonuses it inherits.
+  const setOwn = cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs));
+  const setArms = resolveArms(it.setBonusMore, it.mod, setOwn);
+  const setBonus = [setOwn, setArms].filter(Boolean).join('\n');
+  const setParsed = armsOf(setOwn ? parseTooltipStats(setOwn) : {}, setArms);
   const cls = it.slot === 'weapon' ? (classOf(it.damageClass) ?? 'other') : null;
-  const sources = [...(dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []), ...(fishSources.get(it.id) ?? []), ...(worldgenSources.get(it.id) ?? [])];
+  const sources = dedupeSources([...(dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []), ...(fishSources.get(it.id) ?? []), ...(worldgenSources.get(it.id) ?? [])]);
   for (const r of (recipesByResult.get(it.id) ?? []).slice(0, 3)) {
     sources.push({ kind: 'craft', from: r.ingredients.map((g) => `${g.n > 1 ? g.n + '× ' : ''}${nameOf.get(g.item) ?? g.item ?? '?'}`).concat(r.groups.map((g) => `any ${g.replace(/^any/, '')}`)).join(', ') });
   }
@@ -779,6 +862,10 @@ for (const it of allItems) {
     // and what one use costs off the void bar
     subclass: it.subclass ? classOf(it.subclass) : undefined,
     voidCost: it.voidCost,
+    // …and what the right click costs, where the weapon charges more for it
+    altVoidCost: it.altVoidCost,
+    // which vanilla reforge tables the weapon's own `*Prefix` hooks put it on
+    prefixRolls: it.prefixRolls,
     // …and what one use costs off the health bar, for the weapons that are paid for in it
     lifeCost: it.lifeCost,
     // …and whether it is on Thorium's thrower exhaustion bar (`ThoriumItem.isThrowerNon`), which
@@ -866,6 +953,7 @@ const projectiles = {};
     if (it.fire?.typeOverride) want.push(it.fire.typeOverride);
     if (it.ammoSwap?.to) want.push(it.ammoSwap.to);
     if (it.fire?.stealthMods?.type) want.push(it.fire.stealthMods.type);
+    if (it.fire?.altMods?.type) want.push(it.fire.altMods.type); // the right click's own projectile
     for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.spawns ?? [])]) if (s.type) want.push(s.type);
   }
   for (const a of ammo) if (a.shoot) want.push(a.shoot);
@@ -875,9 +963,13 @@ const projectiles = {};
     if (seen.has(id)) continue;
     seen.add(id);
     const p = projById.get(id);
-    if (!p) continue;
+    // …and one nothing was mined for is still worth naming: a weapon that shoots it has to be able
+    // to say what it shoots. 13 vanilla ids are in this position — the shortsword stabs, the
+    // jousting lances — because the case walker never reached their `SetDefaults`. `unmined` says
+    // the record is a name and nothing else, so nothing reads its absent fields as facts.
+    if (!p) { projectiles[id] = { name: projNameOf(id), unmined: true }; continue; }
     const { id: _id, cloneOf: _c, mentions: _m, ...rest } = p;
-    projectiles[id] = rest;
+    projectiles[id] = { name: projNameOf(id), ...rest };
     for (const ch of p.children ?? []) if (seen.size < 6000) want.push(ch.type);
   }
 }
@@ -915,7 +1007,7 @@ const groupsOut = {};
   const pickaxeByName = new Map(allItems.filter((i) => i.pick > 0).map((i) => [i.name, i.id]));
   const materialRecord = (it) => {
     const st = stageResult.byItem.get(it.id);
-    return compact({ name: it.name, icon: iconHash(it.mod, it.name), mod: it.mod, slot: EQUIP_SLOTS.has(it.slot) ? it.slot : undefined, rarity: it.rarity, pick: it.pick, stage: st ? st.stage : null, prog: st ? st.progression : null, src: st?.source ?? { kind: 'unknown' }, drops: [...(dropSources.get(it.id) ?? []).slice(0, 4).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []).slice(0, 3), ...(fishSources.get(it.id) ?? []).slice(0, 2), ...(worldgenSources.get(it.id) ?? []).slice(0, 2)] });
+    return compact({ name: it.name, icon: iconHash(it.mod, it.name), mod: it.mod, slot: EQUIP_SLOTS.has(it.slot) ? it.slot : undefined, rarity: it.rarity, pick: it.pick, stage: st ? st.stage : null, prog: st ? st.progression : null, src: st?.source ?? { kind: 'unknown' }, drops: [...dedupeSources((dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean)).slice(0, 4), ...dedupeSources(shopSources.get(it.id) ?? []).slice(0, 3), ...dedupeSources(fishSources.get(it.id) ?? []).slice(0, 2), ...dedupeSources(worldgenSources.get(it.id) ?? []).slice(0, 2)] });
   };
   const byIdAll = new Map(allItems.map((i) => [i.id, i]));
   while (want.length) {
@@ -1071,20 +1163,80 @@ function mergeEffects(a, b) {
   // dropping it took Feral Claws' deliberate ±12% attack speed with it)
   return out;
 }
+/**
+ * The arms a key press reveals, in words with numbers in them.
+ *
+ * An arm is a quotation: "Inherited Silva Set Bonus:" and then `{$SilvaHeadMagic.SetBonusEffect}`.
+ * Its `{0}`s are the *quoted* item's format arguments, and the quoting item passes its own — which
+ * is how "+{0} HP/s life regen" came out as the Auric helmet's 4 minion slots. So a reference to an
+ * item this pack has is replaced by the set bonus **that item already resolved for itself**, which
+ * is the same text the game shows when you wear it. Anything else falls back to the ordinary
+ * reference resolution, placeholders and all.
+ *
+ * A line the quoting item already states is dropped, and *its* number is the one that counts: the
+ * Auric summoner helmet grants 4 minion slots and quotes three sets that grant 2, 2 and 3, none of
+ * which the wearer gets — so lines are compared with their magnitudes blanked out.
+ */
+function resolveArms(text, modId, printed = '') {
+  if (!text) return '';
+  const quoted = text.replace(/\{\$([^}@]+)(?:@\d+)?\}/g, (m, key) => {
+    const cls = key.split('.').slice(-2)[0];
+    return setTextByClass.get(`${modId}:${cls}`) ?? m;
+  });
+  const shape = (l) => l.replace(/[\d.]+/g, '#').trim();
+  const said = new Set(printed.split('\n').map(shape));
+  return cleanText(resolveRefs(quoted, modId)).split('\n').filter((l) => !said.has(shape(l))).join('\n');
+}
+
+/**
+ * A parse of the text the item prints, plus what the arms a key press reveals *do*.
+ *
+ * What an arm does is readable ("taking fatal damage will revive you", a dash, a debuff); what it
+ * is worth is not, because its `{0}`s are the arguments of the item it was inherited from and
+ * nothing here fills them — Auric Tesla's arms are Tarragon's, Bloodflare's and Silva's own lines.
+ * So only the abilities are taken. Reading magnitudes off placeholder fallbacks invents numbers,
+ * and letting one unfilled `{0}` set the item's `placeholders` flag would halve every stat its own
+ * line states exactly (which is what cost the Auric Tesla set its #1 rank until it was found).
+ * An arm may also be one *form* of the item (SOTS's Dream Lamp), which is another reason its
+ * numbers are not the ones in hand.
+ */
+function armsOf(parsed, arms) {
+  if (!arms) return parsed;
+  const extra = parseTooltipStats(arms);
+  parsed.flags = [...new Set([...(parsed.flags ?? []), ...extra.flags])];
+  parsed.debuffs = [...new Set([...(parsed.debuffs ?? []), ...(extra.debuffs ?? [])])];
+  return parsed;
+}
 /** `{$Mods.X.Key}` / `{$Common.Key}` references in tooltips → the referenced text. */
-function resolveRefs(text, modId) {
+function resolveRefs(text, modId, depth = 4) {
   if (!text || !text.includes('{$')) return text ?? '';
   const loc = localizations.get(modId);
-  return text.replace(/\{\$([^}@]+)(?:@(\d+))?\}/g, (m, key, at) => {
+  const out = text.replace(/\{\$([^}@]+)(?:@(\d+))?\}/g, (m, key, at) => {
     const candidates = [key, `Mods.${modId}.${key}`];
     for (const c of candidates) {
-      const v = loc?.get(c) ?? vanilla?.loc.get(c) ?? vanilla?.loc.get(c.replace(/^Mods\.[^.]+\./, ''));
-      // `{$CommonItemTooltip.PercentIncreasedCritChance@1}`: the referenced text's {0} is this text's {1}
+      // `find`, not `get`: a mod writes the reference relative to where it sits, so
+      // `{$GodSlayerHeadMelee.SetBonusEffect}` is the key ending in that and nothing else was
+      // resolving it — every Calamity post-Moon-Lord set bonus was the words "Set Bonus Effect"
+      const v = loc?.find(c) ?? vanilla?.loc.get(c) ?? vanilla?.loc.get(c.replace(/^Mods\.[^.]+\./, ''));
+      // `{$CommonItemTooltip.PercentIncreasedCritChance@1}`: the referenced text's arguments start
+      // at 1 here, so *every* index shifts — shifting only `{0}` collided the God Slayer dash's
+      // keybind and its cooldown onto the same argument ("Press  to … has a  second cooldown")
+      if (v) return at ? v.replace(/\{(\d+)(:[^}]*)?\}/g, (_m, i, fmt) => `{${+i + +at}${fmt ?? ''}}`) : v;
+    }
+    // an add-on mod's set bonus quotes the mod it extends (`{$TarragonBreastplate.CommonSetBonus}`
+    // from CalamityBardHealer), so the last resort is every other loaded mod's localization
+    for (const other of localizations.values()) {
+      if (other === loc) continue;
+      const v = other.find(key);
       if (v) return at ? v.replace(/\{0(:[^}]*)?\}/g, `{${at}$1}`) : v;
     }
     const tail = key.split('.').pop();
     return tail.replace(/([a-z])([A-Z])/g, '$1 $2');
   });
+  // a referenced text references others of its own — Calamity's set bonuses end on the chestplate's
+  // `{$…CommonSetBonus}`, which is where Silva's revive and God Slayer's dash actually live. Bounded,
+  // and stops as soon as a pass changes nothing, so a key that references itself cannot spin.
+  return depth > 0 && out !== text && out.includes('{$') ? resolveRefs(out, modId, depth - 1) : out;
 }
 /** `{0}% increased damage` with the format arguments the item's code passes (unknown ones stay). */
 function formatText(text, args) {

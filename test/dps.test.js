@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  ARCHETYPE, BOSS_DEFAULT, CHILD_CAP, CROWD, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, PIERCE_KEEP, REACH, LIFE_FLOOR, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
+  ARCHETYPE, BOSS_DEFAULT, CALIBRATION, CHILD_CAP, CROWD, MANA_FLOOR, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, LINGER_ON_TARGET, PIERCE_KEEP, REACH, LIFE_FLOOR, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
   asTarget, bladeCoverage, bladeLanding,
   boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, lifeRegen, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages, unknownDebuffDps,
 } from '../src/lib/dps.js';
@@ -468,7 +468,7 @@ describe('realDps', () => {
     expect(blade.f).toBeLessThan(1);
     expect(blade.f).toBeGreaterThan(0);
     expect(part(r, /contact swing/).label).toMatch(/blade .*reaches 100 px of 100/);
-    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * blade.f * risk, 0); // `risk` is the rounded part
+    expect(r.value).toBeCloseTo((20 * playerDamage(0) - 5) * 3 * 1.04 * blade.f * risk * CALIBRATION, 0); // `risk` is the rounded part
   });
   test('a four-tile blade has a much smaller contact window than a normal sword', () => {
     const normal = dps('v:sword');
@@ -503,21 +503,35 @@ describe('realDps', () => {
   test('homing that reaches the boss beats homing that cannot see it', () => {
     expect(dps('M:tome').value).toBeGreaterThan(dps('M:blindTome').value);
   });
-  test('magic pays for mana against regen, with a floor', () => {
+  test('magic pays for mana against the bar, its regen and the potions that top it up', () => {
+    // 100 mana/s against 9.5 regen: the bar and a potion every couple of seconds carry most of it,
+    // and the potion's own price — Mana Sickness — comes off the rest. Two things must not happen:
+    // the old flat floor, which said a weapon at 100 mana/s and one at 1000 were equally
+    // sustainable, and a *rate* cap on a mage who is simply drinking (`potionMana`), which is what
+    // an income of one Lesser every seven seconds amounted to.
     const r = dps('M:tome');
-    expect(part(r, /mana\/s/).mul).toBeCloseTo(SUSTAIN_FLOOR, 5); // 100 mana/s against ~9.5 regen
+    const m = part(r, /mana\/s/).mul;
+    expect(m).toBeGreaterThan(MANA_FLOOR);
+    expect(m).toBeLessThan(0.75);
     expect(manaRegen(0)).toBeCloseTo(9.5);
+    const tome = ds.byId.get('M:tome');
+    const guzzler = realDps({ ...tome, mana: 100 }, ctx());   // ten times the cost
+    expect(part(guzzler, /mana\/s/).mul).toBeLessThan(m * 0.8); // …and nothing like as sustainable
+    const cheap = realDps({ ...tome, mana: 1 }, ctx());       // inside the regen: no potion, no sickness
+    expect(part(cheap, /mana\/s/)?.mul ?? 1).toBeCloseTo(1, 2);
   });
   test('a weapon paid for in health is charged for it, and the tightest of its pools governs', () => {
     const tome = ds.byId.get('M:tome');
-    // 10 mana a cast at 10 casts/s already floors this one; a health cost the bar cannot keep up
-    // with is the harder limit, and the part says which pool it is
+    // a health cost the bar cannot keep up with is a real limit and is priced as one; which of the
+    // two pools ends up binding is whichever is worse, and the part says which
     const bleeds = realDps({ ...tome, lifeCost: 5 }, ctx());
-    expect(part(bleeds, /health\/s vs .* regen/).mul).toBeCloseTo(LIFE_FLOOR, 5);
-    expect(bleeds.value).toBeLessThan(dps('M:tome').value);
+    const bleedPool = part(bleeds, /(health|mana)\/s against .* regen/);
+    expect(bleedPool.mul).toBeLessThanOrEqual(part(dps('M:tome'), /mana\/s/).mul);
+    expect(realDps({ ...tome, lifeCost: 5 }, ctx()).value).toBeLessThanOrEqual(dps('M:tome').value);
+    expect(part(realDps({ ...tome, mana: 0, lifeCost: 5 }, ctx()), /health\/s against .* regen/).mul).toBeCloseTo(LIFE_FLOOR, 5);
     // …and one the regen covers costs nothing: mana is still the pool that binds
     const nick = realDps({ ...tome, lifeCost: 0.1 }, ctx());
-    expect(part(nick, /mana\/s/).mul).toBeCloseTo(SUSTAIN_FLOOR, 5);
+    expect(part(nick, /mana\/s/).mul).toBeCloseTo(part(dps('M:tome'), /mana\/s/).mul, 5);
     expect(nick.value).toBeCloseTo(dps('M:tome').value, 5);
     expect(lifeRegen(0)).toBeCloseTo(2);
   });
@@ -639,7 +653,7 @@ describe('realDps', () => {
     expect(part(r, /effect unread/)).toBeTruthy();
     const ph = r.phases.find((p) => p.kind === 'debuff');
     expect(ph).toMatchObject({ confidence: 'assumed', buffId: 'M:Curse' });
-    expect(ph.contribution).toBeCloseTo(unknownDebuffDps(r.boss.progression), 0); // the boss fought next sets the stage
+    expect(ph.contribution).toBeCloseTo(unknownDebuffDps(r.boss.progression) * CALIBRATION, 0); // the boss fought next sets the stage
     expect(unknownDebuffDps(20)).toBeGreaterThan(unknownDebuffDps(0));
     // the allowance stays under a real early DoT
     expect(unknownDebuffDps(0)).toBeLessThan(ds.debuffs['v:24'].dot * 2);
@@ -681,12 +695,12 @@ describe('realDps', () => {
   });
   test('a void weapon spends void the way a mage spends mana, and is its vanilla class underneath', () => {
     const r = dps('M:voidBow');
-    expect(part(r, /void\/s vs .* regen/)).toBeTruthy();
+    expect(part(r, /void\/s against .* regen/)).toBeTruthy();
     expect(part(r, /void\/s/).mul).toBeLessThan(1);
     // a loadout carrying ranged damage counts for it as well as void damage
     const gear = realDps(ds.byId.get('M:voidBow'), ctx({ loadout: { damage: 0.1, crit: 0 }, loadoutFor: (c) => (c === 'ranged' ? { damage: 0.2, crit: 5 } : { damage: 0, crit: 0 }) }));
     expect(part(gear, /void and ranged damage/)).toBeTruthy();
-    expect(part(gear, /damage from the loadout/).mul).toBeCloseTo(1.3, 2);
+    expect(part(gear, /damage from the standard loadout at this stage/).mul).toBeCloseTo(1.3, 2);
   });
   test('a zero-damage child is a sparkle, not a hit', () => {
     const fx = structuredClone(raw);
@@ -703,7 +717,10 @@ describe('realDps', () => {
     const cloud = dps('M:flask');
     const extraHits = (r, re) => Number(/\+([\d.]+) hits/.exec(part(r, re).label)[1]);
     expect(extraHits(once, /boom on death/)).toBeCloseTo(1, 5);       // it goes off, once
-    expect(extraHits(cloud, /acid on death/)).toBeGreaterThan(3);     // …this one keeps ticking
+    // …this one keeps ticking — but it stays where it went off and the boss does not, so only
+    // `LINGER_ON_TARGET` of its 6 ticks (180 life ÷ 30 immunity) lands on top of the first hit
+    expect(extraHits(cloud, /acid on death/)).toBeCloseTo(1 + LINGER_ON_TARGET * 6, 5);
+    expect(extraHits(cloud, /acid on death/)).toBeLessThan(7);        // not the whole window
   });
   test('a child that explodes wide still helps when the parent misses; a pebble does not', () => {
     expect(dps('M:bomb').value).toBeGreaterThan(dps('M:dud').value);
@@ -739,6 +756,33 @@ describe('realDps', () => {
     expect(part(r, /get through/)).toBeFalsy();                    // the window is charged there, not here
     expect(r.value).toBeGreaterThanOrEqual(solo.value);            // six of them are never worth less than one
     expect(r.value).toBeLessThan(solo.value * 2);                  // …and never six times more: one window
+  });
+  test('beams a held weapon keeps up hit on their own clocks, not one hit between them', () => {
+    // Yharim's Crystal: the prism maintains six beams with a 10-tick cooldown each — 36 hits a
+    // second between them, where the unread-cadence rule ("worth at most one extra hit, never
+    // `count`") allowed one. A child that expires on its own is a spray and keeps that reading.
+    const d = structuredClone(raw);
+    d.projectiles['M:crystalBeam'] = { pen: -1, local: 10, width: 18, height: 18, walls: true }; // no life: it lasts as long as the prism
+    d.projectiles['M:crystalPrism'] = { pen: -1, held: true, ownAi: true, walls: true, children: [{ type: 'M:crystalBeam', count: 6, where: 'ai', dmgMul: 1 }] };
+    d.items.push({ id: 'M:crystal', mod: 'M', name: 'Crystal', slot: 'weapon', class: 'magic', arch: 'held', damage: 65, useTime: 10, useAnimation: 10, crit: 4, mana: 2, shoot: 'M:crystalPrism', shootSpeed: 30, channel: true, noMelee: true, useStyle: 5, stage: 0, stageSource: { kind: 'rarity' } });
+    const sprayed = structuredClone(d);
+    sprayed.projectiles['M:crystalBeam'].life = 90;
+    const beams = indexDataset(d);
+    const spray = indexDataset(sprayed);
+    const r = realDps(beams.byId.get('M:crystal'), ctx({ ds: beams }));
+    const s = realDps(spray.byId.get('M:crystal'), ctx({ ds: spray }));
+    expect(part(r, /kept up while the weapon is out, hitting every 10 ticks/)).toBeTruthy();
+    expect(r.value).toBeGreaterThan(s.value * 2); // six clocks against one hit between the six
+    // …and a beam that charges itself is worth its ramp to the weapon holding it there, and only
+    // there: the spray, which is gone before it charges, is not paid for one.
+    const charged = structuredClone(d);
+    charged.projectiles['M:crystalBeam'].ramp = 2;
+    const chargedSpray = structuredClone(sprayed);
+    chargedSpray.projectiles['M:crystalBeam'].ramp = 2;
+    const c = realDps(indexDataset(charged).byId.get('M:crystal'), ctx({ ds: indexDataset(charged) }));
+    const cs = realDps(indexDataset(chargedSpray).byId.get('M:crystal'), ctx({ ds: indexDataset(chargedSpray) }));
+    expect(c.value / r.value).toBeCloseTo(2, 0);
+    expect(cs.value).toBeCloseTo(s.value, 5);
   });
   test('a piercing beam is not spent on one body of a crowd; a blade in your hands is', () => {
     const crowd = (id) => realDps(ds.byId.get(id), ctx({ targets: 'multi' })).parts.some((p) => /reaches one body/.test(p.label));
@@ -782,7 +826,7 @@ describe('realDps', () => {
     const r = dps('M:staff');
     expect(r.mode).toBe('minion');
     // 60/20 = 3 hits/s, defense 10, and a minion is not on the boss every second of the fight
-    expect(r.value).toBeCloseTo((12 * playerDamage(0) - 5) * 3 * ARCHETYPE.minion.uptime, 5);
+    expect(r.value).toBeCloseTo((12 * playerDamage(0) - 5) * 3 * ARCHETYPE.minion.uptime * CALIBRATION, 5);
   });
   test('a rogue weapon is worth the better of its two loops, never their sum, and that loop names the grade', () => {
     const r = dps('M:rogue', { stealthMax: 1 });
@@ -1156,7 +1200,7 @@ describe('phase damage', () => {
     const [kid] = kidOf(r);
     expect(kid.share).toBeCloseTo(0.3, 2);
     expect(kid.hitDmg).toBe(1);
-    expect(kid.contribution).toBeCloseTo(kid.eventsSec * 1 * r.critMult, 0);
+    expect(kid.contribution).toBeCloseTo(kid.eventsSec * 1 * r.critMult * CALIBRATION, 0);
     expect(part(r, /defense taken off each phase's own damage/)?.mul).toBeLessThan(1);
     // …and against nothing, the share is the whole story and the correction part does not appear
     const flat = realDps(gun, { ...ctx(), ds: indexDataset(weak), boss: DUMMY });
@@ -1207,7 +1251,7 @@ describe('phase damage', () => {
     const always = realDps(gun, { ...ctx(), ds: indexDataset(burning(null)), boss: DUMMY });
     const rare = realDps(gun, { ...ctx(), ds: indexDataset(burning(0.05)), boss: DUMMY });
     const fire = (r) => r.phases.find((p) => p.kind === 'debuff' && p.buffId === 'v:24');
-    expect(fire(always).contribution).toBeCloseTo(4, 0);
+    expect(fire(always).contribution).toBeCloseTo(4 * CALIBRATION, 0);
     expect(fire(rare).contribution).toBeLessThan(4);
     expect(fire(rare).contribution).toBeGreaterThan(0);
     expect(part(rare, /kept up \d+% of the time by the phases that apply it/)).toBeTruthy();

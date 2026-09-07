@@ -11,9 +11,55 @@
 import { decodeIL } from '../clr/il.js';
 import { Machine, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { expandValue, progressionHooks, siteGates } from './flags.js';
-import { TYPE_ABSTRACT, callsMethodNamed, contentRefs, derivesFromTml, refId } from './util.js';
+import { TYPE_ABSTRACT, callsMethodNamed, contentRefs, derivesFromTml, gateRefs, refId } from './util.js';
 
 const VANILLA_GEN_TYPES = /^Terraria\.(WorldGen|GameContent\.Biomes|GameContent\.Generation|WorldBuilding)/;
+
+/** A compiler-generated closure class: `<>c`, `<>c__DisplayClass288_0`, `<>o__12`. */
+const CLOSURE = /^<>/;
+const labelCache = new WeakMap(); // asm → "Type::Method" → { lambda name → the string it was registered under }
+
+/**
+ * The string a lambda was registered under, by the name of the method the compiler gave it. Gen
+ * passes are written `new PassLegacy("Water Chests", new WorldGenLegacyMethod(<lambda>))`, so the
+ * `ldstr` before the `ldftn` is the pass's own name.
+ */
+function lambdaLabels(asm, ownerFull, methodName) {
+  let byMethod = labelCache.get(asm);
+  if (!byMethod) labelCache.set(asm, (byMethod = new Map()));
+  const key = `${ownerFull}::${methodName}`;
+  let out = byMethod.get(key);
+  if (out) return out;
+  byMethod.set(key, (out = new Map()));
+  const md = asm.typeByName.get(ownerFull)?.methods.find((m) => m.name === methodName);
+  let body;
+  try { body = md && asm.methodBody(md); } catch { body = null; }
+  if (!body) return out;
+  let ins;
+  try { ins = decodeIL(body.il); } catch { return out; }
+  let last;
+  for (const x of ins) {
+    if (x.op === 'ldstr') { try { last = asm.userString(x.operand); } catch { last = undefined; } continue; }
+    if (x.op !== 'ldftn' || !last) continue;
+    try { const n = asm.resolve(x.operand)?.name; if (n) out.set(n, last); } catch { /* unresolvable */ }
+  }
+  return out;
+}
+
+/**
+ * A readable owner for the method a chest was filled from — and the key `worldgenGates` is written
+ * against, so it has to be stable and writable by hand. A gen pass registered as a lambda lives on
+ * a closure class under a mangled name: the Flipper's water chests came out as
+ * `<>c.<AddGenPasses>b__288_61`, which says nothing and cannot be pinned. The closure resolves to
+ * the type that wrote it, and the lambda to the name it was registered under ("Water Chests"), or
+ * failing that to the method it was written inside.
+ */
+export function viaName(asm, td, md) {
+  const ownerFull = td.fullName.split('/').filter((p) => !CLOSURE.test(p.split('.').pop())).pop() ?? td.fullName;
+  const enclosing = /^<(.+?)>[a-z]__/.exec(md.name)?.[1];
+  const name = enclosing ? lambdaLabels(asm, ownerFull, enclosing).get(md.name) ?? enclosing : md.name;
+  return `${ownerFull.split('.').pop()}.${name}`;
+}
 
 /**
  * @returns {Array<{ item: string, style?: number, tile?: number, via: string, cond?: string[] }>}
@@ -80,7 +126,7 @@ export function extractVanillaChests(tml) {
             const contain = args[2];
             const style = isNum(args[4]) ? args[4] : args[4]?.k === 'maybe' ? args[4].value : undefined;
             const tile = isNum(args[6]) ? args[6] : undefined;
-            const via = `${td.name}.${md.name}`;
+            const via = viaName(tml, td, md);
             if (contain?.k === 'maybe') for (const v of cands.get(contain.local) ?? [contain.value]) add(v, ctx, via, style, tile);
             else for (const e of expandValue(contain, ctx)) add(e.v, e.ctx, via, style, tile);
             return UNKNOWN;
@@ -135,23 +181,40 @@ export function extractModWorldgen(asm, { modId }) {
       queue.push({ md: def, hardmode, depth: depth + 1 });
     }
   }
-  // a chest tile with its own lock (ModTile.UnlockChest / LockChest) needs a key the code does not
-  // name: what such a method places keeps its rarity guess as a floor (`locked`)
-  const lockedTiles = new Set();
-  for (const td of asm.types) if (!(td.flags & TYPE_ABSTRACT) && derivesFromTml(asm, td, 'ModTile') && td.methods.some((x) => (x.name === 'UnlockChest' || x.name === 'LockChest') && asm.methodBody(x))) lockedTiles.add(td.fullName);
   const items = new Map();
   const tiles = new Set();
   for (const [md, hardmode] of seen) {
-    const via = `${md.declaringType.name}.${md.name}`;
-    const tileRefs = contentRefs(asm, md, 'TileType');
-    const locked = tileRefs.some((t) => lockedTiles.has(t)) || /Locked|BiomeChest/i.test(md.name);
+    const via = viaName(asm, md.declaringType, md);
+    // the chest tiles this method places into (another mod's as often as its own): `extractChestLocks`
+    // says which of them are locked, and behind what
+    const tileRefs = contentRefs(asm, md, 'TileType').map((t) => refId(asm, t));
+    const locked = /Locked|BiomeChest/i.test(md.name);
     for (const t of contentRefs(asm, md, 'ItemType')) {
       const id = refId(asm, t);
       const prev = items.get(id);
-      const rec = { item: id, via, cond: hardmode ? ['hardMode'] : undefined, locked: locked || undefined };
+      const rec = { item: id, via, cond: hardmode ? ['hardMode'] : undefined, locked: locked || undefined, chests: tileRefs.length ? tileRefs : undefined };
       if (!prev || (prev.cond && !hardmode) || (prev.locked && !locked)) items.set(id, rec);
     }
-    for (const t of tileRefs) tiles.add(refId(asm, t));
+    for (const t of tileRefs) tiles.add(t);
   }
   return { items: [...items.values()].map((i) => ({ ...i, mod: modId })), tiles: [...tiles] };
+}
+
+/**
+ * Chest tiles that need a boss or a key (`ModTile.UnlockChest`): tile id → the progression flags the
+ * lock reads. Calamity's Abyss chest opens at Skeletron, and a mod placing an item in one — its own
+ * chest or another mod's — places it behind that gate; an empty list is a lock the code does not
+ * name (a key item), which only keeps the item's rarity guess as a floor.
+ */
+export function extractChestLocks(asm, { modId }) {
+  const out = new Map();
+  for (const td of asm.types) {
+    if (td.flags & TYPE_ABSTRACT || !derivesFromTml(asm, td, 'ModTile')) continue;
+    // UnlockChest only: it answers "can this be opened", the same polarity as CanKillTile.
+    // IsLockedChest / LockChest answer the inverse, and their flags would read backwards.
+    const m = td.methods.find((x) => x.name === 'UnlockChest' && asm.methodBody(x));
+    if (!m) continue;
+    out.set(`${modId}:${td.name}`, [...gateRefs(asm, m)]);
+  }
+  return out;
 }

@@ -114,6 +114,9 @@
     {#if !loadout.armor}
       {@render empty('armor')}
     {:else}
+      <!-- the pieces scroll on their own: an inherited set bonus runs twenty lines and used to push
+           the runner-up sets out of the panel entirely -->
+      <div class="min-h-0 overflow-y-auto">
       <table class="lab-table">
         <tbody>
           {#each ['head', 'body', 'legs'] as slot}
@@ -146,8 +149,9 @@
           {/if}
         </tbody>
       </table>
+      </div>
       {#if loadout.armorAlternatives.length}
-        <div class="flex min-h-0 flex-1 flex-col border-t border-line px-4 pb-3 pt-2.5">
+        <div class="flex min-h-0 flex-1 basis-40 flex-col border-t border-line px-4 pb-3 pt-2.5">
           <div class="lab-rule start mb-2">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
           <div class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-px overflow-y-auto bg-line md:grid-cols-2">
@@ -265,7 +269,7 @@
               <td class="num text-right">{w.eff.damage}</td>
               <td class="num text-right text-dim">{Math.round(w.item.cls === 'melee' ? w.eff.useAnimation : w.eff.useTime) || '–'}</td>
               <!-- the crit the weapon is actually swung at: its own plus what the loadout carries -->
-              <td class="num text-right text-dim" title="{w.eff.crit}% on the weapon{loadout.bonus.crit ? ` + ${Math.round(loadout.bonus.crit)}% from the loadout` : ''}">{Math.round(w.eff.crit + (w.item.cls === 'summon' ? 0 : loadout.bonus.crit))}%</td>
+              <td class="num text-right text-dim" title="{w.eff.crit}% on the weapon{loadout.bonus.crit ? ` + ${Math.round(loadout.bonus.crit)}% from the standard loadout at this stage` : ''}">{Math.round(w.eff.crit + (w.item.cls === 'summon' ? 0 : loadout.bonus.crit))}%</td>
               <td>
                 <div class="flex items-center gap-2">
                   <div class="bar flex-1"><i style="width:{Math.round((w.value / maxDps) * 100)}%"></i></div>

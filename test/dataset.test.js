@@ -275,7 +275,7 @@ describe('dataset.json', () => {
     expect(byName('Sonar Cannon').stageSource).toMatchObject({ kind: 'drop', boss: 'Viscount' });
     // same registry for vanilla bosses: the closure is on the GlobalNPC, keyed by the npc id
     // pushed before the delegate (The Stalker is Brain of Cthulhu loot, not a rarity guess)
-    expect(byName('The Stalker').sources).toContainEqual({ kind: 'drop', from: 'Brain of Cthulhu' });
+    expect(byName('The Stalker').sources).toContainEqual({ kind: 'drop', from: 'Brain of Cthulhu', chance: 0.333333 });
     // ThoriumRework picks the cosmetic of whichever boss this is in an `npc.ModNPC.Name == "…"`
     // chain, then adds the local it filled once at the end: each arm belongs to its own boss
     expect(byName('Zephyr Wings').stageSource).toMatchObject({ kind: 'drop', boss: 'The Grand Thunder Bird' });
@@ -409,5 +409,21 @@ describe('attack phases cover every weapon type', () => {
     const bare = [...byArch.values()].reduce((n, a) => n + a.bare, 0);
     // a pin, not a target: it may only be lowered deliberately
     expect(bare).toBeLessThanOrEqual(30);
+  });
+
+  // Drop chances read out of the rules' arguments, checked against what the wikis state. The
+  // fail-chain ones matter most: vanilla writes a *list* of drops as `A.OnFailedRoll(B)`, and read
+  // as a nested roll Bone Sword came out at 1 in 4,000,000 instead of 1 in 200.
+  it(has)('drop chances match the published rates', () => {
+    const chance = (item, from) => byName(item)?.sources?.find((s) => s.from === from)?.chance;
+    expect(chance('Bone Sword', 'Skeleton')).toBeCloseTo(1 / 200, 6);
+    expect(chance('Slime Staff', 'Blue Slime')).toBeCloseTo(1 / 10000, 6);
+    expect(chance('Dart Rifle', 'Corrupt Mimic')).toBeCloseTo(1 / 5, 6); // one from five options
+    expect(chance('Rifle Scope', 'Skeleton Sniper')).toBeCloseTo(1 / 12, 6);
+    expect(chance('Muramasa', 'Golden Lock Box')).toBeCloseTo(1 / 7, 6);
+    // Calamity parks its boss-weapon rate in a `.cctor` static: `new Fraction(1, 4)` from an NPC,
+    // 1/3 out of the bag. Without it every Calamity boss weapon reads as a guaranteed drop.
+    expect(chance('Mycelial Claws', 'Crabulon')).toBeCloseTo(1 / 4, 6);
+    expect(chance('Mycelial Claws', 'Treasure Bag (Crabulon)')).toBeCloseTo(1 / 3, 6);
   });
 });

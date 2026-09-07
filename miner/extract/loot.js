@@ -33,6 +33,50 @@ const ITEM_ARG = {
   MechBossSpawnersDropRule: null, DropPerPlayerOnThePlayerNotScalingWithLuck: 0,
 };
 
+/**
+ * Where a rule's drop chance sits in its arguments: `den`/`num` are argument indices holding the
+ * chance denominator and numerator, and `one` means the rule rolls *one* of its options, so the
+ * chance splits between them. A rule missing from the table drops whatever it names outright.
+ */
+const CHANCE_ARG = {
+  Common: { den: 1 }, NotScalingWithLuck: { den: 1 }, Food: { den: 1 }, ExpertGetsRerolls: { den: 1 },
+  CommonDropWithRerolls: { den: 1 }, WithRerolls: { den: 1 },
+  // the normal-mode denominator: the dataset has no difficulty, and normal is the pessimistic read
+  NormalvsExpert: { den: 1 }, NormalvsExpertNotScalingWithLuck: { den: 1 },
+  MasterModeCommonDrop: { den: 1 }, MasterModeDropOnAllPlayers: { den: 1 },
+  CommonDrop: { den: 1, num: 4 }, CommonDropNotScalingWithLuck: { den: 1, num: 4 },
+  PerPlayer: { den: 1, num: 4 }, DropPerPlayerOnThePlayer: { den: 1, num: 4 },
+  DropPerPlayerOnThePlayerNotScalingWithLuck: { den: 1, num: 4 },
+  ItemDropWithConditionRule: { den: 1, num: 5 },
+  ByCondition: { den: 2, num: 5 }, BossBagByCondition: { den: 2, num: 5 },
+  OneFromOptions: { den: 0, one: true }, OneFromOptionsNotScalingWithLuck: { den: 0, one: true },
+  OneFromOptionsWithNumerator: { den: 0, num: 1, one: true }, OneFromOptionsDropRule: { den: 0, num: 1, one: true },
+  OneFromOptionsNotScaledWithLuckDropRule: { den: 0, num: 1, one: true },
+  FromOptionsWithoutRepeatsDropRule: { den: 0, one: true }, OneFromRulesRule: { den: 0, one: true },
+  SequentialRules: { den: 0 }, SequentialRulesRule: { den: 0 },
+  SequentialRulesNotScalingWithLuck: { den: 0 }, SequentialRulesNotScalingWithLuckRule: { den: 0 },
+  FewFromOptions: { den: 1, one: true }, FewFromOptionsNotScalingWithLuck: { den: 1, one: true },
+  FewFromOptionsDropRule: { den: 1, num: 2, one: true }, MultipleFromRulesRule: { den: 1, one: true },
+  // Calamity: every boss weapon rolls its own `NormalWeaponDropRateFraction` (1/4), all at once
+  CalamityStyle: { den: 0 },
+};
+/** `DropHelper.Add(loot, item, chance, min, max)` / `AddIf(loot, cond, item, chance, …)`: the chance follows the item. */
+function addChanceArg(name, args) {
+  if (!/^Add/.test(name)) return null;
+  const i = args.findIndex((a) => a?.k === 'type' && a.fn === 'ItemType');
+  const next = args[i + 1];
+  return i >= 0 && (isNum(next) || next?.k === 'frac') ? { den: i + 1 } : null;
+}
+/** `{ p, split }` for a rule call: `p` is its chance to fire, `split` that it picks one option. */
+function chanceOf(name, args) {
+  const c = CHANCE_ARG[name] ?? addChanceArg(name, args);
+  if (!c) return {};
+  const d = args[c.den];
+  const n = c.num === undefined ? 1 : args[c.num];
+  const p = d?.k === 'frac' ? (d.d > 0 ? d.n / d.d : null) : isNum(d) && d > 0 && isNum(n) && n > 0 ? n / d : null;
+  return { p: p === null ? undefined : Math.min(1, p), split: c.one };
+}
+
 const isRuleName = (n) => n in ITEM_ARG || /Rule$|Drop$/.test(n);
 /** Special-seed conditions (remix / zenith / drunk worlds): those drops are not normal progression. */
 const SEED_RE = /Remix|Zenith|Drunk|ForTheWorthy|GetGoodWorld|NotTheBees|NoTraps|DontDigUp|Everything|Anniversary|Celebration|GFB/;
@@ -99,26 +143,33 @@ function ruleItems(asm, name, args, { intsAreItems, locals = null }) {
 
 function makeRule(asm, name, args, opts) {
   const seed = args.some(isSeedArg);
-  const r = { k: 'rule', name, ...ruleItems(asm, name, args, opts), seed };
+  const r = { k: 'rule', name, ...ruleItems(asm, name, args, opts), ...chanceOf(name, args), seed };
   if (seed) { r.items = new Set(); r.children = []; }
   return r;
 }
 
 /**
- * Every item a rule can yield, through its chained/nested rules, with the condition flags
- * on the way down (`Map<item, Set<flag>>`; an item reachable unconditionally has no flags).
+ * Every item a rule can yield, through its chained/nested rules, with the condition flags and the
+ * drop chance on the way down (`Map<item, { cond: Set<flag>, p }>`; an item reachable
+ * unconditionally has no flags). Chances multiply down the chain; an item two rules can both yield
+ * keeps the better one.
  */
-function allItems(rule, out = new Map(), seen = new Set(), inherited = []) {
+function allItems(rule, out = new Map(), seen = new Set(), inherited = [], p = 1) {
   if (!rule || seen.has(rule)) return out;
   seen.add(rule);
   const cond = [...inherited, ...(rule.cond ?? [])];
+  // a rule that rolls one of its options splits its chance between them
+  const q = (p * (rule.p ?? 1)) / (rule.split ? Math.max(1, rule.items.size + rule.children.length) : 1);
   for (const x of rule.items) {
     const cur = out.get(x);
-    if (!cur) out.set(x, new Set(cond));
-    else if (cond.length === 0) cur.clear();
-    else if (cur.size) for (const c of [...cur]) if (!cond.includes(c)) cur.delete(c);
+    if (!cur) out.set(x, { cond: new Set(cond), p: q });
+    else {
+      if (q > cur.p) cur.p = q;
+      if (cond.length === 0) cur.cond.clear();
+      else if (cur.cond.size) for (const c of [...cur.cond]) if (!cond.includes(c)) cur.cond.delete(c);
+    }
   }
-  for (const c of rule.children) allItems(c, out, seen, cond);
+  for (const c of rule.children) allItems(c, out, seen, cond, c.fail ? p : q);
   return out;
 }
 
@@ -165,7 +216,38 @@ function newItemTypeIndex(callee) {
 }
 
 /**
- * Run a loot method and emit `{ source, item, cond? }` records.
+ * Drop-rate constants a mod parks in a static: every Calamity boss weapon rolls
+ * `DropHelper.NormalWeaponDropRateFraction`, a `new Fraction(1, 4)` written in a `.cctor` — which
+ * `evalLoadStatics` never sees, since it only reads `Load`. Only fractions are answered: letting
+ * this resolve anything else would decide branches the loot extractors read both ways on purpose.
+ */
+const fracStatics = new WeakMap();
+function fracStatic(asm, tml, f) {
+  let byType = fracStatics.get(asm);
+  if (!byType) fracStatics.set(asm, (byType = new Map()));
+  const td = f.declaringType?.def ?? f.declaringType;
+  const key = td?.fullName ?? td?.name;
+  if (!td || !key) return undefined;
+  let found = byType.get(key);
+  if (!found) {
+    byType.set(key, (found = new Map()));
+    const cctor = td.methods?.find((m) => m.name === '.cctor');
+    let body;
+    try { body = cctor && asm.methodBody(cctor); } catch { body = null; }
+    if (body && body.il.length <= 2048) {
+      const machine = new Machine(asm, {
+        tml, budget: 50000, maxDepth: 1,
+        onNew: (callee, args) => (callee.declaringType?.name === 'Fraction' && isNum(args[0]) && isNum(args[1]) ? { k: 'frac', n: args[0], d: args[1] } : undefined),
+        onStaticStore: (fld, val) => { if (val?.k === 'frac') found.set(fld.name, val); },
+      });
+      try { machine.run(cctor, undefined, []); } catch { /* partial is fine */ }
+    }
+  }
+  return found.get(f.name);
+}
+
+/**
+ * Run a loot method and emit `{ source, item, cond?, chance? }` records.
  * `sourceOf(cases)` maps the case-tracker state to source ids (or nothing to skip);
  * `anySource` is used for a drop without a key that is gated by flags (any enemy while X).
  */
@@ -184,7 +266,7 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
   const later = (sources, name, cargs, ctx) => {
     const gates = siteGates(ctx); // `if (Main.hardMode) loot.Add(...)`: the block's flags gate the rule
     let list = sourcesOf(sourceOf, ctx?.cases, sources);
-    const r = ruleItems(asm, name, cargs, { ...ruleOpts, intsAreItems: false });
+    const r = { ...ruleItems(asm, name, cargs, { ...ruleOpts, intsAreItems: false }), ...chanceOf(name, cargs) };
     // Nothing keys the call site, but an arm of the value does: a mod picks the item in a per-boss
     // `if (npc.ModNPC.Name == "TheGrandThunderBird")` chain and adds it once at the end, so each
     // arm belongs to the boss it was chosen under.
@@ -238,10 +320,11 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
       if (recv?.k === 'obj' && recv.name === 'keyArg') return recv.props[name] ?? UNKNOWN;
       return prog.onLoad(recv, name);
     },
-    onStaticLoad: (f) => conditionField(f) ?? prog.onStaticLoad(f) ?? statics?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`) ?? tmlStaticLoadHook(f),
+    onStaticLoad: (f) => conditionField(f) ?? prog.onStaticLoad(f) ?? statics?.get(`${f.declaringType?.fullName ?? ''}::${f.name}`) ?? fracStatic(asm, tml, f) ?? tmlStaticLoadHook(f),
     onNew(callee, cargs) {
       const decl = callee.declaringType?.fullName ?? callee.declaringType?.name ?? '';
       const short = decl.split(/[./]/).pop();
+      if (short === 'Fraction' && isNum(cargs[0]) && isNum(cargs[1])) return { k: 'frac', n: cargs[0], d: cargs[1] };
       if (/ItemDropRules/.test(decl) && isRuleName(short)) return makeRule(asm, short, cargs, ruleOpts);
       if (/Conditions?[./+]|Condition$/.test(decl) || COND_CLASS_RE.test(short)) {
         // a condition whose name does not give it away (`Conditions.YoyosYelets`): what its own
@@ -321,6 +404,9 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
         const child = (recv?.k === 'rule' ? cargs[0] : cargs[1]);
         if (parent && child?.k === 'rule') {
           if (name === 'OnFailedConditions' && parent.neg?.length) child.cond = [...(child.cond ?? []), ...parent.neg];
+          // a fail chain is how vanilla writes a *list* of independent drops (Bone Sword hangs three
+          // rules deep off a 1/100 one): the child rolls its own chance, not the parent's as well
+          if (name !== 'OnSuccess') child.fail = true;
           parent.children.push(child);
         }
         return child?.k === 'rule' ? child : parent ?? UNKNOWN;
@@ -376,13 +462,11 @@ export function runLootMethod(asm, md, { tml, thisVal, args, emit, sourceOf, any
     machine.run(md, thisVal, args, asm);
   } catch (e) { if (process.env.TL_STRICT) throw e; }
   for (const { source, r, gates } of pending) {
-    const items = new Map();
-    for (const x of r.items) items.set(x, new Set(r.cond));
-    for (const c of r.children) allItems(c, items, new Set(), r.cond);
-    for (const [it, cond] of items) {
+    for (const [it, { cond, p }] of allItems(r)) {
       const all = [...new Set([...cond, ...gates])];
-      if (process.env.TL_TRACE_ITEM && it.includes(process.env.TL_TRACE_ITEM)) console.log('emit', it, 'from', `${md.declaringType.name}::${md.name}`, 'source', source, 'cond', JSON.stringify(all), 'rule', r.name);
-      emit(all.length ? { source, item: it, cond: all } : { source, item: it });
+      const chance = p < 1 ? Math.round(p * 1e6) / 1e6 : undefined;
+      if (process.env.TL_TRACE_ITEM && it.includes(process.env.TL_TRACE_ITEM)) console.log('emit', it, 'from', `${md.declaringType.name}::${md.name}`, 'source', source, 'cond', JSON.stringify(all), 'chance', p, 'rule', r.name);
+      emit({ source, item: it, ...(all.length ? { cond: all } : {}), ...(chance ? { chance } : {}) });
     }
   }
 }
@@ -400,7 +484,12 @@ export function extractModDrops(asm, { tml, modId, enabledMods = null, statics =
     if (!d.item) return;
     const k = `${d.source}|${d.item}`;
     const prev = seen.get(k);
-    if (prev) { if (prev.cond && !d.cond && !fallback) delete prev.cond; return; }
+    if (prev) {
+      if (prev.cond && !d.cond && !fallback) delete prev.cond;
+      // the same item off two rules (normal vs expert, a pity roll): the better chance is the one
+      if (!fallback && (d.chance ?? 1) > (prev.chance ?? 0)) { if (d.chance) prev.chance = d.chance; else delete prev.chance; }
+      return;
+    }
     seen.set(k, d);
     out.push(d);
   };

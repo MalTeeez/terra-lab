@@ -10,6 +10,7 @@ import { buffCooldownOf, ownedCapOf } from './guards.js';
 import { analyzeShoot, lifeCostOf } from './shoot.js';
 import { projRef } from './projectiles.js';
 import { extractWingStats } from './wings.js';
+import { prefixRollsOf } from './prefixes.js';
 
 export const EQUIP = ['Head', 'Body', 'Legs', 'HandsOn', 'HandsOff', 'Back', 'Front', 'Shoes', 'Waist', 'Wings', 'Shield', 'Neck', 'Face', 'Balloon', 'Beard'];
 
@@ -344,6 +345,9 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       name: text.name ?? deCamel(td.name),
       tooltip: text.tooltip ?? '',
       setBonus: text.setBonus ?? '',
+      // the arms of a description the game hides behind a key press, formatted apart (see `loc.item`)
+      tooltipMore: text.tooltipMore,
+      setBonusMore: text.setBonusMore,
       slot,
       equip,
       damageClass: rec.damageClass ?? null,
@@ -398,6 +402,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
     if (equip.includes('Shoes') || f.shoeSlot > 0) item.boots = true;
     if (f.wingSlot > 0 || equip.includes('Wings')) { item.wings = true; item.wingStats = extractWingStats(asm, td, { tml }) ?? undefined; }
     if (slot === 'weapon') {
+      // which vanilla reforge table this weapon rolls on, where the mod says so itself
+      try { item.prefixRolls = prefixRollsOf(asm, td, { damageClass: rec.damageClass, subclass: voidSub }); } catch { /* unread */ }
       try { item.fire = analyzeShoot(asm, td, { tml, projRef: (v) => projRef(asm, v) }) ?? undefined; } catch { /* keep the item */ }
       // what a use costs in health, where the weapon pays in that instead of (or as well as) mana
       try { item.lifeCost = lifeCostOf(asm, td); } catch { /* unread */ }
@@ -406,10 +412,22 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       if (/^Void/.test(rec.damageClass ?? '')) {
         const gv = findInherited(asm, td, 'GetVoid');
         if (gv) {
-          try {
-            const v = new Machine(asm, { tml, concreteType: td, budget: 4000, onCall: tmlStaticHook, onStaticLoad: tmlStaticLoadHook }).run(gv, THIS, [PLAYER]);
-            if (isNum(v) && v > 0) item.voidCost = v;
-          } catch { /* unread */ }
+          // …and again as the right click, because `GetVoid` is where a weapon charges for it:
+          // Blink Blade is `3 * (player.altFunctionUse == 2 ? 3 : 1)`, and reading only the left
+          // click sold its 300 % slash at a third of what the bar actually pays for it.
+          const cost = (alt) => {
+            try {
+              const v = new Machine(asm, {
+                tml, concreteType: td, budget: 4000, onCall: tmlStaticHook, onStaticLoad: tmlStaticLoadHook,
+                onLoad: (recv, name) => (alt && recv === PLAYER && name === 'altFunctionUse' ? 2 : undefined),
+              }).run(gv, THIS, [PLAYER]);
+              return isNum(v) && v > 0 ? v : null;
+            } catch { return null; /* unread */ }
+          };
+          const left = cost(false);
+          if (left) item.voidCost = left;
+          const right = left && cost(true);
+          if (right && right !== left) item.altVoidCost = right;
         }
       }
     }

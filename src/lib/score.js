@@ -21,6 +21,16 @@ import { STEALTH_RECHARGE, hitDamage, realDps, stealthMultiplier } from './dps.j
 const MINION_UPTIME = 0.9;
 
 /**
+ * How much of that time an *accessory's* free minion is actually swinging, against a summoner's
+ * commanded one. Nothing here reads its AI — the Fungal Clump latches on and drains, an elemental
+ * drifts around the player, none of them take a target order and none of them scale with the
+ * class's damage — so the 3 hits/s its immunity window allows is a ceiling it never holds. Half of
+ * it, and half is still the optimistic reading.
+ * ponytail: one number for every spawn; read the AI's own clock if it ever matters.
+ */
+const SPAWN_DUTY = 0.5;
+
+/**
  * Crit chance a player actually carries into a boss fight — the yardstick crit *damage* is worth
  * anything against: a bigger crit only pays on the hits that crit. `+1% crit damage` is worth
  * `TYPICAL_CRIT / (1 + TYPICAL_CRIT)` of `+1% damage`, so 20% crit damage ≈ 2.6% damage.
@@ -57,6 +67,16 @@ export const W = {
   maxLife: 0.05, lifeRegen: 1.2, endurance: 60, manaCost: 20, maxMana: 0.03, armorPen: 0.5, aggro: 0.8,
   flight: 10, wingTime: 0.04, wingSpeed: 2, flightBoost: 5, noKnockback: 1.5, dash: 2, jump: 3, jumpBoost: 1, accel: 4, debuffImmune: 5, lava: 2, mobility: 3, utility: 1,
   dodge: 5, // a negated hit now and then: about what immunity to every debuff is worth
+  // a death undone once a fight: a second health bar (W.maxLife × 500 ≈ 25), discounted for coming
+  // exactly once — but that once is the moment the fight would otherwise have ended, which is the
+  // most valuable hit point in it. What this has to be honest about is the endgame trade the model
+  // keeps making: three loose pieces stacking raw stats, against a set whose bonus is a free death.
+  // ponytail: one number for every revive; split it if a short-cooldown one ever shows up.
+  revive: 15,
+  // …and a window where nothing can hurt you at all: the seconds after that revive, the bubble an
+  // armour ability puts you in, a dash spent immune. Above a dodge (one hit, whenever it happens)
+  // and under the revive (a whole bar) — several hits' worth, at a moment you or the game picks.
+  invuln: 8,
   debuffResist: 2, // immunity to a few named debuffs, not to all of them
   selfDebuff: 4, // a drawback that puts a debuff on you: near enough the mirror of debuff immunity
   whipRange: 5, // summon: +100% whip range = 5 (the lash reaches further, the minions do the damage)
@@ -78,9 +98,18 @@ export const W = {
   potionHeal: 2 * 150 * 0.05, potionMana: 8 * 60 * 0.03,
   healerHealing: 1.5, // healer: +1 life on every heal they cast
   // void (SOTS) is a resource class: its weapons spend void the way a mage spends mana, so what a
-  // piece gives the bar is what it gives the class. Gain is the strongest of the three — it is how
-  // fast the bar comes back — and the pool is worth about what the same mana is.
-  voidGain: 2.5, voidMaxPool: 0.03, voidRegen: 12,
+  // piece gives the bar is what it gives the class — and both of these are *measured* against the
+  // model rather than guessed. Grading the class's best five weapons at every stage with the bar a
+  // piece gives them (`dps.js` prices void as a pool with `VOID_BAR` under it now, so a deeper bar
+  // is worth something at all): +50 max void is +2.2 % DPS, +100 is +4.3 %, and the response is
+  // near enough linear to +300; +10 % regeneration is +5.9 % DPS, +25 % is +14 %, +50 % is +26 %.
+  // Against the scale where +10 % damage scores 10, that is 0.043 a point and 62 a full fraction —
+  // where the pool was 0.03 and the regeneration 12, both a third to a fifth of what the class's
+  // own arithmetic says they buy. Both saturate at the same place, and the `SOFT` caps are set so
+  // the eased curve follows the measurement over its whole range: a bar nothing can empty is
+  // +56 % DPS and no more, which is what full sustain is worth and what `Infinite Void` is.
+  // Gain is not measured: nothing prices what a hit puts back yet.
+  voidGain: 2.5, voidMaxPool: 0.0434, voidRegen: 62,
   // Thorium bard starts with 10 inspiration. Extra capacity is a meaningful fraction of the bar,
   // while regeneration changes how often instruments can be played across a long fight.
   inspiration: 1.5, inspirationRegen: 20,
@@ -169,7 +198,7 @@ export const typicalDefense = (progression) => 6 * 1.13 ** Math.max(0, progressi
  * aggro all pay less the more a single item piles on.
  */
 export const soft = (x, cap) => { const t = Math.min(1, Math.abs(x) / (3 * cap)); return Math.sign(x) * cap * (1 - (1 - t) ** 3); };
-export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 150, inspiration: 10, inspirationRegen: 0.5 };
+export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 1300, voidRegen: 0.9, inspiration: 10, inspirationRegen: 0.5 };
 
 /** Hits one spawned projectile lands: its pierce (or life ÷ immunity frames when infinite), plus half its children. */
 export function onHitHits(s) {
@@ -308,6 +337,11 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'condDamage': b = Math.max(0, condStat(st, 'CondDamage', cls, aliases) - Math.abs(forClass(fx?.damage, cls, aliases) + forClass(fx?.damageMult, cls, aliases))); break;
     case 'condCrit': b = Math.max(0, condStat(st, 'CondCrit', cls, aliases) - Math.abs(forClass(fx?.crit, cls, aliases))); break;
     case 'condArmorPen': b = Math.max(0, condStat(st, 'CondArmorPen', cls, aliases) - Math.abs(forClass(fx?.armorPen, cls, aliases))); break;
+    // …and the same three again for a line whose condition is a *state* rather than a stance you
+    // steer: one item's tooltip can carry both, so they are separate keys with separate discounts
+    case 'stateDamage': b = Math.max(0, condStat(st, 'StateDamage', cls, aliases) - Math.abs(forClass(fx?.damage, cls, aliases) + forClass(fx?.damageMult, cls, aliases))); break;
+    case 'stateCrit': b = Math.max(0, condStat(st, 'StateCrit', cls, aliases) - Math.abs(forClass(fx?.crit, cls, aliases))); break;
+    case 'stateArmorPen': b = Math.max(0, condStat(st, 'StateArmorPen', cls, aliases) - Math.abs(forClass(fx?.armorPen, cls, aliases))); break;
     default: return 0;
   }
   // the code's answer when it gave one, the tooltip only where it was silent
@@ -347,7 +381,23 @@ const SET_COND = 0.25;
 const COND_STATE = 0.15;
 const COND_BUNDLE = 0.25; // …and every state-gated stat after the biggest, since they share the condition
 const COND_MARK = ' ⅙'; // how a state-gated stat is marked in a part's label (≈ COND_STATE)
+/**
+ * What a stat is worth when the tooltip is a `{0}` template and the effect is applied through a
+ * player flag — the value is computed at runtime ("damage based on your defense") and what the
+ * miner read are the constants in that formula, which are its *cap* far more often than its typical
+ * value. The Light-Bringer's Ring's 30% is the ceiling of a bonus that scales off defense you do not
+ * have pre-boss; counting the ceiling at half made it a stage-0 damage emblem. A quarter, the same
+ * as a set bonus's prose ability, is the honest reading of a number nobody in the model can evaluate.
+ * ponytail: one factor for every formula; evaluate the formula if that ever matters.
+ */
+const DYN = 0.25;
+const DYN_MARK = ' ¼';
 const CONDMSG = `Conditional, from the tooltip text (the code applies it elsewhere): something has to supply the condition and it does not hold through a fight, so points count for ${Math.round(COND_STATE * 100)}%.`;
+// The same discount for a stat whose *value* the tooltip gave under a state gate. One tooltip can
+// gate the same stat twice over at two different prices — "5% damage in the air" is a stance you
+// steer and counts at COND, "immunity frames in the air grant 18%" is not and counts at COND_STATE
+// — so the two arms are separate parts rather than one summed number at one discount.
+const STATEMSG = `State-gated in the tooltip text: the line only pays while something you do not control holds (immunity frames after a hit, a liquid to stand in, a world event), so points count for ${Math.round(COND_STATE * 100)}% — against ${Math.round(COND * 100)}% for a part-time bonus you steer yourself.`;
 
 const has = (item, flag) => item.effects?.flags?.includes(flag) || item.flags?.includes(flag);
 
@@ -402,6 +452,10 @@ export function loadoutBonus(pieces, cls, aliases = {}, progression) {
   let damage = 0;
   let crit = 0;
   let armorPen = 0;
+  // …and what the gear gives the void bar, which is ammunition for that class the way damage is
+  // damage: the weapon's sustain is graded against the bar the player is actually wearing.
+  let voidMax = 0;
+  let voidRegen = 0;
   for (const p of pieces) {
     const item = p?.item ?? p;
     if (!item) continue;
@@ -411,8 +465,11 @@ export function loadoutBonus(pieces, cls, aliases = {}, progression) {
     crit += mergedStat(item, 'crit', cls, aliases, fx);
     // …and the armour penetration, which every phase's own hit takes off the boss's defense
     armorPen += mergedStat(item, 'armorPen', cls, aliases, fx);
+    voidMax += mergedStat(item, 'voidMaxPool', cls, aliases, fx);
+    voidRegen += mergedStat(item, 'voidRegen', cls, aliases, fx);
+
   }
-  return { damage, crit, armorPen };
+  return { damage, crit, armorPen, voidMax, voidRegen };
 }
 
 export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression, cond = COND } = {}) {
@@ -422,7 +479,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   // a tooltip with `{0}` placeholders and effects applied through a ModPlayer flag means the
   // numbers are computed at runtime ("damage based on defense"): what the miner read are the
   // constants in that formula, usually its cap — take them at half
-  const dyn = item.placeholders && item.effects?.via?.length ? COND : 1;
+  const dyn = item.placeholders && item.effects?.via?.length ? DYN : 1;
   // a stat only conditional tooltip lines mention ("+5 defense when submerged") was read from the code
   // without its guard: half. Labels show the stat as mined; the halving is on the points.
   const isCond = (key) => item.condStats?.includes(key);
@@ -431,12 +488,12 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   // the item's own value at its discount, a reforge's contribution in full
   const scaled = (key) => { const own = mergedStat(item, key, cls, aliases, null); return own * half(key) + (stat(key) - own); };
   // the ½ marks the item's own value; a reforge's share is never halved
-  const condLabel = (key) => (!mergedStat(item, key, cls, aliases, null) ? '' : isCond(key) ? COND_MARK : dyn < 1 ? ' ½' : '');
+  const condLabel = (key) => (!mergedStat(item, key, cls, aliases, null) ? '' : isCond(key) ? COND_MARK : dyn < 1 ? DYN_MARK : '');
   // the eased value of a stat, and a note when the curve took something off
   const ease = (key, x) => soft(x, SOFT[key]);
   const easeNote = (key, x, fmt = (v) => round1(v)) => (Math.abs(soft(x, SOFT[key])) < Math.abs(x) * 0.9 ? `Diminishing returns: ${fmt(x)} counts as ${fmt(soft(x, SOFT[key]))} (the curve flattens past ${fmt(SOFT[key])}).` : undefined);
   const notes = (...xs) => { const t = xs.filter(Boolean).join(' '); return t || undefined; };
-  const condDetail = (key) => (!mergedStat(item, key, cls, aliases, null) ? undefined : isCond(key) ? `State-gated: the tooltip only grants this while something holds (a debuff on you, a buff you keep up, water you stand in) and the code's value was read without its guard — usually the biggest arm of an if/else chain. Something outside the loadout has to supply the condition and it does not hold through a fight, so points count for ${Math.round(COND_STATE * 100)}%.` : dyn < 1 ? 'Runtime formula: the tooltip uses placeholders and the effect is applied through a player flag, so the mined numbers are the formula\'s constants (usually its cap). Points are halved.' : undefined);
+  const condDetail = (key) => (!mergedStat(item, key, cls, aliases, null) ? undefined : isCond(key) ? `State-gated: the tooltip only grants this while something holds (a debuff on you, a buff you keep up, water you stand in) and the code's value was read without its guard — usually the biggest arm of an if/else chain. Something outside the loadout has to supply the condition and it does not hold through a fight, so points count for ${Math.round(COND_STATE * 100)}%.` : dyn < 1 ? 'Runtime formula: the tooltip uses placeholders and the effect is applied through a player flag, so the mined numbers are the formula\'s constants — usually its cap, not what it pays at this stage. Points count for ' + Math.round(DYN * 100) + '%.' : undefined);
   const dynLabel = condLabel('');
   const condMark = cond === COND ? ' ½' : ' ¼';
   const PART_TIME = `Class mechanic read from the tooltip text; it applies part of the time (stealth strikes, after a hit, for a few seconds${cond < COND ? ', and the ability it hangs off is usually on a long cooldown' : ''}), so points count for ${Math.round(cond * 100)}%.`;
@@ -484,7 +541,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     const vc = stat('voidCost');
     if (vc) add(`${pct(-vc)} void cost`, vc * W.manaCost * dyn);
     const vr = stat('voidRegen');
-    if (vr) add(`${pct(vr)} void regeneration`, vr * W.voidRegen * dyn);
+    if (vr) add(`${pct(vr)} void regeneration`, ease('voidRegen', vr) * W.voidRegen * dyn, easeNote('voidRegen', vr, (v) => pct(v)));
   }
   if (cls === 'magic' || cls === 'healer' || cls === 'bard') {
     const mc = stat('manaCost');
@@ -508,6 +565,15 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   if (cc && cls !== 'summon') add(`${sgn(cc)}% crit chance${condMark}`, cc * W.crit * pref(cls, 'crit') * cond, PART_TIME);
   const cap = stat('condArmorPen');
   if (cap) add(`${sgn(cap)} armor pen${condMark}`, cap * W.armorPen * cond, PART_TIME);
+  // …and the state-gated arm of the same stats, as parts of their own. One item's tooltip mixes the
+  // two: the Galeflame Feather's 5% damage in the air is a stance you steer, and the 18% its
+  // immunity frames add is not — one part each, at its own discount, instead of one number at one.
+  const sgd = stat('stateDamage');
+  if (sgd) add(`${pct(sgd)} ${cls} damage${COND_MARK}`, sgd * W.damage * COND_STATE, STATEMSG);
+  const sgc = stat('stateCrit');
+  if (sgc && cls !== 'summon') add(`${sgn(sgc)}% crit chance${COND_MARK}`, sgc * W.crit * pref(cls, 'crit') * COND_STATE, STATEMSG);
+  const sga = stat('stateArmorPen');
+  if (sga) add(`${sgn(sga)} armor pen${COND_MARK}`, sga * W.armorPen * COND_STATE, STATEMSG);
   // projectiles the item spawns on hit, graded like a small weapon: damage × hits per spawn ÷ seconds
   // per trigger (a stealth strike every 8 s, a plain hit every 3 s — procs have immunity frames and
   // hidden cooldowns — or the cooldown the code or the tooltip states), as a share of a typical
@@ -562,14 +628,14 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     // its immunity frames, read the way dps.js reads them: a negative hit cooldown is not a rate, it
     // means the thing hits a given enemy once and never again — so it lands one hit per life on the boss
     const rate = (s) => (s.local < 0 ? 60 / Math.max(60, s.life ?? 300) : Math.min(s.local > 0 ? 60 / s.local : 2, 3));
-    const dps = spawns.reduce((n, s) => n + hitDamage(s.damage, { defense: def }) * rate(s) * MINION_UPTIME, 0);
+    const dps = spawns.reduce((n, s) => n + hitDamage(s.damage, { defense: def }) * rate(s) * MINION_UPTIME * SPAWN_DUTY, 0);
     const share = dps / typicalDps(progression);
     const capPts = W.minionSlot * minionSlotScale(progression);
     const points = Math.min(capPts, share * 100 * dyn);
     const each = spawns.map((s) => `${s.name} (${s.damage} damage × ${round1(rate(s))} hits/s)`).join(', ');
     add(spawns.length > 1 ? `${spawns.length} minions while equipped` : `${spawns[0].name} while equipped`,
       points,
-      `Keeps ${each} out for as long as it is worn: ${round1(dps)} DPS against ${Math.round(def)} defense at this stage — ${Math.round(MINION_UPTIME * 100)}% of the time on the boss — against a typical ${Math.round(typicalDps(progression))} DPS weapon ≈ ${pct(share)}${points < share * 100 * dyn ? `, capped at ${round1(capPts)}: what a minion slot is worth here` : ''}.`);
+      `Keeps ${each} out for as long as it is worn: ${round1(dps)} DPS against ${Math.round(def)} defense at this stage — ${Math.round(MINION_UPTIME * 100)}% of the time on the boss, and swinging for ${Math.round(SPAWN_DUTY * 100)}% of that, since it takes no target order and nothing here reads its AI — against a typical ${Math.round(typicalDps(progression))} DPS weapon ≈ ${pct(share)}${points < share * 100 * dyn ? `, capped at ${round1(capPts)}: what a minion slot is worth here` : ''}.`);
   }
   // stealth strike bonuses, and the item is marked. They only touch the strike, so they are worth
   // the share of a rogue's damage the strike is (STEALTH_SHARE) — a rate bonus (a strike that
@@ -675,6 +741,8 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     // vanilla keeps its dodge on the Black Belt / Brain of Confusion player flags; a mod's own is
     // read off the tooltip
     if (has(item, 'dodge') || has(item, 'onHitDodge') || has(item, 'blackBelt') || has(item, 'brainOfConfusion')) add('dodges attacks', W.dodge * tank(cls), notes('A dodged hit now and then: about what immunity to every debuff is worth.', tankNote));
+    if (has(item, 'revive')) add('revives you on a fatal hit', W.revive * tank(cls), notes(`A death undone: the fight continues instead of ending. It comes once — the cooldown runs to minutes and does not tick down while a boss is up — so it counts for ${W.revive} against the ${Math.round(TYPICAL_MAX_LIFE * W.maxLife)} a second life pool would be worth, and that once is the hit point the whole fight turns on.`, tankNote));
+    if (has(item, 'invuln')) add('a window where nothing can hurt you', W.invuln * tank(cls), notes(`Seconds of immunity to every hit — after a revive, inside an armour ability's bubble, through a dash. Several hits' worth at a moment you or the game picks, so it counts for ${W.invuln}: more than a dodge, less than the life bar a revive gives back.`, tankNote));
     if (has(item, 'lava') || has(item, 'lavaRose') || has(item, 'fireWalk')) add('lava/fire protection', W.lava);
     if (has(item, 'mobility') || has(item, 'iceSkate') || has(item, 'waterWalk')) add('mobility', W.mobility);
   }

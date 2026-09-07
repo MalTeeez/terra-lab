@@ -247,6 +247,15 @@ function counterAt(asm, ins, j) {
     if (!f || /^(Terraria|Microsoft|System)\./.test(decl)) return null;
     return f.name;
   }
+  // `public ref float Timer => ref Projectile.ai[0];` — a counter behind a mod's own ref-property,
+  // which is how Calamity names its `ai` slots. The load is `call get_Timer; ldind.r4`, so what
+  // says which counter it is sits on the getter and not on any field: SHPC's vortex fires inside
+  // `if (Timer % 5f == 0f)` and the guard was unreadable for want of these three lines.
+  if (/^ldind/.test(x.op) && /^call/.test(ins[j - 1]?.op ?? '')) {
+    const g = asm.resolve(ins[j - 1].operand);
+    const decl = g?.declaringType?.fullName ?? '';
+    if (g && /^get_[A-Z]/.test(g.name ?? '') && !/^(Terraria|Microsoft|System)\./.test(decl)) return g.name.slice(4);
+  }
   return null;
 }
 
@@ -351,7 +360,7 @@ function counterGuard(asm, ins, i, event) {
     n = Math.max(2, Math.max(...states) + 1);
   }
   if (!(n > 1) || !Number.isFinite(n)) return null;
-  return { n: Math.round(n), truthyReached: truthy, counter };
+  return { n: Math.round(n), truthyReached: truthy, counter, isRem };
 }
 
 /**
@@ -369,7 +378,11 @@ export function counterRanges(asm, m, event) {
     for (let i = 0; i < all.length; i++) {
       if (!COND.test(all[i].op)) continue;
       const g = counterGuard(asm, all, i, event);
-      if (g) branchAt(i, { gate: { kind: 'threshold', n: g.n, event, reset: false }, truthyReached: g.truthyReached, counter: g.counter });
+      // A `counter % N == 0` gate is periodic by construction — the modulo *is* the reset, and there
+      // is no store of 0 for the scan below to find. Reading it as a one-way threshold is why a
+      // field that fires every five ticks came out under the unread-spawn-rate cap: SHPC's vortex
+      // spawns its laser inside `if (Timer % 5f == 0f)` and the model was allowed to count one.
+      if (g) branchAt(i, { gate: { kind: 'threshold', n: g.n, event, reset: !!g.isRem }, truthyReached: g.truthyReached, counter: g.counter });
     }
   });
   for (const r of ranges) {
@@ -532,9 +545,24 @@ export function gatesAt({ counters = [], requires = [], crits = [], always = [],
   if (q) out.requires = { what: q.gate.what, id: q.gate.id, negated: !q.has };
   const unread = all.filter((r) => o >= r.lo && o < r.hi && !explained.some((e) => e.lo === r.lo && e.hi === r.hi));
   const u = innermostAt(unread, o);
-  if (u) out.branch = { id: u.id, side: u.on, cond: u.cond };
+  if (u) out.branch = { id: u.id, side: u.on, cond: u.cond, charge: CHARGE_COND.test(u.cond) || undefined };
   return out;
 }
+
+/**
+ * A branch whose condition is the weapon's own charge counter. It reads like any other unread
+ * if/else — the machine cannot follow how full the counter is — but it is not unread in the way
+ * that matters: **the player decides which arm runs, by how long they hold the button.** So the
+ * pessimistic "weaker arm" rule is the wrong one here; the two arms are two attacks, on two
+ * clocks, and the weapon is worth its better one, exactly as the two mouse buttons already are.
+ *
+ * Only the counter's *name* is read: `PerfectStar.chargeLevel`, `CoralSpoutHoldout.FullChargeProgress`.
+ * That is thin evidence for a big change in how the arms are combined, so it stays a name match and
+ * nothing more — and the model still has to find both arms of one if/else before it does anything
+ * with the tag. (`Charge` as a verb — a dashing NPC, a satchel charge — never reaches here: this is
+ * a friendly projectile's own field being compared.)
+ */
+const CHARGE_COND = /charge/i;
 
 /** The odds of reaching an offset: every priced guard it sits inside, multiplied. */
 export function chanceAt(ranges, o) {

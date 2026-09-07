@@ -74,6 +74,24 @@
    "stealthMax": 1,
    "shown": 200,
    "note": "the same weapon at a full stealth bar: 200/60 = 3.33x. The model gives 3.70 at Max Stealth 100 and 3.16 at 80, so this pins `stealthMultiplier` only as far as the player's Max Stealth is known - it was not recorded. Worth re-taking with the Stat Meter's Max Stealth written down"
+  },
+  {
+   "name": "Mycoroot",
+   "mode": "stealth",
+   "target": "boss",
+   "stage": 9,
+   "targetStage": 28,
+   "loadout": {
+    "damage": 0.22,
+    "crit": 20
+   },
+   "stealthMax": 0.65,
+   "seconds": 420,
+   "dps": 202,
+   "note": "post-Crabulon, seven minutes of continuous use against The Excavator, the meter dead steady at 202. Three tooltips off the same character, Flawless Mycoroot: 15 damage / 13% crit bare, 17 / 27% with accessories only (3x Menacing = +12%, so the accessories add no damage of their own), 70 / 33% with everything at full stealth (armour is +10% damage and +6% crit, which the crit column confirms exactly). The Stat Meter read 233.72% thrower damage on armour alone at full stealth, and the model predicts 234.01% - that is stealthMultiplier reproduced against the game. It also read Max Stealth 65, Standing Regen 10.53/s, Moving Regen 5.27/s, which is rogueStealthMax / BaseStealthGenTime x 1.08 x 60: a display figure carrying the wrong constant, and evidence of the Silent reforge (+8% accStealthGenBoost), NOT of the fill clock - UpdateRogueStealth is 'rogueStealth += rogueStealthMax * gen / 120' a tick, so the bar fills in 2 s standing and 4 s moving. The x1.15 is the reforge second multiplier (RogueWeaponPrefix.stealthDmgMult, applied by CalamityPlayer.ModifyWeaponDamage only while StealthStrikeAvailable), and with it in the model gives 195 DPS against the measured 202 - but it needs a re-mine, because the prefix extractor only learned to read stealthDmgMult with this trial. STILL OPEN: the tooltip 70. The model says 14 x (1 + 0.22 gear + 1.24 stealth) x 1.15 = 40, and the player has confirmed no Rage and no Adrenaline were up, so the x1.75 has no name yet. What closes it: the Stat Meter Damage percentage read at the same instant as a 70 tooltip - if it is ~240% the gap is item-level (ModifyWeaponDamage and friends), if it is ~435% it is player-level and belongs in the additive pool",
+   "prefix": "CalamityMod:Flawless",
+   "shown": 70,
+   "crit": 33
   }
  ]
 }

@@ -20,4 +20,18 @@ export const fmtFull = (v) => (v === null || v === undefined || Number.isNaN(v) 
  */
 export const fmtStat = (v) => (typeof v === 'number' ? Math.round(v * 100) / 100 : v);
 
+/**
+ * A drop chance. Percentages read straight down to 1%; below that "1 in 10,000" is the number a
+ * player can actually hold on to. Empty for a drop that is certain (or one the miner never read).
+ */
+export const fmtChance = (c) => (!c || c >= 1 ? '' : c >= 0.01 ? `${+(c * 100).toFixed(c >= 0.1 ? 0 : 1)}%` : `1 in ${Math.round(1 / c).toLocaleString('en-US')}`);
+
+/**
+ * The word Terraria prints instead of a use time — it grades the *animation*, not the use time, so
+ * a weapon whose two differ reads as the speed it actually swings at. Vanilla's own thresholds.
+ */
+const SPEED = [[8, 'Insanely fast'], [20, 'Very fast'], [25, 'Fast'], [30, 'Average'], [35, 'Slow'], [45, 'Very slow'], [55, 'Extremely slow']];
+export const fmtSpeed = (useAnimation) =>
+  useAnimation === undefined || useAnimation === null ? '' : (SPEED.find(([max]) => useAnimation <= max)?.[1] ?? 'Snail');
+
 export const fmtPart = (p) => (p.value !== undefined ? fmtNum(p.value) : p.mul === undefined ? '' : `×${Math.round(p.mul * 100) / 100}${p.unit ?? ''}`);

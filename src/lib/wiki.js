@@ -11,6 +11,13 @@ const WIKIS = {
   ThoriumMod: { base: 'https://thoriummod.wiki.gg/' },
   StarsAbove: { base: 'https://starsabovemod.wiki.gg/' },
   InfernumMode: { base: 'https://infernummod.wiki.gg/' }, // 16/16 articles, 12/16 sprites
+  // A sprite archive more than an article one: 253 files, of which 57 of this pack's 85 Ragnarok
+  // records, but only a dozen items have an article — so a name link would be red 8 times out of 9.
+  // Search instead: MediaWiki jumps straight to an exact title, and the rest land on the Weapons or
+  // Armor table row that names the item. The sprites are filed under the mod's *internal* name
+  // (`Victide Sponge Hood` → `VictideHeadHealer.png`), which no rule derives, so they all come from
+  // data/wiki-icons.json.
+  RagnarokMod: { base: 'https://ragnarokmod.wiki.gg/', search: true },
 
   SOTS: { base: 'https://terrariamods.wiki.gg/', page: 'Secrets_Of_The_Shadows/', file: ' (Secrets Of The Shadows)' },
   // the mod's in-game name is not its wiki's: CalamityHunt is "Hunt of the Old God", NoxusBoss is
@@ -66,7 +73,9 @@ export const wikiFile = (it) => {
 /** Article URL for an item/material, or null when the mod has no known wiki. */
 export function wikiUrl(it) {
   const w = WIKIS[it?.mod];
-  return w && it.name ? `${w.base}wiki/${w.page ?? ''}${enc(wikiName(it))}` : null;
+  if (!w || !it.name) return null;
+  if (w.search) return `${w.base}wiki/Special:Search?search=${enc(wikiName(it))}`;
+  return `${w.base}wiki/${w.page ?? ''}${enc(wikiName(it))}`;
 }
 
 /**

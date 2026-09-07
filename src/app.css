@@ -281,11 +281,22 @@
     @apply pointer-events-none fixed z-30 m-1.5 hidden w-72 whitespace-pre-line border border-line bg-panel px-2.5 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-ink2;
     border-radius: var(--radius-chip);
     box-shadow: var(--shadow-pop, 0 6px 18px rgba(0, 0, 0, 0.12));
+    zoom: calc(1 / var(--zoom, 1)); /* inside a zoomed graph, stay the size it is everywhere else */
     position-area: block-start span-inline-end;
     position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
     position-visibility: anchors-visible; /* scrolled out of its panel → the box goes too */
   }
   .lab-part.has-tip:hover::after, .lab-part.has-tip:focus-visible::after, .has-tip:hover::after { display: block; }
+
+  /* the attack graph's branch switch. Lives here rather than in PhaseGraph's scoped style because
+     the roomy window renders the same buttons in a bar of its own, under its header. */
+  .ph-loops { display: flex; flex-wrap: wrap; gap: 4px; }
+  .ph-loop { display: inline-flex; align-items: baseline; gap: 5px; border: 1px solid var(--color-line-strong); background: var(--color-panel); padding: 1px 6px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-ink2); cursor: pointer; }
+  .ph-loop:hover { color: var(--color-ink); }
+  .ph-loop > .num { font-family: var(--font-mono); font-size: 10.5px; text-transform: none; letter-spacing: 0; color: var(--color-dim); }
+  /* the one being drawn is filled in; the one the score is made of keeps the accent whether or not it is drawn */
+  .ph-loop.scored { color: var(--accent, var(--color-green)); }
+  .ph-loop.on { border-color: var(--accent, var(--color-green)); background: color-mix(in srgb, var(--accent, var(--color-green)) 12%, var(--color-panel)); color: var(--color-ink); font-weight: 600; }
 
   /* ---------- item browser ---------- */
   /* a two-handle range: two native sliders on one track, only their thumbs take the pointer */
@@ -359,9 +370,37 @@
     @apply cursor-pointer transition-colors;
     box-shadow: inset 3px 0 0 transparent;
   }
+  /* Pinned rows sit above the filter, so they need to look like they are not part of the list.
+     Declared before the hover rule, which still has to win when the pointer is on one.
+
+     `--pin-tile` is what keeps the stripes still: a repeating gradient with no `background-size`
+     runs its gradient line off the *centre* of the box it is painted into, so the pattern slid to a
+     new phase the moment opening the row changed that box. Sized to one period across (9px at 45°
+     is 9√2), anchored at 0 0, the tile is the same wherever it lands. */
+  .lab-table tbody tr.row.pin {
+    --pin-tile: 12.728px 12.728px;
+    background: repeating-linear-gradient(
+        -45deg,
+        color-mix(in srgb, var(--accent, var(--color-green)) 15%, transparent) 0 3px,
+        transparent 3px 9px
+      )
+      0 0 / var(--pin-tile);
+  }
   .lab-table tbody tr.row:hover {
     background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, transparent);
     box-shadow: inset 3px 0 0 var(--accent, var(--color-green));
+  }
+  /* hovering a pinned row keeps the stripes — over the hover tint and stronger, or the row the
+     pointer is on is the one that stops looking pinned */
+  .lab-table tbody tr.row.pin:hover {
+    background:
+      repeating-linear-gradient(
+          -45deg,
+          color-mix(in srgb, var(--accent, var(--color-green)) 26%, transparent) 0 3px,
+          transparent 3px 9px
+        )
+        0 0 / var(--pin-tile),
+      color-mix(in srgb, var(--accent, var(--color-green)) 7%, transparent);
   }
   .lab-table th.sortable {
     @apply cursor-pointer select-none transition-colors;
@@ -370,6 +409,9 @@
   .lab-table th.sorted { @apply text-green-deep; }
   /* the item browser: an open row and its detail row read as one block */
   .lab-table tbody tr.row.open > td { background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, #fff); }
+  /* that tint is opaque, so an open pinned row lost its stripes until it was closed again — tint
+     through instead and the row's own striped background stays underneath */
+  .lab-table tbody tr.row.pin.open > td { background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, transparent); }
   .lab-table tbody tr.expanded > td { background: color-mix(in srgb, var(--accent, var(--color-green)) 7%, #fff); }
   /* the detail row: a timeline on the left, its supporting visual on the right, split by a rule */
   .lab-detail { @apply grid gap-4 p-3 text-[12.5px]; }

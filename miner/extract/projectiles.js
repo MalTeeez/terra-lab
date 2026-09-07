@@ -6,7 +6,7 @@
  * Output per projectile (see README "Real DPS"):
  *   { id, pen, tile, updates, ai, aiType, life, local, minion, sentry, slots, width, height,
  *     gravity, gravityK, drag, homing: { range, speed, inertia, delay }, held, windup, still, sticks, returns, explode, digs,
- *     falloff, armorPen, children: [{ type, count, where, stealth, dmgMul, dmgAbs }], debuffs: [...],
+ *     falloff, ramp, armorPen, children: [{ type, count, where, stealth, dmgMul, dmgAbs }], debuffs: [...],
  *     stealth, cloneOf }
  *
  * `gravityK` is the per-tick pull on `velocity.Y`, `drag` the per-tick multiplier on the velocity
@@ -66,6 +66,31 @@ function methodDigs(asm, md, depth = 0) {
 /** What mods call the flag on a projectile that embeds itself in what it hits. */
 const STICKY_RE = /isStickingToTarget|StickToTarget|StickingTo/i;
 const HOMING_RE = /Hom(e|ing)|Closest|Nearest|FindTarget|Seek|Track|CanBeChasedBy|GetTarget|TargetNPC|Chase|AcquireTarget|EnemyInRange|ClosestNPC/i;
+/**
+ * The three numbers a homing helper takes, by the *name* its parameters carry rather than by
+ * counting numbers off the front of the call.
+ *
+ * `CalamityUtils.HomeInOnNPC(projectile, ignoreTiles, distanceRequired, homingVelocity, inertia,
+ * respectIFrames)` opens with a bool, and a bool is the number 1 to the interpreter — so the
+ * positional read handed back `range 1, speed 300, inertia 10` for a call that says the projectile
+ * seeks anything within 300 px at 10 px/tick. Malachite's stealth kunai is the one that showed it:
+ * homing from one pixel away is homing that never fires. The names are in the metadata, and reading
+ * them also gets `HomeInOnSelectedNPC` right, which has no range argument at all and had been
+ * handing its `homingVelocity` over as one.
+ *
+ * Falls back to the positional read (null) when the names are not readable — a helper in another
+ * assembly, or one whose parameters are named something else.
+ */
+const HOMING_PARAM = { distanceRequired: 'range', homingRange: 'range', homingVelocity: 'speed', speed: 'speed', inertia: 'inertia', N: 'inertia' };
+function homingByName(asm, callee, args) {
+  let names;
+  try { names = callee.def ? asm.paramNames(callee.def) : null; } catch { return null; }
+  if (!names?.length) return null;
+  const out = {};
+  for (let i = 0; i < names.length; i++) { const k = HOMING_PARAM[names[i]]; if (k && isNum(args[i]) && out[k] === undefined) out[k] = args[i]; }
+  return out.speed !== undefined || out.range !== undefined ? out : null;
+}
+
 /** Per-tick `velocity.Y +=` of the vanilla arc aiStyles, when the AI itself could not be read. */
 export const GRAVITY_K = 0.1;
 /** The largest per-update `velocity.Y +=` that is still an arc and not a misread steering blend. */
@@ -196,11 +221,49 @@ function readsStealth(asm, td) {
 }
 
 /**
+ * Does the type turn `Projectile.friendly` **on** anywhere outside `SetDefaults`?
+ *
+ * `friendly = false` in `SetDefaults` is two completely different statements depending on this. On
+ * its own it says the thing can never damage an NPC — a charge marker, a bow holdout, a minion
+ * anchor. With a write anywhere else it says the opposite: the projectile is armed later, and the
+ * `SetDefaults` value is just where it starts.
+ *
+ * The store is very often out of reach of the phase walk. Ragnarok's Astral Ripper writes it
+ * through a property — `set_CanHit(bool value) { Projectile.friendly = value; }` — called from
+ * `HandleSwing`, and reading only the AI phases had a swung scythe scored as a prop that cannot
+ * hit, 3993 → 1163/s. So the question is asked of every method the type has, the same way
+ * `readsStealth` asks its own. Only run for the ~130 types that write a `false` at all.
+ *
+ * `Terraria.NPC` has a `friendly` of its own, which is why the declaring type is checked.
+ */
+function armsFriendly(asm, td) {
+  // …up the chain, because the `false` itself usually comes from a base class: SOTS routes fourteen
+  // Void crushers through `CrusherProjectile`, which is where both the `SetDefaults` and the arming
+  // live. Asking only the leaf type found neither.
+  for (let cur = td, i = 0; cur && i < 32; i++, cur = asm.baseOf(cur)?.kind === 'typeDef' ? asm.baseOf(cur).def : null) {
+    for (const m of cur.methods) {
+      if (m.name === 'SetDefaults') continue;
+      const body = asm.methodBody(m);
+      if (!body) continue;
+      let ins;
+      try { ins = decodeIL(body.il); } catch { continue; }
+      for (const x of ins) {
+        if (x.op !== 'stfld') continue;
+        let f;
+        try { f = asm.resolve(x.operand); } catch { continue; }
+        if (f?.name === 'friendly' && /(^|\.)Projectile$/.test(f.declaringType?.fullName ?? f.declaringType?.name ?? '')) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Evaluate one ModProjectile: SetDefaults fields and AI traits.
  * @returns {{ fields: Record<string, any>, aiType?: any, cloneOf?: any, gravity: boolean, homing: boolean, wallPierceInAi: boolean, children: Array, debuffs: string[], stealth: boolean }}
  */
 export function evalProjectile(asm, td, { tml }) {
-  const rec = { fields: {}, children: [], mentions: [], debuffs: [], gravity: false, velYAdds: [], velXAdds: new Set(), homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td) };
+  const rec = { fields: {}, self: {}, children: [], mentions: [], debuffs: [], gravity: false, velYAdds: [], velXAdds: new Set(), homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td) };
   const PROJ = makeObj('projectile');
   const VEL = makeObj('velocity');
   const AI = { k: 'arr', items: [] };
@@ -315,6 +378,12 @@ export function evalProjectile(asm, td, { tml }) {
       // property, and only the property was being recognised. Thorium's Whip returns by
       // `player.position.X + player.width * 0.5f - Center.X` and so read as a projectile that
       // simply flies away — its `maxOut: 1` round trip never got priced.
+      // …and `damage` read off a projectile the walk reached through `Main.projectile[…]` — the
+      // parent, in every case in the pool — is the same weapon's damage in the model's unit, so it
+      // keeps the marker rather than losing the whole term to an unknown receiver. A beam that
+      // scales itself off the prism holding it (`damage = prism.damage * multiplier`) is spelled
+      // exactly that way, and so is a child spawned at its parent's damage.
+      if (name === 'damage' && phase !== 'defaults' && recv !== NPC && recv !== PLAYER) return DMG;
       if (recv === PLAYER && (name === 'position' || name === 'Center' || name === 'MountedCenter')) return OWNER_POS;
       if (recv === OWNER_POS && (name === 'X' || name === 'Y')) { if (phase === 'ai') rec.ownerAxis = true; return OWNER_AXIS; }
       if (recv === VEL) return { k: 'adj', slot: 'vel', field: name, add: 0, mul: 1 };
@@ -348,8 +417,27 @@ export function evalProjectile(asm, td, { tml }) {
         // constant 1 is the ordinary case and is not this; only an unconditional store of a value
         // the interpreter could not fold is, which is the flag being read back out of a field.
         if (name === 'friendly' && phase === 'ai' && !isNum(value)) rec.windup = true;
+        // …and any write outside `SetDefaults` at all is what tells the two readings below apart:
+        // one that arms the projectile later is a wind-up, and a `SetDefaults` false with no such
+        // write anywhere is a projectile that never becomes able to damage anything. `armsFriendly`
+        // asks the same of the methods this walk does not reach.
+        if (name === 'friendly' && phase !== 'defaults') rec.friendlyLater = true;
+        // …and turning it *off* the moment it connects is the projectile spending itself. Whatever
+        // its `penetrate` and its immunity cooldown say, it lands exactly one hit and everything
+        // after that is a dead sprite. SOTS's Star Laser is `penetrate = -1` with a 10-tick window
+        // of its own, and `OnHitNPC` calls `TriggerStop()`: velocity to zero, `tileCollide` off,
+        // `friendly` off. The pierce model read the pierce and the window and gave it 19 hits.
+        if (name === 'friendly' && phase === 'hit' && isNum(value) && !value) rec.spent = true;
         // `damage = (int)(damage * 0.8f)` in OnHitNPC: the pierce falloff per successive hit
         if (name === 'damage' && phase === 'hit' && value?.k === 'adj' && value.slot === 'dmg' && value.mul > 0 && value.mul < 1) rec.falloff = Math.min(rec.falloff ?? 1, value.mul);
+        // …and the same store in the *AI* is the opposite thing: a projectile that scales its own
+        // damage up while it lives. That is how a charge weapon states its ramp — Yharim's Crystal's
+        // beam sets `damage = <the prism's damage> * GetDamageMultiplier(charge)`, and the helper is
+        // `Lerp(1f, 3f, x³)` over 180 ticks — and the model had no way to know the printed number is
+        // not what a held beam is doing after three seconds. Only ever a *rise*: anything at or below
+        // ×1 in the AI is a fade, a reset, or the walk folding a branch, and the pessimistic reading
+        // of those is the printed damage the record already carries.
+        if (name === 'damage' && phase === 'ai' && value?.k === 'adj' && value.slot === 'dmg' && value.mul > 1) rec.ramp = Math.max(rec.ramp ?? 1, value.mul);
         // the blast radius a Kill resizes the projectile to
         if ((name === 'width' || name === 'height') && phase !== 'ai' && isNum(value) && value > (rec.explode ?? 0)) rec.explode = value;
         if (name === 'velocity' && carriesOwner(value)) { rec.returns = true; return; }
@@ -378,10 +466,22 @@ export function evalProjectile(asm, td, { tml }) {
         return;
       }
       if (recv === THIS && phase === 'defaults' && (name === 'AIType' || name === 'aiType')) { rec.aiType = value; return; }
+      // …and every other number the type writes to a field of its **own** in `SetDefaults`. Most of
+      // them are private bookkeeping and nobody reads them, but a charge weapon states its whole
+      // mechanism there — how long it winds up for, and what the wind-up buys — and until now the
+      // walk threw all of it away because the receiver was not `Terraria.Projectile`.
+      if (recv === THIS && phase === 'defaults' && isNum(value)) { rec.self[name] = value; return; }
       // The player holds this projectile out (a spear, a drill, a beam): it never travels on its
       // own. Only when that happens every tick — a charge-up weapon sets `heldProj` inside the
       // wind-up branch and then throws the thing, which is not a held weapon at all.
       if (recv === PLAYER && name === 'heldProj' && !ctx.conditional) rec.held = true;
+      // …and one that writes the player's *animation* every tick is holding the use open for as long
+      // as it is out (`player.itemTime = 2`). The item's `useTime` is then not the weapon's clock at
+      // all: it never comes round while the button is down, and the moment the projectile ends the
+      // animation has two ticks left. Nothing bounds a re-click but the player's own hand — which is
+      // what makes tapping such a weapon a different attack from holding it, at a rate the item's own
+      // numbers cannot state.
+      if (recv === PLAYER && (name === 'itemTime' || name === 'itemAnimation') && phase === 'ai') rec.pinsUse = true;
       // `velocity.Y += k` written through a helper that takes the component by reference — Thorium
       // routes 40-odd of its thrown projectiles through `ProjectileExtras.ThrowingKnifeAI`, so
       // without this their arc and their decay are both invisible and they never pay for either
@@ -439,12 +539,23 @@ export function evalProjectile(asm, td, { tml }) {
       if (/^get_(Center|MountedCenter|position)$/.test(name) && ctx.recv === PLAYER) return OWNER_POS;
       if (phase === 'ai' && (name === 'set_Center' || name === 'set_position') && ctx.recv === PROJ && fromNpc(args[0])) { rec.sticks = true; return UNKNOWN; }
       if (decl === 'Terraria.Projectile' && name === 'Resize' && isNum(args[0])) { rec.explode = Math.max(rec.explode ?? 0, args[0], isNum(args[1]) ? args[1] : 0); return UNKNOWN; }
-      if (phase === 'ai' && HOMING_RE.test(name)) {
+      if (HOMING_RE.test(name)) {
         // Calamity's `HomeInOnNPC(proj, ignoreTiles, range, speed, inertia)` and its variants carry
         // the three numbers the model needs; anything else only says that it homes
-        const nums = args.filter(isNum);
-        if (/^HomeInOn/.test(name) && nums.length >= 3) noteHoming({ range: nums[0], speed: nums[1], inertia: nums[2] });
-        else noteHoming({});
+        if (phase === 'ai') {
+          const named = homingByName(asm, callee, args);
+          const nums = args.filter(isNum);
+          if (named) noteHoming(named);
+          else if (/^HomeInOn/.test(name) && nums.length >= 3) noteHoming({ range: nums[0], speed: nums[1], inertia: nums[2] });
+          else noteHoming({});
+        }
+        // …and the search for a target is not evidence that there is none. Inlined, these helpers
+        // walk a loop over `Main.npc` the machine cannot run and hand back the `null` they were
+        // initialised with — and the `if (target != null)` the payload sits under then folds to
+        // *false*, which marks every projectile, debuff and child the weapon fires at what it found
+        // as dead code. Eternity summons its crystals, its beam and its flower burst inside exactly
+        // that guard and came out of the miner with no children at all.
+        return UNKNOWN;
       }
       if (phase === 'hit' && name === 'AddBuff' && args.length >= 2) {
         const b = args[0];
@@ -454,6 +565,12 @@ export function evalProjectile(asm, td, { tml }) {
       // inside is a counter the interpreter cannot follow, but the bounds say where it ends up, so
       // the middle of the range stands in rather than the whole term going unread.
       if (name === 'Clamp' && !isNum(args[0]) && isNum(args[1]) && isNum(args[2])) return (args[1] + args[2]) / 2;
+      // `MathHelper.Lerp(a, b, t)` between two numbers is a value somewhere between them, and where
+      // `t` is a charge the walk cannot follow the middle stands in for it, exactly as `Clamp` does
+      // above. It is how a weapon states its own damage ramp: Yharim's Crystal's beam scales itself
+      // by `Lerp(1f, 3f, x³)`, so the beam is worth twice the printed number rather than the
+      // unknown that made the whole term unreadable.
+      if (name === 'Lerp' && args.length === 3 && isNum(args[0]) && isNum(args[1])) return (args[0] + args[1]) / 2;
       if (decl === 'Microsoft.Xna.Framework.Vector2' && name === 'get_Zero') return { k: 'vecZero' };
       if (decl === 'Microsoft.Xna.Framework.Vector2' && phase === 'ai') {
         // `Projectile.Center = npc.Center - offset` and its variants stay "an NPC's position"
@@ -531,6 +648,41 @@ export function evalProjectile(asm, td, { tml }) {
   else if (steers.length && rec.homing) rec.homingArgs = { ...(rec.homingArgs ?? {}), turn: Math.max(...steers) };
   if (td.methods.some((m) => STICKY_RE.test(m.name))) rec.sticks = true;
   return rec;
+}
+
+/**
+ * A charge weapon that states its own numbers.
+ *
+ * The generic wind-up read (`windup`) only knows *that* a projectile arms partway through its life;
+ * `WINDUP_TICKS` then stands in for how long, and nothing at all stands in for what the charge is
+ * worth. But a mod that builds a charge weapon has to keep those numbers somewhere, and it keeps
+ * them in `SetDefaults` as fields of its own type — SOTS's fourteen Void crushers put the whole
+ * mechanism in `CrusherProjectile`: `chargeTime = 180`, `releaseTime = 150`, `minDamage = 0.3`,
+ * `maxDamage = 7`, `minExplosions = 3`, `maxExplosions = 5`. Held for three seconds, Eclipse slams
+ * for five explosions at seven times its printed damage; tapped, three at a third of it.
+ *
+ * Read by field *name*, which is the same thin evidence `branch.charge` runs on and is treated the
+ * same way: it is only ever a charge record, never a score. The model still has to decide what
+ * holding the button is worth against tapping it, and it grades both.
+ *
+ * `chargeTime` alone is the trigger — a type that names one is a charge weapon whatever else it
+ * says — and every other field is optional, so a mod that scales damage but not count, or count but
+ * not damage, still reads.
+ */
+function chargeRecord(self) {
+  const ticks = num(self.chargeTime);
+  if (!(ticks > 0)) return undefined;
+  const out = { ticks };
+  const pick = (k, ...names) => { for (const n of names) if (num(self[n]) > 0) { out[k] = self[n]; return; } };
+  pick('release', 'releaseTime');
+  pick('minMul', 'minDamage');
+  pick('maxMul', 'maxDamage');
+  pick('minCount', 'minExplosions');
+  pick('maxCount', 'maxExplosions');
+  // a "ramp" that does not rise is not one, and a count that does not grow is just the count
+  if (out.maxMul <= (out.minMul ?? 0)) delete out.maxMul;
+  if (out.maxCount <= (out.minCount ?? 0)) delete out.maxCount;
+  return out;
 }
 
 function symbolicArgs(asm, m) {
@@ -654,6 +806,18 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // it switches its own damage on partway through its life: a charge held on the player, a mine
     // that arms after a delay — either way the shot is not free the moment the button goes down
     windup: rec.windup || undefined,
+    // `SetDefaults` says `friendly = false` and nothing anywhere else says otherwise: this thing
+    // cannot damage an NPC, ever. It is a charge marker, a holdout, a prop — SOTS's Perfect Star
+    // hides one on the player (`hide`, `alpha = 255`) purely to count the charge, and the model was
+    // paying it six contact hits a second. Only ever emitted as an explicit `false`: a projectile
+    // that never mentions the field is one nobody looked at, which is a different fact.
+    friendly: bool(f.friendly) === false && !rec.friendlyLater && !rec.friendlyArmed ? false : undefined,
+    // the item's use animation is held open for as long as this is out, so `useTime` is not its clock
+    pinsUse: rec.pinsUse || undefined,
+    // it disarms itself on its first hit: one hit, whatever the pierce says
+    spent: rec.spent || undefined,
+    // what holding the button buys, in the weapon's own numbers
+    charge: chargeRecord(rec.self ?? {}),
     sticks: rec.sticks || undefined,
     returns: rec.returns || undefined,
     // …and vanilla bounces every `aiStyle 3` boomerang off whatever it hits, in `Projectile.Damage`
@@ -670,6 +834,10 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     ridesOwner: rec.ridesOwner || undefined,
     explode: rec.explode !== undefined && rec.explode > (num(f.width) ?? 0) ? rec.explode : undefined,
     falloff: rec.falloff,
+    // …and the opposite, read in the AI: what the projectile scales its own damage *up* to while it
+    // is out, as a multiplier on the printed number. A charge ramp: only a weapon that is held long
+    // enough gets to the top of it, which is the model's business, not the record's.
+    ramp: rec.ramp > 1 ? Math.round(rec.ramp * 100) / 100 : undefined,
     armorPen: num(f.ArmorPenetration),
     walls: rec.wallPierceInAi || bool(f.tileCollide) === false || undefined,
     digs: rec.digs || undefined,
@@ -740,8 +908,8 @@ export function vanillaSetProjectiles(tml) {
 /** Vanilla yoyos hit the same NPC about six times a second (Projectile.aiStyle 99). */
 export const YOYO_HIT_COOLDOWN = 10;
 
-/** Every ModProjectile of a mod. */
-export function extractProjectiles(asm, { tml, modId }) {
+/** Every ModProjectile of a mod. `loc` names them: `ApolloFireball` is the Volatile Plasma Blast. */
+export function extractProjectiles(asm, { tml, modId, loc = null }) {
   const out = [];
   for (const td of asm.types) {
     if (td.flags & TYPE_ABSTRACT) continue;
@@ -749,7 +917,10 @@ export function extractProjectiles(asm, { tml, modId }) {
     if (!isModProjectileType(asm, td)) continue;
     let rec;
     try { rec = evalProjectile(asm, td, { tml }); } catch { continue; }
-    out.push(projectileRecord(asm, `${modId}:${td.name}`, rec));
+    // only worth the scan where `SetDefaults` said `false` — the question does not arise otherwise
+    if (rec.fields?.friendly === 0 && !rec.friendlyLater) rec.friendlyArmed = armsFriendly(asm, td);
+    const name = loc?.proj(td.name);
+    out.push({ ...projectileRecord(asm, `${modId}:${td.name}`, rec), ...(name ? { name } : {}) });
   }
   return out;
 }

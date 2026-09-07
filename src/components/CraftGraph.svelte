@@ -1,10 +1,62 @@
 <script>
   /** The chosen recipe drawn as a tree: root on the left, ingredients branching right. */
-  import { elbow, layout, toDisplay } from '../lib/treelayout.js';
+  import { DEFAULTS, elbow, layout, toDisplay } from '../lib/treelayout.js';
   import { craftTree } from '../lib/sources.js';
   import WikiIcon from './WikiIcon.svelte';
 
   let { ds, tree, onselect = null, scale = 1, zoomable = false } = $props();
+
+  // How tall a box has to be. The gate sentence carries a drop rate and a gate now ("dropped by
+  // Ball O' Guts, 50%, which needs Pre-boss"), which is more than one line for some nodes and one
+  // for most — and the boxes are placed before they are rendered, so the wrap has to be predicted.
+  // Canvas `measureText` is the only way to do that without laying the whole graph out twice; the
+  // approximation is that the second line is assumed to start where the stage chip ends, which is
+  // pessimistic by a word at most. Without a canvas (SSR, tests) every box stays one line.
+  // the box minus its icon, gaps and padding — measured at 188, with 4px held back: canvas and the
+  // layout engine disagree by a fraction of a pixel, and "any CursedFlameIchor (Cursed Flame)"
+  // wrapped on a 0.4px margin the arithmetic said it cleared
+  const TEXT_W = DEFAULTS.nodeW - 52;
+  // A ceiling, not a target: "the Archaeologist, once a Refracting Crystal from the Cursed Pyramid
+  // has cracked the Coconut Island keystone" is one hand-written gate in sources.json, and a box
+  // tall enough for all of it would dwarf the tree around it.
+  const MAX_LINES = 4;
+  const canvas = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+  // Inter arrives over the network, and text measured in the fallback font is narrower — every
+  // box came out one line short until the graph re-laid itself out once the real face was in.
+  let fontsIn = $state(false);
+  if (typeof document !== 'undefined') document.fonts.ready.then(() => (fontsIn = true));
+  const measure = (text, px) => {
+    void fontsIn; // re-measure when the webfont lands
+    canvas.font = `${px}px ${getComputedStyle(document.body).fontFamily}`;
+    return canvas.measureText(text).width;
+  };
+  // The greedy fill the browser does, one word at a time. Two things this cannot be shortcut past:
+  // dividing the sentence's total width by the line's is a line short whenever a long word has to
+  // move down whole ("any CursedFlameIchor" wraps after "any"), and adding up the words one by one
+  // is ~4px short of the sentence, because shaping does not stop at the spaces. So each candidate
+  // line is measured as the whole string it would be.
+  function linesOf(n) {
+    const detail = n.via ?? n.gate ?? '';
+    if (!canvas || !detail) return 1;
+    const words = detail.split(/\s+/).filter(Boolean);
+    // the stage chip sits inline at the start of the first line: px-1, border, mr-1, then a space.
+    // Measured at 10.5px rather than its own 10px — the extra covers the semibold face, which
+    // canvas renders narrower than the layout engine does.
+    let indent = measure(n.stageLabel ?? '', 10.5) + 14 + measure(' ', 10.5);
+    let lines = 1;
+    let start = 0;
+    for (let i = 0; i < words.length; i++) {
+      if (i > start && indent + measure(words.slice(start, i + 1).join(' '), 10.5) > TEXT_W) {
+        lines += 1;
+        start = i;
+        indent = 0;
+      }
+    }
+    return Math.min(MAX_LINES, lines);
+  }
+  // the box is sized to the lines it will show, and clamped to the same count: if the measurement
+  // is ever a line out, the text ends in an ellipsis rather than being sliced through
+  const heightOf = (n) => DEFAULTS.nodeH + (linesOf(n) - 1) * DEFAULTS.lineH;
   // `scale` is the size the caller wants; when the graph carries its own controls that is only the
   // starting point, and the buttons take it from there
   const clamp = (z) => Math.round(Math.min(1.6, Math.max(0.3, z)) * 100) / 100;
@@ -19,7 +71,7 @@
   // when the window closes, so the small graph in the row behind it is always the row's own item.
   let trail = $state([]); // [{ id, name }], deepest last
   const walked = $derived(trail.length ? craftTree(ds, trail.at(-1).id) : null);
-  const g = $derived(layout(toDisplay(walked ?? tree)));
+  const g = $derived(layout(toDisplay(walked ?? tree), { heightOf }));
   const backTo = $derived(trail.length > 1 ? trail.at(-2).name : tree?.name ?? 'the tree');
   let popOpen = $state(false);
   function follow(id, name) {
@@ -92,7 +144,7 @@
         {/if}
         <span class="min-w-0 flex-1">
           <span class="block truncate font-medium">{#if n.n > 1}<span class="num text-dim">{n.n}×</span> {/if}{n.name}</span>
-          <span class="block truncate text-[10.5px] text-dim">
+          <span class="line-clamp-1 text-[10.5px] text-dim" style="-webkit-line-clamp:{linesOf(n)}">
             <span class="craft-stage" class:warn={n.gating && n.prog > 0}>{n.stageLabel}</span>
             {n.via ?? n.gate ?? ''}
           </span>

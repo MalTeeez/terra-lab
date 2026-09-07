@@ -102,6 +102,13 @@ describe('parseTooltipStats', () => {
     expect(parseTooltipStats('8% increased damage to all other classes').stats).toEqual({ allDamage: 0.08 });
     expect(parseTooltipStats('Deal 150% damage to up to 2 enemies surrounding the initially hit enemy').stats).toEqual({});
   });
+  // one tooltip, one stat, two conditions that are not worth the same: the Galeflame Feather's 5%
+  // is a stance you steer, the 18% needs a hit taken first. They stay apart so score.js can price
+  // each one, instead of a flat 23% that reads like an unconditional damage accessory.
+  test('splits a stat gated two ways on one item into its part-time and state-gated arms', () => {
+    const gale = parseTooltipStats('Gain 5% increased damage in the air\nImmunity frames in the air grant an additional 18% increased damage and Swiftness');
+    expect(gale.stats).toEqual({ allCondDamage: 0.05, allStateDamage: 0.18 });
+  });
 });
 
 describe('cleanText', () => {

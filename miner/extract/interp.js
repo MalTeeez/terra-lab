@@ -873,7 +873,12 @@ export class Machine {
             // bridges up there (`TryGetMod("CalamityBardHealer", out calBardHealer)`) and its
             // AddRecipes then asks that mod for the ingredient
             if ((m.name === '.ctor' || m.name === 'Load' || m.name === 'OnModLoad' || m.name === 'SetStaticDefaults') && this.asm.methodBody(m)?.il.length < 20000 && this.asm.methodSig(m).params.length === 0) {
-              this.run(m, THIS, [], this.asm, this.maxDepth - 1);
+              // …from depth zero, because a constructor chain is one object setting itself up, not
+              // a call graph worth rationing. Started one below the ceiling, only a ctor that
+              // stores its own fields was ever read: Thorium's bard prefixes pass their numbers to
+              // `BardPrefix(dmg, shootSpeed, useTime, …)` through a second overload, one hop too
+              // far, and eight of the twelve came out with no stats at all and were dropped.
+              this.run(m, THIS, [], this.asm, 0);
             }
           }
           const base = this.asm.baseOf(cur);

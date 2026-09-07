@@ -10,7 +10,7 @@
  * `StealthStrikeAvailable()` check.
  */
 import { decodeIL, ldcValue } from '../clr/il.js';
-import { Machine, PLAYER, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
+import { ITEM, Machine, PLAYER, THIS, UNKNOWN, isNum, tmlStaticHook, tmlStaticLoadHook } from './interp.js';
 import { alwaysRanges, branchRanges, chanceAt as chanceOf, chanceRanges, counterRanges, followLoads, gatesAt, guardRanges, requiresRanges } from './guards.js';
 import { findInherited } from './util.js';
 import { loopTracker, projTypeArg } from './projectiles.js';
@@ -195,6 +195,64 @@ export function altRanges(asm, m) {
 }
 
 /**
+ * Which projectile the weapon puts in `Item.shoot` before the shot goes out.
+ *
+ * `Shoot` and `ModifyShootStats` are not the only places a weapon picks its attack. Malachite has
+ * one `Shoot` override — the stealth fan — and does its real branching in `CanUseItem`, where
+ * `Item.shoot` is assigned one of three projectiles: `MalachiteStealth` when a stealth strike is
+ * available, `MalachiteBolt` on the right click, `MalachiteProj` otherwise. `SetDefaults` only ever
+ * writes the third, so the model flew the plain kunai for all three — the stealth strike lost the
+ * homing that is the only reason its tooltip line exists, and the right click did not exist at all.
+ *
+ * The buckets are the ones `ModifyShootStats` already fills, so what comes out is the same
+ * `typeOverride` / `stealthMods.type` / `altMods.type` the model already reads. Only the hooks that
+ * run *per use* are read: `HoldItem` swaps (Calamity's biome blade attunements) are a mode the
+ * player sets, not a click, and belong to whatever reads that mode.
+ * @returns {{ default?: string, stealth?: string, alt?: string }}
+ */
+export function shootSwaps(asm, td, { tml, projRef }) {
+  const out = {};
+  for (const name of ['CanUseItem', 'UseItem']) {
+    const m = findInherited(asm, td, name);
+    if (!m || m.declaringType !== td) continue;
+    const body = asm.methodBody(m);
+    if (!body) continue;
+    // cheap gate: run the machine only for the handful of items that actually write the field
+    let ins;
+    try { ins = decodeIL(body.il); } catch { continue; }
+    const writes = ins.some((x) => {
+      if (x.op !== 'stfld') return false;
+      let d; try { d = asm.resolve(x.operand); } catch { return false; }
+      return d?.name === 'shoot' && (d.declaringType?.name ?? '') === 'Item';
+    });
+    if (!writes) continue;
+    const stealth = stealthRanges(asm, m);
+    const alts = altRanges(asm, m);
+    let at = 0;
+    const machine = new Machine(asm, {
+      tml,
+      concreteType: td,
+      linear: true, // every arm of the switch is a real attack: walk them all
+      maxDepth: 1,
+      budget: 20000,
+      onStore(recv, field, value) {
+        if (recv !== ITEM || field !== 'shoot' || value?.k !== 'type') return;
+        const bucket = sideAt(alts, at) === true ? 'alt' : sideAt(stealth, at) === true ? 'stealth' : 'default';
+        out[bucket] = projRef(value) ?? out[bucket];
+      },
+      onCall(callee, args, ctx) {
+        if (callee.name === 'StealthStrikeAvailable' || callee.name === 'AdditionalStealthCheck') return { k: 'flag', name: STEALTH_FLAG };
+        return tmlStaticHook(callee, args, ctx);
+      },
+      onStaticLoad: tmlStaticLoadHook,
+    });
+    machine.trace = (x) => { at = x.offset; };
+    try { machine.run(m, THIS, [PLAYER]); } catch { /* partial */ }
+  }
+  return out;
+}
+
+/**
  * What one use costs the player in health: `player.statLife -= N` in the item's own use hooks.
  *
  * A weapon that pays in life is the one cost the model had no way to see — `mana` and SOTS's void
@@ -248,7 +306,9 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
   // where the type declares one reads the real method instead of its wrapper.
   const shoot = findInherited(asm, td, 'BardShoot') ?? findInherited(asm, td, 'Shoot');
   const modify = findInherited(asm, td, 'ModifyShootStats');
-  if (!shoot && !modify) return null;
+  // a weapon can pick its attack by assigning `Item.shoot` per click instead of in either of those
+  const swaps = shootSwaps(asm, td, { tml, projRef });
+  if (!shoot && !modify && !Object.keys(swaps).length) return null;
   const calls = [];
   const rets = [];
   let loops = [];
@@ -437,6 +497,11 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
       out.returnsTrue = known.length ? known.some((v) => v !== 0) : false;
     }
   }
+  // `Item.shoot` assigned per click sits in the same three buckets `ModifyShootStats` fills, and
+  // loses to it: that hook runs later and is the more specific answer where a weapon has both.
+  if (swaps.stealth) out.stealthMods = { ...out.stealthMods, type: out.stealthMods?.type ?? swaps.stealth };
+  if (swaps.alt) out.altMods = { ...out.altMods, type: out.altMods?.type ?? swaps.alt };
+  if (swaps.default) out.typeOverride ??= swaps.default;
   const sm = findInherited(asm, td, 'get_StealthDamageMultiplier');
   if (sm) {
     const v = new Machine(asm, { tml, concreteType: td, budget: 2000, onStaticLoad: tmlStaticLoadHook }).run(sm, THIS, []);

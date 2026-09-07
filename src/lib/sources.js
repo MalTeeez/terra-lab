@@ -7,22 +7,38 @@
  * recipe the inference picked (the earliest) is `chosen`.
  */
 import { nodeOf } from './dataset.js';
+import { fmtChance } from './fmt.js';
 
 const squash = (t) => String(t ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
 /** Does a hand-written note already say which boss it is behind? */
 const namesBoss = (via, boss) => !!boss && squash(via).includes(squash(boss));
 
+/**
+ * How often the drop the gate names actually rolls. The gate says *who* drops it and the node's
+ * sources say *how often*, so they have to be matched up by name — loosely at the end, because a
+ * stage source can name two bosses at once ("Eater of Worlds / Brain of Cthulhu") where the drop
+ * record names only the one that has the rule.
+ */
+function gateChance(node) {
+  const want = [node.src?.via, node.src?.boss].filter(Boolean);
+  const drops = node.drops ?? [];
+  const hit = drops.find((d) => want.includes(d.from)) ?? drops.find((d) => d.from && want.some((w) => w.includes(d.from)));
+  return fmtChance(hit?.chance);
+}
+
 /** Human sentence for why a node is obtainable when it is. */
 export function gateText(node, ds) {
   const s = node.src ?? {};
   const after = s.boss ? ` (after ${s.boss})` : '';
+  const odds = /^(drop|enemy|bag)$/.test(s.kind ?? '') ? gateChance(node) : '';
+  const rate = odds ? `, ${odds}` : '';
   switch (s.kind) {
-    case 'drop': return s.until ? `dropped by ${s.boss} after ${s.until}` : `dropped by ${s.boss}`;
+    case 'drop': return s.until ? `dropped by ${s.boss} after ${s.until}${rate}` : `dropped by ${s.boss}${rate}`;
     case 'fish': return `caught by fishing${s.boss ? ` (after ${s.boss})` : ''}`;
     case 'critter': return `caught as a critter (${s.via})${s.boss ? `, after ${s.boss}` : ''}`;
     case 'worldgen': return s.via && !/^mined/.test(s.via) ? `in a chest placed at world generation (${s.via})${s.estimated ? ` — the code does not say if the chest is locked, so the rarity guess${s.boss ? ` (${s.boss})` : ''} stands` : s.boss ? ` (after ${s.boss})` : ''}` : 'generated in the world, any pickaxe';
-    case 'bag': return `${s.via ?? 'treasure bag'} (${s.boss})`;
-    case 'enemy': return `dropped by ${s.via}${s.boss ? `, which needs ${s.boss}` : ''}${s.gate && !s.boss ? ` (${s.gate})` : ''}`;
+    case 'bag': return `${s.via ?? 'treasure bag'} (${s.boss})${rate}`;
+    case 'enemy': return `dropped by ${s.via}${rate}${s.boss ? `, which needs ${s.boss}` : ''}${s.gate && !s.boss ? ` (${s.gate})` : ''}`;
     case 'decraft': return `shimmer-decrafted from ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
     case 'companion': return `worn with ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;
     case 'reward': return `handed over by ${s.via}${s.boss ? ` (after ${s.boss})` : ''}`;

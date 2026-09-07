@@ -13,7 +13,10 @@ import { normalizeEffects, playerHooks } from './effects.js';
 // …and the on-hit helpers a mod calls out of its hit hooks (Calamity's `SummonOnHit`, where the
 // Spirit Glyph's buffs live): walked here rather than inlined, because a nested call is not read
 // linearly and the `if (sGlyph)` region a delta sits in would be lost.
-const HOOK_RE = /^(PostUpdate|UpdateEquips|PostUpdateEquips|PostUpdateMiscEffects|PostUpdateRunSpeeds|UpdateLifeRegen|ModifyWeaponDamage|ModifyWeaponCrit|UpdateBadLifeRegen|PreUpdateMovement|UpdateDead|OtherBuffEffects|.*Effects?|Update\w*|\w*OnHit\w*)$/;
+// …and the hooks that run when the *player* is hit, which is where a defensive set puts its buff on
+// you (Calamity's Tarragon melee set grants TarraLifeRegen in `OnHurt`, and nothing else in its
+// player code mentions the flag — the set read as a flag name and no effects at all).
+const HOOK_RE = /^(PostUpdate|UpdateEquips|PostUpdateEquips|PostUpdateMiscEffects|PostUpdateRunSpeeds|UpdateLifeRegen|ModifyWeaponDamage|ModifyWeaponCrit|UpdateBadLifeRegen|PreUpdateMovement|UpdateDead|OtherBuffEffects|.*Effects?|Update\w*|\w*OnHit\w*|\w*Hurt\w*|\w*LifeRegen\w*)$/;
 
 /**
  * @returns {Map<string, object>} bool field name → effects object (normalizeEffects form)

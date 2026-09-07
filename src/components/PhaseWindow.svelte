@@ -7,6 +7,7 @@
   import { tick } from 'svelte';
   import PhaseGraph from './PhaseGraph.svelte';
   import Info from './Info.svelte';
+  import { fmtNum } from '../lib/fmt.js';
 
   let { ds, id = 'phasegraph', title = '', accent, phases = [], total = null, mode = null, legend = null } = $props();
 
@@ -15,6 +16,7 @@
   const MIN_FIT = 0.3;
   const MAX_FIT = 1.6;
   const r2 = (v) => Math.round(v * 100) / 100;
+  let sw = $state(null); // the graph's branch switch, handed over so it can live under the header
   let box = $state(null);
   let inner = $state(null);
   let zoom = $state(1);
@@ -46,12 +48,26 @@
       <button class="lab-btn py-0.5" popovertarget={id} popovertargetaction="hide">Done</button>
     </span>
   </div>
+  <!-- the branch switch as a bar of its own, under the header: inside the graph it rode the top of
+       a canvas centred in the window, which parked it in the middle of all that space -->
+  {#if sw}
+    <div class="ph-loops shrink-0 border-b border-line px-4 py-2">
+      {#each sw.items as i (i.g)}
+        <button type="button" class="ph-loop" class:on={i.on} class:scored={i.scored} aria-pressed={i.on}
+                title={i.tip} onclick={() => sw.pick(i.g)}>{i.name}<span class="num">{fmtNum(i.total)}/s</span></button>
+      {/each}
+    </div>
+  {/if}
   <div bind:this={box} class="min-h-0 flex-1 overflow-auto p-4" style="display:grid; place-content:safe center">
     <!-- the outer box takes the scaled size so the window scrolls and centres on it; the inner one
-         is the graph at 100%, which is what gets measured for the fit -->
+         is the graph at 100%, which is what gets measured for the fit.
+         `zoom`, not `transform: scale()`: a transform makes this box the containing block for the
+         `fixed` hover tips inside the graph, which then scroll with the graph and are cut off at
+         the window's edges. `zoom` scales without that, and `--zoom` lets the tip cancel it out so
+         it stays readable at 30% as well as 160%. `offsetWidth` still reads the unzoomed size. -->
     <div style="width:{Math.ceil(w * zoom)}px; height:{Math.ceil(h * zoom)}px">
-      <div bind:this={inner} style="width:max-content; transform:scale({zoom}); transform-origin:top left">
-        <PhaseGraph {ds} {phases} {total} {mode} />
+      <div bind:this={inner} style="width:max-content; zoom:{zoom}; --zoom:{zoom}">
+        <PhaseGraph {ds} {phases} {total} {mode} onloops={(x) => (sw = x)} />
       </div>
     </div>
   </div>

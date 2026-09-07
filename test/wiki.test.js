@@ -46,6 +46,17 @@ test('looked-up sprite file wins over the guessed one', () => {
     .toBe('https://starsabovemod.wiki.gg/images/Thespian%2C_the_Act_of_Alchemy_Delight.png');
 });
 
+test('Ragnarok: sprites by internal name, links through search', () => {
+  // the wiki files the sprite under the mod's internal name, so only the looked-up file resolves —
+  // the `<display name>.png` the hash rule builds does not exist (see data/wiki-icons.json)
+  expect(wikiImg({ mod: 'RagnarokMod', name: 'Victide Sponge Hood', icon: '3/3a', img: 'VictideHeadHealer.png' }))
+    .toBe('https://ragnarokmod.wiki.gg/images/VictideHeadHealer.png');
+  // barely a dozen items have an article; search jumps to an exact title and otherwise lands on the
+  // Weapons/Armor table that names the item, instead of a red link
+  expect(wikiUrl({ mod: 'RagnarokMod', name: 'Victide Sponge Hood' }))
+    .toBe('https://ragnarokmod.wiki.gg/wiki/Special:Search?search=Victide_Sponge_Hood');
+});
+
 test('gif sprite fallback', () => {
   // Infernum files this one as a .gif, so the .png the name rule builds 404s and this is tried next
   expect(wikiImgGif({ mod: 'InfernumMode', name: "Storm Maiden's Retribution" }))

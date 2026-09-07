@@ -24,7 +24,7 @@
 import { readFileSync } from 'node:fs';
 import { indexDataset } from '../src/lib/dataset.js';
 import { weaponDps } from '../src/lib/score.js';
-import { ARCHETYPE, BOSS_DEFAULT, IMMUNITY } from '../src/lib/dps.js';
+import { ARCHETYPE, BOSS_DEFAULT, CALIBRATION, IMMUNITY, bossOf } from '../src/lib/dps.js';
 
 const ds = indexDataset(JSON.parse(readFileSync(new URL('../data/dataset.json', import.meta.url), 'utf8')));
 const obs = JSON.parse(readFileSync(new URL('../data/observed.json', import.meta.url), 'utf8'));
@@ -43,10 +43,12 @@ for (const s of obs.trials) {
   if (!it) { console.log(`${s.name.padEnd(22)} not in the dataset`); continue; }
   const prefix = ds.prefixById.get(s.prefix) ?? null;
   const onDummy = dummyAll || s.target === 'dummy';
-  const v = weaponDps(it, { ds, stage: s.stage ?? PLAYER.stage, prefix, loadout: s.loadout ?? PLAYER.loadout, stealthMax: s.stealthMax ?? PLAYER.stealthMax, conds: new Set(), ...(onDummy ? { boss: DUMMY } : {}) });
+  // `targetStage` is the target picker: a trial taken against a boss other than the one fought next
+  const target = onDummy ? DUMMY : s.targetStage !== undefined ? bossOf(ds, s.targetStage) : null;
+  const v = weaponDps(it, { ds, stage: s.stage ?? PLAYER.stage, prefix, loadout: s.loadout ?? PLAYER.loadout, stealthMax: s.stealthMax ?? PLAYER.stealthMax, conds: new Set(), ...(target ? { boss: target } : {}) });
   // what the game prints on the item: damage after the prefix, times what the loadout carries;
   // a screenshot taken with the bar full carries the stealth multiplier
-  const shownModel = v.eff.damage * (1 + (s.loadout ?? PLAYER.loadout).damage) * (s.mode === 'stealth' ? v.stealthParts?.find((p) => /stealth strike ×/.test(p.label))?.mul ?? 1 : 1);
+  const shownModel = v.eff.damage * (1 + (s.loadout ?? PLAYER.loadout).damage) * (s.mode === 'stealth' ? v.stealthParts?.find((p) => /^stealth strike +/.test(p.label))?.mul ?? 1 : 1);
   // each trial is one loop: continuous throwing, or throw-pause-strike
   const got = s.mode === 'stealth' ? v.stealth ?? v.value : v.spam ?? v.value;
   const dps = s.dps ?? (s.damage && s.seconds ? s.damage / s.seconds : null);
@@ -68,7 +70,9 @@ for (const s of obs.trials) {
 }
 if (ratios.length) {
   const sorted = [...ratios].sort((a, b) => a - b);
-  console.log(`\nmedian model/observed ${sorted[Math.floor(sorted.length / 2)].toFixed(2)}×  (1.00 = the model is right)`);
+  const med = sorted[Math.floor(sorted.length / 2)];
+  console.log(`\nmedian model/observed ${med.toFixed(2)}×  (1.00 = the model is right)`);
+  console.log(`the model above already carries CALIBRATION = ${CALIBRATION}; re-fitting it means ${(CALIBRATION / med).toFixed(2)} — but only after the rows whose *shown* damage disagrees with the game are fixed, because those are not DPS errors`);
 }
 if (terms.length) {
   console.log('\nterm by term (a knob is calibrated against these, never against the aggregate)');

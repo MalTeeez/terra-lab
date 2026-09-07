@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+/**
+ * Weapons that do not age: the ones that take their class's crown and keep it for stage after
+ * stage, while the weapons a player is actually finding get worse than what they already have.
+ *
+ *   node tools/outliers.mjs                       # write docs/class-outliers.md
+ *   node tools/outliers.mjs --top 5 --min 4       # crown = top 5, report a reign of 4+ stages
+ *   node tools/outliers.mjs --cls magic           # one class, printed to stdout
+ *
+ * A long reign is not by itself a bug — a genuinely great weapon *should* hold up, and the guides
+ * say so too (Terra Blade, Daedalus Stormbow). What the list is for is the other kind: a weapon
+ * that holds the crown across a dozen stages of the run is either mis-staged (the lab thinks you
+ * get it far earlier than you do), mis-mined (its damage or its cadence is read wrong), or the
+ * model is paying it for something it does not do. Reading it next to `guide-check`'s UNLISTED
+ * section is the fastest way to tell which: a weapon no guide ever names that reigns for fifteen
+ * stages is the model's problem, not the player's.
+ *
+ * Method: every weapon in the pack is graded at every stage it is available for, in `auto` target
+ * mode, with no loadout and no prefix — the same weapon-only arithmetic `dps-snapshot` freezes, so
+ * nothing here depends on the solver. A weapon's *reign* is the run of consecutive stages it is its
+ * class's #1 (or top `--top`); what is counted against it is only the stages where a **newer**
+ * weapon of the class exists, because outlasting weapons nobody has released yet is not an outlier.
+ */
+import { readFileSync, writeFileSync } from 'node:fs';
+import { indexDataset } from '../src/lib/dataset.js';
+import { weaponDps } from '../src/lib/score.js';
+
+const args = process.argv.slice(2);
+const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
+const TOP = Number(opt('--top', 1));          // 1 = the crown; 3 = a podium place
+const MIN = Number(opt('--min', 5));          // stages of reign worth reporting
+const PODIUM = Number(opt('--podium', 3)); // a place a weapon keeps without ever being #1
+const ONLY = opt('--cls', null);
+const OUT = opt('--out', 'docs/class-outliers.md');
+
+const ds = indexDataset(JSON.parse(readFileSync(new URL('../data/dataset.json', import.meta.url), 'utf8')));
+const stages = ds.stages;
+const label = (i) => stages[i]?.label ?? `stage ${i}`;
+const weapons = ds.items.filter((it) => it.slot === 'weapon' && (it.damage ?? 0) > 0 && (it.stage ?? null) !== null);
+const classes = [...new Set(weapons.map((it) => it.class))]
+  .filter((c) => weapons.filter((it) => it.class === c).length >= 20 && (!ONLY || c === ONLY));
+
+/**
+ * Every item any guide names, at any tier — the one outside opinion the lab has. A weapon that
+ * reigns for fifteen stages and appears nowhere in this set is the model's problem; one the guides
+ * name at the tier it takes over is the run working as intended.
+ */
+const named = new Set();
+try {
+  for (const p of JSON.parse(readFileSync(new URL('../data/guides.json', import.meta.url), 'utf8')).picks ?? []) {
+    for (const id of [p.id, ...(p.ids ?? [])]) if (id) named.add(id);
+  }
+} catch { /* no guides.json: the column reads "?" */ }
+const guided = (id) => (!named.size ? '?' : named.has(id) ? 'yes' : '—');
+
+const ctx = (stage) => ({ conds: new Set(), uncertain: false, prefix: null, calibration: null, ds, stage, targets: 'auto' });
+const r0 = (v) => Math.round(v);
+
+/** For one class: [stage] -> the ranking (ids, best first) of everything available by then. */
+function rankings(cls) {
+  const pool = weapons.filter((it) => it.class === cls);
+  const out = [];
+  for (let s = 0; s < stages.length; s++) {
+    const here = [];
+    for (const it of pool) {
+      if ((it.stage ?? 0) > s) continue;
+      const v = weaponDps(it, ctx(s)).value;
+      if (v > 0) here.push({ id: it.id, name: it.name, mod: it.mod, stage: it.stage ?? 0, value: v });
+    }
+    here.sort((a, b) => b.value - a.value);
+    out.push(here);
+  }
+  return out;
+}
+
+/** Runs of consecutive stages a weapon spends inside the top `top` of its class. */
+function reigns(ranked, top) {
+  const open = new Map(); // id -> { from, to, name, mod, stage, value }
+  const done = [];
+  for (let s = 0; s < ranked.length; s++) {
+    const crown = new Set(ranked[s].slice(0, top).map((x) => x.id));
+    for (const [id, r] of open) if (!crown.has(id)) { done.push(r); open.delete(id); }
+    for (const x of ranked[s].slice(0, top)) {
+      const r = open.get(x.id);
+      if (r) { r.to = s; r.value = x.value; r.newer = ranked[s].filter((y) => y.stage > x.stage).length; r.beat = ranked[s].filter((y) => y.stage > x.stage && y.value < x.value).length; }
+      else open.set(x.id, { ...x, from: s, to: s, newer: 0, beat: 0 });
+    }
+  }
+  done.push(...open.values());
+  return done;
+}
+
+const lines = [];
+lines.push('# Weapons that do not age', '');
+lines.push('Generated by `node tools/outliers.mjs` — re-run it after any scoring or mining change.', '');
+lines.push(`Every weapon graded at every stage it is available for, in \`auto\` target mode, with **no loadout and no prefix**: the weapon's own arithmetic, the same one \`dps-snapshot\` freezes. A **reign** is a run of consecutive stages a weapon spends as its class's ${TOP === 1 ? '**#1**' : `**top ${TOP}**`}; only reigns of **${MIN} stages or more** are listed, and only the part of one where a *newer* weapon of the class already exists — outlasting weapons nobody can have yet is not an outlier.`, '');
+lines.push('A long reign is not proof of a bug. It is a list of where to look: a weapon that holds its class for a dozen stages is either **mis-staged** (the lab hands it to you before the game does), **mis-mined** (its damage, its cadence or what it spawns is read wrong), or **over-modelled** (the model pays it for something it does not do). Cross-read it with the UNLISTED section of `guide-check`: a weapon no guide ever names that reigns for fifteen stages is the model\'s problem.', '');
+
+const totals = [];
+for (const cls of classes) {
+  const ranked = rankings(cls);
+  const runs = (top) => reigns(ranked, top)
+    .map((r) => ({ ...r, span: r.to - r.from + 1 }))
+    .filter((r) => r.span >= MIN && r.newer > 0)
+    .sort((a, b) => b.span - a.span || b.beat - a.beat);
+  const found = runs(TOP);
+  // …and the ones that never take the crown but never leave the podium either, which is where a
+  // weapon that is merely *too good for when you get it* shows up rather than one that is broken.
+  const seen = new Set(found.map((r) => r.id));
+  const podium = runs(PODIUM).filter((r) => !seen.has(r.id));
+  totals.push({ cls, pool: weapons.filter((it) => it.class === cls).length, n: found.length, worst: found[0] });
+  lines.push(`## ${cls}`, '');
+  if (!found.length) { lines.push('Nothing holds this class for that long.', ''); continue; }
+  lines.push('| weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |');
+  lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
+  for (const r of found.slice(0, 10)) {
+    const after = ranked[Math.min(r.to + 1, ranked.length - 1)];
+    const next = after?.[0];
+    const ender = r.to + 1 < ranked.length && next && next.id !== r.id ? `${next.name} (${r0(next.value)}/s)` : 'nothing yet';
+    lines.push(`| **${r.name}** | ${r.mod} | ${label(r.stage)} | ${label(r.from)} → ${label(r.to)} | **${r.span}** | ${r.beat} of ${r.newer} | ${guided(r.id)} | ${ender} |`);
+  }
+  lines.push('');
+  if (podium.length) {
+    lines.push(`<details><summary>…and ${podium.length} more that hold a top ${PODIUM} place without ever taking the crown</summary>`, '');
+    lines.push('| weapon | mod | you get it at | top ' + PODIUM + ' from | to | stages | newer weapons it outscores | a guide names it |');
+    lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
+    for (const r of podium.slice(0, 8)) lines.push(`| ${r.name} | ${r.mod} | ${label(r.stage)} | ${label(r.from)} | ${label(r.to)} | ${r.span} | ${r.beat} of ${r.newer} | ${guided(r.id)} |`);
+    lines.push('', '</details>', '');
+  }
+}
+
+lines.push('## the shape of it', '');
+lines.push('| class | weapons | long reigns | the longest |');
+lines.push('| --- | --- | --- | --- |');
+for (const t of totals) lines.push(`| ${t.cls} | ${t.pool} | ${t.n} | ${t.worst ? `${t.worst.name}, ${t.worst.span} stages` : '—'} |`);
+lines.push('');
+
+const text = lines.join('\n');
+if (ONLY) console.log(text);
+else { writeFileSync(new URL(`../${OUT}`, import.meta.url), text); console.log(`${classes.length} classes, ${totals.reduce((s, t) => s + t.n, 0)} reigns of ${MIN}+ stages → ${OUT}`); }

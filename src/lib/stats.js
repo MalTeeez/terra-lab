@@ -128,13 +128,27 @@ export function prefixesFor(item, prefixes, aliases = {}) {
   if (item.slot !== 'weapon') return [];
   const cls = item.cls ?? item.class;
   const classAliases = new Set([cls, ...Object.entries(aliases).filter(([, to]) => to === cls).map(([from]) => from)]);
-  return prefixes.filter((p) => {
+  // …and what the weapon's own `MeleePrefix` / `RangedPrefix` / `MagicPrefix` / `WeaponPrefix`
+  // hooks say, where the mod wrote them (`prefixRolls`). That is the only thing that can put a
+  // class the mod invented onto a vanilla reforge table — Thorium's healer weapons take the magic
+  // table, a whip takes the melee one, a SOTS void sword rolls Legendary while the void bow beside
+  // it rolls Unreal — and a pool the hooks did not answer for keeps the vanilla rule below.
+  const rolls = item.prefixRolls ?? null;
+  const pick = (own) => prefixes.filter((p) => {
     if (p.category === 'accessory' || p.category === 'custom') return false;
+    if (own) return !!p.rollsFor?.some((c) => classAliases.has(c));
     if (p.rollsFor?.length) return p.rollsFor.some((c) => classAliases.has(c));
-    if (p.category === 'weapon') return true;
+    if (p.category === 'weapon') return rolls?.weapon !== false;
+    if (rolls && rolls[p.category] !== undefined) return rolls[p.category];
     // vanilla categories: summon/rogue/thrower/bard/healer weapons only roll universal prefixes
     return p.category === cls;
   });
+  // a weapon whose own `ChoosePrefix` rolls out of its mod's set never reaches the vanilla table:
+  // a Thorium instrument gets Fabled, never Godly. Unless that leaves it nothing — an addon's
+  // hybrid inherits the hook without being of the class the set rolls for, and a weapon that can
+  // be reforged at all is better read by the ordinary rule than given an empty list.
+  if (rolls?.only) { const mine = pick(true); if (mine.length) return mine; }
+  return pick(false);
 }
 
 /** The prefix that maximises DPS for a weapon (or class score for an accessory). */

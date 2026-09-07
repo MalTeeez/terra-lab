@@ -42,6 +42,12 @@ export function cleanText(s) {
     // a plural marker whose argument never resolved (`{^0:second;seconds}`) — keep the plural arm
     .replace(/\{\^\d+:[^};]*;([^}]*)\}/g, '$1')
     .replace(/\r/g, '')
+    // a line the mod never wrote ("Temp1", "TODO"): placeholder localization, not a description
+    .replace(/^(?:Temp\d*|TODO|PLACEHOLDER)$/gim, '')
+    // an argument the miner could not read leaves a hole ("Press  to Dimensional Drive": the
+    // keybind is a runtime string) — close it rather than print the gap
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +$/gm, '')
     .replace(/\n{2,}/g, '\n')
     .trim();
 }
@@ -72,8 +78,22 @@ const CONDITIONAL = /\b(?:when|while|if|after|during|until|instead|only|upon|eve
 // damage aimed at a named target set ("20% increased damage dealt to Old One's Army enemies") is
 // worth nothing against everything else you fight. The enemy noun is what makes it a target set —
 // "8% increased damage to all other classes" is a plain stat and must not be caught.
-const CONDITIONAL_STRONG = /\bstealth strikes?|\bfor each|\bfor every|\bper |\bwhile\b|\bwhen\b|\bif |\bunless\b|\bduring\b|\bto non-|\bof the (?:increases|bonuses)|\btakes?\b|\bdoes\b|\bthat\b[^.]*\bgains?\b|\b[Uu]p to \d|[Dd]amage (?:dealt |done )?(?:to|against) [\w'’ -]*\b(?:enem(?:y|ies)|foes?|targets?|bosses|mobs?)\b|[A-Za-z]+Mod\/[A-Za-z0-9_]+/;
+// a stance you are only sometimes in ("Gain 5% increased damage in the air") reads as flat prose —
+// no "while", no "when" — but is a condition all the same
+const CONDITIONAL_STRONG = /\bstealth strikes?|\bfor each|\bfor every|\bper |\bwhile\b|\bwhen\b|\bif |\bunless\b|\bduring\b|\bto non-|\bof the (?:increases|bonuses)|\btakes?\b|\bdoes\b|\bthat\b[^.]*\bgains?\b|\b[Uu]p to \d|[Dd]amage (?:dealt |done )?(?:to|against) [\w'’ -]*\b(?:enem(?:y|ies)|foes?|targets?|bosses|mobs?)\b|[A-Za-z]+Mod\/[A-Za-z0-9_]+|\b[Ii]n (?:the air|midair|mid-air)\b|\b[Aa]irborne\b|\b[Ii]mmunity frames?\b|\b[Ii]nvincib/;
 const UNCONDITIONAL_START = /^(\+?\d+(\.\d+)?% |increases? (your )?(max(imum)? )?(melee|ranged|magic|summon|minion|rogue|throwing|symphonic|radiant|movement|move|attack|melee speed|critical|damage|life|mana|defense|inspiration))/i;
+/**
+ * Which *kind* of condition a line hangs off. Two lines on the same item can gate the same stat
+ * differently — the Galeflame Feather gives 5% damage in the air and another 18% for the immunity
+ * frames in the air — and they are not worth the same. A stance you steer yourself (in the air, on
+ * a stealth strike, after your own attack) is part-time; the ones below need something you do not
+ * control to supply them — a hit taken, a world event, a liquid to stand in — and are much rarer
+ * than the line reads. `Cond` and `State` are two different discounts in `score.js`.
+ * ponytail: a word list, not a model of the condition; extend it when a gate is priced wrong.
+ */
+const STATE_GATE =/\bimmunity frames?\b|\bi-frames?\b|\binvincib|\bsubmerged\b|\bunderwater\b|\bwet\b|\bin (?:water|lava|honey)\b|\b(?:after|upon|when) (?:being |you are |you're )?(?:hit|struck|damaged)\b|\bblood moon\b|\bsolar eclipse\b|\bat night\b|\bduring the (?:day|night)\b|\bfull moon\b/i;
+/** A line that hands the *player* a stat, rather than quoting a number some projectile of its own has. */
+const GRANTS_STAT = /\d(?:\.\d+)?% (?:increased|more|bonus|additional|extra) |your (?:\w+ )?(?:damage|crit)|damage you deal|(?:critical strike chance|crit chance) by |\bup to \d/i;
 
 /** Damage the *enemy* deals or takes — never the player's damage stat. */
 const ENEMY_DAMAGE = /damage reduction|damage taken|less damage|damage over time|damage they|they take|enemies take|its damage|damage done to/i;
@@ -113,6 +133,13 @@ function flagsOnly(line, flags) {
   else if (/immun(?:e|ity) to \w/i.test(line) && !/knockback|fire block|lava/i.test(line)) flags.add('debuffResist');
   if ((/lava/i.test(line) && /immun|walk|protect|reduces damage/i.test(line)) || /immun(?:e|ity) to fire blocks?/i.test(line)) flags.add('lava');
   if (/\bdodg(?:e|es|ing)\b/i.test(line)) flags.add('dodge');
+  // a death undone: Calamity's Silva revive, Thorium's phylactery. Worth more than a dodge and
+  // still only once — the cooldowns are minutes long and do not tick down during a boss fight
+  if (/taking (?:fatal|lethal|otherwise fatal) damage|(?:revive|resurrect)\w* you\b|will revive you|cheat death|survive (?:an )?otherwise (?:fatal|lethal)/i.test(line)) flags.add('revive');
+  // …and a window where nothing can hurt you at all: the seconds after that revive, the bubble an
+  // armour ability puts you in, the dash you spend immune. Not the same as `iframes`, which is a
+  // *longer* version of the window every hit already gives you.
+  if (/(?:invulnerab\w*|invincib\w*|immune) to (?:all )?damage|impervious|damage taken is converted into healing|become immune to damage|cannot be damaged/i.test(line)) flags.add('invuln');
   if (/increases? (?:your )?pickup range|auto[- ]?swing/i.test(line)) flags.add('utility');
   // a longer invincibility window after a hit, and a bigger melee hitbox: small, real, and common
   if (/length of invincibility|invincibility (?:frames|time|length)|longer invincibility/i.test(line)) flags.add('iframes');
@@ -148,23 +175,32 @@ export function parseTooltipStats(text) {
   // is duplicated", "Stealth strikes grant 15% critical strike chance …") is a conditional class
   // damage / crit / armor-pen stat: recorded as `<cls>Cond…` so the solver can credit it at a discount.
   // `partTime` when the line is conditional; a plain line that no flat pattern knew ("15% of your
-  // throwing damage is duplicated") is the full stat.
-  const classMechanic = (line, partTime = true, sign = 1) => {
+  // throwing damage is duplicated") is the full stat. `fallback` is the class a conditional line
+  // that names none belongs to — every class, since a bonus you wear is not one class's.
+  const classMechanic = (line, partTime = true, sign = 1, fallback = null) => {
     if (WORSE.test(line) && !/increas|more|duplicat/i.test(line)) return;
-    const cls = Object.entries(CLASS_WORDS).find(([, re]) => re.test(line))?.[0];
+    const cls = Object.entries(CLASS_WORDS).find(([, re]) => re.test(line))?.[0] ?? fallback;
     if (!cls) return;
     const add = (k, v) => addStat(k, sign * v); // `sign` is -1 for a drawback clause worded as a gain
     let m;
     // a stealth strike bonus is a rogue's full stat (stealth strikes are how the class fights), tagged
     // `Stealth` so the solver can mark the item; other conditions are `Cond`
     // a timed buff a stealth strike grants ("15% crit to non-stealth strikes for 10 seconds") is still conditional
-    const kind = /stealth strikes?/i.test(line) && !/for \d+(?:\.\d+)? seconds/i.test(line) ? 'Stealth' : partTime ? 'Cond' : '';
+    const kind = /stealth strikes?/i.test(line) && !/for \d+(?:\.\d+)? seconds/i.test(line) ? 'Stealth'
+      : !partTime ? ''
+      : STATE_GATE.test(line) ? 'State' : 'Cond';
     if ((m = line.match(new RegExp(`\\+${NUM} armor penetration`, 'i')))) add(kind ? `${cls}${kind}ArmorPen` : 'armorPen', flat(m[1], 5));
     // the percentage right before the word, with no other percentage in between — or, when the
     // sentence puts it last, the one after it ("summon damage and crit chance are boosted by 10%")
     const after = (what) => line.match(new RegExp(`${what}[^%\\d]*?(?:by|up to|of) ${NUM}%`, 'i'));
     if ((m = line.match(new RegExp(`${NUM}%[^%]*?\\bcrit`, 'i'))) || (m = after('\\bcrit(?:ical)?\\w* (?:strike )?chance'))) add(`${cls}${kind}Crit`, Math.min(15, flat(m[1], 5)));
-    if (((m = line.match(new RegExp(`${NUM}%[^%]*?\\bdamage\\b`, 'i'))) || (m = after('\\bdamage\\b'))) && !ENEMY_DAMAGE.test(m[0])) add(`${cls}${kind}Damage`, Math.min(0.3, pct(m[1])));
+    // "Magic weapons unleash a star that deals 100% damage" is the *star's* damage, not a bonus you
+    // wear — and read as one it made a pre-boss accessory the best magic pick in the game. A bare
+    // percentage in front of the word only counts where the line words it as an increase, or as a
+    // ceiling on one ("up to 15% damage"); the `after` form is already stat phrasing ("damage … by 10%").
+    let dm = line.match(new RegExp(`${NUM}%[^%]*?\\bdamage\\b`, 'i'));
+    if (dm && !GRANTS_STAT.test(line)) dm = null;
+    if ((dm || (dm = after('\\bdamage\\b'))) && !ENEMY_DAMAGE.test(dm[0])) add(`${cls}${kind}Damage`, Math.min(0.3, pct(dm[1])));
   };
   // values in a conditional line the code cannot give ("any player inside it gains 3 defense and 75% acceleration")
   const condValues = (line) => {
@@ -189,7 +225,11 @@ export function parseTooltipStats(text) {
     const forms = [capped, targeted].filter(Boolean).join('|');
     if (!dr && new RegExp(`your damage|damage you deal|${forms}`, 'i').test(line) && !ENEMY_DAMAGE.test(line)
       && !Object.keys(CLASS_WORDS).some((c) => CLASS_WORDS[c].test(line))
-      && (m = line.match(new RegExp(`\\bdamage\\b[^%]*?(?:by|up to|of) ${NUM}%|${forms}`, 'i')))) add('allCondDamage', Math.min(0.3, pct(m[1] ?? m[2] ?? m[3])));
+      && (m = line.match(new RegExp(`\\bdamage\\b[^%]*?(?:by|up to|of) ${NUM}%|${forms}`, 'i')))) {
+      add(STATE_GATE.test(line) ? 'allStateDamage' : 'allCondDamage', Math.min(0.3, pct(m[1] ?? m[2] ?? m[3])));
+      return true; // the line's damage is recorded; nothing else may read it a second time
+    }
+    return false;
   };
   // "Critical strikes deal 40 more damage", "Critical strikes have a 50% chance to deal 30 more
   // damage": a flat bonus only the hits that crit get, kept with the chance it comes with. Read
@@ -252,15 +292,23 @@ export function parseTooltipStats(text) {
     const cl = line.replace(/critical strikes? (?:chance|damage)/gi, 'crit').replace(/,?\s*(?:and )?does not stack[^,.]*/gi, '');
     if ((CONDITIONAL.test(cl) && !UNCONDITIONAL_START.test(line)) || CONDITIONAL_STRONG.test(cl)) {
       flagsOnly(line, flags);
-      condValues(line);
+      const took = condValues(line);
       for (const k of statWords(line)) cond.add(k);
+      // a conditional line that names no class is still a bonus you wear ("Gain 5% increased damage
+      // in the air"): credit it to every class at the discount its condition earns, rather than
+      // dropping it. Only where the line reads as a bonus to a stat you carry, though — a bare
+      // percentage belongs to something the item fires ("arrows behind you for 50% damage" is the
+      // arrow's damage, not yours) — and never where the sentence is about damage something *else*
+      // deals or takes, or where `condValues` already took the number out of it.
+      const anyClass = !took && GRANTS_STAT.test(line) && !ENEMY_DAMAGE.test(line)
+        && !/\bdeals?\b|\bdealing\b|\btakes?\b/i.test(line) ? 'all' : null;
       // a conditional line turns too ("For 5 seconds after a stealth strike, all damage increased
       // by 25%, but stealth strike damage reduced by 25%"): each half is its own class mechanic,
       // and the half that reads as a loss is worded as a gain and counted against you
       for (const [i, clause] of line.split(DRAWBACK).entries()) {
         if (i && (TAKES_DAMAGE.test(clause) || /\bnon-\w/i.test(clause))) continue;
         const loss = i > 0 && WORSE.test(clause);
-        classMechanic(loss ? asGain(clause) : clause, true, loss ? -1 : 1);
+        classMechanic(loss ? asGain(clause) : clause, true, loss ? -1 : 1, anyClass);
       }
       continue;
     }
@@ -424,7 +472,7 @@ export function parseTooltipStats(text) {
   }
 
   const classes = Object.entries(CLASS_WORDS).filter(([, re]) => re.test(t)).map(([k]) => k);
-  const flatKeys = new Set(Object.keys(stats).filter((k) => !/cond|stealth/i.test(k)).map((k) => (/Damage$/.test(k) ? 'damage' : /Crit$/.test(k) ? 'crit' : k === 'damageReduction' ? 'endurance' : k === 'meleeSpeed' ? 'attackSpeed' : k)));
+  const flatKeys = new Set(Object.keys(stats).filter((k) => !/cond|state|stealth/i.test(k)).map((k) => (/Damage$/.test(k) ? 'damage' : /Crit$/.test(k) ? 'crit' : k === 'damageReduction' ? 'endurance' : k === 'meleeSpeed' ? 'attackSpeed' : k)));
   const conditional = [...cond].filter((k) => !flatKeys.has(k));
   return { stats, classes, placeholders, flags: [...flags], debuffs: [...debuffs], conditional };
 }

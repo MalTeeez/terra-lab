@@ -6,6 +6,7 @@
    * rarity colours are readable on.
    */
   import WikiIcon from './WikiIcon.svelte';
+  import { fmtSpeed } from '../lib/fmt.js';
 
   let { item, stats = null } = $props();
 
@@ -24,7 +25,6 @@
   const VANILLA = ['#828282', '#ffffff', '#9696ff', '#96ff96', '#ffc896', '#ff9696', '#ff96ff', '#d2a0ff', '#96ff0a', '#ffff0a', '#5acdff', '#ff2864', '#b428ff'];
   const color = $derived(RARITY[item.rarityName] ?? VANILLA[(item.rarity ?? 0) + 1] ?? '#ffffff');
 
-  const SPEED = [[8, 'Insanely fast'], [20, 'Very fast'], [25, 'Fast'], [30, 'Average'], [35, 'Slow'], [45, 'Very slow'], [55, 'Extremely slow']];
   const KNOCK = [[0, 'No'], [1.5, 'Extremely weak'], [3, 'Very weak'], [4, 'Weak'], [6, 'Average'], [7, 'Strong'], [9, 'Very strong'], [11, 'Extremely strong']];
   const word = (table, v, last) => table.find(([max]) => v <= max)?.[1] ?? last;
   const cls = (it) => (it.dc ?? '').replace(/(Damage)?(Class)?$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
@@ -53,7 +53,7 @@
     const out = [];
     if (s.damage !== undefined) out.push(`${s.damage}${cls(item) ? ` ${cls(item)}` : ''} damage`);
     if (s.crit !== undefined) out.push(`${s.crit}% critical strike chance`);
-    if (s.useAnimation !== undefined) out.push(`${word(SPEED, s.useAnimation, 'Snail')} speed`);
+    if (s.useAnimation !== undefined) out.push(`${fmtSpeed(s.useAnimation)} speed`);
     if (s.knockback !== undefined) out.push(`${word(KNOCK, s.knockback, 'Insane')} knockback`);
     if (item.pick) out.push(`${item.pick}% pickaxe power`);
     if (item.mana) out.push(`Uses ${item.mana} mana`);

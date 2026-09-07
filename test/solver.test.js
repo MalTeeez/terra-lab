@@ -3,7 +3,7 @@ import { indexDataset } from '../src/lib/dataset.js';
 import { CLASS_PREF, SOFT, dupCapLoss, loadoutBonus, STEALTH_SHARE, TYPICAL_CRIT, W, accessoryGroup, defenseScale, foreignClass, minionSlotScale, pieceScore, round1, soft, typicalDefense, typicalDps, weaponDps } from '../src/lib/score.js';
 
 const MELEE_TANK = CLASS_PREF.melee.tank; // melee counts survivability higher than everyone else
-import { REACH, STEALTH_RECHARGE, bladeCoverage, bladeLanding, bossSpeed, playerDamage } from '../src/lib/dps.js';
+import { CALIBRATION, REACH, STEALTH_RECHARGE, bladeCoverage, bladeLanding, bossSpeed, playerDamage } from '../src/lib/dps.js';
 import { solveLoadout, solveTimeline } from '../src/lib/solver.js';
 
 const raw = {
@@ -91,7 +91,7 @@ describe('score', () => {
     // …and how much of the fight a blade of that reach is in contact at all. That used to be a flat
     // ×0.85; it is `bladeCoverage` now, which is 1 at the baseline broadsword reach and falls away
     // steeply below it, so the expectation tracks the model's own curve rather than a stale literal.
-    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * bladeCoverage(REACH.swing) * blade.f * risk, 0); // `risk` is the rounded part
+    expect(r.value).toBeCloseTo(r.hit * 3 * 1.04 * bladeCoverage(REACH.swing) * blade.f * risk * CALIBRATION, 0); // `risk` is the rounded part
     expect(weaponDps(ds.byId.get('M:staff')).kind).toBe('per hit');
   });
   test('piece score reads effects for the class and ignores other classes', () => {
@@ -118,10 +118,10 @@ describe('score', () => {
   test('a permanent minion is graded like a small summon weapon, and capped at a minion slot', () => {
     const clump = ds.byId.get('M:clump');
     // 10 damage past half the stage's boss armour, 3 hits/s (10-tick immunity), 90% of the time on
-    // the boss, against a typical weapon at the stage
+    // the boss and swinging for half of that (nothing reads its AI), against a typical weapon
     const early = pieceScore(clump, 'melee', {}, { progression: 2 });
     const hit = 10 - typicalDefense(2) / 2;
-    expect(early.parts[0].value).toBeCloseTo(((hit * 3 * 0.9) / typicalDps(2)) * 100, 1);
+    expect(early.parts[0].value).toBeCloseTo(((hit * 3 * 0.9 * 0.5) / typicalDps(2)) * 100, 1);
     // it never outscores the slot a summoner would have put its own minion in…
     const big = { ...clump, effects: { spawns: [{ ...clump.effects.spawns[0], damage: 200 }] } };
     expect(pieceScore(big, 'melee', {}, { progression: 2 }).score).toBeCloseTo(W.minionSlot * minionSlotScale(2), 1);
@@ -191,11 +191,11 @@ describe('score', () => {
     expect(pieceScore(text, 'magic').score).toBeCloseTo(10 + soft(4, SOFT.crit) * 0.7 * 1.1, 1);
     expect(pieceScore(text, 'summon').score).toBe(10); // minions cannot crit
   });
-  test('defense from a per-class effects table counts, scaled by progression, and formula items are taken at half', () => {
+  test('defense from a per-class effects table counts, scaled by progression, and formula items are taken at a quarter', () => {
     const ring = ds.byId.get('M:ring');
     const early = pieceScore(ring, 'rogue', {}, { progression: 0 });
-    expect(early.parts.find((p) => /damage/.test(p.label)).value).toBe(15); // 30% cap taken at half
-    expect(early.parts.find((p) => /defense/.test(p.label)).value).toBeCloseTo(soft(-5, SOFT.defense) * 0.5 * defenseScale(0), 1);
+    expect(early.parts.find((p) => /damage/.test(p.label)).value).toBe(7.5); // 30% cap taken at a quarter
+    expect(early.parts.find((p) => /defense/.test(p.label)).value).toBeCloseTo(soft(-2.5, SOFT.defense) * 0.5 * defenseScale(0), 1);
     expect(early.score).toBeLessThan(11);
     const late = pieceScore(ring, 'rogue', {}, { progression: 28 });
     expect(late.score).toBeGreaterThan(early.score); // losing defense hurts less late
@@ -257,7 +257,7 @@ describe('solveLoadout', () => {
     expect(lo.bonus).toEqual(loadoutBonus(worn, 'melee', ds.aliases));
     expect(lo.bonus.damage).toBeGreaterThan(0.2); // the set bonus and the Warrior Emblem at least
     const w = lo.weapons.find((x) => x.item.id === 'v:sword');
-    expect(w.parts.find((p) => /% melee damage from the loadout/.test(p.label)).mul).toBeCloseTo(1 + lo.bonus.damage, 2);
+    expect(w.parts.find((p) => /% melee damage from the standard loadout at this stage/.test(p.label)).mul).toBeCloseTo(1 + lo.bonus.damage, 2);
     // …and graded on its own the model falls back to the progression curve, not to nothing
     const alone = weaponDps(ds.byId.get('v:sword'), { ds, stage: 1 });
     expect(alone.parts.find((p) => /loadout carries/.test(p.label))).toBeTruthy();

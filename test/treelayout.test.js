@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { DEFAULTS, elbow, layout, toDisplay } from '../src/lib/treelayout.js';
 
-const { nodeW, nodeH, colGap, rowH } = DEFAULTS;
+const { nodeW, nodeH, colGap, rowGap, lineH } = DEFAULTS;
+const rowH = nodeH + rowGap;
 
 test('layout: one column per depth, one row per leaf, parents centred', () => {
   //        root
@@ -31,7 +32,7 @@ test('layout: one column per depth, one row per leaf, parents centred', () => {
   expect(at('a').y).toBe(rowH / 2);
   expect(at('root').y).toBe((at('a').y + at('b').y) / 2);
   expect(g.width).toBe(3 * nodeW + 2 * colGap);
-  expect(g.height).toBe(3 * rowH);
+  expect(g.height).toBe(3 * rowH - rowGap); // no dead gap under the last row
 });
 
 test('toDisplay: only the chosen recipe, with groups and stations as children', () => {
@@ -59,6 +60,19 @@ test('toDisplay: only the chosen recipe, with groups and stations as children', 
   expect(d.children[2].kind).toBe('station');
   // the non-chosen recipe's Gold Bar is not in the graph
   expect(JSON.stringify(d)).not.toContain('Gold Bar');
+});
+
+test('layout: only the node that needs a second line grows, and the column closes up after it', () => {
+  const tree = { name: 'root', children: [{ name: 'tall', children: [] }, { name: 'short', children: [] }] };
+  const g = layout(tree, { heightOf: (n) => (n.name === 'tall' ? nodeH + lineH : 0) });
+  const at = (name) => g.nodes.find((n) => n.name === name);
+  expect([at('tall').h, at('short').h, at('root').h]).toEqual([nodeH + lineH, nodeH, nodeH]);
+  // the short box starts below the tall one, not a fixed row down
+  expect(at('short').y).toBe(nodeH + lineH + rowGap);
+  // the parent centres on its children's centres, not their top edges
+  const mid = (name) => at(name).y + at(name).h / 2;
+  expect(mid('root')).toBe((mid('tall') + mid('short')) / 2);
+  expect(g.height).toBe(2 * nodeH + lineH + rowGap);
 });
 
 test('elbow: parent right edge, midway trunk, child left edge', () => {

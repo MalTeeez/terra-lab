@@ -6,7 +6,9 @@
  * centred between its first and last child. No layout library for twenty lines of arithmetic.
  */
 
-export const DEFAULTS = { nodeW: 236, nodeH: 42, colGap: 36, rowH: 50 };
+// `nodeH` is a one-line box; a node whose gate sentence needs a second line asks for more through
+// `heightOf`, and only that node grows. `rowGap` is the space between two boxes in a column.
+export const DEFAULTS = { nodeW: 236, nodeH: 42, colGap: 36, rowGap: 8, lineH: 14 };
 
 /**
  * Flatten one craftTree node into the boxes the graph draws: the chosen recipe's ingredients,
@@ -49,21 +51,32 @@ export function toDisplay(node, extra = {}) {
 
 /**
  * Place a display tree. Returns absolutely-positionable boxes and the elbow edges between them.
+ * `heightOf(node)` sizes a box that needs more than one line of gate text; leave it out and every
+ * box is `nodeH` tall.
  * @returns {{ nodes: Array, edges: Array<{from, to, gating}>, width: number, height: number }}
  */
 export function layout(display, opts = {}) {
-  const { nodeW, nodeH, colGap, rowH } = { ...DEFAULTS, ...opts };
+  const { nodeW, nodeH, colGap, rowGap, heightOf } = { ...DEFAULTS, ...opts };
   const nodes = [];
   const edges = [];
-  let row = 0;
+  let cursor = 0; // the top of the next leaf's row
   let maxDepth = 0;
 
   const place = (d, depth) => {
     maxDepth = Math.max(maxDepth, depth);
-    const box = { ...d, depth, x: depth * (nodeW + colGap), w: nodeW, h: nodeH, i: 0 };
-    // children first: a parent sits between the rows its subtree ended up on
+    const h = Math.max(nodeH, heightOf?.(d) ?? 0);
+    const box = { ...d, depth, x: depth * (nodeW + colGap), w: nodeW, h, i: 0 };
+    // children first: a parent sits centred on the span its subtree ended up covering — measured
+    // between the outer children's *centres*, since boxes in a column need not be the same height
     const kids = d.children.map((c) => place(c, depth + 1));
-    box.y = kids.length ? (kids[0].y + kids[kids.length - 1].y) / 2 : row++ * rowH;
+    if (kids.length) {
+      const first = kids[0];
+      const last = kids[kids.length - 1];
+      box.y = (first.y + first.h / 2 + last.y + last.h / 2) / 2 - h / 2;
+    } else {
+      box.y = cursor;
+      cursor += h + rowGap;
+    }
     box.i = nodes.push(box) - 1;
     for (const k of kids) edges.push({ from: box, to: k, gating: !!k.gating });
     return box;
@@ -75,7 +88,7 @@ export function layout(display, opts = {}) {
     edges,
     root,
     width: (maxDepth + 1) * nodeW + maxDepth * colGap,
-    height: Math.max(1, row) * rowH,
+    height: Math.max(root.h, cursor - rowGap),
   };
 }
 
