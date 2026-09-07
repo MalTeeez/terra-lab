@@ -87,10 +87,28 @@ export const SOURCE_HINT = {
 };
 
 export async function loadDataset(url = `${import.meta.env.BASE_URL}dataset.json`) {
-  const res = await fetch(url);
+  // A dataset the user mined themselves lives in the Cache API under a URL that does not exist on
+  // the server (see lib/datasets.js), so both kinds are reached the same way — here and in the worker.
+  const res = (await globalThis.caches?.match(url).catch(() => null)) ?? (await fetch(url));
   if (!res.ok) throw new Error(`dataset.json: HTTP ${res.status}`);
   const raw = await res.json();
   return indexDataset(raw);
+}
+
+/**
+ * The card the start page shows for a dataset: everything it needs to describe one without
+ * downloading all 6 MB of it. Written next to each shipped dataset by the miner, and computed here
+ * for a dataset the user uploads.
+ */
+export function summarize(raw) {
+  return {
+    generatedAt: raw.generatedAt,
+    tml: raw.tml,
+    terraria: raw.terraria,
+    items: raw.items.length,
+    stages: raw.stages.length,
+    mods: raw.mods.filter((m) => m.equipment > 0 && m.id !== 'v').map((m) => ({ name: m.name, version: m.version })),
+  };
 }
 
 /** Add lookup structures and derived fields the UI and solver rely on. */

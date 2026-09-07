@@ -727,7 +727,15 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     return chanceAt(rolls.get(c.method), c.offset);
   };
   // …and the counters and requirements, in the domain the method gives them: a counter in `AI`
-  // counts ticks, one in `OnHitNPC` counts hits
+  // counts ticks, one in `OnHitNPC` counts hits.
+  //
+  // The list is exact names on purpose. Widening it to every `*AI` was tried — Calamity runs each
+  // holdout's logic in `HoldoutAI`, and its 60-tick shot cooldowns were reading as "once per 60
+  // *uses*" — and it costs more than it buys: a helper called *from* `AI` is not per tick just
+  // because of its name. Thorium's `PoisonPricklerPro2.SpecialAI` runs once per projectile, behind
+  // the fade-in that gates it, and its `ai[1] % 3` generation counter read as a 3-tick cadence: two
+  // clouds every three ticks for 300 ticks, 148 → 1869 DPS. The domain has to come from whether the
+  // counter really moves each tick, which is a read the walk does not have.
   const domainOf = (m) => (/^(AI|PostAI|PreAI|PostDraw)$/.test(m.name) ? 'tick' : /OnHit/.test(m.name) ? 'hit' : /Kill/.test(m.name) ? 'death' : 'use');
   const guardSets = new Map();
   const gatesOf = (c) => {
@@ -806,12 +814,20 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // it switches its own damage on partway through its life: a charge held on the player, a mine
     // that arms after a delay — either way the shot is not free the moment the button goes down
     windup: rec.windup || undefined,
-    // `SetDefaults` says `friendly = false` and nothing anywhere else says otherwise: this thing
-    // cannot damage an NPC, ever. It is a charge marker, a holdout, a prop — SOTS's Perfect Star
-    // hides one on the player (`hide`, `alpha = 255`) purely to count the charge, and the model was
-    // paying it six contact hits a second. Only ever emitted as an explicit `false`: a projectile
-    // that never mentions the field is one nobody looked at, which is a different fact.
-    friendly: bool(f.friendly) === false && !rec.friendlyLater && !rec.friendlyArmed ? false : undefined,
+    // Nothing anywhere says `friendly = true`: this thing cannot damage an NPC, ever. It is a charge
+    // marker, a holdout, a prop — SOTS's Perfect Star hides one on the player (`hide`, `alpha = 255`)
+    // purely to count the charge, and the model was paying it six contact hits a second.
+    //
+    // *Never mentioning* the field says exactly the same thing, and reading it as "nobody looked"
+    // was letting every invisible controller in the pack bill contact damage. `Projectile.SetDefaults`
+    // writes `friendly = 0` in its own reset, before `SetDefaults_Inner` dispatches to the mod's
+    // override, so a `ModProjectile` that never turns it on is harmless by the game's own arithmetic:
+    // Thorium's Obsidian Staff holds an `alpha = 255` charge controller whose boulders do the damage,
+    // and it was scored as a beam held on the boss at six hits a second.
+    //   `cloneOf`  copies a *vanilla* projectile's defaults, friendly among them — unknown, not false.
+    //   `vanillaId`  is a vanilla record, where the field was read from the game's own SetDefaults.
+    friendly: (bool(f.friendly) === false || (vanillaId === null && f.friendly === undefined && rec.cloneOf === undefined))
+      && !rec.friendlyLater && !rec.friendlyArmed ? false : undefined,
     // the item's use animation is held open for as long as this is out, so `useTime` is not its clock
     pinsUse: rec.pinsUse || undefined,
     // it disarms itself on its first hit: one hit, whatever the pierce says
@@ -917,8 +933,9 @@ export function extractProjectiles(asm, { tml, modId, loc = null }) {
     if (!isModProjectileType(asm, td)) continue;
     let rec;
     try { rec = evalProjectile(asm, td, { tml }); } catch { continue; }
-    // only worth the scan where `SetDefaults` said `false` — the question does not arise otherwise
-    if (rec.fields?.friendly === 0 && !rec.friendlyLater) rec.friendlyArmed = armsFriendly(asm, td);
+    // …wherever `SetDefaults` did not turn it *on*: a `false` there and no mention at all are the
+    // same statement, so both have to ask whether some other method arms it later.
+    if (!rec.fields?.friendly && !rec.friendlyLater) rec.friendlyArmed = armsFriendly(asm, td);
     const name = loc?.proj(td.name);
     out.push({ ...projectileRecord(asm, `${modId}:${td.name}`, rec), ...(name ? { name } : {}) });
   }

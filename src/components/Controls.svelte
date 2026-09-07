@@ -107,13 +107,13 @@
         <span class="lab-label inline-flex shrink-0 items-center gap-1">
           Stage
           <Info label="Gamestage" w={340}>
-            <p>Everything that is <em>obtainable once you have beaten this boss</em> — the loadout is solved from exactly that pool.</p>
-            <p>Drag the slider to walk a run forward; “All stages” shows where the loadout actually changes.</p>
+            <p>Gear that is <em>obtainable once you have beaten this boss</em>, which provides the pool loadouts are solved from.</p>
+            <p>Drag the slider to walk a run forward.</p>
           </Info>
         </span>
         <button class="lab-btn shrink-0 px-2" onclick={() => stepStage(-1)} title="Go back one gamestage" aria-label="Previous stage">‹</button>
         <BossIcon {ds} stage={shown} size={20} />
-        <select class="lab-input min-w-[190px] flex-1" value={shown} onchange={(e) => { draft = null; ui.stage = +e.currentTarget.value; }} title="{shown === 0 ? stage.label : `Post ${stage.label}`} — everything obtainable by this point">
+        <select class="lab-input min-w-[190px] flex-1" value={shown} onchange={(e) => { draft = null; ui.stage = +e.currentTarget.value; }} title="{shown === 0 ? stage.label : `Post ${stage.label}`} - everything obtainable by this point">
           {#each eras as e}
             <optgroup label={e.label}>
               {#each e.stages as s}
@@ -167,7 +167,7 @@
   </section>
 </div>
 
-<!-- everything you set once and forget -->
+<!-- everything set once and forget -->
 <div id="opts" popover="auto" class="lab-pop" style="--w:720px">
   <div class="mb-3 flex items-center justify-between">
     <h2 class="text-[14px] font-semibold">Options</h2>

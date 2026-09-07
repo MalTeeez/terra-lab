@@ -86,6 +86,12 @@ metric actually lost.
 | --- | --- | --- | --- | --- | --- | --- |
 | Blood Rain Bow | v:4381 | v | 10 | 11 Eater of Worlds / Brain of Cthulhu | enemy: Eater of Worlds / Brain of Cthulhu | yes |
 
+## ieor · Pre-Evil · bard (guide stage 10)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Acid Belcher | SOTS:PlagueSpitter | SOTS | 10 | 11 Eater of Worlds / Brain of Cthulhu | chest: Eater of Worlds / Brain of Cthulhu | no |
+
 ## ieor · Pre-Evil · ranged (guide stage 10)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |

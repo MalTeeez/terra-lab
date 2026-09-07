@@ -363,6 +363,18 @@ export const HOMING_INERTIA = 20;
  */
 export const CHILD_CAP = 1.5;
 /**
+ * How much of a cascade makes it a *reading* of where a carrier's damage went, in hits per use.
+ *
+ * A projectile the game will not let damage anything is scored at what it spawns instead of at the
+ * one hit per use the zero-damage rule assumes — but only where that cascade is an answer. Below
+ * this it is a gap wearing an answer's clothes: Calamity's Wildfire Bloom holds a 1×1 px controller
+ * whose flares sit behind a shot cooldown the miner read as "once per 60 *uses*", worth 0.02 hits,
+ * and the weapon came out at 8 DPS at Plantera. The assumed hit is wrong too, but it is wrong by a
+ * factor, not by two orders of magnitude, and it leaves the weapon in `unresolved-phases` where
+ * something can be done about it.
+ */
+export const CARRIER_EXPLAINED = 0.25;
+/**
  * Shot speed for a weapon that fires something but whose `shootSpeed` the miner could not read
  * (the projectile sets its own velocity in AI). Without a number the landing model used to be
  * skipped whole — no travel lead, no gravity, no range check, and `land = 1`, which also handed
@@ -614,6 +626,12 @@ export const CROWD_SWEEP = 0.6;
 export const CROWD_WASTE = 0.6;
 /** Per-tick pull on a projectile the miner saw arcing without reading the constant. */
 export const GRAVITY_K = 0.1;
+/**
+ * Speed, in px per update, below which a projectile that is slowing down stops being a weapon: a
+ * boss moves 5 px a tick, and something drifting slower than that cannot be put in front of it.
+ * ponytail: a flat floor rather than the boss's own speed, which `reachOf` is not handed.
+ */
+export const DRAG_STALL = 2;
 
 /**
  * How far a projectile gets before it expires, with its per-update drag integrated
@@ -626,7 +644,19 @@ export const GRAVITY_K = 0.1;
 export function reachOf(p, step, drop = DROP_TOLERANCE) {
   const life = p?.life ?? LIFE_UNKNOWN;
   const d = p?.drag;
-  const byLife = d > 0 && d < 1 ? (step * (1 - d ** life)) / (1 - d) : step * life;
+  // …and a projectile with drag is out of range long before it stops moving. `v·(1−d^L)/(1−d)` is
+  // the distance it covers *given for ever*, and the last of that is covered at a crawl: SOTS's
+  // Crescent Staff sheds 4% an update and its 106 px "reach" is an asymptote it takes thousands of
+  // ticks to approach. Walking the player in to that number and then charging the flight time to it
+  // is a guaranteed miss — the two answers have to describe the same shot. So the life it is
+  // integrated over ends when it has slowed to `DRAG_STALL`, which is where it stops being
+  // something a moving target can be hit with.
+  // …but not for a seeker, whose "drag" is usually no such thing: the standard homing blend
+  // (`velocity = (velocity·(N−1) + toTarget·speed) / N`) reads to the walk as a per-update decay,
+  // and it is a steering constant with a terminal speed under it, not a projectile winding down.
+  const stall = d > 0 && d < 1 && !p?.homing && step > DRAG_STALL ? Math.log(DRAG_STALL / step) / Math.log(d) : Infinity;
+  const window = Math.min(life, stall);
+  const byLife = d > 0 && d < 1 ? (step * (1 - d ** window)) / (1 - d) : step * life;
   // A shot that arcs is not out of range when it expires — it is out of range when it has fallen
   // too far below where it was aimed to still be on the target. Falling `drop` px takes
   // `sqrt(2·drop/g)` ticks, and it covers `step` px in each of them. A thrown knife lives long
@@ -679,7 +709,16 @@ export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, coun
 
   const step = stepOf(velocity);
   const v = speedOf(p, velocity);
-  const flight = velocity !== null && velocity > 0 ? D / v : 0;
+  // …at the speed it is still doing when it gets there, not the speed it left at. A projectile with
+  // drag crosses the last of the gap far more slowly than the first, and `D / v` was charging every
+  // one of them a lead as if it held its muzzle velocity the whole way: SOTS's Fizzle Star sheds 1.5%
+  // a tick and was billed 17 ticks for a 340 px crossing that really takes it 24. `hitsPerProjectile`
+  // has read the arrival off `flightOf` all along; this is the same question, asked in the same place.
+  // A flight longer than the projectile's own life is one that never arrives, which the range term
+  // below is what answers — the cap here only keeps the arithmetic (and the label) finite.
+  const flight = !(velocity !== null && velocity > 0) ? 0
+    : p?.drag > 0 && p.drag < 1 && !p.homing ? Math.min(flightOf(p, v, D).flight, p.life ?? LIFE_UNKNOWN)
+      : D / v;
 
   // ---- the three ways a shot misses, each as pixels off the target when it arrives ------------
   // the drift is measured against one segment, not the whole chain a worm drapes across the screen:
@@ -1239,15 +1278,25 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
     // and were then rated at 6 hits a second on that one, for a quarter of the beam it is.
     const bunched = (p?.local === undefined || (p?.shared && (spread > 0 || fan))) && !p?.homing && !CONTACT.has(arch);
     const arrivals = Math.min(aimed, bunched ? bodies : Infinity) * (land.f / spreadShare);
+    // …and the collapse has to be counted in *hits*, not in projectiles. One window per body is a
+    // ceiling on what the whole volley lands in that instant — `bodies` hits, however they are
+    // distributed — and capping the arrivals alone let the pierce spend the same windows a second
+    // time: Fizzle Star's seven sparks collapsed to 6 of a 6-body crowd and were then credited 1.4
+    // bodies apiece, 8.4 hits into six windows. Where the volley is narrower than the crowd there is
+    // room to spare and the pierce is worth what it always was (two stars piercing 2 in a six-body
+    // crowd: four hits, four windows).
+    const shareCap = bunched && hits > 1 ? bodies / Math.max(1e-6, Math.min(aimed, bodies)) : Infinity;
+    const capped = hits > shareCap ? shareCap / hits : 1;
+    if (capped < 1) hits = shareCap;
     /**
-     * …and a thing that cannot damage an NPC lands nothing, however well it arrives. `friendly:
-     * false` in `SetDefaults` with no write anywhere else is the game's own statement of that: a
-     * charge marker, a bow holdout, a minion counter. It still *carries* — Perfect Star's hidden
-     * star is what releases the laser — so only its own hits go, not the cascade underneath it,
-     * which is why this is a factor on `own` and not on the share the children inherit.
+     * …and a thing that cannot damage an NPC lands nothing, however well it arrives. A projectile
+     * that never turns `friendly` on is the game's own statement of that: a charge marker, a bow
+     * holdout, a minion counter. It still *carries* — Perfect Star's hidden star is what releases
+     * the laser — so only its own hits go, not the cascade underneath it, which is why this is a
+     * factor on `own` and not on the share the children inherit.
      *
-     * Only where the model can see where the damage went instead. 126 projectiles in the pool are
-     * never friendly and 63 weapons fire one directly, but most of those are the shape the
+     * Only where the model can see where the damage went instead. 513 projectiles in the pool are
+     * never friendly and 311 weapons fire one directly, but most of those are the shape the
      * zero-damage carrier rule already covers: SOTS's Glaze Bow is `aiStyle 20` in the player's
      * hands and its arrows come from the item, Jar of Pineapple's "Fresh Greeny Counter" is an
      * anchor that spawns the minions. Nothing was read off either, so zeroing them would trade a
@@ -1271,8 +1320,9 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
     // landing model, so their cascade is worth nothing — zeroing the carrier on top of that took
     // six weapons to a flat 0, which is never a reading, only a gap. Where nothing was found the
     // carrier keeps the assumption it already had: one hit of the weapon's damage per use, and a
-    // place in `unresolved-phases` rather than a confident nought.
-    const inert = carries && kids.hits > 0.01;
+    // place in `unresolved-phases` rather than a confident nought. `CARRIER_EXPLAINED` is where that
+    // line sits: a cascade worth a fiftieth of a hit is the same gap with a number in front of it.
+    const inert = carries && kids.hits > CARRIER_EXPLAINED;
     const own = inert ? 0 : landed;
     // …stated as a fact rather than as a `×0`: the chain has to go on to what it releases, and a
     // zero in front of the cascade would take the card's arithmetic to nothing while the score is
@@ -1286,6 +1336,7 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
     }
     for (const x of land.parts) parts.push({ ...x, label: `${pre}${x.label}` });
     if (hp.label) parts.push({ fac: 'hits', label: `${pre}${hp.label}`, mul: r2(hp.hits) });
+    if (capped < 1) parts.push({ fac: 'hits', label: `${pre}…but ${r1(Math.min(aimed, bodies))} of them arrive together into ${bodies === 1 ? 'one immunity window' : `${bodies} immunity windows`}: the pierce has none left to use`, mul: r2(capped) });
     if (links) parts.push({ fac: 'hits', label: `${pre}${links.label}`, mul: links.mul });
     if (dmgMul !== undefined && Math.abs(dmgMul - 1) > 0.005) parts.push({ fac: 'damage', label: `${pre}${dmgWhy ?? `${Math.round(dmgMul * 100)}% damage`}${shotMul !== 1 ? ` (×${r2(shotMul)} on every shot from ModifyShootStats)` : ''}`, mul: r2(dmgMul) });
     for (const x of kids.parts) parts.push({ ...x, label: `${pre}${x.label}` });
@@ -1560,13 +1611,14 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     if (stocked?.has(c.type)) { parts.push({ label: `${nameOf(c.type, ds)} is stocked for the other click, not damage now`, mul: 1 }); continue; }
     const cp = asStrike(proj(ds, c.type), variant);
     // …and the same fact one level down, on the same terms as the delivery above: a spawn the game
-    // will not let damage anything is a marker, not a hit. Ten in the pool — blood splatters, mana
-    // and heal locks, Ignis's sigil — every one of them counting as a full extra hit of the
-    // weapon's damage until now.
-    if (cp?.friendly === false && (cp.children?.length > 0 || cp.debuffs?.length > 0 || cp.ownAi === false)) {
-      parts.push({ label: `${nameOf(c.type, ds)} is never friendly: a marker, not a hit`, mul: 1 });
-      continue;
-    }
+    // will not let damage anything is a marker, not a hit. Blood splatters, mana and heal locks,
+    // Ignis's sigil — every one of them counting as a full extra hit of the weapon's damage until now.
+    //
+    // It is not *dropped*, though. A marker that spawns is exactly the shape the delivery above is:
+    // an invisible controller carrying the attack, and cutting the subtree here charged the whole
+    // cascade to nothing — Exoblade's slash creator spawns the slashes that are the sword's damage.
+    // Its own hits go; what it puts out goes on being counted, at its own share.
+    const inertKid = cp?.friendly === false && (cp.children?.length > 0 || cp.debuffs?.length > 0 || cp.ownAi === false);
     /**
      * …and what holding the button buys, where the parent states it (`charge`, read off the
      * projectile's own `SetDefaults`): more of them, each hitting harder. SOTS's Eclipse slams for
@@ -1611,7 +1663,12 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
       // …and the payload a *charge* weapon releases is not a spray on a clock nobody read either:
       // the parent states its own cycle (`charge.ticks + charge.release`), the model fires it on
       // that cycle, and what comes out lands where the weapon was pointed, like a death spawn.
-      reachShare = maintained || ch ? clamp(parentLand, 0, 1) : cadence ? land.f : land.f / Math.max(1, n);
+      // …and neither is what a holdout that cannot damage anything puts out. The `/ n` is the
+      // pessimistic reading of "the miner did not find the spawn's clock, so assume one of the group
+      // lands between them" — but where the parent is a marker the group *is* the weapon's attack,
+      // fired once per use like a release, and dividing it by its own count reads a spear that throws
+      // three gelatin balls as a spear that throws a third of one (Goopwood Reap, 4/s).
+      reachShare = maintained || ch ? clamp(parentLand, 0, 1) : cadence || soleCarrier ? land.f : land.f / Math.max(1, n);
     }
     if (reachShare <= 0) continue;
     // A blast goes off where the parent died and stays there. It does not fly through anything, so
@@ -1646,6 +1703,10 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     // (`textTarget`): sprayed over every child it gated the ordinary explosion along with the burst.
     // ponytail: a share is not a miss probability, so "in a row" is read as "N hits"; the
     // run-completion form would need a per-shot landing chance the model does not have.
+    // how long the parent is out for one use of the weapon: a held or placed one for the use, a
+    // flying one for its life. Both the spawn cadence and the wind-up counter below are counted
+    // against it.
+    const outTicks = parentHeld ? useTicks ?? 60 : Math.min(p.life ?? LIFE_UNKNOWN, SPAWN_WINDOW);
     let every = 1;
     const mined = ph.threshold;
     if (mined?.n > 1 && mined.event !== 'tick') every = mined.reached ? mined.n : mined.n / (mined.n - 1);
@@ -1657,6 +1718,14 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
       const most = 60 / (cooldown * parentRate);
       if (most < gate) { gate = most; ph.cooldown = cooldown; ph.confidence = 'text'; }
     }
+    // …and one that only appears once the parent has been out `n` ticks cannot come round more often
+    // than that, however fast the weapon is clicked. A counter with no reset is a wind-up, not a
+    // cadence: the boulder Thorium's Obsidian Staff charges for a second was being spawned on every
+    // 20-tick use — and so was the half-charged one, and the fragments the release before the charge
+    // drops, all three of them, three times a second. The parent has to live that long for it to
+    // happen at all, which is the same sum for a projectile that flies rather than being held.
+    const windupN = mined?.event === 'tick' && !mined.reset && mined.reached && mined.n > 1 ? mined.n : 0;
+    if (windupN) gate *= clamp(outTicks / windupN, 0, 1);
     // …one only on a crit is the crit chance's worth of them
     if (ph.crit !== null) gate *= ph.crit ? crit : 1 - crit;
     // …and one behind a requirement the loadout does not carry does not happen
@@ -1664,15 +1733,16 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     // how many of it one parent spawns: once, or — with the AI's clock read — once per tick of that
     // clock for as long as the parent is there: a held or placed parent for the use, a flying one
     // for its life
-    const spawns = cadence ? Math.max(1, (parentHeld ? useTicks ?? 60 : Math.min(p.life ?? LIFE_UNKNOWN, SPAWN_WINDOW)) / cadence) : 1;
+    const spawns = cadence ? Math.max(1, outTicks / cadence) : 1;
     // A beam that scales its own damage the longer it is out (, read off the AI) reaches the
     // top of its ramp for a weapon that *keeps* it there and nowhere else — which is the projectile
     // this branch is about. Yharim's Crystal charges its beams to three times the printed number over
     // 180 ticks, and the record carries the middle of that.
     const rampMul = maintained && cp?.ramp > 1 ? cp.ramp : 1;
-    const own = scale * n * spawns * reachShare * hits * dmg * gate * rampMul * chMul;
-    if (own <= 0.01) continue;
-    parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type, ds)} ${ch ? `released ${charged ? `after the full ${r1(ch.ticks / 60)} s charge` : 'the moment it may be'}${chMul !== 1 ? ` at ${Math.round(chMul * 100)}% damage` : ''}` : maintained ? `kept up while the weapon is out, hitting every ${cp.local} ticks` : CHILD_WHERE[c.where] ?? ''}${cadence ? ` every ${cadence} ticks (${r1(spawns)} per ${parentHeld ? 'use' : 'flight'})` : ''}${roll < 1 ? ` on a 1-in-${r1(1 / roll)} roll` : ''}${every > 1 ? `, once per ${r1(every)} ${mined?.event ?? 'landed hit'}s` : every < 1 ? `, ${mined.n - 1} of every ${mined.n} ${mined.event}s` : ''}${ph.crit !== null ? (ph.crit ? ' on a crit' : ' on a non-crit') : ''}${ph.cooldown ? `, at most once per ${r1(ph.cooldown / 60)} s` : ''}${lingered > 0.05 ? `, lingering for ${r1(lingered)} more hits (${Math.round(LINGER_ON_TARGET * 100)}% of its ${Math.round(Math.min(cp.life ?? 0, STUCK_TICKS) / cp.local)} ticks: it stays where it went off and the boss does not)` : ''} (+${r1(own)} hits at ${Math.round(scale * dmg * rampMul * 100)}%${rampMul > 1 ? `, charged` : ``})`, mul: step(total + read, total + read + own) });
+    const own = inertKid ? 0 : scale * n * spawns * reachShare * hits * dmg * gate * rampMul * chMul;
+    if (own <= 0.01 && !inertKid) continue;
+    if (inertKid) parts.push({ label: `${nameOf(c.type, ds)} is never friendly: a marker, not a hit — what it spawns is the damage`, mul: 1 });
+    else parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type, ds)} ${ch ? `released ${charged ? `after the full ${r1(ch.ticks / 60)} s charge` : 'the moment it may be'}${chMul !== 1 ? ` at ${Math.round(chMul * 100)}% damage` : ''}` : maintained ? `kept up while the weapon is out, hitting every ${cp.local} ticks` : CHILD_WHERE[c.where] ?? ''}${cadence ? ` every ${cadence} ticks (${r1(spawns)} per ${parentHeld ? 'use' : 'flight'})` : ''}${roll < 1 ? ` on a 1-in-${r1(1 / roll)} roll` : ''}${every > 1 ? `, once per ${r1(every)} ${mined?.event ?? 'landed hit'}s` : every < 1 ? `, ${mined.n - 1} of every ${mined.n} ${mined.event}s` : ''}${windupN ? `, only once the parent has been out ${windupN} ticks of its ${Math.round(outTicks)}` : ''}${ph.crit !== null ? (ph.crit ? ' on a crit' : ' on a non-crit') : ''}${ph.cooldown ? `, at most once per ${r1(ph.cooldown / 60)} s` : ''}${lingered > 0.05 ? `, lingering for ${r1(lingered)} more hits (${Math.round(LINGER_ON_TARGET * 100)}% of its ${Math.round(Math.min(cp.life ?? 0, STUCK_TICKS) / cp.local)} ticks: it stays where it went off and the boss does not)` : ''} (+${r1(own)} hits at ${Math.round(scale * dmg * rampMul * 100)}%${rampMul > 1 ? `, charged` : ``})`, mul: step(total + read, total + read + own) });
     /**
      * …and so does the release of a weapon that does nothing else.
      *
@@ -1698,14 +1768,19 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     if (cadence || maintained || ch || (soleCarrier && ph.trigger === 'death')) { read += own; readPhases.add(ph.id); } else total += own;
     // the record carries its hit events and its share of the weapon's damage apart, so the model
     // can price the two separately: the window caps events, the defense comes off the share
-    phases.push({ ...ph, hitsPerUse: own, events: n * spawns * reachShare * hits * gate, share: scale * dmg * rampMul, shared: cp?.local === undefined });
+    phases.push({ ...ph, hitsPerUse: own, events: inertKid ? 0 : n * spawns * reachShare * hits * gate, share: scale * dmg * rampMul, shared: cp?.local === undefined });
     // What this child in turn spawns. `scale` carries down everything already paid to get here —
     // how many of the parent there are, how often it arrives, and what share of the weapon's damage
     // it does — because a grandchild is worth its own share *of that*, not of the whole weapon.
     // Without it the acid a Contaminated Bile's blast leaves behind was priced at half the weapon's
     // damage rather than a fifth, and its hits were added to the total with no part accounting for
     // them at all, so the stealth strike's factors stopped multiplying out to its own score.
-    const deeper = childHits(ds, cp, { boss: b, D, vb, arch, parentLand: reachShare, variant, charged, base: base + total + read, stocked, depth: depth + 1, scale: scale * n * spawns * reachShare * dmg, parentId: ph.id, crit });
+    // …and where *this* child is the marker, the same is true of its cascade one level down: the
+    // spawn cap stands in for a spawn rate nobody read, and a carrier's death spawn has none — it
+    // dies once and drops what the weapon is. Super Plasma Cannon is two markers deep (the holdout
+    // holds a plasma ball, the ball drops the explosions) and was capped to +1.5 hits for a cadence
+    // the miner read off both of them.
+    const deeper = childHits(ds, cp, { boss: b, D, vb, arch, parentLand: reachShare, variant, charged, soleCarrier: inertKid, base: base + total + read, stocked, depth: depth + 1, scale: scale * n * spawns * reachShare * dmg, parentId: ph.id, crit });
     parts.push(...deeper.parts);
     phases.push(...deeper.phases);
     total += deeper.hits;
@@ -2087,9 +2162,17 @@ function gradeWeapon(item, ctx = {}) {
   // tolerance here (and ignoring the velocity a stealth strike throws at) walked the player to a
   // distance the shot was then told it could not cover, for a flat ×0. `landing` allows the boss's
   // half-height; anything else is the model disagreeing with itself.
-  const closeIn = (velMul = 1) => (primary && flies(arch, cls)
-    ? Math.min(turnsRoundAt(arch), reachOf(primary, flightSpeed((item.shootSpeed || SHOOT_SPEED_UNKNOWN) * velMul), b.h / 2))
-    : Infinity);
+  // …and measured on everything the weapon throws, not only on the one `Item.shoot` names. Frost
+  // Pelter's ammo is a snowball and its `Shoot` fires four dragging pellets instead: the player was
+  // walked in to the snowball's 490 px and the pellets were then told they could not cover 380, for
+  // the flat ×0 this paragraph exists to prevent.
+  const closeIn = (velMul = 1) => {
+    if (!flies(arch, cls)) return Infinity;
+    const speed = flightSpeed((item.shootSpeed || SHOOT_SPEED_UNKNOWN) * velMul);
+    const shots = [primary, ...(fire?.calls ?? []).filter((c) => c.abs !== 0).map((c) => proj(ds, c.type === 'shoot' ? primaryId : c.type))].filter(Boolean);
+    if (!shots.length) return Infinity;
+    return Math.min(turnsRoundAt(arch), ...shots.map((p) => reachOf(p, speed, b.h / 2)));
+  };
 
   const shoots = !!primaryId || !!fire?.calls?.length || isAmmo;
   /**

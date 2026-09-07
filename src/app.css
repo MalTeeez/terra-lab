@@ -123,6 +123,12 @@
   }
   /* the only static layer: grain that moved would read as noise rather than as paper */
   .lab-bg .grain { inset: 0; will-change: auto; background-image: radial-gradient(rgb(26 33 25 / 0.09) 1px, transparent 1px); background-size: 6px 6px; }
+  /* the start page is one small panel on a lot of empty paper, and the wash that sits well behind a
+     full app reads as weather behind it: same greens, pulled right back, with the dots on a wider
+     grid so the paper itself is what carries the page */
+  .lab-bg.start .blob-a, .lab-bg.start .blob-b, .lab-bg.start .blob-c { opacity: 0.14; filter: blur(110px); }
+  .lab-bg.start .shafts { opacity: 0.3; }
+  .lab-bg.start .grain { background-image: radial-gradient(rgb(26 33 25 / 0.1) 1px, transparent 1px); background-size: 11px 11px; }
   @keyframes drift-a { to { transform: translate(60px, 40px) scale(1.15); } }
   @keyframes drift-b { to { transform: translate(-50px, 30px) scale(0.9); } }
   @keyframes drift-c { to { transform: translate(-40px, -50px) scale(1.1); } }
@@ -232,6 +238,29 @@
     box-shadow: var(--shadow-raise);
   }
   .lab-btn.primary:hover { background: var(--color-green-deep); }
+
+  /* start page: one pickable dataset, and the drop target for your own */
+  .lab-card {
+    @apply block w-full cursor-pointer border border-line bg-panel px-3.5 py-3 text-left transition-colors;
+    box-shadow: var(--shadow-panel);
+  }
+  .lab-card:hover { @apply border-line-strong; background: var(--color-panel2); }
+  .lab-card[aria-current='true'] { @apply border-green; background: var(--color-green-soft); }
+  .lab-drop {
+    @apply mt-1 flex cursor-pointer items-center justify-center gap-2 border border-dashed border-line-strong px-3 py-5 text-[12.5px] text-dim transition-colors;
+  }
+  .lab-drop:hover, .lab-drop.is-over { @apply border-green text-green-deep; background: var(--color-green-soft); }
+  /* one file to pick, and what was picked */
+  .lab-pick {
+    @apply flex cursor-pointer items-center gap-2 border border-line bg-panel px-3 py-2 text-[12.5px] text-dim transition-colors;
+    box-shadow: var(--shadow-panel);
+  }
+  .lab-pick:hover { @apply border-green text-green-deep; }
+  .lab-pick:has(input:disabled) { @apply cursor-default opacity-60; }
+  .lab-minelog {
+    @apply m-0 max-h-40 overflow-auto whitespace-pre-wrap border border-line bg-panel2 px-2.5 py-2 text-[11px] leading-[1.5] text-dim;
+    font-family: var(--font-mono);
+  }
 
   /* removable "this setting is on" chip */
   .lab-active {

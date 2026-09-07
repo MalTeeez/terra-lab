@@ -1,9 +1,9 @@
 <script>
-  import { LayoutList, Milestone, Volume2, VolumeX, ClipboardList } from '@lucide/svelte';
+  import { Database, LayoutList, Milestone, Volume2, VolumeX, ClipboardList } from '@lucide/svelte';
   import Info from './Info.svelte';
   import { ui } from '../lib/state.svelte.js';
 
-  let { ds } = $props();
+  let { ds, onstart } = $props();
   const contentMods = $derived(ds ? ds.mods.filter((m) => m.equipment > 0 && m.id !== 'v') : []);
   const MODES = [['loadout', 'Loadout', ClipboardList], ['timeline', 'Stages', Milestone], ['items', 'Items', LayoutList]];
   // where the sliding tab indicator sits; clamped so a stale ui.mode doesn't send it off-track
@@ -45,6 +45,9 @@
           <span class="num font-semibold text-ink">{n}</span>{label}
         </span>
       {/each}
+      <button type="button" class="lab-btn px-2 py-1" onclick={onstart} title="Choose a different dataset">
+        <Database size={14} /> Dataset
+      </button>
       <!-- the delegated click sound fires before this handler, so muting signs off with one last click -->
       <button type="button" class="lab-btn px-2 py-1" aria-pressed={ui.sound} onclick={() => (ui.sound = !ui.sound)}
               title={ui.sound ? 'Turn interaction sounds off' : 'Turn interaction sounds on'}
@@ -61,7 +64,7 @@
           Rarity guesses are the ones worth double-checking.
         </p>
         <p class="num text-[11.5px] text-dim">
-          tModLoader {ds.tml} · mined {ds.generatedAt.slice(0, 10)} · regenerate with `bun run mine`
+          tModLoader {ds.tml} on Terraria {ds.terraria} · mined {ds.generatedAt.slice(0, 10)} · regenerate with `bun run mine`
         </p>
         <div class="lab-rule start my-2">Content mods</div>
         <p class="text-[11.5px] text-dim">{contentMods.map((m) => `${m.name} ${m.version}`).join(' · ')}</p>

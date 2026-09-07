@@ -291,7 +291,13 @@ describe('landing', () => {
   });
   test('drag shortens the reach', () => {
     expect(reachOf({ life: 600 }, 10)).toBe(6000);
-    expect(reachOf({ life: 600, drag: 0.9 }, 10)).toBeCloseTo(100, 5);
+    // …and it stops at the speed the thing stops being a weapon at, not at the asymptote it would
+    // creep up on given for ever: 100 px is where a 10 px/update shot at 0.9 drag ends up after
+    // hundreds of updates, and the last of that is covered at a crawl no moving boss waits for.
+    expect(reachOf({ life: 600, drag: 0.9 }, 10)).toBeCloseTo(80, 5);
+    expect(reachOf({ life: 600, drag: 0.9 }, 10)).toBeLessThan(10 / (1 - 0.9));
+    // a seeker's "drag" is its steering blend, not deceleration, so it keeps the full reach
+    expect(reachOf({ life: 600, drag: 0.9, homing: { range: 300 } }, 10)).toBeCloseTo(100, 5);
   });
 });
 

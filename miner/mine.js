@@ -16,7 +16,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { loadAssembly } from './clr/metadata.js';
+import { T, loadAssembly } from './clr/metadata.js';
 import { classOf, cleanText, parseTooltipStats, VANILLA_RARITY_NAMES } from './classify.js';
 import { configHooks, loadModConfigs } from './config.js';
 import { extractGlobalOverrides, extractModItemModifiers } from './extract/globals.js';
@@ -51,6 +51,7 @@ import { inferStages } from './stage/infer.js';
 import { SEED_GROUPS } from './extract/flags.js';
 import { readTmodFile } from './tmod.js';
 import { wikiFile } from '../src/lib/wiki.js'; // the wiki table is shared so the icon hash cannot drift from the link
+import { summarize } from '../src/lib/dataset.js'; // the start page's card for this dataset, written beside it
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -92,7 +93,8 @@ if (!existsSync(tmlPath)) {
 // ---- load ------------------------------------------------------------------------------
 const t0 = Date.now();
 const tml = loadAssembly(readFileSync(tmlPath));
-console.log(`tModLoader.dll: ${tml.types.length} types`);
+const { tmlVersion, terrariaVersion } = versionsOf(tml);
+console.log(`tModLoader.dll: ${tml.types.length} types, tModLoader ${tmlVersion} on Terraria ${terrariaVersion}`);
 const config = JSON.parse(readFileSync(new URL('./stage/progression.json', import.meta.url), 'utf8'));
 const configs = loadModConfigs(paths.saves);
 const ammoIds = evalStatics(tml, tml.typeByName.get('Terraria.ID.AmmoID'), tml);
@@ -1058,7 +1060,8 @@ const groupsOut = {};
 const dataset = {
   generatedAt: new Date().toISOString(),
   vanillaBehaviour: { game: VANILLA_BEHAVIOUR.game, source: VANILLA_BEHAVIOUR.source, projectiles: Object.keys(VANILLA_BEHAVIOUR.projectiles).length, ammoSwaps: Object.keys(VANILLA_BEHAVIOUR.ammoSwap).length },
-  tml: tml.runtimeVersion,
+  tml: tmlVersion,
+  terraria: terrariaVersion,
   mods: modInfo,
   loadOrder: ordered.map((m) => m.name),
   stages: stageResult.stages.map((s) => ({ index: s.index, key: s.key, label: s.label, progression: s.progression, mod: s.mod, kind: s.kind, npcs: s.npcs })),
@@ -1084,6 +1087,8 @@ const dataset = {
 
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, JSON.stringify(dataset));
+// a few KB beside it, so the start page can describe this dataset without downloading all of it
+writeFileSync(outPath.replace(/(\.json)?$/, '.summary.json'), JSON.stringify(summarize(dataset)));
 const bySrc = {};
 for (const it of items) bySrc[it.stageSource.kind] = (bySrc[it.stageSource.kind] ?? 0) + 1;
 const changed = items.filter((i) => i.changes).length;
@@ -1094,6 +1099,26 @@ console.log(`crafting: ${Object.keys(recipesOut).length} recipe results, ${Objec
 console.log(`projectiles: ${allProjectiles.length} mined, ${Object.keys(projectiles).length} referenced; ${ammo.length} ammo items; ${items.filter((i) => i.fire).length} weapons with shoot analysis`);
 
 // ---- helpers --------------------------------------------------------------------------------
+/**
+ * What tModLoader.dll says it is. `BuildInfo.tMLVersion` is no help — it parses the assembly's own
+ * informational version at runtime, which no static evaluation reaches — so read that string here
+ * the same way it does:
+ *
+ *   1.4.4.9+2026.07.3.0|2026.07|stable|Stable|<sha>|<ticks>
+ *   └ Terraria  └ tModLoader
+ *
+ * The Assembly table's version is the Terraria one again, so it stands in when the attribute is
+ * missing (an unofficial build, a future rename); the tModLoader half has no fallback.
+ */
+function versionsOf(asm) {
+  const row = asm.tables.count(T.Assembly) ? asm.tables.row(T.Assembly, 1) : null;
+  const attr = asm.attributes((T.Assembly << 24) | 1).find((a) => a.name === 'AssemblyInformationalVersionAttribute');
+  const [terraria, tail] = (attr ? String(asm.attributeArgs(attr).fixed[0] ?? '') : '').split('+');
+  return {
+    tmlVersion: tail?.split('|')[0] || null,
+    terrariaVersion: terraria || (row ? `${row.major}.${row.minor}.${row.build}.${row.rev}` : null),
+  };
+}
 /**
  * MediaWiki's static file layout: /images/<h0>/<h0h1>/<File_name>.png, h = md5 of the file name.
  * Precomputed here so the site links the image directly — `Special:Redirect/file/` is a special

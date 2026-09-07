@@ -22,6 +22,47 @@ Svelte 5 + Tailwind 4 + Vite, on Bun. The generated dataset is committed, so the
 the game installed. The miner itself runs under Node (`bun run mine` invokes it): Bun 1.3 segfaults
 on the full 78-mod run, Node does not.
 
+## Datasets
+
+The site opens on a start page that asks which dataset to look at: one of the presets we ship
+(`PRESETS` in `src/lib/datasets.js`, served out of `data/`) or a `dataset.json` the visitor mined
+themselves and dropped on the page. An uploaded one is kept in the browser's Cache API under a URL
+that does not exist on the server, so `loadDataset` — on the page and in the timeline worker —
+reaches both kinds with one fetch. The choice is remembered in `localStorage` until they come back
+to the start page via **Dataset** in the header. Nothing is uploaded anywhere.
+
+Each shipped dataset needs a `<name>.summary.json` beside it (items, stages, content mods, mine date
+and the tModLoader / Terraria version it was read from) so the start page can describe it without
+pulling all 6 MB; `bun run mine` writes one next to whatever it writes.
+
+With nothing picked yet, `bun run dev` skips the start page and opens on `data/dataset.json`, so the
+local loop stays `bun run mine` → reload: the dev server serves that file `no-cache` with an ETag on
+its size and mtime, and the timeline worker fetches the same URL, so a reload is the whole story. A
+choice you actually make still wins — including a browser-mined one, which then keeps being served
+out of the Cache API until you switch back under **Dataset**.
+
+### Mining in the browser
+
+The start page can also mine a pack in the tab: point it at your Mods folder (and/or the Steam
+workshop folder) and at `tModLoader.dll`, and it produces the same dataset — byte for byte, verified
+against `bun run mine` on the same pack.
+
+Nothing in `miner/` is copied or modified for this. `miner/web/worker.js` runs the real `mine.js`,
+with the platform swapped underneath it by five aliases in `vite.config.js`:
+
+| the miner asks for | in the browser |
+|---|---|
+| `node:fs` | `web/node-fs.js` — the picked files, in memory (`web/vfs.js`) |
+| `node:zlib` | `web/node-zlib.js` — never called: `web/tmodpack.js` rewrites each `.tmod` with its entries *stored*, because `readTmod` inflates synchronously and the browser's only inflate is a stream |
+| `node:crypto` | `web/node-crypto.js` — md5 for the wiki image path (`web/md5.js`; WebCrypto has no md5) |
+| `node:path`, `node:os` | string helpers over those in-memory paths |
+| `Buffer`, `process` | `web/buffer.js` as the global — a `Uint8Array` with the reads the CLR parser uses |
+
+Two things decide whether the result matches the desktop: **enabled.json**, which breaks ties in
+`loadorder.js` and so decides which balancing mod overlays last (pick the Mods folder and it is used
+automatically), and the newest copy of each mod, which `src/lib/mine.js` picks out of a workshop
+folder full of old versions. `bun run mine` is plain Node and never goes near any of this.
+
 ## The miner
 
 `miner/` is a pure-JavaScript pipeline. No .NET SDK, no decompiler: it reads the mod DLLs itself.
@@ -57,7 +98,7 @@ on the full 78-mod run, Node does not.
 
 ### Where the numbers come from
 
-Everything is read out of compiled code, not wikis:
+Everything is read from of compiled code:
 
 - **Item stats** come from each item's `SetDefaults`, evaluated symbolically. Calls into the same
   mod (base classes like Thorium's `BardItem`, Calamity's `BaseWings`) and tModLoader's `Item`
@@ -219,8 +260,9 @@ TML_SAVES=… STEAM_DIR=… bun run mine             # non-default install paths
 TL_DEBUG_ITEM=CalamityMod:Murasama bun run mine  # print one item's overlays, drops and recipes
 ```
 
-Mods resolve from `Documents/My Games/Terraria/tModLoader/Mods/enabled.json`: the local `Mods/`
-folder first, then the Steam workshop (newest version folder).
+Mods resolve from tModLoader's save folder, `…/Terraria/tModLoader/Mods/enabled.json`: the local
+`Mods/` folder first, then the Steam workshop (newest version folder). `defaultPaths()` guesses the
+Windows locations; anywhere else, give it `TML_SAVES` and `STEAM_DIR`.
 
 ## The site
 

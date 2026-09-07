@@ -8,8 +8,10 @@
   import GearPanel from './components/GearPanel.svelte';
   import CalibrationPanel from './components/CalibrationPanel.svelte';
   import Footer from './components/Footer.svelte';
+  import StartPage from './components/StartPage.svelte';
   import { fitCalibration } from './lib/calibration.js';
   import { applySeeds, loadDataset } from './lib/dataset.js';
+  import { getChoice, setChoice } from './lib/datasets.js';
   import { solveLoadout, solveTimeline, unpackTimeline } from './lib/solver.js';
   import { setEnabled, startSound } from './lib/sound.js';
   import { persist, ui } from './lib/state.svelte.js';
@@ -34,17 +36,41 @@
     if (q.has('panel')) ui.panel = q.get('panel');
   }
 
-  loadDataset().then((d) => {
-    dsRaw = d;
-    ui.seeds = ui.seeds.filter((s) => d.seeds.some((x) => x.key === s));
-    applySeeds(d, ui.seeds); // a saved seed has to be in before the first render
-    ds = d;
-    applyUrl(d);
-    if (ui.stage >= d.stages.length) ui.stage = d.stages.length - 1;
-    if (!d.classList.includes(ui.cls)) ui.cls = d.classList[0] ?? 'melee';
-    if (!['loadout', 'timeline', 'items'].includes(ui.mode)) ui.mode = 'loadout';
-    ui.conds = ui.conds.filter((c) => d.conditions.includes(c));
-  }).catch((e) => { error = e?.message ?? String(e); });
+  // Which dataset is on screen — a shipped preset or the user's own mine (see lib/datasets.js).
+  // The choice sticks until they come back to the start page; a switch drops everything derived
+  // from the old one, the timeline worker included, since it holds a dataset of its own.
+  const chosen = getChoice(); // read once, as a plain value: `dsUrl` is state, and this runs before any effect
+  let dsUrl = $state.raw(chosen);
+  let showStart = $state(!chosen);
+
+  function open(url) {
+    dsUrl = url;
+    error = null;
+    ds = null;
+    dsRaw = null;
+    timeline = null;
+    solving = null;
+    worker?.terminate();
+    worker = null;
+    loadDataset(url).then((d) => {
+      if (dsUrl !== url) return; // a faster second pick won
+      dsRaw = d;
+      ui.seeds = ui.seeds.filter((s) => d.seeds.some((x) => x.key === s));
+      applySeeds(d, ui.seeds); // a saved seed has to be in before the first render
+      ds = d;
+      applyUrl(d);
+      if (ui.stage >= d.stages.length) ui.stage = d.stages.length - 1;
+      if (!d.classList.includes(ui.cls)) ui.cls = d.classList[0] ?? 'melee';
+      if (!['loadout', 'timeline', 'items'].includes(ui.mode)) ui.mode = 'loadout';
+      ui.conds = ui.conds.filter((c) => d.conditions.includes(c));
+    }).catch((e) => { if (dsUrl === url) error = e?.message ?? String(e); });
+  }
+
+  function pick(url) {
+    setChoice(url);
+    showStart = false;
+    open(url); // always: picking the custom slot again means its file was just replaced
+  }
 
   // toggling a seed rewrites the stage of a handful of records in place: re-copy so everything re-derives
   $effect(() => {
@@ -112,6 +138,7 @@
     timelineWorker().postMessage({
       token,
       seeds,
+      dsUrl,
       opts: {
         cls: o.cls, slots: o.slots, requireSet: o.requireSet, unknownStage: o.unknownStage,
         uncertain: o.uncertain, reforge: o.reforge, source: o.source,
@@ -131,9 +158,11 @@
   function select(id) {
     ui.selected = id;
   }
+
+  if (chosen) open(chosen); // last: `open` touches the worker and timeline state declared above
 </script>
 
-<div class="lab-bg" aria-hidden="true">
+<div class="lab-bg" class:start={showStart} aria-hidden="true">
   <div class="blob-a"></div>
   <div class="blob-b"></div>
   <div class="blob-c"></div>
@@ -142,11 +171,14 @@
 </div>
 
 <div class="mx-auto flex min-h-screen max-w-[1680px] flex-col">
-  <Header {ds} />
+  <Header ds={showStart ? null : ds} onstart={() => (showStart = true)} />
 
-  {#if error}
+  {#if showStart}
+    <StartPage current={dsUrl} onpick={pick} oncancel={ds ? () => (showStart = false) : null} />
+  {:else if error}
     <div class="lab-panel m-5 border-bad/40 bg-bad-soft p-4 text-bad">
-      <strong>Could not load the dataset.</strong> {error}. Run <code class="num">bun run mine</code> to generate <code class="num">data/dataset.json</code>.
+      <strong>Could not load the dataset.</strong> {error}.
+      <button type="button" class="lab-btn ml-2" onclick={() => (showStart = true)}>Pick another dataset</button>
     </div>
   {:else if !ds}
     <div class="m-4 p-8 text-center text-dim">Loading dataset…</div>

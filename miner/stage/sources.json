@@ -641,8 +641,8 @@
     "via": "crafted from an Armored Shell"
   },
   "InfernalEclipseWeaponsDLC:ObsidianSickle": {
-    "after": "start",
-    "via": "dropped when a Blazing Wheel touches water"
+    "after": "Skeletron",
+    "via": "dropped when a Blazing Wheel touches water, and Blazing Wheels spawn only in the Dungeon (Terraria.NPC.SpawnNPC puts NPC 72 inside the ZoneDungeon block)"
   },
   "InfernalEclipseWeaponsDLC:GarudaWings": {
     "after": "SubspaceSerpentHead",

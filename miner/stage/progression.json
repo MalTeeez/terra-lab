@@ -558,6 +558,18 @@
         "CalamityMod:StrangeOrb",
         "CalamityMod:TorrentialTear"
       ]
+    },
+    "Triple Locked Gula Vault (Abandoned Village)": {
+      "$why": "SOTS fills every Abandoned Village chest from one method (AbandonedVillageWorldgenHelper.FillChestsWithLoot), and the pool at TileFrameX >= 108 — the Triple Locked vault — is these five. InfernalEclipseAPI detours the vault's right-click (GulaVaultTierLock) and refuses it until NPC.downedBoss2, with 'The vault refuses to open. A stronger evil must be defeated first...'; its SOTSBalanceChanges config defaults to true. Blongus is the crimson world's swap for the Acid Belcher.",
+      "after": "EaterOfWorlds",
+      "items": [
+        "SOTS:StarshardSaber",
+        "SOTS:Icebreaker",
+        "SOTS:SandstormPouch",
+        "SOTS:PlagueSpitter",
+        "SOTS:JarOfPineapple",
+        "SOTS:Blongus"
+      ]
     }
   },
   "townNpcs": {

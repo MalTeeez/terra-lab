@@ -12,9 +12,10 @@ import { packTimeline, solveTimeline } from './solver.js';
 let ready = null;
 
 self.onmessage = async ({ data }) => {
-  const { token, opts, seeds } = data;
+  const { token, opts, seeds, dsUrl } = data;
   try {
-    ready ??= loadDataset();
+    // the page terminates this worker when the dataset changes, so `ready` never holds a stale one
+    ready ??= loadDataset(dsUrl);
     const ds = await ready;
     applySeeds(ds, seeds);
     // the calibration's `factor` is a function and the Sets travel as arrays (see App.svelte)
