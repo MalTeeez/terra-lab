@@ -1,5 +1,16 @@
 # Terra Lab
 
+
+## AI Disclaimer
+
+I did not write most of this app, I had claude work on it. The amount of effort it took to get the rough framework to a reasonable level of parity already took way too long, this would not be a thing if I also had to do that alone.
+
+If you end up reading into the code or some descriptions for some reason, treat it with the typical grain of salt anything AI-generated should get.
+
+I have fixed and covered a lot of edge-cases or weird things mods (and especially the basegamea, huh) do, but expect there to be holes (if it REALLY annoys you feel free to open an issue and if I notice i'll probably look at it).
+
+---
+
 Optimal class loadouts per gamestage for modded Terraria — mined from your own `.tmod` files.
 
 Pick a class and a boss stage and the lab tells you the best armor (full set or mixed pieces),
