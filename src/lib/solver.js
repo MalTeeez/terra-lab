@@ -5,7 +5,7 @@
  */
 import { ammoAt, SLOT_MODES } from './dps.js';
 import { W, accessoryGroup, foreignClass, loadoutBonus, pieceScore, setBonusScore, sprintFactor, weaponDps } from './score.js';
-import { bestPrefix, prefixesFor } from './stats.js';
+import { bestPrefix, prefixesFor, scopedItem } from './stats.js';
 
 /** Items obtainable at `stage` from mods that are not excluded (or the owned set). */
 export function candidates(ds, { stage, excludedMods = new Set(), unknownStage = false, source = 'all', owned = {}, excluded = new Set() }) {
@@ -50,7 +50,7 @@ export function solveLoadout(ds, opts) {
     }
     return bestPrefix(it, prefixes, statCtx, {
       dpsOf: (item, p) => weaponDps(item, { ...statCtx, ds, stage, prefix: p }).value,
-      scoreOf: (item, p) => pieceScore(item, cls, aliases, { prefix: p }).score,
+      scoreOf: (item, p) => pieceScore(scopedItem(item, statCtx), cls, aliases, { prefix: p }).score,
     });
   };
   const decorate = (it) => ({ owned: isOwned(it), pinned: pinned.has(it.id) });
@@ -59,6 +59,15 @@ export function solveLoadout(ds, opts) {
   const progression = ds.stages[stage]?.progression;
   const cache = opts.cache ?? { piece: new Map(), acc: new Map(), prefix: new Map() };
   const key = (it) => `${it.id}|${cls}|${progression}`;
+  // A piece is scored as *this* balance scope sees it: a guide judged at its own content's balance
+  // must not be handed the overlays of mods it does not include. `effectiveStats` does this for a
+  // weapon's numbers by replaying `changes` from `base`; `scopedItem` is the same answer for the
+  // equip effects, which have no `base` to replay from.
+  const scoped = new Map();
+  const inScope = (it) => {
+    if (!scoped.has(it.id)) scoped.set(it.id, scopedItem(it, statCtx));
+    return scoped.get(it.id);
+  };
   // a weapon's best reforge is picked on DPS alone, so it is the same whatever class is in view;
   // an accessory's is picked on its class score, so that one is keyed per class
   const reforgeOf = (it) => {
@@ -70,7 +79,7 @@ export function solveLoadout(ds, opts) {
   // ---- armor ------------------------------------------------------------------------------
   const scoreOf = (it) => {
     let s = cache.piece.get(key(it));
-    if (!s) cache.piece.set(key(it), (s = pieceScore(it, cls, aliases, { progression })));
+    if (!s) cache.piece.set(key(it), (s = pieceScore(inScope(it), cls, aliases, { progression })));
     return { ...s, ...decorate(it) };
   };
   const armorPool = pool.filter((it) => ARMOR.includes(it.slot) && !foreignClass(it, cls, aliases));
@@ -128,7 +137,7 @@ export function solveLoadout(ds, opts) {
   // ---- accessories ------------------------------------------------------------------------
   const accOf = (it) => {
     let a = cache.acc.get(key(it));
-    if (!a) { const prefix = reforgeOf(it); cache.acc.set(key(it), (a = { prefix, ...pieceScore(it, cls, aliases, { prefix, progression }), group: accessoryGroup(it) })); }
+    if (!a) { const prefix = reforgeOf(it); cache.acc.set(key(it), (a = { prefix, ...pieceScore(inScope(it), cls, aliases, { prefix, progression }), group: accessoryGroup(it) })); }
     return a;
   };
   const ranked = pool

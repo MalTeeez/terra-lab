@@ -25,6 +25,44 @@ export function activeVariants(item, ctx) {
   return item.variants.filter((v) => (!v.cond || v.cond.every((c) => conds.has(c))) && balanceAllowed(item, ctx instanceof Set ? null : ctx, v.mod));
 }
 
+/**
+ * The item's equip effects with the overlays this scope does not allow taken back out.
+ *
+ * `effects` is what the miner ended up with: every balancing mod's contribution already summed in,
+ * because that is what the player's installed game does. A weapon's numbers can be replayed from
+ * `base` and a narrowed scope gets its own answer (`effectiveStats`), but a *piece's* effects had no
+ * such path, so a guide judged at its own balance was still being handed the whole pack's. Calamity
+ * takes the 12 % melee speed back off every vanilla glove and replaces it with `gloveLevel`, and the
+ * Terraria guide — scored with no external balancing at all — was reading Feral Claws as +0 %.
+ *
+ * Only numbers come back out. `mergeEffects` unions the arrays (flags, on-hit spawns, self-buffs)
+ * and there is no way to tell an overlay's addition from what the item already had, so those stay:
+ * this un-applies magnitudes, not mechanics.
+ */
+export function scopedEffects(item, ctx) {
+  const fx = item?.effects;
+  if (!fx || !ctx?.balanceMods) return fx;
+  const undo = (item.changes ?? []).filter((c) => c.effects && !balanceAllowed(item, ctx, c.mod));
+  if (!undo.length) return fx;
+  const r = (n) => Math.round(n * 10000) / 10000;
+  const out = structuredClone(fx);
+  for (const c of undo) {
+    for (const [k, v] of Object.entries(c.effects)) {
+      if (k === 'velocityDrag') { if (v) out.velocityDrag = r((out.velocityDrag ?? 1) / v); }
+      else if (Array.isArray(v)) continue;
+      else if (v && typeof v === 'object') { if (out[k]) for (const [cls, n] of Object.entries(v)) out[k][cls] = r((out[k][cls] ?? 0) - n); }
+      else if (typeof v === 'number') out[k] = r((out[k] ?? 0) - v);
+    }
+  }
+  return out;
+}
+
+/** The item as this balance scope sees it — the same object where nothing has to come back out. */
+export function scopedItem(item, ctx) {
+  const fx = scopedEffects(item, ctx);
+  return fx === item?.effects ? item : { ...item, effects: fx };
+}
+
 /** Modifiers that apply under the current conditions. */
 export function activeMods(item, ctx) {
   if (!item.mods) return [];
