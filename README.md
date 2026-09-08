@@ -9,6 +9,8 @@ If you end up reading into the code or some descriptions for some reason, treat 
 
 I have fixed and covered a lot of edge-cases or weird things mods (and especially the basegamea, huh) do, but expect there to be holes (if it REALLY annoys you feel free to open an issue and if I notice i'll probably look at it).
 
+see below for the AI readme (which is still (mostly) right but obviously annoying to read) v
+
 ---
 
 Optimal class loadouts per gamestage for modded Terraria — mined from your own `.tmod` files.
