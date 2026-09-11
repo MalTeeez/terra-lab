@@ -352,8 +352,21 @@ const withKids = (p) => (p?.children?.length ? { ...p, kids: p.children.map((c) 
 for (const p of allProjectiles) {
   const src = p.cloneOf ? projById.get(p.cloneOf) : p.aiType !== undefined ? projById.get(`v:${p.aiType}`) : null;
   if (!src) continue;
-  for (const k of ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'gravityK', 'drag', 'homing', 'held', 'still', 'explode', 'falloff', 'armorPen', 'walls', 'width', 'height', 'minion', 'sentry', 'slots']) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
+  for (const k of ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'gravityK', 'drag', 'homing', 'held', 'still', 'explode', 'falloff', 'armorPen', 'walls', 'width', 'height', 'minion', 'sentry', 'slots', 'immune']) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
   if (p.cloneOf && !p.children && src.children) p.children = src.children;
+}
+
+// A minion the weapon summons through `Player.SpawnMinionOnCursor`. `Projectile.minion` is the flag
+// the archetype rules read, and a mod is free never to set it: SOTS's Spirit Staves register their
+// spirits in `ProjectileID.Sets.MinionTargettingFeature` and summon them through the vanilla
+// helper, and every one of them read as a projectile thrown twice a second. The weapon's own call
+// is the evidence, so only the projectile it actually hands over is marked — the two Stars Above
+// weapons that summon a helper *alongside* their real attack keep their archetype.
+for (const it of allItems) {
+  const ref = it.fire?.minion;
+  if (!ref) continue;
+  const p = projById.get(ref === 'shoot' ? it.shoot : ref);
+  if (p) p.minion = true;
 }
 
 // Tile damage travels up the projectile graph: one that spawns — or merely names — a projectile

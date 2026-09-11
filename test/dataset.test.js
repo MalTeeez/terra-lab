@@ -37,6 +37,57 @@ describe('dataset.json', () => {
     expect(ds.stages[pick.stage].label).toMatch(/Eater of Worlds/);
   });
 
+  test('a weapon that summons through the vanilla helper is a minion, whatever its class', () => {
+    // SOTS's Spirit Staves call `Player.SpawnMinionOnCursor` and never set `Projectile.minion`, so
+    // they read as a shot re-thrown twice a second and were re-charged their 135-void summon cost
+    // every time. The archetype is the mechanic, not the damage bucket: these are void minions.
+    const staff = byName('Nature Spirit Staff');
+    expect(staff.class).toBe('void');
+    expect(staff.arch).toBe('minion');
+    expect(ds.projectiles[staff.shoot].minion).toBe(true);
+    const indexed = indexDataset(JSON.parse(readFileSync(path, 'utf8')));
+    expect(weaponDps(indexed.byId.get(staff.id), { ds: indexed, stage: staff.stage, conds: new Set() }).mode).toBe('minion');
+  });
+
+  test("a projectile that rewrites the player's immunity window is read at the window it sets", () => {
+    // `PrismLaser::OnHitNPC` does `npc.immune[owner] = 5` — the Last Prism's trick — so the Photon
+    // Geyser's seven lasers land twice as often as the vanilla ten-tick window allows.
+    expect(ds.projectiles['SOTS:PrismLaser'].immune).toBe(5);
+    // …and `immune[owner] = 0` is a statement about the projectile's own clock, not a zero-tick
+    // window: reading it as one would hand out an unbounded hit rate.
+    expect(ds.projectiles['SOTS:PurpleLightning']?.immune).toBeUndefined();
+  });
+
+  test('a sticky projectile lands one hit, and a rolled burst size is its average', () => {
+    // The Parasitic Scepter's leeches carry `penetrate = -1` so that landing does not kill them —
+    // `CanDamage` returns false once `ai[0] == 1`, so each one hits exactly once and then rides its
+    // target holding Irradiated. Read as infinite pierce they were scoring repeat hits for nine
+    // seconds. A wind-up (`ai[0] <= 30`, Calamity's plague bee) is an ordering test, not a state,
+    // and must not be read the same way.
+    expect(ds.projectiles['CalamityMod:WaterLeechProj'].disarms).toBe(true);
+    expect(ds.projectiles['CalamityMod:BasicPlagueBee']?.disarms).toBeUndefined();
+    // …and it fires `2 + NextBool(3) + NextBool(4) + NextBool(5)` of them, not five
+    const scepter = byName('Parasitic Scepter');
+    expect(scepter.fire.calls[0].count).toBeCloseTo(2.78, 2);
+  });
+
+  test('a splash is worth what its arc spans, not one hit per droplet', () => {
+    // Dracula Fang's crit spawns five blood droplets straight up into a 1.05 px/update pull. They
+    // are back down in 7.6 ticks — inside the 10-tick immunity window the fang's own hit just
+    // opened — and none of them sets an immunity of its own, so the five together are worth what
+    // one of them is. Read as five ordinary projectiles they were half the weapon's score.
+    const drop = ds.projectiles['ThoriumMod:DraculaFangPro2'];
+    expect(drop.gravityK).toBeCloseTo(1.05, 2);
+    expect(drop.local).toBeUndefined();
+    const indexed = indexDataset(JSON.parse(readFileSync(path, 'utf8')));
+    const fang = indexed.byId.get('ThoriumMod:DraculaFang');
+    const r = weaponDps(fang, { ds: indexed, stage: 18, conds: new Set() });
+    const splash = r.phases.find((ph) => ph.projId === 'ThoriumMod:DraculaFangPro2' && ph.hitsPerUse > 0);
+    const thrown = r.phases.find((ph) => ph.projId === 'ThoriumMod:DraculaFangPro' && ph.hitsPerUse > 0);
+    // five droplets at full damage used to out-hit the knife that spawned them
+    expect(splash.hitsPerUse).toBeLessThan(thrown.hitsPerUse / 2);
+  });
+
   test('an OR-ed key does not leak onto the blocks after its chain', () => {
     // `TreasureBagDropChanges::ModifyItemLoot` tests `type == AquaticDepthsCrate || type ==
     // AbyssalCrate`, fills that block, and only then adds Ocram's Roar under a `TryGetMod

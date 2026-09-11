@@ -612,7 +612,22 @@ const immuneTo = (b, buff) => b.immuneAll || b.immune?.has(buff);
  */
 const stepOf = (velocity) => Math.max(0.01, velocity ?? 0);
 /** Effective speed of a projectile in px/tick (extra updates move it several times a tick). */
-const speedOf = (p, velocity) => stepOf(velocity) * (1 + (p?.updates ?? 0));
+/**
+ * How fast it actually travels, in px per tick.
+ *
+ * `velocity` is the launch — the item's `shootSpeed`, or the number the parent threw it at — and for
+ * a projectile that steers, that is only its first tick. `cruise` is the speed its own AI writes
+ * into itself (`velocity = <direction> * k`), and where the two disagree the flight is somewhere
+ * between them: the launch, a ramp nobody can follow, then the cruise. The middle of the range is
+ * the same reading `Clamp` and `Lerp` already get in the miner when the walk cannot follow one.
+ *
+ * Meteor Fist launches at 4 and steers onto the cursor at up to 22.5; flying it 420 px at 4 was
+ * 105 ticks of lead and most of what a 0-DPS reading was made of.
+ */
+const speedOf = (p, velocity) => {
+  const launch = stepOf(velocity);
+  return (p?.cruise > 0 && p.cruise !== launch ? (launch + p.cruise) / 2 : launch) * (1 + (p?.updates ?? 0));
+};
 /** Life of a projectile whose `timeLeft` the miner could not read, in updates. */
 export const LIFE_UNKNOWN = 600;
 /** How far an arcing shot may fall below the line it was aimed along and still be on the target. */
@@ -939,9 +954,17 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, cls = null, D = 
   // immunity the projectile falls back to the player's own 10-tick window on that NPC.
   const local = localOf(p);
   const pen = p?.pen ?? 1;
-  // `localNPCHitCooldown = -1` is not a rate: the projectile may hit a given NPC once and never
-  // again, whatever its pierce says. An explosion, a splinter, a bomb's blast — one hit each.
-  if (p?.local < 0) return { hits: 1, label: null };
+  /**
+   * `localNPCHitCooldown = -1` is not a rate: the projectile may hit a given NPC once and never
+   * again. But that bounds its **repeats**, not its **pass** — a shot that pierces two bodies still
+   * hits two of them, once each, which is the whole of what pierce is for. Returning a flat 1 here
+   * threw the pierce away with the repeats, and **409 of the pool's 446** once-per-NPC projectiles
+   * pierce: Meteor Fist carries pen 2 through a crowd of six and read as a dagger that reaches one
+   * of them, and so did the Hellfire Arrow, God Slayer Slug and Terraprisma. The bound belongs on
+   * `imm`, where an infinite window makes `repeats` zero and leaves the crowd terms to do their job.
+   * Against a single target the two readings are identical — `bodies` is 1 — so nothing moves there.
+   */
+  const onceEach = p?.local < 0;
   // …and so does a projectile that switches its own `friendly` off the moment it connects: it has
   // spent itself, and its pierce and its immunity window describe a thing that can no longer damage
   // anything. Read off `OnHitNPC`, so it is a fact and not an archetype guess.
@@ -954,7 +977,7 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, cls = null, D = 
   if (velocity === 0) return { hits: 1, label: 'starts at zero velocity: custom delivery, one hit' };
   // A local cooldown is counted in updates like `life` is; the player's own window and the time it
   // takes to cross the boss are in ticks. Extra updates run that cooldown down faster in real time.
-  const imm = local !== null ? local / (1 + (p?.updates ?? 0)) : IMMUNITY;
+  const imm = onceEach ? Infinity : local !== null ? local / (1 + (p?.updates ?? 0)) : IMMUNITY;
   // It embeds in the first thing it touches, so its pierce buys nothing: it is not going through
   // to anything else, and it is not crossing the silhouette either. What it does after that is
   // whatever its own hit cooldown says — a javelin keeps wounding what it is stuck in, a bola
@@ -963,6 +986,11 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, cls = null, D = 
   // through the target: it hits once and goes somewhere else. Thorium's baseball reads as infinite
   // pierce and actually bounces back to your hand, which is the opposite of piercing.
   if (p?.bounces && !CONTACT.has(arch)) return { hits: 1, label: 'bounces off what it hits' };
+  // …and the same for one that switches its own damage off the moment it lands. `penetrate = -1` on
+  // a sticky projectile is there so that connecting does not kill it, not so that it carves through
+  // a crowd: the Parasitic Scepter's leeches latch on and spend the next nine seconds holding a
+  // debuff, damaging nothing. `CanDamage` reading the AI state is the code saying so.
+  if (p?.disarms && !CONTACT.has(arch)) return { hits: 1, label: 'stops damaging once it lands (its CanDamage reads its own state)' };
   if (p?.sticks) {
     if (!local) return { hits: 1, label: 'sticks in the first thing it hits' };
     const stuck = Math.min(p.life ?? 300, STUCK_TICKS);
@@ -1070,7 +1098,7 @@ export function hitsPerProjectile(p, { boss: b, velocity, arch, cls = null, D = 
   const what = `${passMul > 1.001 ? `out and back, ` : ''}${pen === -1 ? 'infinite pierce' : `pierces ${pen}`}`;
   const stay = clamp(aim, 0, 1) < 0.98 ? `, ${Math.round(clamp(aim, 0, 1) * 100)}% stay on target` : '';
   const reached = bodies <= 1.05 ? '' : b.targets === 'multi' ? `, ${r1(bodies)} targets` : b.worm ? `, ${r1(bodies)} segments` : `, ${r1(bodies)} parts`;
-  return { hits, spread: bodies > 1.05, label: `${what}, ${r1(hits)} hits over ${Math.round(window)} ticks on target with a ${r1(imm)}-tick immunity${reached}${stay}` };
+  return { hits, spread: bodies > 1.05, label: `${what}, ${r1(hits)} hits${onceEach ? ' — one per body, it may not hit the same one twice' : ` over ${Math.round(window)} ticks on target with a ${r1(imm)}-tick immunity`}${reached}${stay}` };
 }
 
 /** Contact archetypes hit on the projectile's own clock, not the weapon's use time. */
@@ -1347,6 +1375,8 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
       events: arrivals * hits * waste,
       // no immunity of its own: it goes through the player's window on the target, with everything else that does
       shared: p?.local === undefined,
+      // …and how long its hit keeps that window shut, where `OnHitNPC` rewrites it
+      immune: p?.immune,
       needed: links?.needed ?? null,
     };
   };
@@ -1455,6 +1485,7 @@ function variantHits(item, ds, fire, variant, base, ctxIn) {
     ph.events = g.events * roll;
     ph.share = dm ?? 1;
     ph.shared = g.shared;
+    ph.immune = g.immune;
     needs.push(g.needed);
     spawned.set(ph.id, g.spawned.map((k) => ({ ...k, region: ph.region, hitsPerUse: k.hitsPerUse * roll, events: (k.events ?? 0) * roll })));
     return rolled;
@@ -1583,6 +1614,55 @@ function spentArms(spawns, { charged = false, ds = null, parts = null } = {}) {
   return out;
 }
 
+/**
+ * A **splash**: a burst thrown up from the point the parent hit, under gravity heavy enough that it
+ * comes straight back down again. Dracula Fang is the shape — five blood droplets launched at
+ * `NextFloat(-1, 1)` sideways and `NextFloat(-6, -2)` *upward* into a pull of 1.05 px per update —
+ * and the model had been reading them as five ordinary projectiles, each worth most of a hit of the
+ * weapon's damage, which was half the weapon's score.
+ *
+ * Two facts make a splash different from anything else a projectile spawns, and they compound:
+ *
+ *   - **It cannot follow.** Its whole reach is ballistic, `v²/g` px from where it was born — 15 px
+ *     for the fang — so it only ever touches what is already standing on the impact point.
+ *   - **It happens inside its own parent's immunity window.** The burst is born the instant the
+ *     parent lands, every piece of it shares the player's window (none of them sets an immunity of
+ *     its own), and it is back down before the window the parent's own hit just opened has closed.
+ *     Five droplets arriving inside one window are worth what one of them is.
+ *
+ * So what the *whole group* can land is the number of windows its arc spans, not `count` hits each.
+ * A splash that outlives the window is not one — this returns its arc and the caller compares.
+ *
+ * @returns {number|null} ticks from launch back to the height it was launched at, or null if the
+ *   spawn does not arc at all (a seeker climbs back on, so it is never a splash)
+ */
+function splashArc(p, v) {
+  if (!p?.gravity || p.homing) return null;
+  const g = p.gravityK ?? GRAVITY_K;
+  if (!(g > 0) || !(v > 0)) return null;
+  // `gravityK` pulls once per *update*; the answer is wanted in ticks
+  return (2 * v) / (g * (1 + (p.updates ?? 0)));
+}
+
+/**
+ * How much a spawn's pierce is worth in a crowd: 1 against a single target, and against a crowd the
+ * bodies it can get through before it expires, with `CROWD_SWEEP` on every one after the first —
+ * the same discount the delivery path applies for the same reason (they are lined up in the flight
+ * path, so the fourth is no harder than the second, but a spawn does not get them for free either).
+ *
+ * A blast is excluded because `blastBodies` already answers the crowd question for it from its
+ * radius, and so is anything that parks itself: a cloud that stays where it went off sweeps nothing.
+ */
+function sweepBodies(cp, { boss: b, velocity, cap }) {
+  if (b?.targets !== 'multi' || !cp || cp.blast || cp.still || !(cap > 1)) return 1;
+  const segments = segmentsOf(b);
+  if (segments <= 1.001) return 1;
+  // its life against what one body costs it to cross, exactly as `hitsPerProjectile` measures it
+  const cross = Math.max(1, b.w) / Math.max(0.01, velocity);
+  const bodies = Math.min(segments, cap, 1 + Math.max(0, cp.life ?? LIFE_UNKNOWN) / Math.max(1e-6, cross));
+  return 1 + Math.max(0, bodies - 1) * CROWD_SWEEP;
+}
+
 function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged = false, soleCarrier = false, base = 0, stocked = null, depth = 0, scale = 1, parentId = null, threshold = null, cooldown = null, textTarget = null, parentRate = 0, useTicks = null, parentHeld = false, crit = 0 }) {
   const parts = [];
   // the spawn records, each carrying `hitsPerUse` — its hits per *parent projectile*, in hits of
@@ -1659,7 +1739,7 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
       // pointed where the weapon is pointed, for as long as it is held there, so what it lands is
       // what the parent lands. Flying it to the boss on the spray assumption charged Yharim's beams
       // a second travel penalty on top of the prism's own.
-      const land = landing(cp, { D: Math.min(D, 200), boss: b, velocity: 8, vb });
+      const land = landing(cp, { D: Math.min(D, 200), boss: b, velocity: ph.absVelocity ?? 8, vb });
       // …and the payload a *charge* weapon releases is not a spray on a clock nobody read either:
       // the parent states its own cycle (`charge.ticks + charge.release`), the model fires it on
       // that cycle, and what comes out lands where the weapon was pointed, like a death spawn.
@@ -1680,10 +1760,41 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     const lingers = cp?.local > 0 && !cp.spent;
     let hits;
     let lingered = 0;
-    if (ph.trigger === 'death') {
+    let swept = 1;
+    // …and a burst born on the target the parent just hit, sharing the player's window, and back on
+    // the ground before that window closes, is a splash: the group lands what its arc spans, not
+    // `count` of them each. See `splashArc`.
+    const window = cp?.immune ?? IMMUNITY;
+    // …but only where the parent's hit really did open that window. Where the delivery itself lands
+    // nothing (`soleCarrier`, a holdout the game will not let damage anything) the burst *is* the
+    // weapon's attack and there is no earlier hit for it to be swallowed by.
+    const arc = (ph.trigger === 'hit' || ph.trigger === 'death') && cp?.local === undefined && !soleCarrier ? splashArc(cp, ph.absVelocity ?? 8) : null;
+    const splash = arc !== null && arc < window ? arc : null;
+    if (splash !== null) {
+      hits = splash / window / Math.max(1, n);
+    } else if (ph.trigger === 'death') {
       const cap = cp?.pen === -1 ? Infinity : Math.max(1, cp?.pen ?? 1);
       lingered = lingers ? (LINGER_ON_TARGET * Math.min(cp.life ?? 0, STUCK_TICKS)) / cp.local : 0;
       hits = Math.min(cap, 1 + lingered);
+      /**
+       * …and a crowd is what pierce is *for*, which a death spawn had no term for at all.
+       *
+       * The delivery path counts the bodies a piercing shot sweeps (`hitsPerProjectile`) and the
+       * maintained-beam branch below counts them too, but the blast branch is flat — it was written
+       * for something that goes off where the parent died and stays there. A projectile with a life
+       * and a speed does not stay there. Photon Geyser is the case that shows it: its whole attack
+       * is seven infinite-pierce lasers released when a carrier that damages nothing expires, and it
+       * read **the same against six targets as against one** — a ×1.17 where the weapons whose
+       * pierce happens to sit in the delivery get ×1.8 to ×3.5. Perfect Star and Coral Spout, both
+       * carried entirely by what they spawn, sat at a flat ×1.00.
+       *
+       * Deliberately only the crowd term. The single-target answer is untouched, so `auto` and
+       * `single` cannot move at all and this can only ever be read as what it is: what the extra
+       * bodies are worth. `sweepBodies` is the same shape the delivery path uses — how many of the
+       * crowd it can get through before it expires, then `CROWD_SWEEP` on the ones after the first.
+       */
+      swept = sweepBodies(cp, { boss: b, velocity: ph.absVelocity ?? 8, cap });
+      if (swept > 1.001) hits *= swept;
     } else if (maintained) {
       // its own clock, counted in the unit this function works in: hits per use of the weapon — and
       // in a crowd, once per body the beam is laid through, because each body carries its own copy
@@ -1693,8 +1804,20 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
       const bodies = cp.pen === -1 || cp.pen > 1 ? Math.min(segmentsOf(b), cp.pen === -1 ? Infinity : cp.pen) : 1;
       hits = (useTicks / cp.local) * bodies;
     } else {
-      hits = Math.min(hitsPerProjectile(cp, { boss: b, velocity: 8, arch: 'shot' }).hits, 2);
+      hits = Math.min(hitsPerProjectile(cp, { boss: b, velocity: ph.absVelocity ?? 8, arch: 'shot' }).hits, 2);
     }
+    /**
+     * …and a **blast** lands that on every body inside it rather than on one of them. `cp.blast` is
+     * the miner reading the explosion arming itself in `OnKill` (`penetrate = -1` beside an expanded
+     * hitbox), so this is the crowd answer the radius already implies: how many bodies fit across
+     * it, bounded by the crowd there is. A single target has one body and nothing changes, which is
+     * why this needs no condition of its own.
+     *
+     * Meteor Fist's stealth strike drops a 300 px meteorite on the enemy it hits and was paid one
+     * hit for it in a crowd of six.
+     */
+    const blastBodies = cp?.blast ? Math.min(segmentsOf(b), 1 + (cp.explode ?? cp.width ?? 0) / Math.max(1, 2 * b.w)) : 1;
+    if (blastBodies > 1.05) hits *= blastBodies;
     // a spawn behind a roll the miner priced happens that often, not on every parent event
     const roll = ph.chance > 0 && ph.chance < 1 ? ph.chance : 1;
     // …and one behind a counter happens once per that many of the counter's events — hits, deaths
@@ -1729,7 +1852,7 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     // …one only on a crit is the crit chance's worth of them
     if (ph.crit !== null) gate *= ph.crit ? crit : 1 - crit;
     // …and one behind a requirement the loadout does not carry does not happen
-    if (ph.requires && !ph.requires.negated) { parts.push({ label: `${nameOf(c.type, ds)} needs ${describeRequires(ph.requires, ds)} the loadout does not carry`, mul: 1 }); ph.evidence = { ...ph.evidence, gates: { ...ph.evidence?.gates, requires: 'unmet' } }; phases.push({ ...ph, hitsPerUse: 0, events: 0, share: scale * dmg, shared: cp?.local === undefined }); continue; }
+    if (ph.requires && !ph.requires.negated) { parts.push({ label: `${nameOf(c.type, ds)} needs ${describeRequires(ph.requires, ds)} the loadout does not carry`, mul: 1 }); ph.evidence = { ...ph.evidence, gates: { ...ph.evidence?.gates, requires: 'unmet' } }; phases.push({ ...ph, hitsPerUse: 0, events: 0, share: scale * dmg, shared: cp?.local === undefined, immune: cp?.immune }); continue; }
     // how many of it one parent spawns: once, or — with the AI's clock read — once per tick of that
     // clock for as long as the parent is there: a held or placed parent for the use, a flying one
     // for its life
@@ -1742,7 +1865,7 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     const own = inertKid ? 0 : scale * n * spawns * reachShare * hits * dmg * gate * rampMul * chMul;
     if (own <= 0.01 && !inertKid) continue;
     if (inertKid) parts.push({ label: `${nameOf(c.type, ds)} is never friendly: a marker, not a hit — what it spawns is the damage`, mul: 1 });
-    else parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type, ds)} ${ch ? `released ${charged ? `after the full ${r1(ch.ticks / 60)} s charge` : 'the moment it may be'}${chMul !== 1 ? ` at ${Math.round(chMul * 100)}% damage` : ''}` : maintained ? `kept up while the weapon is out, hitting every ${cp.local} ticks` : CHILD_WHERE[c.where] ?? ''}${cadence ? ` every ${cadence} ticks (${r1(spawns)} per ${parentHeld ? 'use' : 'flight'})` : ''}${roll < 1 ? ` on a 1-in-${r1(1 / roll)} roll` : ''}${every > 1 ? `, once per ${r1(every)} ${mined?.event ?? 'landed hit'}s` : every < 1 ? `, ${mined.n - 1} of every ${mined.n} ${mined.event}s` : ''}${windupN ? `, only once the parent has been out ${windupN} ticks of its ${Math.round(outTicks)}` : ''}${ph.crit !== null ? (ph.crit ? ' on a crit' : ' on a non-crit') : ''}${ph.cooldown ? `, at most once per ${r1(ph.cooldown / 60)} s` : ''}${lingered > 0.05 ? `, lingering for ${r1(lingered)} more hits (${Math.round(LINGER_ON_TARGET * 100)}% of its ${Math.round(Math.min(cp.life ?? 0, STUCK_TICKS) / cp.local)} ticks: it stays where it went off and the boss does not)` : ''} (+${r1(own)} hits at ${Math.round(scale * dmg * rampMul * 100)}%${rampMul > 1 ? `, charged` : ``})`, mul: step(total + read, total + read + own) });
+    else parts.push({ label: `${n > 1 ? `${n}× ` : ''}${nameOf(c.type, ds)} ${ch ? `released ${charged ? `after the full ${r1(ch.ticks / 60)} s charge` : 'the moment it may be'}${chMul !== 1 ? ` at ${Math.round(chMul * 100)}% damage` : ''}` : maintained ? `kept up while the weapon is out, hitting every ${cp.local} ticks` : CHILD_WHERE[c.where] ?? ''}${cadence ? ` every ${cadence} ticks (${r1(spawns)} per ${parentHeld ? 'use' : 'flight'})` : ''}${roll < 1 ? ` on a 1-in-${r1(1 / roll)} roll` : ''}${every > 1 ? `, once per ${r1(every)} ${mined?.event ?? 'landed hit'}s` : every < 1 ? `, ${mined.n - 1} of every ${mined.n} ${mined.event}s` : ''}${windupN ? `, only once the parent has been out ${windupN} ticks of its ${Math.round(outTicks)}` : ''}${ph.crit !== null ? (ph.crit ? ' on a crit' : ' on a non-crit') : ''}${splash !== null ? `, a splash: thrown up from the impact and back down in ${r1(splash)} ticks, all of it inside the ${window}-tick window the parent's own hit opened` : ''}${ph.cooldown ? `, at most once per ${r1(ph.cooldown / 60)} s` : ''}${lingered > 0.05 ? `, lingering for ${r1(lingered)} more hits (${Math.round(LINGER_ON_TARGET * 100)}% of its ${Math.round(Math.min(cp.life ?? 0, STUCK_TICKS) / cp.local)} ticks: it stays where it went off and the boss does not)` : ''}${blastBodies > 1.05 ? `, its ${Math.round(cp.explode ?? cp.width ?? 0)} px blast catching ${r1(blastBodies)} of the ${segmentsOf(b)} bodies in front of you` : ''}${swept > 1.05 ? `, sweeping ${r1(swept)} of the ${segmentsOf(b)} bodies in front of you on its ${cp.pen === -1 ? 'infinite pierce' : `pierce of ${cp.pen}`}` : ''} (+${r1(own)} hits at ${Math.round(scale * dmg * rampMul * 100)}%${rampMul > 1 ? `, charged` : ``})`, mul: step(total + read, total + read + own) });
     /**
      * …and so does the release of a weapon that does nothing else.
      *
@@ -1768,7 +1891,7 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     if (cadence || maintained || ch || (soleCarrier && ph.trigger === 'death')) { read += own; readPhases.add(ph.id); } else total += own;
     // the record carries its hit events and its share of the weapon's damage apart, so the model
     // can price the two separately: the window caps events, the defense comes off the share
-    phases.push({ ...ph, hitsPerUse: own, events: inertKid ? 0 : n * spawns * reachShare * hits * gate, share: scale * dmg * rampMul, shared: cp?.local === undefined });
+    phases.push({ ...ph, hitsPerUse: own, events: inertKid ? 0 : n * spawns * reachShare * hits * gate, share: scale * dmg * rampMul, shared: cp?.local === undefined, immune: cp?.immune, swept: swept > 1.05 ? r2(swept) : undefined, bodies: swept > 1.05 ? segmentsOf(b) : undefined });
     // What this child in turn spawns. `scale` carries down everything already paid to get here —
     // how many of the parent there are, how often it arrives, and what share of the weapon's damage
     // it does — because a grandchild is worth its own share *of that*, not of the whole weapon.
@@ -1938,7 +2061,12 @@ function gradeWeapon(item, ctx = {}) {
   if (hit !== raw) parts.push({ fac: 'target', label: `${b.name ?? 'boss'} defense ${b.defense}${defenseDebuff ? ` ${defenseDebuff}` : ''}${armorPen ? `, ${Math.round(armorPen)} armor pen` : ''}`, value: r1(hit) });
 
   // ---- summons keep their slot model; their ranged children go through the landing model
-  if (cls === 'summon' && (arch === 'minion' || arch === 'sentry') && primary) {
+  //
+  // The archetype decides this, not the class. A minion is a minion whatever bucket its damage
+  // counts in: SOTS's Spirit Staves are void, Infernum's Wanderer's Shell is a thrower, and gating
+  // this branch on `cls === 'summon'` sent every one of them down the projectile path — where a
+  // permanent summon is re-thrown once per use time and re-charged its full summon cost each time.
+  if ((arch === 'minion' || arch === 'sentry') && primary) {
     const summon = summonPhase(primary, arch, { projId: primaryId });
     // A negative hit cooldown is not a rate: it means the projectile hits a given NPC once and
     // never again, and `60 / -1` is a *negative* hit rate — Terraprisma scored −8,829/s and the
@@ -2391,13 +2519,19 @@ function gradeWeapon(item, ctx = {}) {
         // strike at `6 / rate` hits — four, for a weapon swung every 40 ticks — which is a hard
         // ceiling on exactly the multi-projectile strikes the guides pick a weapon *for*.
         const window = name === 'stealth' ? stealthRecharge(ds) * rate : 1;
-        const capHps = (60 / IMMUNITY) * segmentsOf(b) * window;
+        // …and the window is not always the vanilla ten ticks. A projectile that writes
+        // `npc.immune[owner] = N` in `OnHitNPC` sets it to N for the hit it just landed — the Last
+        // Prism's trick, and 121 projectiles in this pack use it, in both directions. Where a group
+        // mixes them the *longest* one is taken: hits alternate between the members and the model
+        // does not get to assume the fast one always went last.
+        const imm = Math.max(swingHps > 0 ? IMMUNITY : 1, ...shared.map((ph) => ph.immune ?? IMMUNITY));
+        const capHps = (60 / imm) * segmentsOf(b) * window;
         if (sharedHps > capHps) {
           const k = capHps / sharedHps;
           for (const ph of shared) { ph.hitsPerUse *= k; if (ph.events != null) ph.events *= k; }
           swingHps *= k;
           const after = hps - sharedDmg * (1 - k);
-          vparts.push({ fac: 'target', label: `${r1(sharedHps)} hits/s share the player's ${IMMUNITY}-tick immunity window`, mul: r2(after / hps) });
+          vparts.push({ fac: 'target', label: `${r1(sharedHps)} hits/s share the player's ${imm}-tick immunity window${imm !== IMMUNITY ? ' (the projectile sets it)' : ''}`, mul: r2(after / hps) });
           hps = after;
         }
       }

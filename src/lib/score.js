@@ -61,6 +61,14 @@ const MAX_STEALTH_DPS_SHARE = 0.13;
  * ponytail: one flat number for every hurt proc; make it stage-aware if it ever matters.
  */
 const HURT_EVERY = 20;
+/**
+ * …and between triggers of a *spend* proc (`OnConsumeMana`): SOTS's Wishing Star pays out a star
+ * every 100 mana of magic cast, which at the ~20 mana/s a mage sustains is about five seconds. Not
+ * every attack, which is what the `shoot` rate below would have said.
+ * ponytail: one flat number; read the threshold and the class's own resource rate if a second
+ * accessory ever turns on it.
+ */
+const SPEND_EVERY = 5;
 
 export const W = {
   damage: 100, crit: 0.7, critDamage: (100 * TYPICAL_CRIT) / (1 + TYPICAL_CRIT), attackSpeed: 60, defense: 0.5, minionSlot: 100, sentrySlot: 30, moveSpeed: 25,
@@ -583,7 +591,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     if (s.cls && s.cls !== cls && aliases[s.cls] !== cls) continue;
     // the spawn is real even when its damage is not readable (the projectile sets it in AI): worth
     // a token, never the full grade a numbered proc gets
-    const trig = s.hurt ? 'when you take damage' : s.shoot ? 'on every attack' : 'on hit';
+    const trig = s.hurt ? 'when you take damage' : s.spend ? 'as you cast' : s.shoot ? 'on every attack' : 'on hit';
     // a hurt spawn scaled off the hit is a share of the damage *taken*, which says nothing about
     // what it deals: token it like an unreadable proc
     if (!s.damage && (!s.share || s.hurt)) { add(`spawns ${s.name} ${trig}`, W.onHitUnknown, `The item spawns ${s.name} ${trig}, but the miner could not read what it hits for, so it counts for a flat ${W.onHitUnknown}.`); continue; }
@@ -592,6 +600,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     // it comes out on every attack, ~3 a second, and what limits it is its own per-target immunity
     // window rather than a hidden proc cooldown
     const every = s.hurt ? HURT_EVERY
+      : s.spend ? Math.max(SPEND_EVERY, (s.cooldown ?? 0) / 60, item.stats?.cooldown ?? 0)
       : s.shoot ? Math.max(1 / 3, (s.cooldown ?? 0) / 60, (s.local ?? 0) / 60, item.stats?.cooldown ?? 0)
       : Math.max(s.stealth ? STEALTH_RECHARGE * 1.6 : 3, (s.cooldown ?? 0) / 60, item.stats?.cooldown ?? 0);
     // a weapon lands about 3 hits a second: a share of one hit is that share ÷ 3 of its DPS; a proc
@@ -604,12 +613,12 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     // a fired projectile the code gates on the weapon (a spear tip only fires off spears) is
     // worth half: the piece scorer has no weapon in hand to check which you are holding
     const points = Math.min(capPts, share * 100 * dyn) * (s.gated ? COND : 1);
-    const when = s.hurt ? 'when you take damage' : s.shoot ? 'on every attack' : s.stealth ? 'on each stealth strike' : s.crit ? 'on a critical hit (~15% of hits)' : 'on hit';
+    const when = s.hurt ? 'when you take damage' : s.spend ? 'as you cast' : s.shoot ? 'on every attack' : s.stealth ? 'on each stealth strike' : s.crit ? 'on a critical hit (~15% of hits)' : 'on hit';
     const gate = (s.chance ? ` with a ${Math.round(s.chance * 100)}% chance` : '') + (s.gated ? ', and only on the weapons the accessory is for' : '');
-    const detail = `Spawns ${s.name} ${when}${gate}: ${what} × ${round1(hits)} hit${hits > 1 ? 's' : ''} per spawn (pierce ${s.pen === -1 ? '∞' : s.pen ?? 1}${s.kids ? `, ${s.kids} child projectiles` : ''}), ${s.hurt ? `about once every ${round1(every)} s — you only get hit a handful of times a fight, and taking the hit is the price` : s.stealth ? `one stealth strike every ${round1(every)} s` : `at most every ${round1(every)} s${s.cooldown || item.stats?.cooldown ? ' (its cooldown)' : ' (immunity frames, hidden cooldowns)'}`}`
+    const detail = `Spawns ${s.name} ${when}${gate}: ${what} × ${round1(hits)} hit${hits > 1 ? 's' : ''} per spawn (pierce ${s.pen === -1 ? '∞' : s.pen ?? 1}${s.kids ? `, ${s.kids} child projectiles` : ''}), ${s.hurt ? `about once every ${round1(every)} s — you only get hit a handful of times a fight, and taking the hit is the price` : s.stealth ? `one stealth strike every ${round1(every)} s` : s.spend ? `about once every ${round1(every)} s — it pays out per resource spent, not per attack` : `at most every ${round1(every)} s${s.cooldown || item.stats?.cooldown ? ' (its cooldown)' : ' (immunity frames, hidden cooldowns)'}`}`
       + (s.damage ? ` = ${round1((s.damage * hits) / every)} DPS against a typical ${Math.round(typicalDps(progression))} DPS weapon at this stage` : ` against a weapon landing ~3 hits/s`)
       + ` ≈ ${pct(share)} of the weapon's DPS${points < share * 100 * dyn ? `, capped at ${capPts}` : ''}.`;
-    add(`${s.name} ${s.hurt ? 'when hit' : s.shoot ? 'per attack' : s.stealth ? 'per stealth strike' : s.crit ? 'on crit' : 'on hit'}`, points, detail);
+    add(`${s.name} ${s.hurt ? 'when hit' : s.spend ? 'as you cast' : s.shoot ? 'per attack' : s.stealth ? 'per stealth strike' : s.crit ? 'on crit' : 'on hit'}`, points, detail);
   }
   // Projectiles the item keeps out for as long as it is worn — the Fungal Clump's clump, the free
   // minion a summoner set bonus spawns — graded like the summon weapon they are: each one's damage

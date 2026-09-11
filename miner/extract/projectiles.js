@@ -65,6 +65,54 @@ function methodDigs(asm, md, depth = 0) {
 
 /** What mods call the flag on a projectile that embeds itself in what it hits. */
 const STICKY_RE = /isStickingToTarget|StickToTarget|StickingTo/i;
+
+/**
+ * A projectile that switches its own damage off partway through its life: `CanDamage()` can return
+ * `false`, and what it decides on is its own `ai[]` state.
+ *
+ * This is what a sticky projectile looks like from the outside. Calamity's `StickyProjAI` family —
+ * Jaws of Oblivion, Lionfish, Snap Clam, Urchin Stinger, Time Bolt, the Parasitic Scepter's water
+ * leeches — all spawn with `penetrate = -1` so that landing does not kill them, latch onto the
+ * first thing they hit, and then ride it doing nothing but holding a debuff on it. Read as written,
+ * `-1` says *infinite pierce* and the model hands them repeat hits for the rest of a 9-second
+ * lifetime; `CanDamage` is the line that says they get exactly one.
+ *
+ * Read as a flat IL scan rather than through the machine on purpose. The state these methods test
+ * is set inside a shared helper, and an inlined helper is walked *non*-linearly — an unconditional
+ * `br` out of the "not stuck yet" arm jumps clean over the block that does the sticking, so neither
+ * `rec.sticks` nor anything else in that block is ever seen. The two facts wanted here are both
+ * plainly visible in `CanDamage`'s own bytes: a `(bool?)false` to return, and an `ai[]` to read.
+ *
+ * A `CanDamage` gated on anything *else* is deliberately not read, and the test that separates the
+ * two is whether the slot is compared for **equality**. `ai[0] == 1` is a state — it flipped, and
+ * it is not going back. `ai[0] <= 30` is a clock, and Calamity's plague bee is exactly that: it
+ * cannot damage for its first thirty ticks and then damages for the rest of its life, which is
+ * "not yet", not "never again". Only the equality form is read.
+ */
+function selfDisarms(asm, td) {
+  const md = findInherited(asm, td, 'CanDamage');
+  const body = md && asm.methodBody(md);
+  if (!body) return false;
+  let ins;
+  try { ins = decodeIL(body.il); } catch { return false; }
+  let canReturnFalse = false;
+  let testsState = false;
+  for (let i = 0; i < ins.length; i++) {
+    // `return false;` as a `bool?` is `ldc.i4.0` + `newobj Nullable<bool>::.ctor`
+    if (ins[i].op === 'ldc.i4.0' && ins[i + 1]?.op === 'newobj') canReturnFalse = true;
+    if (ins[i].op !== 'ldfld') continue;
+    let f;
+    try { f = asm.resolve(ins[i].operand); } catch { continue; }
+    if (f?.name !== 'ai' || !/Projectile$/.test(f.declaringType?.fullName ?? '')) continue;
+    // the compare this read feeds: equality is a state flag, an ordering is a timer
+    for (let j = i + 1; j < Math.min(ins.length, i + 8); j++) {
+      if (!/^(b[a-z]{2}|ceq|cgt|clt)/.test(ins[j].op)) continue;
+      if (/^(beq|bne|ceq)/.test(ins[j].op)) testsState = true;
+      break;
+    }
+  }
+  return canReturnFalse && testsState;
+}
 const HOMING_RE = /Hom(e|ing)|Closest|Nearest|FindTarget|Seek|Track|CanBeChasedBy|GetTarget|TargetNPC|Chase|AcquireTarget|EnemyInRange|ClosestNPC/i;
 /**
  * The three numbers a homing helper takes, by the *name* its parameters carry rather than by
@@ -97,6 +145,14 @@ export const GRAVITY_K = 0.1;
 export const GRAVITY_MAX = 1.5;
 /** How far a projectile with no readable search radius is assumed to see (pessimistic). */
 export const HOMING_RANGE = 300;
+/**
+ * Below this a mined "speed" is a fraction of something the walk did not read rather than a launch:
+ * `dir * item.shootSpeed * 0.55f` keeps only the 0.55, and vanilla's Lunar Flare is spawned along
+ * `(0, 1)` and then falls out of the sky on its own aiStyle. Nothing this slow crosses a room — the
+ * model's `DRAG_STALL` puts the line at 2 px/update against a boss moving 5 — so under it the
+ * model's own stand-in is the better answer than a number that is precisely the wrong one.
+ */
+export const SPEED_FLOOR = 3;
 
 const PHASES = [
   ['ai', ['AI', 'PreAI', 'PostAI', 'Kill']],
@@ -167,6 +223,45 @@ export function loopTracker() {
       if (!Number.isFinite(n) || n < 1) return 1;
       return Math.min(n, 30);
     },
+    /**
+     * What a loop bound the weapon *rolled for* is worth on average, rather than at its maximum.
+     *
+     * The Parasitic Scepter is the case that shows it:
+     *
+     *     int count = 2;
+     *     if (Main.rand.NextBool(3)) count++;
+     *     if (Main.rand.NextBool(4)) count++;
+     *     if (Main.rand.NextBool(5)) count++;
+     *     for (int i = 0; i < count; i++) NewProjectile(…)
+     *
+     * The linear walk takes every fall-through, so `count` arrives at the bottom holding 5 — the
+     * roll that never comes off. It fires **2.78** leeches a use, and read as five the weapon was
+     * scoring 44% more than it can.
+     *
+     * The odds are already read; they are the same `Main.rand.NextBool(n)` regions the analyzer
+     * prices the *calls* inside. This prices them where they build a count instead. A bound written
+     * once is left exactly alone — there is nothing to weigh — which is what keeps this to the
+     * handful of weapons that really do roll for how much they fire.
+     *
+     * @param {number} bound       the value the compare saw
+     * @param {number} before      the loop's first offset: only stores ahead of it built the bound
+     * @param {(offset: number) => number|undefined} chanceOf  odds of the region a store sits in
+     */
+    expected(bound, before, chanceOf) {
+      if (!isNum(bound)) return bound;
+      for (const l of hist.values()) {
+        const prior = l.filter((e) => e.offset < before && isNum(e.value));
+        if (prior.length < 2 || prior[prior.length - 1].value !== bound) continue;
+        let v = prior[0].value;
+        for (let i = 1; i < prior.length; i++) {
+          const step = prior[i].value - prior[i - 1].value;
+          const c = chanceOf(prior[i].offset);
+          v += step * (c > 0 && c < 1 ? c : 1);
+        }
+        return v;
+      }
+      return bound;
+    },
   };
 }
 
@@ -193,6 +288,16 @@ export function projRef(asm, v) {
 
 /** Calamity's per-projectile "this was a stealth strike" flag. */
 const STEALTH_FIELD = 'stealthStrike';
+/**
+ * `Projectile.numHits` — how many things it has already hit. A velocity write under `numHits > 0`
+ * is what the projectile does *after* it connects, and the flight model is about how it gets there.
+ * Meteor Fist steers onto the cursor at up to 22.5 px/tick and only drops once it has hit
+ * something: `velocity.X *= 0.9f; velocity.Y += 0.2f;` inside that arm was read as its arc and its
+ * drag, and the model then had a wire-guided rocket fist falling 4410 px on the way out, scoring 0.
+ */
+const HIT_FIELD = 'numHits';
+/** Is this write in the "has already hit" arm? */
+const afterHit = (tags) => (tags ?? []).some((t) => t.replace(/^any:/, '') === HIT_FIELD);
 /**
  * Whether a branch is inside the stealth-strike test, from the tags the interpreter carries: `true`
  * only a stealth strike gets here, `false` only a normal hit does, `undefined` either.
@@ -259,6 +364,31 @@ function armsFriendly(asm, td) {
 }
 
 /**
+ * `public override bool? CanDamage() => false;` — the other way a projectile says it can never hit
+ * anything, and the one `friendly` cannot see: the holdout sets `friendly = true` in `SetDefaults`
+ * like any shot and then refuses every hit at the hook. Calamity's Cauldron is that — the lava
+ * bombs it drops are the whole weapon — and the model was billing its holdout six contact hits a
+ * second for 333/s of damage that does not exist.
+ *
+ * Read only in its constant form (`ldc.i4.0; [newobj bool?;] ret`), which is what an unconditional
+ * refusal compiles to. A `CanDamage` with any branch in it is a projectile that can damage
+ * *sometimes*, and that is a different fact this does not claim to have read.
+ */
+function neverDamages(asm, td) {
+  for (const n of ['CanDamage', 'CanHitNPC']) {
+    const m = findInherited(asm, td, n);
+    const body = m && asm.methodBody(m);
+    if (!body) continue;
+    let ins;
+    try { ins = decodeIL(body.il).filter((x) => x.op !== 'nop'); } catch { continue; }
+    if (ins[0]?.op !== 'ldc.i4.0') continue;
+    const rest = ins.slice(1).map((x) => x.op);
+    if (rest.length === 1 ? rest[0] === 'ret' : rest.length === 2 && rest[0] === 'newobj' && rest[1] === 'ret') return true;
+  }
+  return false;
+}
+
+/**
  * Evaluate one ModProjectile: SetDefaults fields and AI traits.
  * @returns {{ fields: Record<string, any>, aiType?: any, cloneOf?: any, gravity: boolean, homing: boolean, wallPierceInAi: boolean, children: Array, debuffs: string[], stealth: boolean }}
  */
@@ -268,6 +398,8 @@ export function evalProjectile(asm, td, { tml }) {
   const VEL = makeObj('velocity');
   const AI = { k: 'arr', items: [] };
   const LOCAL_AI = { k: 'arr', items: [] };
+  /** `npc.immune[…]`, tagged so the store into it is heard (see `rec.immune`). */
+  const IMMUNE = { k: 'arr', tag: 'immune', items: [] };
   const DMG = Object.freeze({ k: 'adj', slot: 'dmg', field: 'damage', add: 0, mul: 1 });
   let phase = 'defaults';
   let loops = [];
@@ -301,10 +433,13 @@ export function evalProjectile(asm, td, { tml }) {
    * their gravity inside a branch (`if (!sticking)`, `if (timeLeft < n)`) and every one of them
    * really does arc, so refusing those trades a handful of bad reads for a much larger, and
    * optimistic, hole.
+   *
+   * The one branch that is refused is `numHits > 0` (see `afterHit`): not "sometimes it arcs" but
+   * "this is what it does once it has already hit", which is not flight at all.
    */
-  const noteGravity = (k) => { if (isNum(k) && k > 0) rec.velYAdds.push(k); };
+  const noteGravity = (k, ctx) => { if (isNum(k) && k > 0 && !afterHit(ctx?.condTags)) rec.velYAdds.push(k); };
   /** …and the same constant on the X axis, which is what marks one of them as steering. */
-  const noteVelX = (k) => { if (isNum(k) && k > 0) rec.velXAdds.add(k); };
+  const noteVelX = (k, ctx) => { if (isNum(k) && k > 0 && !afterHit(ctx?.condTags)) rec.velXAdds.add(k); };
   /**
    * `velocity * k` on its own is not drag yet. The same expression is half of every steering blend
    * in the game — `velocity = velocity * 0.9f + toTarget * 0.1f`, `(velocity * (N-1) + dir) / N` —
@@ -335,6 +470,13 @@ export function evalProjectile(asm, td, { tml }) {
   // its way home. That is a boomerang however it is spelled — the design note asked for "an `ai`
   // that returns to the owner" and this is it. Thorium's baseball does it in `OnHitNPC`, which is
   // why it read as infinite pierce: it does not go through what it hits, it bounces back to you.
+  // a unit vector, and the same vector once something has scaled it: `speed` is px per update.
+  // `scaled` is the difference that matters — a bare direction handed to `NewProjectile` says
+  // nothing about how fast the thing travels, because its own AI is what moves it (vanilla's Lunar
+  // Flare is spawned along `Vector2.UnitY` and then falls out of the sky on its aiStyle), so only a
+  // direction the walk saw *multiplied* by a number is a launch speed.
+  const UNIT = Object.freeze({ k: 'dir', speed: 1, scaled: false });
+  const isDir = (v) => v?.k === 'dir';
   const OWNER_POS = Object.freeze({ k: 'ownerPos' });
   const fromOwner = (v) => v === OWNER_POS;
   // A weapon that builds that vector one component at a time through a local struct — Thorium's
@@ -354,6 +496,15 @@ export function evalProjectile(asm, td, { tml }) {
       // it back as a flag makes the branch it guards a *tagged* region, so a child spawned inside
       // it can be told from one the projectile always spawns.
       if (name === STEALTH_FIELD) return { k: 'flag', name: STEALTH_FIELD };
+      // `npc.immune[Projectile.owner] = 5` in `OnHitNPC`: the projectile rewrites how long the
+      // player's shared immunity window on that target lasts. It is the Last Prism's trick and 121
+      // projectiles in the pack do it, in both directions — SOTS's Photon Laser halves the window
+      // to 5, Thorium's Palm Cross doubles it to 20 — and the model was reading every one of them
+      // as the vanilla 10. `NPC.immune` is an `int[]` and nothing else on this walk is, so the name
+      // alone identifies it (the parameters of `OnHitNPC` are symbolic, so the receiver cannot).
+      if (name === 'immune') return IMMUNE;
+      // …and the same trick for `numHits` (see `afterHit`): a flag, so the arm it guards is tagged
+      if (recv === PROJ && name === HIT_FIELD) return { k: 'flag', name: HIT_FIELD };
       if (recv === PROJ) {
         if (name === 'velocity') return VEL;
         // `Projectile.ai[]` is where a mod stashes what it decided earlier — Calamity writes the
@@ -389,6 +540,15 @@ export function evalProjectile(asm, td, { tml }) {
       if (recv === VEL) return { k: 'adj', slot: 'vel', field: name, add: 0, mul: 1 };
       return undefined;
     },
+    onArrayStore(arr, idx, val, ctx) {
+      // Only a hit sets it, only an unconditional write speaks for every hit, and only a positive
+      // one is a window: `immune[owner] = 0` says "my hit does not close the window on anyone
+      // else", which is a statement about the projectile's *own* clock (its local immunity) and
+      // buys nothing here — 87 of the 209 writes in the pack are that, and reading them as a
+      // zero-tick window would hand out an unbounded hit rate.
+      if (arr !== IMMUNE || phase !== 'hit' || ctx?.conditional || !isNum(val) || val <= 0) return;
+      rec.immune = Math.max(rec.immune ?? 0, val);
+    },
     onStore(recv, name, value, ctx) {
       if (recv === PROJ) {
         if (phase === 'defaults') {
@@ -408,6 +568,15 @@ export function evalProjectile(asm, td, { tml }) {
           if (!ctx.conditional) rec.fields.penetrate = value;
           else if (rec.stealth && rank(value) > rank(rec.fields.penetrate ?? 1)) rec.stealthPen = value;
         }
+        // …and `penetrate = -1` in **`OnKill`** is not the flight's pierce at all, it is a blast
+        // arming itself. The idiom is one block:
+        //   ExpandHitboxBy(300); penetrate = -1; usesLocalNPCImmunity = true;
+        //   localNPCHitCooldown = -1; Projectile.Damage();
+        // and what it says is that the explosion hits **every body inside it, once**. 71 of the
+        // pack's 3030 kill methods arm themselves that way. The flight is unaffected — this is a
+        // separate fact from `pen`, because a bomb that pierces nothing on the way in still levels
+        // the crowd it lands in, and the model was paying Meteor Fist's 300 px meteorite one hit.
+        if (name === 'penetrate' && phase === 'kill' && value === -1) rec.blast = true;
         if (name === 'tileCollide' && value === 0 && !ctx.conditional) rec.wallPierceInAi = true;
         // A projectile that decides every tick whether it is friendly is not dealing damage for
         // part of its life: `Projectile.friendly = DoneCharging` is how a charge weapon holds the
@@ -462,6 +631,11 @@ export function evalProjectile(asm, td, { tml }) {
           if (value?.k === 'velMul') { noteDrag(value.mul, ctx); return; }
           if (value === VEL) return;
           if (value?.k === 'vecZero' || (value?.k === 'obj' && value.args?.every((a) => a === 0))) rec.still = true;
+          // `velocity = <direction> * k` — the projectile setting its own speed, which is what the
+          // item's `shootSpeed` only ever states for its first tick. Meteor Fist launches at 4 and
+          // steers onto the cursor at up to 22.5, and the model was flying it 420 px at 4 px/tick:
+          // 105 ticks of lead, a ×0.24 that was most of what a 0-DPS reading was made of.
+          if (value?.k === 'dir' && value.scaled && value.speed >= SPEED_FLOOR) rec.cruise = Math.max(rec.cruise ?? 0, value.speed);
         }
         return;
       }
@@ -486,14 +660,14 @@ export function evalProjectile(asm, td, { tml }) {
       // routes 40-odd of its thrown projectiles through `ProjectileExtras.ThrowingKnifeAI`, so
       // without this their arc and their decay are both invisible and they never pay for either
       if (name === '@ind' && recv?.k === 'adj' && recv.slot === 'vel' && phase === 'ai' && value?.k === 'adj' && value.slot === 'vel') {
-        if (recv.field === 'Y' && value.field === 'Y') noteGravity(value.add);
-        if (recv.field === 'X' && value.field === 'X') noteVelX(value.add);
+        if (recv.field === 'Y' && value.field === 'Y') noteGravity(value.add, ctx);
+        if (recv.field === 'X' && value.field === 'X') noteVelX(value.add, ctx);
         if (value.mul !== 1 && value.add === 0) noteDrag(value.mul, ctx);
         return;
       }
       if (recv === VEL && phase === 'ai' && value?.k === 'adj' && value.slot === 'vel') {
-        if (name === 'Y' && value.field === 'Y') noteGravity(value.add);
-        if (name === 'X' && value.field === 'X') noteVelX(value.add);
+        if (name === 'Y' && value.field === 'Y') noteGravity(value.add, ctx);
+        if (name === 'X' && value.field === 'X') noteVelX(value.add, ctx);
         if (value.mul !== 1 && value.add === 0) noteDrag(value.mul, ctx);
       }
     },
@@ -522,11 +696,19 @@ export function evalProjectile(asm, td, { tml }) {
       if (decl === 'Terraria.Projectile' && /^NewProjectile(Direct)?$/.test(name)) {
         const n = callee.sig?.params.length ?? args.length;
         const dmg = n >= 12 ? args[6] : args[4];
+        // how fast it is thrown: a `Vector2` velocity the walk scaled from a direction, or the two
+        // scalar components of the long overload. Absent where the vector came from somewhere the
+        // walk could not follow — the model's own assumption then stands, as it always did.
+        // ponytail: the launch tick, not the travel speed. A child that accelerates in its own AI
+        // (vanilla's Lunar Flare, spawned at 1 px/tick off Thorium's Northern Light) reads low;
+        // widen it to the child's own `velocity` writes if a weapon ever turns on that.
+        const vel = n >= 12 ? (isNum(args[3]) && isNum(args[4]) ? Math.hypot(args[3], args[4]) : null) : (args[2]?.scaled ? args[2].speed : null);
         rec.children.push({
           type: projTypeArg(callee, args),
           where: phase,
           offset: ctx.offset,
           method: ctx.method,
+          speed: vel >= SPEED_FLOOR ? Math.round(vel * 100) / 100 : undefined,
           // which strike spawns it: true = only a stealth strike does, false = only a normal hit
           stealth: stealthTag(ctx.condTags),
           dmgMul: dmg?.k === 'adj' && dmg.slot === 'dmg' ? dmg.mul : undefined,
@@ -572,13 +754,34 @@ export function evalProjectile(asm, td, { tml }) {
       // unknown that made the whole term unreadable.
       if (name === 'Lerp' && args.length === 3 && isNum(args[0]) && isNum(args[1])) return (args[0] + args[1]) / 2;
       if (decl === 'Microsoft.Xna.Framework.Vector2' && name === 'get_Zero') return { k: 'vecZero' };
+      // `NewProjectile(…, SafeNormalize(-Vector2.UnitY) * 18f, CauldronProj, …)`: a direction times a
+      // number is a **launch speed**, and it is the one number the child-spawn record never carried.
+      // Without it the model guesses 8 px/tick for every spawned projectile, which for the Cauldron's
+      // lava bomb — fired straight up at 18 and arcing back down at 0.4 a tick — put its whole range
+      // at 126 px of the 180 it needs, zeroed the cascade, and left the weapon scored on a holdout
+      // that `CanDamage` says cannot hit anything.
+      if (name === 'SafeNormalize' || name === 'Normalize' || name === 'ToRotationVector2') return UNIT;
+      if (decl === 'Microsoft.Xna.Framework.Vector2' && (name === 'get_UnitX' || name === 'get_UnitY')) return UNIT;
+      if ((name === 'RotatedBy' || name === 'RotatedByRandom' || name === 'op_UnaryNegation') && isDir(args[0])) return args[0];
+      if (/^op_(Multiply|Division)$/.test(name) && (isDir(args[0]) || isDir(args[1]))) {
+        const v = isDir(args[0]) ? args[0] : args[1];
+        const k = isDir(args[0]) ? args[1] : args[0];
+        // An unread scalar beside a read one is usually a player stat sitting next to the speed
+        // (`* rogueVelocity`), all of them around 1 — but only where what was read is a *speed*.
+        // `dir * item.shootSpeed * 0.55f` is the holdout idiom and the 0.55 is a fraction of the
+        // number the walk could not follow: keeping it read the Cauldron's holdout as travelling
+        // half a pixel a tick. Nothing that slow is a weapon (the model's own `DRAG_STALL` puts the
+        // line at 2 px/update, a boss moving 5), so below the floor it is not a speed at all.
+        if (!isNum(k) || k === 0) return v.scaled && v.speed >= SPEED_FLOOR ? v : UNIT;
+        return { k: 'dir', scaled: true, speed: (v.speed ?? 1) * (name === 'op_Division' ? 1 / Math.abs(k) : Math.abs(k)) };
+      }
       if (decl === 'Microsoft.Xna.Framework.Vector2' && phase === 'ai') {
         // `Projectile.Center = npc.Center - offset` and its variants stay "an NPC's position"
         if (/^op_(Addition|Subtraction)$/.test(name) && (fromNpc(args[0]) || fromNpc(args[1]))) return NPC_POS;
         if (/^op_(Addition|Subtraction|Multiply|Division)$/.test(name) && (carriesOwner(args[0]) || carriesOwner(args[1]))) return OWNER_POS;
         if (name === 'op_Addition' || name === 'op_Subtraction') {
           const other = isVel(args[0]) ? args[1] : isVel(args[1]) ? args[0] : null;
-          if (other?.k === 'obj' && isNum(other.args?.[1]) && (other.args[0] === 0 || !isNum(other.args[0]))) noteGravity(other.args[1]);
+          if (other?.k === 'obj' && isNum(other.args?.[1]) && (other.args[0] === 0 || !isNum(other.args[0]))) noteGravity(other.args[1], ctx);
           if (other !== null) return VEL_SUM; // something was added to it: a blend, not a decay
         }
         if (name === 'op_Multiply' && (isVel(args[0]) || isVel(args[1]))) {
@@ -647,6 +850,8 @@ export function evalProjectile(asm, td, { tml }) {
   if (steers.length && rec.ownerAxis) rec.returns = true;
   else if (steers.length && rec.homing) rec.homingArgs = { ...(rec.homingArgs ?? {}), turn: Math.max(...steers) };
   if (td.methods.some((m) => STICKY_RE.test(m.name))) rec.sticks = true;
+  if (neverDamages(asm, td)) rec.cantDamage = true;
+  else if (selfDisarms(asm, td)) rec.disarms = true;
   return rec;
 }
 
@@ -760,12 +965,14 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     const chance = rollAt(c);
     const prev = children.get(key);
     // two spawns merged into one record only keep odds they agree on; disagreeing ones are unread
-    if (prev) { prev.count += c.count || 1; if (prev.chance !== chance) prev.chance = undefined; continue; }
+    // …and the slowest launch of the ones merged here: an unread speed leaves the model's own
+    // assumption in place rather than claiming the one spawn site it could follow speaks for both
+    if (prev) { prev.count += c.count || 1; if (prev.chance !== chance) prev.chance = undefined; prev.speed = prev.speed && c.speed ? Math.min(prev.speed, c.speed) : undefined; continue; }
     // Keep a share of exactly 1: "it is spawned with the parent's damage" and "the damage argument
     // could not be followed" are opposite facts, and normalising the first to `undefined` made them
     // the same field. The model has to be able to tell them apart — one deserves full damage, the
     // other is a gap, and a gap gets the pessimistic answer.
-    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs, chance, ...gates });
+    children.set(key, { type: t, count: c.count || 1, where: c.where, stealth: c.stealth, speed: c.speed, dmgMul: c.dmgMul, dmgAbs: c.dmgAbs, chance, ...gates });
   }
   const aiType = isNum(rec.aiType) ? rec.aiType : rec.aiType?.k === 'type' ? null : undefined;
   const ai = num(f.aiStyle);
@@ -785,6 +992,8 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // stack the way a volley with local immunity can — it is the player's shared window again, only
     // on the projectile's cooldown rather than the item's.
     shared: !bool(f.usesLocalNPCImmunity) && bool(f.usesIDStaticNPCImmunity) ? true : undefined,
+    // how long a hit of this projectile keeps the *player's* window closed, where `OnHitNPC` says so
+    immune: num(rec.immune),
     minion: bool(f.minion) || undefined,
     sentry: bool(f.sentry) || undefined,
     whip: rec.whip || undefined,
@@ -826,8 +1035,9 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // and it was scored as a beam held on the boss at six hits a second.
     //   `cloneOf`  copies a *vanilla* projectile's defaults, friendly among them — unknown, not false.
     //   `vanillaId`  is a vanilla record, where the field was read from the game's own SetDefaults.
-    friendly: (bool(f.friendly) === false || (vanillaId === null && f.friendly === undefined && rec.cloneOf === undefined))
-      && !rec.friendlyLater && !rec.friendlyArmed ? false : undefined,
+    //   `cantDamage`  is `CanDamage() => false`, which outranks every `friendly` write there is.
+    friendly: rec.cantDamage || ((bool(f.friendly) === false || (vanillaId === null && f.friendly === undefined && rec.cloneOf === undefined))
+      && !rec.friendlyLater && !rec.friendlyArmed) ? false : undefined,
     // the item's use animation is held open for as long as this is out, so `useTime` is not its clock
     pinsUse: rec.pinsUse || undefined,
     // it disarms itself on its first hit: one hit, whatever the pierce says
@@ -835,6 +1045,8 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // what holding the button buys, in the weapon's own numbers
     charge: chargeRecord(rec.self ?? {}),
     sticks: rec.sticks || undefined,
+    // it turns its own damage off once its AI reaches a state: one landed hit, then nothing
+    disarms: rec.disarms || undefined,
     returns: rec.returns || undefined,
     // …and vanilla bounces every `aiStyle 3` boomerang off whatever it hits, in `Projectile.Damage`
     // rather than in any AI a mod writes:
@@ -849,6 +1061,10 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     // …and one that is pinned to the player instead, wherever the player goes
     ridesOwner: rec.ridesOwner || undefined,
     explode: rec.explode !== undefined && rec.explode > (num(f.width) ?? 0) ? rec.explode : undefined,
+    // it arms a blast when it dies: one hit on every body inside the radius above (see the store)
+    blast: rec.blast || undefined,
+    // the speed its own AI flies it at, where that is not the speed it was launched at
+    cruise: rec.cruise > 0 ? Math.round(rec.cruise * 100) / 100 : undefined,
     falloff: rec.falloff,
     // …and the opposite, read in the AI: what the projectile scales its own damage *up* to while it
     // is out, as a multiplier on the printed number. A charge ramp: only a weapon that is held long

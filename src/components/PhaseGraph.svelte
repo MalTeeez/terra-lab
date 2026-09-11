@@ -124,15 +124,20 @@
   /**
    * The phase's kind, out of `phases.js`'s own vocabulary, refined where the graph already tells two
    * of one kind apart by name: a `contact` phase is either the blade itself or something held on the
-   * target, and a `minion` is either a minion or a sentry. `impact` / `split` / `linger` are in the
-   * vocabulary but nothing produces them yet, so they fall through to `travel` — which is what a
-   * spawned child is anyway.
+   * target, and a `minion` is either a minion or a sentry.
+   *
+   * `impact` and `split` are the **sub-attacks** — not something the weapon throws, but something one
+   * of its own projectiles sets off: the blast a shell leaves when it lands, the seven lasers a
+   * carrier releases when it expires. They were falling through to `travel` and reading as one more
+   * shot from the player, which is the wrong thing in a tree whose whole job is to say what sets off
+   * what. They keep their own glyph and hang, as they always did, under the phase that triggers them.
    */
   const kindOf = (p) => {
     if (p.kind === 'primary') return 'use';
     if (p.kind === 'debuff') return 'debuff';
     if (p.kind === 'minion') return p.id === 'sentry' ? 'sentry' : 'minion';
     if (p.kind === 'contact') return bare(p.id) === 'swing' ? 'swing' : 'held';
+    if (p.kind === 'impact' || p.kind === 'split') return p.kind;
     return 'travel';
   };
   const KIND_HINT = {
@@ -140,6 +145,8 @@
     swing: 'The weapon itself, swung through the target.',
     held: 'Held or placed on the target rather than thrown at it, hitting on its own cooldown.',
     travel: 'Something that leaves the start point and crosses to the target.',
+    impact: 'A sub-attack: what the phase above sets off when it lands a hit.',
+    split: 'A sub-attack: what the phase above releases — when it dies, or on a clock of its own.',
     minion: 'An autonomous summon on its own clock, paid for in minion slots.',
     sentry: 'A sentry that stands where you put it and only connects while the fight comes back to it.',
     debuff: 'Damage/Debuff over time on the target.',
@@ -188,6 +195,9 @@
     if (p.dmgMul !== 1 && p.dmgMul !== null && p.dmgMul !== undefined) out.push(`${Math.round(p.dmgMul * 100)}% dmg`);
     if (p.dmgAbs !== null && p.dmgAbs !== undefined) out.push(`${p.dmgAbs} flat`);
     if (p.resource?.kind === 'minionSlots') out.push(`${p.resource.cost} slot${p.resource.cost === 1 ? '' : 's'}`);
+    // what its pierce is worth in the crowd the fight is being read against: only ever shown in
+    // multi-target, where it is the whole reason a piercing sub-attack pulls ahead
+    if (p.swept > 1.05) out.push(`sweeps ${r1(p.swept)} of ${p.bodies}`);
     return out;
   };
   // exported so a legend can name the tags a graph actually carries instead of listing all of them

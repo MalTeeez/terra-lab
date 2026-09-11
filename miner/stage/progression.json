@@ -646,9 +646,10 @@
     "SOTS:DissolvingDeluge": "start"
   },
   "structures": {
-    "$comment": "Loot a mod files under a structure's own namespace comes out of that structure whichever route you take — its chests, its crates, or a recipe made from what those hold — so the structure's gate is a floor under every one of them, never a way to make something earlier. Type-name prefix → the boss that opens it. SOTS's Planetarium chests need a Strange Key, which the Archaeologist only sells after The Advisor (its Planetarium Crate holds the same alloys and asks for nothing but Tardigrade bait, so the floor is what keeps that tier honest); its pyramid needs the evil boss.",
+    "$comment": "Loot a mod files under a structure's own namespace comes out of that structure whichever route you take — its chests, its crates, or a recipe made from what those hold — so the structure's gate is a floor under every one of them, never a way to make something earlier. Type-name prefix → the boss that opens it. SOTS's Planetarium chests need a Strange Key, which the Archaeologist only sells after The Advisor (its Planetarium Crate holds the same alloys and asks for nothing but Tardigrade bait, so the floor is what keeps that tier honest); its pyramid needs the evil boss. The namespace is the mod's filing, not the loot table: `SOTSWorld.PostWorldGen` builds the Planetarium pool out of ten items and files nine of them under `Planetarium.FromChests` — the Otherworldly Spirit Staff sits in the same pool under `SpiritStaves`, and its Green rarity is too low for the worldgen rarity floor to catch it, so it is named here in full.",
     "SOTS.Items.Pyramid.": { "after": "EaterOfWorlds", "via": "the pyramid" },
-    "SOTS.Items.Planetarium.FromChests.": { "after": "TheAdvisorHead", "via": "a Planetarium chest (Strange Key)" }
+    "SOTS.Items.Planetarium.FromChests.": { "after": "TheAdvisorHead", "via": "a Planetarium chest (Strange Key)" },
+    "SOTS.Items.SpiritStaves.OtherworldlySpiritStaff": { "after": "TheAdvisorHead", "via": "a Planetarium chest (Strange Key)" }
   },
   "classAliases": {
     "$comment": "When these mods are present, classes on the left count as the class on the right.",

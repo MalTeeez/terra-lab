@@ -31,7 +31,26 @@ const HURT_HOOKS = /^(OnHitByNPC|OnHitByProjectile|PostHurt|OnHurt|ModifyHurt)$/
 // fires it wherever the use passes through its GlobalItem, and SOTS puts the Wishing Star's free
 // magic star in `CanUseItem` — the accessory's whole effect, and it was read nowhere.
 const SHOOT_HOOKS = /^(Shoot|CanUseItem|UseItem)$/;
+// …and the mage's version of the same thing, which lives on the *ModPlayer* instead: a hook that
+// watches what you spend and pays a projectile back for it. SOTS's Wishing Star casts a 100-damage
+// star every 100 mana of magic spent, in `OnConsumeMana`, and the only branch the miner could reach
+// was the one in `CanUseItem` behind `WishingStar.IsAlternate` — `UniqueVisionNumber % 8 == 7`, a
+// cosmetic roll seven players in eight never get. The accessory's real effect was read nowhere.
+const SPEND_HOOKS = /^(OnConsumeMana|OnConsumeAmmo|OnMissingMana)$/;
 const GLOBALS = ['GlobalProjectile', 'GlobalItem', 'GlobalNPC'];
+/**
+ * The damage argument of a spawn helper the walk does not descend into: the one integer it takes.
+ * `CastWishingStar(player, target, 100)` states a flat base and `CastWishingStar(player, target,
+ * item.damage)` hands over the sentinel — both are the star's damage, and looking only for the
+ * sentinel (as the caller used to) saw the second and lost the first entirely.
+ */
+const INT_ETS = new Set([ET.I1, ET.U1, ET.I2, ET.U2, ET.I4, ET.U4]);
+function loneIntArg(callee, args) {
+  const ps = callee?.sig?.params ?? [];
+  if (ps.length !== args.length) return null;
+  const at = ps.reduce((acc, p, i) => (INT_ETS.has(p.et) ? [...acc, i] : acc), []);
+  return at.length === 1 && isNum(args[at[0]]) ? args[at[0]] : null;
+}
 
 /** @returns {Map<string, Array<{ type: string, damage: number|null, cls?: string, stealth?: true, cooldown?: number }>>} flag → spawns */
 export function extractOnHitSpawns(asm, { tml }) {
@@ -77,7 +96,8 @@ export function extractOnHitSpawns(asm, { tml }) {
     if (!kind) continue;
     for (const md of td.methods) {
       const hurt = HURT_HOOKS.test(md.name);
-      const shoot = SHOOT_HOOKS.test(md.name) && kind === 'global';
+      const perItem = SHOOT_HOOKS.test(md.name) && kind === 'global'; // a hook that runs for *every* item
+      const shoot = perItem || (SPEND_HOOKS.test(md.name) && kind === 'player');
       if ((!hurt && !shoot && !HIT_HOOKS.test(md.name)) || !asm.methodBody(md)) continue;
       let statCls = null;
       const spawns = []; // this method's, to receive a cooldown set in the same flag region
@@ -126,7 +146,8 @@ export function extractOnHitSpawns(asm, { tml }) {
               const type = inline ? projRef(asm, args[i]) : helperType;
               // the helper's own damage argument is the caller's: `CastWishingStar(…, item.damage, …)`
               // hands it the sentinel, which is what says the star hits for a whole attack
-              const d = inline ? (isNum(args[i + 1]) ? args[i + 1] : null) : args.find((a) => isNum(a) && a >= HIT_SENTINEL * 0.25) ?? null;
+              const d = inline ? (isNum(args[i + 1]) ? args[i + 1] : null)
+                : loneIntArg(callee, args) ?? args.find((a) => isNum(a) && a >= HIT_SENTINEL * 0.25) ?? null;
               const fromHit = d !== null && d >= HIT_SENTINEL * 0.25; // a fraction of the sentinel, not a flat base
               const tagCls = (ctx.condTags ?? []).find((t) => /^cls:/.test(t))?.slice(4);
               // `other` is a mod's own class (SOTS's void): the spawn belongs to no class the solver knows
@@ -140,9 +161,15 @@ export function extractOnHitSpawns(asm, { tml }) {
                 crit: !hurt && tags.includes('hit:crit') || undefined, chance: chance < 1 ? Math.round(chance * 1000) / 1000 : undefined,
                 hurt: hurt || undefined,
                 shoot: shoot || undefined,
+                // …and which kind of shoot: a spend hook does not fire it on every attack, it fires
+                // it when enough has been spent (`if (ManaSpentCounter >= 100)`), so the card must
+                // not say "on every attack" and the rate must not be the attack rate
+                spend: (!perItem && shoot) || undefined,
                 // `if (ItemID.Sets.Spears[item.type])` around the block: the accessory only fires on
-                // the weapons it is for, and which weapon you hold is not a question this can answer
-                gated: (shoot && ctx.conditional) || undefined,
+                // the weapons it is for, and which weapon you hold is not a question this can answer.
+                // Only in a hook that runs for every item — a `ModPlayer` watching what you spend is
+                // not choosing between weapons, and its conditions are player state, not selection.
+                gated: (perItem && ctx.conditional) || undefined,
               };
               statCls = null;
               for (const flag of flags) {
@@ -150,7 +177,12 @@ export function extractOnHitSpawns(asm, { tml }) {
                 if (!l) byFlag.set(flag, (l = []));
                 const had = l.find((s) => s.type === type);
                 // the same projectile off both hooks (hit and hurt) is an on-hit proc: keep that reading
-                if (had) { if (had.hurt && !hurt) Object.assign(had, spawn); continue; }
+                // …and the same for a gated reading against an ungated one. SOTS spawns the Wishing
+                // Star from two exclusive branches of `IsAlternate`: a per-attack star behind that
+                // gate in `CanUseItem`, and one per 100 mana spent in `OnConsumeMana`. Whichever
+                // branch a player is on the accessory does spawn it, so the reading that has to
+                // qualify itself is not the one to keep.
+                if (had) { if ((had.hurt && !hurt) || (had.gated && !spawn.gated)) Object.assign(had, spawn); continue; }
                 const s = { ...spawn }; l.push(s); spawns.push([flag, s]);
               }
             }

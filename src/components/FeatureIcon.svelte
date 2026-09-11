@@ -65,6 +65,9 @@
     swing: Swords,
     held: Hand,
     travel: Send,
+    // a sub-attack: not something the weapon throws, but something one of its projectiles sets off
+    impact: Sparkles,
+    split: GitFork,
     minion: Bug,
     sentry: TowerControl,
     debuff: Skull,

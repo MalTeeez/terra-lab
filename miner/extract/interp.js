@@ -221,7 +221,11 @@ export class Machine {
       if (!stackAt.has(target)) { stackAt.set(target, stack.map((v) => (v?.k === 'flag' && also.length ? { ...v, also: [...new Set([...(v.also ?? []), ...also])] } : v))); stackTagsAt.set(target, [...this.condTags]); }
       if (!regionsAt.has(target)) regionsAt.set(target, { at: x0.offset, list: regions.filter((r) => !r.dead && r.end > target) });
       if (withGroups && !groupsAt.has(target)) groupsAt.set(target, groups.map((g) => [...g]));
+      if (!jumpsAt.has(target)) jumpsAt.set(target, new Set());
+      jumpsAt.get(target).add(x0.offset);
     };
+    // every offset that jumps to a target, not just the first: what tells an else-branch from a join
+    const jumpsAt = caseMap ? new Map() : null;
     // linear mode: forward conditional jumps open a region whose stores are "conditional"
     const regions = []; // { end, tag, groups } — groups = the key context the if statement sits in; els = an else-branch, not a condition of the if
     const openRegion = (target, tags = [], els = false) => { if (caseMap && target > 0) regions.push({ end: target, tags: tags.filter(Boolean), groups: this.caseGroups.map((g) => [...g]), at: x0.offset, els }); };
@@ -251,17 +255,34 @@ export class Machine {
      * here); the else cannot outlive the region enclosing the if, so it is clamped to `limit` and
      * to the enclosing ends. An else-branch clamped to the same end is not a condition of this if:
      * `if (!hardMode) { if (n < 2) … else { …; br END } }` must still say `hardMode` here.
-     * Only fires when the innermost region closes right after this instruction; a br out of a
-     * block nested in a larger region is a plain jump.
+     * Only fires when a live region closes right after this instruction *and* the jump leaves every
+     * region opened inside it; a br out of a block nested in a larger region is a plain jump.
+     * The innermost region is not always the one that closes: Meteor Fist's `if (numHits == 0) { …
+     * if (timeLeft == 2) SetUpLeftoverWire(); br END }` ends with a nested `if` whose own region
+     * runs to the same END as the br, so asking only the top of the stack never saw the arm close
+     * and the post-hit block below read as unconditional — the fist's drag and its 0.2 drop were
+     * taken for its flight.
      */
     const openElse = (limit) => {
-      const inner = regions.length ? regions[regions.length - 1] : null;
-      if (!inner || inner.end !== ins[pc + 1]?.offset) return;
+      const at = ins[pc + 1]?.offset;
+      const closing = regions.filter((r) => r.end === at);
+      const inner = closing.length ? closing[closing.length - 1] : null;
+      if (!inner) return;
+      // …and everything opened inside it leaves with the jump: a region outliving `limit` is one
+      // this br is still inside, which makes the br a plain jump out of a nested block.
+      if (regions.slice(regions.indexOf(inner) + 1).some((r) => r.end > limit)) return;
       // `if (!config.X) return;` with X known on: the early return is dead, so the rest of the
       // method is the *only* path, not the else-branch of a live condition. Opening a region here
       // put every recipe edit in the method under an untagged condition and dropped all of them.
       if (inner.dead) return;
       const same = regions.filter((r) => !r.dead && !r.els && r.end === inner.end);
+      // …and the block is only the *else* of this if when this if is the only way in. SOTS guards
+      // `if (isConduitItem && !ConduitBelt) return false;` — the `isConduitItem` test also jumps
+      // past the return, so the rest of the method runs with or without the belt, and reading it
+      // as the else-arm hung every later proc in `CanUseItem` (a shrimp laser, the Wishing Star)
+      // on the Archaeologist's Toolbelt. A join is not a negation.
+      const ats = new Set(same.map((r) => r.at));
+      for (const src of jumpsAt.get(inner.end) ?? []) if (!ats.has(src)) return;
       const tags = !same.length || same.some((r) => !r.tags.length) ? [] : same.length === 1 ? same[0].tags.map(negTag) : same.flatMap((r) => (r.tags.length === 1 ? [`any:${negTag(r.tags[0])}`] : []));
       const outer = regions.filter((r) => r.end > inner.end).map((r) => r.end);
       openRegion(Math.min(limit, ...outer), tags, true);

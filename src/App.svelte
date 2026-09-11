@@ -22,7 +22,7 @@
   let error = $state(null);
   let dsRaw = null; // the indexed dataset itself; `ds` is a shallow copy so seed changes re-render
 
-  // Deep links: ?cls=summon&stage=35&mode=timeline&item=CalamityMod:Murasama
+  // Deep links: ?cls=summon&stage=35&mode=timeline&item=CalamityMod:Murasama&targets=multi
   function applyUrl(d) {
     const q = new URLSearchParams(location.search);
     if (q.has('cls')) ui.cls = q.get('cls');
@@ -32,6 +32,7 @@
       if (idx >= 0) ui.stage = idx;
     }
     if (q.has('mode')) ui.mode = q.get('mode');
+    if (q.has('targets')) ui.targets = q.get('targets');
     if (q.has('item') && d.byId.has(q.get('item'))) ui.selected = q.get('item');
     if (q.has('panel')) ui.panel = q.get('panel');
   }

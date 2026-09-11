@@ -311,6 +311,8 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
   if (!shoot && !modify && !Object.keys(swaps).length) return null;
   const calls = [];
   const rets = [];
+  /** the projectile handed to `Player.SpawnMinionOnCursor` — the game's own word for "a minion" */
+  let minionType;
   let loops = [];
   const track = loopTracker();
   let cur = null;
@@ -351,6 +353,13 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
         calls.push({ offset: ctx.offset, method: ctx.method, type, dmg, vel, depth: ctx.depth, region: ctx.region });
         return UNKNOWN;
       }
+      // `player.SpawnMinionOnCursor(source, whoAmI, type, damage, knockback, …)` is Terraria's own
+      // way of saying "this weapon summons a minion", and for SOTS's nine Spirit Staves it is the
+      // *only* way it is said: `SpiritMinion.SetDefaults` never sets `Projectile.minion`, it only
+      // registers the type in `ProjectileID.Sets.MinionTargettingFeature`. Read as an ordinary
+      // shot, a permanent minion was being re-thrown twice a second and billed its 135-void summon
+      // cost every time — 225 void/s against a 200 bar, which is where their scores went.
+      if (decl === 'Terraria.Player' && name === 'SpawnMinionOnCursor') { minionType ??= args[2]; return UNKNOWN; }
       // Calamity asks this to decide what a stealth strike changes, and it asks it inside helpers
       // the machine inlines (`RogueWeapon.ModifyShootStats` calls `ModifyStatsExtra`, which is
       // where a weapon swaps in its stealth projectile). Handing it back as a flag tags the branch,
@@ -383,10 +392,12 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     },
     onReturn(v, ctx) { if (ctx.method === cur) rets.push({ v, offset: ctx.offset }); },
     onStoreLocal: track.onStoreLocal,
-    onBackJump(x, a, b, op, ctx) { loops.push({ lo: x.operand, hi: x.offset, n: track.count(x, a, b, op), method: ctx.method }); },
+    // `bound` is kept because the odds that built it are not read until after the walk: see the
+    // `track.expected` pass below, where a rolled-for count stops being its maximum
+    onBackJump(x, a, b, op, ctx) { loops.push({ lo: x.operand, hi: x.offset, n: track.count(x, a, b, op), bound: b, method: ctx.method }); },
   });
 
-  const out = { calls: [], returnsTrue: true, hasShoot: !!shoot };
+  const out = { calls: [], returnsTrue: true, hasShoot: !!shoot, minion: undefined };
   let at = 0;
   machine.trace = (x) => { at = x.offset; };
   if (modify) {
@@ -445,6 +456,13 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
     // which click fires it: true = only the right one does, false = only the left, undefined = both
     const altAt = (o) => sideAt(alts, o);
     const chanceAt = (o) => chanceOf(chances, o);
+    // A burst whose size the weapon rolls for fires its *average*, not its best roll. The odds are
+    // the same `NextBool` regions priced above; `track.expected` weighs the increments that built
+    // each loop bound by them, and a bound written once comes back unchanged.
+    for (const l of loops) {
+      const e = track.expected(l.bound, l.lo, chanceAt);
+      if (isNum(e) && isNum(l.bound) && l.bound > 0 && e !== l.bound) l.n = Math.round((l.n * e) / l.bound * 100) / 100;
+    }
     // the gates a call sits behind, and the branches nobody has a reader for yet
     const counters = counterRanges(asm, shoot, 'use');
     const onHit = hitCounters(asm, td);
@@ -502,6 +520,7 @@ export function analyzeShoot(asm, td, { tml, projRef }) {
   if (swaps.stealth) out.stealthMods = { ...out.stealthMods, type: out.stealthMods?.type ?? swaps.stealth };
   if (swaps.alt) out.altMods = { ...out.altMods, type: out.altMods?.type ?? swaps.alt };
   if (swaps.default) out.typeOverride ??= swaps.default;
+  if (minionType !== undefined) out.minion = minionType === SHOOT_TYPE ? 'shoot' : projRef(minionType) ?? undefined;
   const sm = findInherited(asm, td, 'get_StealthDamageMultiplier');
   if (sm) {
     const v = new Machine(asm, { tml, concreteType: td, budget: 2000, onStaticLoad: tmlStaticLoadHook }).run(sm, THIS, []);

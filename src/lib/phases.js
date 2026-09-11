@@ -400,6 +400,9 @@ export function spawnPhases(p, { variant, parentId = null } = {}) {
       trigger: WHERE_TRIGGER[c.where] ?? 'timer',
       projId: c.type,
       count: c.count ?? 1,
+      // how fast the parent threw it, where the miner could follow the vector: the model's own
+      // 8 px/tick stand-in is what dropped the Cauldron's lava bomb 101 px short of the boss
+      absVelocity: c.speed ?? null,
       // told apart deliberately: a share the miner read, a flat number it read, and nothing read
       dmgMul: c.dmgMul ?? null,
       dmgAbs: c.dmgAbs ?? null,
