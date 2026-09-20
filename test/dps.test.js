@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  ARCHETYPE, BOSS_DEFAULT, CALIBRATION, CHILD_CAP, CROWD, MANA_FLOOR, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, LINGER_ON_TARGET, PIERCE_KEEP, REACH, LIFE_FLOOR, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
+  ARCHETYPE, BOSS_DEFAULT, CALIBRATION, CHILD_CAP, CROWD, MANA_FLOOR, RECONNECT_SEEK, DMG_MUL_MAX, ENGAGE, LINGER_ON_TARGET, PIERCE_KEEP, REACH, LIFE_FLOOR, RISK, SHOOT_SPEED_MIN, SHOOT_SPEED_UNKNOWN, STATE_GATED, STUCK_TICKS, SUSTAIN_FLOOR, TERRAIN_PENALTY,
   asTarget, bladeCoverage, bladeLanding,
   boss, bossOf, bossSpeed, engagement, fightableDefense, flightOf, hitDamage, hitsPerProjectile, landing, lifeRegen, manaRegen, playerDamage, reachOf, realDps, standardAmmo, stealthMultiplier, targetStages, unknownDebuffDps,
 } from '../src/lib/dps.js';
@@ -815,6 +815,33 @@ describe('realDps', () => {
     expect(rod).toBeGreaterThanOrEqual(RISK.magic);
     expect(drill).toBeGreaterThan(rod);
   });
+  test('a holdout that hits each body once is a swipe, not a beam: it reaches what true melee reaches', () => {
+    // `REACH.held` is 180 px because it was written for the wall of thorns; a projectile whose
+    // immunity cooldown is -1 hits a body once and never again, which is a swing and not something
+    // kept on the boss (`contactPhase` says the same about its clock)
+    // (the fixture's own beam lives 5 ticks, which floors it at `MIN_ENGAGE` before reach has a
+    // say — both arms get one that lasts, so the only difference left is the immunity window)
+    const drill = (local) => {
+      const d = structuredClone(raw);
+      d.projectiles['M:beam'] = { ...d.projectiles['M:beam'], life: 600, local };
+      const dsx = indexDataset(d);
+      return realDps(dsx.byId.get('M:drill'), ctx({ ds: dsx }));
+    };
+    const beam = drill(6);
+    const swipe = drill(-1);
+    expect(beam.distance).toBe(REACH.held);
+    expect(swipe.distance).toBe(REACH.truemelee);
+    expect(part(swipe, /fights at 80 px of the/).mul).toBeLessThan(part(beam, /fights at .* px of the/).mul);
+    // …and it is graded as the blade it is: the archetype's beam uptime gives way to the two terms
+    // a sword of that reach already pays — how often it can be brought into the boss, and whether
+    // the swing connects when it is
+    expect(part(beam, /% of the time on the boss/).mul).toBeCloseTo(ARCHETYPE.held.uptime, 2);
+    const up = part(swipe, /px swipe is on the boss/);
+    expect(up.mul).toBeGreaterThan(0);
+    expect(up.mul).toBeLessThan(bladeCoverage(REACH.truemelee)); // coverage, and a landing on top of it
+    expect(up.mul).toBeLessThan(ARCHETYPE.held.uptime);
+    expect(swipe.value).toBeLessThan(beam.value);
+  });
   test('a debuff the boss is not immune to adds its DoT; an immune boss adds nothing', () => {
     const fire = dps('M:torch');
     const plain = dps('M:fanGun');
@@ -1181,6 +1208,16 @@ describe('mined gates', () => {
     // …a transition without a reset is the old "at most one" rule, and a counter in OnHitNPC is a hit counter
     const once = hold({ threshold: { n: 10, event: 'tick', reset: false, reached: true } });
     expect(kid(grade(once))).toBeCloseTo(kid(grade(unread)), 1);
+  });
+  test('a child gated on the target\'s own state is not free: something has to put the boss in it', () => {
+    const gun = ds.byId.get('M:splitGun');
+    const gated = (branch) => indexDataset({ ...raw, projectiles: { ...raw.projectiles, 'M:splitter': { pen: 1, life: 600, children: [{ type: 'M:pebble', count: 1, where: 'hit', dmgMul: 1, ...(branch ? { branch } : {}) }] } } });
+    const kid = (d) => realDps(gun, { ...ctx(), ds: d }).phases.filter((p) => p.kind === 'impact').reduce((s, p) => s + p.contribution, 0);
+    const plain = kid(gated(null));
+    // the Walking Cane's shadow hands: only on a target its *stealth strike* drove insane
+    expect(kid(gated({ id: 3, side: false, cond: 'CalamityGlobalNPC.caneInsanityTimer' })) / plain).toBeCloseTo(STATE_GATED, 1);
+    // …and a one-sided guard on the player's own aim is not a state of the target: it keeps its share
+    expect(kid(gated({ id: 3, side: false, cond: 'Entity.DistanceSQ' }))).toBeCloseTo(plain, 1);
   });
   test('a child only on a crit is worth the crit chance of itself', () => {
     const gun = ds.byId.get('M:splitGun');

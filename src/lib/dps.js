@@ -153,7 +153,7 @@ const turnsRoundAt = (arch) => (ARCHETYPE[arch]?.cycle === 'flight' ? THROW_OUT 
  * anyone else's (19 of the 30 risky picks). Melee pays less than the rest because it is the class
  * wearing the armour.
  */
-export const RISK = { melee: 0.8, ranged: 0.7, magic: 0.7, summon: 0.7, rogue: 0.75, thrower: 0.75, bard: 0.7, healer: 0.7 };
+export const RISK = { melee: 0.8, ranged: 0.7, magic: 0.7, summon: 0.7, rogue: 0.6, thrower: 0.6, bard: 0.7, healer: 0.7 };
 /**
  * What a weapon is worth once it starts eating the terrain. Rockets and satchel charges blow the
  * arena, the platforms and the loot chests apart, so the DPS on paper is not DPS you get to use —
@@ -413,6 +413,20 @@ const dmgShare = (m) => (m > DMG_MUL_MAX ? 1 : m);
  * number from the pool rather than a guess.
  */
 export const CHILD_DMG_UNREAD = 0.5;
+/**
+ * A spawn whose `if` reads a **state of the target** — a mod's own tracker on `GlobalNPC`, the
+ * boss's remaining life — against the same spawn with no gate on it. Ten children in the pack are
+ * this, and every one of them needs the fight to have put the boss somewhere first: an execute
+ * threshold it has not reached, a debuff nothing in the loadout inflicts, an insanity only the
+ * weapon's *other* grade applies. The miner reads the arm without its guard (see `gatesAt`), so
+ * counting it in full is the optimistic reading of a condition nobody checked — the same mistake
+ * `score.js` priced at `COND_STATE` for a state-gated stat, and the same share.
+ *
+ * A one-sided guard on the *player's* own aim, owner or facing stays at full: those hold far more
+ * often than not, which is why only the target's state reads this way.
+ */
+export const STATE_GATED = 0.15;
+const STATE_GATE = /GlobalNPC\.|^NPC\.life$/;
 /**
  * What a shot used at the very edge of its range is worth. A weapon that only just carries to where
  * its class stands arrives with no life left and cannot be aimed with, which is what the band above
@@ -1851,6 +1865,18 @@ function childHits(ds, p, { boss: b, D, vb, arch, parentLand, variant, charged =
     if (windupN) gate *= clamp(outTicks / windupN, 0, 1);
     // …one only on a crit is the crit chance's worth of them
     if (ph.crit !== null) gate *= ph.crit ? crit : 1 - crit;
+    // …and one gated on a state of the **target** needs something to put the boss in that state
+    // first, which nothing in the grade being scored guarantees. The Walking Cane's shadow hands
+    // only spawn on an enemy carrying `caneInsanityTimer`, which only its own stealth strike
+    // inflicts — and they were being handed to the spam grade, which by construction never throws
+    // one, for 122 of its 298 DPS. Priced like `score.js`'s state-gated stats: the condition holds
+    // some of the time and no part of the loadout supplies it.
+    // ponytail: one share for every target state (an execute threshold reads the same way); read
+    // what sets the field if telling them apart ever matters.
+    if (STATE_GATE.test(ph.branch?.cond ?? '')) {
+      gate *= STATE_GATED;
+      parts.push({ fac: 'hits', label: `${nameOf(c.type, ds)} only spawns on a target already in a state the weapon does not guarantee (${String(ph.branch.cond).split('.').pop()}): ${Math.round(STATE_GATED * 100)}%`, mul: 1 });
+    }
     // …and one behind a requirement the loadout does not carry does not happen
     if (ph.requires && !ph.requires.negated) { parts.push({ label: `${nameOf(c.type, ds)} needs ${describeRequires(ph.requires, ds)} the loadout does not carry`, mul: 1 }); ph.evidence = { ...ph.evidence, gates: { ...ph.evidence?.gates, requires: 'unmet' } }; phases.push({ ...ph, hitsPerUse: 0, events: 0, share: scale * dmg, shared: cp?.local === undefined, immune: cp?.immune }); continue; }
     // how many of it one parent spawns: once, or — with the AI's clock read — once per tick of that
@@ -2317,6 +2343,15 @@ function gradeWeapon(item, ctx = {}) {
   // archetype's reach, the item's `scale` is this blade's
   const bladeReach = (REACH[arch] ?? REACH.swing) * (item.scale ?? 1);
   /**
+   * …and the other end of `keepsBeams`: a holdout that hits each body **once and never again**
+   * (`localNPCHitCooldown` at or below zero) is not a beam kept on the boss at all — `contactPhase`
+   * already says exactly that about its clock — it is a swipe. `REACH.held` is 180 px because it
+   * was written for the wall of thorns; the swing in your hands reaches what true melee reaches,
+   * which is the same reading the 2026-09-04 pass gave a held `TrueMeleeDamageClass` blade. Four
+   * weapons in the pack, the Walking Cane among them: 80 px of the 220 a rogue wants, not 180.
+   */
+  const swipe = arch === 'held' && primary?.local !== undefined && !(primary.local > 0);
+  /**
    * One grade of the weapon (spam / stealth) on one click, at its own engagement distance. A sword
    * that also fires has two stances — in close, where the blade connects, or back at the shot's
    * range, where it does not and the risk is not paid either — and `best` takes the better.
@@ -2334,7 +2369,7 @@ function gradeWeapon(item, ctx = {}) {
     // across the room. The player stands where the class wants to stand and pays no risk for it,
     // which is the honest reading of "there is no range problem with this weapon" — the holdout in
     // your hands is not what has to reach the boss.
-    const want = keepsBeams ? prefer : engagement(cls, arch, style);
+    const want = keepsBeams ? prefer : Math.min(engagement(cls, arch, style), swipe ? REACH.truemelee : Infinity);
     // A player does not stand where their weapon cannot reach — they walk in, and pay for standing
     // there. So the class's preferred distance is the *most* they keep, never a reason to score a
     // short-ranged weapon at zero. Half the reach, so the shot still arrives with life left for the
@@ -2542,8 +2577,22 @@ function gradeWeapon(item, ctx = {}) {
     // counted: reading it only on the contact path meant a type that fell through to the use clock —
     // a blade that hits a given NPC once, a cloud with no cooldown of its own — quietly got its
     // uptime back and scored *higher* than the same weapon with a hit cooldown.
-    const up = uptimeOf(arch);
-    if (up < 1) { vparts.push({ fac: 'landing', label: `${Math.round(up * 100)}% of the time on the boss`, mul: r2(up) }); hps *= up; }
+    // …and a **swipe** is not that kind of weapon at all. `uptime` 0.85 is a beam's number — a thing
+    // you aim from across the room — and what this weapon keeps on the boss is a stick. The model
+    // already prices a stick, for the swords that swing themselves: `bladeCoverage`, the cube of
+    // relative reach that puts a 64 px knife at 26% of a broadsword's contact, times `bladeLanding`,
+    // whether a swing already aimed at the boss connects while it drifts. A swipe never reached
+    // either, because `trueMelee` is `!item.noMelee` and the damage here leaves in a projectile —
+    // but the projectile *is* the blade, and the Walking Cane's is an 80 px stick with a line
+    // hitbox. It was being paid the beam's 85% and a free connect on every one of 3.75 thrusts a
+    // second, which is what "basically only true melee" was pointing at.
+    const up = swipe ? bladeCoverage(D) * bladeLanding({ D, boss: b, vb, reach: D, ticks: ua }).f : uptimeOf(arch);
+    if (up < 1) {
+      vparts.push({ fac: 'landing', label: swipe
+        ? `a ${Math.round(D)} px swipe is on the boss ${Math.round(up * 100)}% of the fight: it has to be walked into range and land there, the same two terms a blade this short pays`
+        : `${Math.round(up * 100)}% of the time on the boss`, mul: r2(up) });
+      hps *= up;
+    }
 
     // A whip tags the boss and the minions do the rest — and what the minions then add does not
     // depend on how many projectiles this particular lash throws. Scaling the tag by the whip's own

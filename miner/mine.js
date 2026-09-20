@@ -575,10 +575,20 @@ const conds = new Set();
         // two balancing mods shipping the same merge would otherwise grant the effect twice
         if (!src?.effects || (it.copied ??= new Set()).has(rec.from)) continue;
         it.copied.add(rec.from);
-        const cp = { ...note, source: src.name, effects: src.effects };
+        // a copy chain re-delivers what it already carries: the gloves are handed Scuttler's Jewel
+        // *and* Bone Grip, which is itself a merge of Scuttler's Jewel — and a flag set twice is
+        // set once, so the second jewel spike is not a second proc, it is the same one counted again
+        const eff = structuredClone(src.effects);
+        for (const k of ['onHit', 'spawns']) {
+          if (!eff[k]) continue;
+          const have = new Set((it.effects?.[k] ?? []).map((x) => JSON.stringify(x)));
+          eff[k] = eff[k].filter((x) => !have.has(JSON.stringify(x)));
+          if (!eff[k].length) delete eff[k];
+        }
+        const cp = { ...note, source: src.name, effects: eff };
         if (rec.conditional) { (it.maybe ??= []).push(cp); continue; }
         if (rec.cond.length) { (it.variants ??= []).push(cp); continue; }
-        it.effects = mergeEffects(it.effects, src.effects);
+        it.effects = mergeEffects(it.effects, eff);
         (it.changes ??= []).push(cp);
         applied++;
       } else if (rec.kind === 'tooltip') {

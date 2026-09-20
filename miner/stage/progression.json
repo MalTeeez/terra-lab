@@ -45,9 +45,10 @@
       ]
     },
     {
+      "$comment": "BossChecklist's own scale puts Deerclops at 6, after Skeletron — and nothing in the pack plays that way: the Deer Thing is craftable the moment there is a Snow biome, and Calamity's class-setup guide puts its buff advice (Warmth Potion, Flask of Poison) in the *pre-Skeletron* section. 4.75 is where it is actually fought: after Queen Bee and Pharaoh's Curse, before Skeletron (5) and Thorium's Illusionist (5.2).",
       "key": "Deerclops",
       "label": "Deerclops",
-      "progression": 6,
+      "progression": 4.75,
       "npcs": [
         668
       ]

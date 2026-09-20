@@ -121,7 +121,7 @@ metric actually lost.
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Sharanga | SOTS:Sharanga | SOTS | 15 | 21 Skeletron | craft: Hellwing Bow | yes |
+| Sharanga | SOTS:Sharanga | SOTS | 15 | 22 Skeletron | craft: Hellwing Bow | yes |
 
 ## ieor · Pre-Evil_2 · summon (guide stage 15)
 
@@ -151,7 +151,7 @@ metric actually lost.
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Houndius Shootius | v:5119 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Houndius Shootius | v:5119 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 | P-PMA: Aqueous Hunter Drone | CalamityMod:AqueousHunterDrone | CalamityMod | 20 | 90 XS-03 Apollo | craft: Dubious Plating | yes |
 
 ## ieor · Pre-Skeletron · healer (guide stage 20)
@@ -164,38 +164,38 @@ metric actually lost.
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Weather Pain | v:5118 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Weather Pain | v:5118 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 
 ## ieor · Pre-Skeletron · ranged (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Pew-matic Horn | v:5117 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Pew-matic Horn | v:5117 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 
 ## ieor · Pre-Skeletron · summon (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Houndius Shootius | v:5119 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Houndius Shootius | v:5119 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 | Book of Virtues | SOTS:BookOfVirtues | SOTS | 20 | 42 Skeletron Prime | enemy: Skeletron Prime | yes |
 
 ## vanilla · Pre-Skeletron · magic (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Weather Pain | v:5118 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Weather Pain | v:5118 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 
 ## vanilla · Pre-Skeletron · ranged (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Pew-matic Horn | v:5117 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Pew-matic Horn | v:5117 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 
 ## vanilla · Pre-Skeletron · summon (guide stage 20)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Houndius Shootius | v:5119 | v | 20 | 23 Deerclops | drop: Deerclops | yes |
+| Houndius Shootius | v:5119 | v | 20 | 21 Deerclops | drop: Deerclops | yes |
 
 ## ieor · Pre-Slime_God · healer (guide stage 26)
 
