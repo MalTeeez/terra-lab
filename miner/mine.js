@@ -44,6 +44,7 @@ import { extractChestLocks, extractModWorldgen, extractVanillaChests } from './e
 import { extractVanilla, constMap } from './extract/vanilla.js';
 import { VANILLA_BEHAVIOUR, applyAmmoSwaps } from './extract/vanilla-behaviour.js';
 import { extractDebuffs, extractModBuffs } from './extract/effects.js';
+import { resolveDebuffs, scanDebuffs } from './extract/debuffs.js';
 import { deCamel } from './extract/localization.js';
 import { loadOrder } from './loadorder.js';
 import { defaultPaths, readEnabled, resolveMods } from './resolve.js';
@@ -169,6 +170,7 @@ const allGrants = [];     // items an id-keyed reward table hands over under a g
 const allCompanions = []; // vanity pieces that appear only while another item is equipped
 const allWorldgen = [];   // chest contents placed at world generation
 const allBuffs = [];      // every buff, with what it does to the player — a potion is worth its buff
+const debuffScans = [];   // what each mod's debuffs do to an NPC's health (extract/debuffs.js)
 const worldgenTiles = new Set();
 const modWorldgen = [];   // mod chest placements, gated once every mod's chest locks are known
 const chestLocks = new Map(); // locked chest tile → the flags that open it
@@ -230,6 +232,7 @@ for (const m of ordered) {
     for (const [k, v] of pack.skipped) packSkipped.set(k, (packSkipped.get(k) ?? 0) + v);
     allItems.push(...items);
     allBuffs.push(...extractModBuffs(asm, { tml, loc, modId }));
+    debuffScans.push(scanDebuffs(asm));
     allNpcs.push(...npcs);
     allBossLogs.push(...bossLogs);
     allRecipes.push(...recipes);
@@ -349,10 +352,17 @@ const projNameOf = (ref) => {
 // shoots a `DuoWhipSpawner` that lashes with two whips of its own — so what a projectile hatches
 // travels with it, for the archetype rules that ask.
 const withKids = (p) => (p?.children?.length ? { ...p, kids: p.children.map((c) => projById.get(c.type)).filter(Boolean) } : p);
+// …but only `CloneDefaults` copies the other projectile's `SetDefaults`. `AIType` borrows its AI and
+// nothing else: tModLoader swaps `type` in for the length of `VanillaAI()` and back out, so pierce,
+// extra updates, lifetime, size and immunity stay whatever the mod's own `SetDefaults` left them.
+// Champion's God Hand's Light Bolt names the bullet's AI and was flying on the bullet's extra
+// update — twice its real speed — for a lead it never has to pay.
+const AI_ONLY = ['ai', 'gravity', 'gravityK', 'gravityDelay', 'drag', 'homing', 'held', 'still'];
+const ALL_DEFAULTS = ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'gravityK', 'gravityDelay', 'drag', 'homing', 'held', 'still', 'explode', 'falloff', 'armorPen', 'walls', 'width', 'height', 'minion', 'sentry', 'slots', 'immune'];
 for (const p of allProjectiles) {
   const src = p.cloneOf ? projById.get(p.cloneOf) : p.aiType !== undefined ? projById.get(`v:${p.aiType}`) : null;
   if (!src) continue;
-  for (const k of ['pen', 'tile', 'updates', 'ai', 'life', 'local', 'gravity', 'gravityK', 'drag', 'homing', 'held', 'still', 'explode', 'falloff', 'armorPen', 'walls', 'width', 'height', 'minion', 'sentry', 'slots', 'immune']) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
+  for (const k of p.cloneOf ? ALL_DEFAULTS : AI_ONLY) if (p[k] === undefined && src[k] !== undefined) p[k] = src[k];
   if (p.cloneOf && !p.children && src.children) p.children = src.children;
 }
 
@@ -779,6 +789,22 @@ const buffName = (ref) => {
   const internal = buffInternal.get(ref);
   return (internal ? vanilla?.loc.get(`BuffName.${internal}`) ?? deCamel(internal) : null) ?? deCamel(ref);
 };
+// What the code says a mod debuff costs an NPC wins over the hand table's DoT (the table was taken
+// from wikis, and Calamity's wiki numbers disagree with its own `DebuffData`); the table's other
+// fields — a defense cut, a damage-taken multiplier — are kept, since the walk only reads health.
+for (const [name, r] of resolveDebuffs(debuffScans)) knownDebuffs[name] = { ...knownDebuffs[name], ...r };
+// (after `debuffRefs` is taken: what a buff does to an NPC says nothing about whether it is a
+// drawback on the player, which is what that set is for)
+// …and vanilla's are a closed set: `NPC.UpdateNPC_BuffApplyDOTs` is every way the game itself drains
+// an NPC, so a vanilla debuff that is not one of these — Slimed, Confused, Frozen, Wet, Midas — does
+// nothing to its health. The ones listed here that the table lacks keep the model's allowance.
+const VANILLA_NPC_DOTS = new Set([20, 24, 39, 44, 70, 144, 153, 169, 183, 186, 189, 323, 324, 337, 344]);
+for (const p of allProjectiles) {
+  for (const b of p.debuffs ?? []) {
+    const id = /^v:(\d+)$/.exec(b)?.[1];
+    if (id && !knownDebuffs[b] && !VANILLA_NPC_DOTS.has(Number(id))) knownDebuffs[b] = { dot: 0, name: buffName(b), via: "not one of vanilla's damage-over-time debuffs" };
+  }
+}
 /** Buffs an equip hook puts on the player: keep only the ones that are debuffs, by name. */
 function foldSelfDebuffs(fx) {
   if (!fx?.selfBuffs) return fx ?? undefined;

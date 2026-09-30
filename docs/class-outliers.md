@@ -11,16 +11,16 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Penthesilea's Muse** | StarsAbove | Penthesilea, the Witch of Ink | Penthesilea, the Witch of Ink → Astrum Aureus | **10** | 61 of 61 | — | Wyvern Slayer (5003/s) |
-| **Wyvern Slayer** | ThoriumMod | Golem | Golem → Arbitration | **9** | 18 of 18 | — | Terrarium Spear (9334/s) |
-| **Reality Shatter** | SOTS | Wall of Flesh | Wall of Flesh → Aquatic Scourge | **8** | 36 of 36 | yes | Energy Storm Partisan (975/s) |
-| **Stellar Sabre** | InfernalEclipseAPI | The Hive Mind | The Hive Mind → Illusionist | **8** | 35 of 35 | yes | Energy Storm Partisan (844/s) |
-| **Energy Storm Partisan** | ThoriumMod | Granite Energy Storm | Granite Energy Storm → Star Scouter | **7** | 11 of 11 | yes | Reality Shatter (1002/s) |
-| **Yateveo Bloom** | CalamityMod | Pre-boss | Pre-boss → Wulfrum Mothership | **6** | 15 of 15 | — | Fork (88/s) |
+| **Yateveo Bloom** | CalamityMod | Pre-boss | Pre-boss → Crabulon | **10** | 39 of 39 | — | Betrayer's Knife (119/s) |
+| **Wyvern Slayer** | ThoriumMod | Golem | Golem → Arbitration | **9** | 18 of 18 | — | Terrarium Spear (9360/s) |
+| **Stellar Sabre** | InfernalEclipseAPI | The Hive Mind | The Hive Mind → Illusionist | **8** | 35 of 35 | yes | Energy Storm Partisan (834/s) |
+| **Reality Shatter** | SOTS | Wall of Flesh | Wall of Flesh → Cryogen | **6** | 22 of 22 | yes | Blood Drinker (1023/s) |
 | **Ark of the Elements** | CalamityMod | Moon Lord | Moon Lord → The Warrior of Light | **6** | 12 of 12 | yes | Sunset of the Sun God (18539/s) |
-| **Terrarian's Last Knife** | ThoriumMod | Dream Eater | Dream Eater → Terra Blade | **5** | 5 of 5 | — | First Fractal (28085/s) |
-| **Pearl Pike** | ThoriumMod | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu → Corpse Bloom | **5** | 2 of 2 | — | Stellar Sabre (744/s) |
+| **First Fractal** | YouBoss | Terra Blade | Polterghast → The Devourer of Gods | **5** | 22 of 22 | — | Murasama (58314/s) |
+| **Terrarian's Last Knife** | ThoriumMod | Dream Eater | Dream Eater → Terra Blade | **5** | 5 of 5 | — | First Fractal (29578/s) |
+| **Pearl Pike** | ThoriumMod | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu → Corpse Bloom | **5** | 2 of 2 | — | Stellar Sabre (742/s) |
 
-<details><summary>…and 14 more that hold a top 3 place without ever taking the crown</summary>
+<details><summary>…and 12 more that hold a top 3 place without ever taking the crown</summary>
 
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -28,10 +28,10 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | Sunset of the Sun God | StarsAbove | Tsukiyomi, the First Starfarer | Tsukiyomi, the First Starfarer | The Devourer of Gods | 14 | 40 of 42 | — |
 | Murasama | CalamityMod | Yharon, Dragon of Rebirth | Yharon, Dragon of Rebirth | Nameless Deity | 9 | 23 of 25 | yes |
 | Moonlight | ThoriumMod | Skeletron | Skeletron | Star Scouter | 9 | 11 of 12 | yes |
-| First Fractal | YouBoss | Terra Blade | Terra Blade | XP-00 Hypnos | 8 | 30 of 32 | — |
 | Ark of the Cosmos | CalamityMod | Yharon, Dragon of Rebirth | Yharon, Dragon of Rebirth | The Avatar of Emptiness | 8 | 23 of 24 | yes |
+| Red Hourglass | ThoriumMod | Pre-boss | Pre-boss | Eye of Cthulhu | 7 | 34 of 35 | — |
 | Hellion Flower Spear | CalamityMod | Plantera | Plantera | Astrum Aureus | 7 | 12 of 13 | — |
-| Red Hourglass | ThoriumMod | Pre-boss | Pre-boss | Wulfrum Mothership | 6 | 15 of 15 | — |
+| Energy Storm Partisan | ThoriumMod | Granite Energy Storm | Granite Energy Storm | Star Scouter | 7 | 11 of 11 | yes |
 
 </details>
 
@@ -39,12 +39,12 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Baby Cannonball Jellyfish** | CalamityMod | Pre-boss | Pre-boss → Star Scouter | **31** | 10 of 10 | — | Aurum Edge (1729/s) |
+| **Baby Cannonball Jellyfish** | CalamityMod | Pre-boss | Pre-boss → Star Scouter | **31** | 10 of 10 | — | Aurum Edge (1805/s) |
 | **Catalyst's Memory** | StarsAbove | Lunar Events (Pillars) | Lunar Events (Pillars) → XG-07 Mars | **29** | 11 of 11 | — | Goozmaga (85802/s) |
-| **Aurum Edge** | StarsAbove | Wall of Flesh | Wall of Flesh → Calamitas Clone | **16** | 1 of 1 | — | Dreamer's Inkwell (6954/s) |
+| **Aurum Edge** | StarsAbove | Wall of Flesh | Wall of Flesh → Calamitas Clone | **16** | 1 of 1 | — | Dreamer's Inkwell (7072/s) |
 | **Dreamer's Inkwell** | StarsAbove | Plantera | Plantera → Empress of Light | **15** | 2 of 2 | — | Gloves of the Black Silence (1748/s) |
 
-<details><summary>…and 8 more that hold a top 3 place without ever taking the crown</summary>
+<details><summary>…and 9 more that hold a top 3 place without ever taking the crown</summary>
 
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -54,8 +54,8 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | Scythe of the Abandoned God | CatalystMod | Astrageldon | Providence, the Profaned Goddess | XG-07 Mars | 17 | 6 of 7 | — |
 | Gloves of the Black Silence | StarsAbove | Golem | Golem | Lunatic Cultist | 10 | 4 of 4 | — |
 | Aegis Driver | StarsAbove | King Slime | The Perforator Hive | Illusionist | 7 | 7 of 7 | — |
+| Gloves of the Black Silence | StarsAbove | Golem | Ravager | Subspace Serpent | 6 | 7 of 8 | — |
 | Aegis Driver | StarsAbove | King Slime | The Vagrant of Space and Time | Viscount | 5 | 6 of 6 | — |
-| Aegis Driver | StarsAbove | King Slime | Giant Clam | Patch Werk | 5 | 5 of 5 | — |
 
 </details>
 
@@ -64,7 +64,7 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Dragalia Found** | StarsAbove | Thespian, the Act of Alchemy | Thespian, the Act of Alchemy → Brimstone Elemental | **29** | 92 of 92 | — | Seaborn Apalistik (1264/s) |
-| **Catharsis** | CatalystMod | Moon Lord | Moon Lord → XG-07 Mars | **26** | 61 of 61 | — | Universe Splitter (21955/s) |
+| **Catharsis** | CatalystMod | Moon Lord | Moon Lord → XG-07 Mars | **26** | 61 of 61 | — | Universe Splitter (23797/s) |
 | **Seaborn Apalistik** | StarsAbove | Skeletron Prime | Skeletron Prime → Lunatic Cultist | **22** | 55 of 55 | — | Phantom Wand (3269/s) |
 | **Droptide** | CalamitySimpleWhipAddon | Giant Clam | Giant Clam → Patch Werk | **5** | 10 of 10 | — | Coral Crusher (109/s) |
 
@@ -73,7 +73,7 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Cinders of Lament | CalamityMod | Moon Lord | Moon Lord | XG-07 Mars | 26 | 61 of 61 | yes |
-| Split Firebrand | InfernalEclipseAPI | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu | Pollux, Baleborn Force | 16 | 26 of 27 | — |
+| Split Firebrand | InfernalEclipseAPI | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu | Borean Strider | 22 | 75 of 76 | — |
 | Unfathomable | CalamitySimpleWhipAddon | The Leviathan | The Leviathan | Lunatic Cultist | 12 | 23 of 23 | — |
 | Ancient Bonds | CalamitySimpleWhipAddon | Pre-boss | Pre-boss | The Vagrant of Space and Time | 11 | 21 of 23 | — |
 | Entwined Branches | CalamitySimpleWhipAddon | Providence, the Profaned Goddess | Providence, the Profaned Goddess | The Old Duke | 10 | 20 of 20 | — |
@@ -87,24 +87,24 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Volt Hatchet** | ThoriumMod | Wall of Flesh | Wall of Flesh → Plantera | **17** | 51 of 51 | — | Shade Shuriken (1711/s) |
-| **Star of Destruction** | CalamityMod | Astrum Deus | Astrum Deus → Terra Blade | **14** | 11 of 11 | yes | Vega (15561/s) |
-| **Mycoroot** | CalamityMod | Crabulon | Eater of Worlds / Brain of Cthulhu → Deerclops | **11** | 14 of 14 | yes | Shinobi Blade (135/s) |
-| **Cosmic Dagger** | ThoriumMod | Martian Madness | Martian Madness → Lunatic Cultist | **9** | 6 of 6 | — | Shade Shuriken (3396/s) |
-| **Champion's God Hand** | ThoriumMod | Buried Champion | Buried Champion → Star Scouter | **6** | 5 of 5 | yes | Volt Hatchet (1345/s) |
-| **The Old Reaper** | CalamityMod | The Old Duke | The Old Duke → Primordial Wyrm | **5** | 13 of 13 | yes | Vega (15446/s) |
+| **Volt Hatchet** | ThoriumMod | Wall of Flesh | Wall of Flesh → Plantera | **17** | 51 of 51 | — | Shade Shuriken (1751/s) |
+| **Star of Destruction** | CalamityMod | Astrum Deus | Astrum Deus → Terra Blade | **14** | 11 of 11 | yes | Vega (15845/s) |
+| **Mycoroot** | CalamityMod | Crabulon | Eater of Worlds / Brain of Cthulhu → Deerclops | **11** | 14 of 14 | yes | Shinobi Blade (146/s) |
+| **Cosmic Dagger** | ThoriumMod | Martian Madness | Martian Madness → Lunatic Cultist | **9** | 6 of 6 | — | Shade Shuriken (3457/s) |
+| **The Old Reaper** | CalamityMod | The Old Duke | The Old Duke → XG-07 Mars | **8** | 22 of 22 | yes | Nanoblack Reaper (25624/s) |
+| **Thorium Dagger** | ThoriumMod | Pre-boss | Pre-boss → Wulfrum Mothership | **6** | 10 of 10 | — | Goblin War Spear (76/s) |
 
-<details><summary>…and 16 more that hold a top 3 place without ever taking the crown</summary>
+<details><summary>…and 17 more that hold a top 3 place without ever taking the crown</summary>
 
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Vega | CalamityMod | Polterghast | Polterghast | Goozma | 12 | 25 of 27 | yes |
+| Mothwing Dagger | InfernalEclipseWeaponsDLC | Glowmoth | Glowmoth | Deerclops | 15 | 14 of 16 | yes |
+| Vega | CalamityMod | Polterghast | Polterghast | XG-07 Mars | 11 | 23 of 24 | yes |
 | Epidemic Shredder | CalamityMod | Golem | Golem | Lunatic Cultist | 10 | 8 of 9 | yes |
-| Contaminated Bile | CalamityMod | Pre-boss | Pre-boss | Patch Werk | 9 | 19 of 21 | yes |
 | Shade Shuriken | ThoriumMod | Plantera | Plantera | Martian Madness | 9 | 18 of 19 | — |
-| Shinobi Blade | CalamityMod | Skeletron | Skeletron | Star Scouter | 9 | 4 of 6 | yes |
-| Thorium Dagger | ThoriumMod | Pre-boss | Pre-boss | Eye of Cthulhu | 7 | 19 of 20 | — |
-| Mothwing Dagger | InfernalEclipseWeaponsDLC | Glowmoth | Eater of Worlds / Brain of Cthulhu | The Perforator Hive | 7 | 12 of 14 | yes |
+| Corrupter's Balloon | ThoriumMod | Wall of Flesh | Wall of Flesh | The Twins | 7 | 11 of 11 | — |
+| Shinobi Blade | CalamityMod | Skeletron | Skeletron | The Excavator | 7 | 2 of 4 | yes |
+| Ice Star | CalamityMod | Cryogen | Aquatic Scourge | Polaris | 6 | 23 of 23 | yes |
 | Valediction | CalamityMod | Polterghast | Polterghast | Yharon, Dragon of Rebirth | 6 | 12 of 13 | — |
 
 </details>
@@ -113,12 +113,13 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **SHPC** | CalamityMod | Skeletron Prime | Skeletron Prime → Arbitration | **21** | 65 of 65 | yes | Ancient Spark (3576/s) |
-| **Event Horizon** | CalamityMod | Ceaseless Void | Ceaseless Void → XP-00 Hypnos | **11** | 31 of 31 | — | Northern Light (24106/s) |
-| **Frigidflash Bolt** | CalamityMod | Wall of Flesh | Wall of Flesh → Brimstone Elemental | **11** | 20 of 20 | yes | SHPC (1399/s) |
-| **Perfect Star** | SOTS | Pre-boss | Pre-boss → Glowmoth | **8** | 21 of 21 | yes | Acid Gun (146/s) |
-| **Nuclear Fury** | CalamityMod | Moon Lord | Subspace Serpent → Dragonfolly | **6** | 9 of 9 | yes | Astral Staff (5003/s) |
-| **Photon Geyser** | SOTS | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu → The Hive Mind | **6** | 4 of 4 | yes | Blood Bath (236/s) |
+| **SHPC** | CalamityMod | Skeletron Prime | Skeletron Prime → Arbitration | **21** | 65 of 65 | yes | Ancient Spark (3554/s) |
+| **Event Horizon** | CalamityMod | Ceaseless Void | Ceaseless Void → XP-00 Hypnos | **11** | 31 of 31 | — | Northern Light (24234/s) |
+| **Frigidflash Bolt** | CalamityMod | Wall of Flesh | Wall of Flesh → Brimstone Elemental | **11** | 20 of 20 | yes | SHPC (1402/s) |
+| **Nuclear Fury** | CalamityMod | Moon Lord | Moon Lord → Providence, the Profaned Goddess | **10** | 14 of 14 | yes | Northern Light (19623/s) |
+| **Perfect Star** | SOTS | Pre-boss | Pre-boss → Patch Werk | **9** | 22 of 22 | yes | Acid Gun (135/s) |
+| **Blood Bath** | CalamityMod | The Perforator Hive | Illusionist → Star Scouter | **8** | 30 of 30 | yes | Frigidflash Bolt (1065/s) |
+| **Photon Geyser** | SOTS | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu → The Hive Mind | **6** | 4 of 4 | yes | Blood Bath (257/s) |
 | **Blood Bath** | CalamityMod | The Perforator Hive | The Perforator Hive → Deerclops | **5** | 4 of 4 | yes | Waterwick Candle (231/s) |
 
 <details><summary>…and 10 more that hold a top 3 place without ever taking the crown</summary>
@@ -127,12 +128,12 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Northern Light | ThoriumMod | Dream Eater | Dream Eater | Primordial Wyrm | 13 | 38 of 38 | — |
 | Waterwick Candle | ThoriumMod | Skeletron | Skeletron | Star Scouter | 9 | 8 of 8 | — |
-| Blue Jellyfish Staff | SOTS | Pre-boss | Pre-boss | Glowmoth | 8 | 20 of 21 | yes |
+| Blue Jellyfish Staff | SOTS | Pre-boss | Pre-boss | Glowmoth | 8 | 21 of 21 | yes |
 | Wyvern's Call | CalamityMod | Wall of Flesh | Wall of Flesh | The Twins | 7 | 15 of 15 | — |
-| Flare Bolt | CalamityMod | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu | The Perforator Hive | 7 | 4 of 5 | yes |
 | Void Vortex | CalamityMod | Yharon, Dragon of Rebirth | Yharon, Dragon of Rebirth | XG-07 Mars | 6 | 14 of 14 | yes |
 | Geomancer's Brush | ThoriumMod | Wall of Flesh | Wall of Flesh | Cryogen | 6 | 10 of 10 | — |
 | Exalted Horizon | CatalystMod | Astrageldon | Astrageldon | Providence, the Profaned Goddess | 6 | 6 of 6 | — |
+| Northern Light | ThoriumMod | Dream Eater | Supreme Witch, Calamitas | Nameless Deity | 5 | 54 of 56 | — |
 
 </details>
 
@@ -140,26 +141,25 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Omni-Cannon** | ThoriumMod | Dream Eater | Dream Eater → Primordial Wyrm | **13** | 43 of 43 | — | The Pack (29041/s) |
-| **Ichorthrower** | CatalystMod | The Perforator Hive | The Perforator Hive → The Advisor | **13** | 33 of 33 | — | Lycanroc (322/s) |
+| **Ichorthrower** | CatalystMod | The Perforator Hive | The Perforator Hive → The Slime God | **11** | 32 of 32 | — | Suspended Shotgun Shell Launcher (248/s) |
 | **Pathogen Regurgitator** | SOTS | Wall of Flesh | Wall of Flesh → The Destroyer | **10** | 27 of 27 | yes | Hellborn (888/s) |
+| **Omni-Cannon** | ThoriumMod | Dream Eater | Dream Eater → The Old Duke | **9** | 15 of 15 | — | The Pack (28248/s) |
 | **Suspended Shotgun Shell Launcher** | CalamityAmmo | Pre-boss | Pre-boss → Eye of Cthulhu | **7** | 26 of 26 | — | Torch Gun (244/s) |
 | **Prideful Hunter's Planar Ripper** | CalamityMod | Moon Lord | Moon Lord → The Warrior of Light | **6** | 8 of 8 | yes | Cosmic Destroyer (20363/s) |
-| **Genocide** | StarsAbove | Golem | Forgotten One → Nalhaun, Ruler of the Hollow World | **5** | 15 of 15 | — | Eventide (2861/s) |
-| **El Capitan's Hardware** | StarsAbove | Skeletron Prime | Skeletron Prime → Calamitas Clone | **5** | 11 of 11 | — | Arc Nova Diffuser (1433/s) |
+| **El Capitan's Hardware** | StarsAbove | Skeletron Prime | Skeletron Prime → Calamitas Clone | **5** | 11 of 11 | — | Arc Nova Diffuser (1434/s) |
 
-<details><summary>…and 9 more that hold a top 3 place without ever taking the crown</summary>
+<details><summary>…and 11 more that hold a top 3 place without ever taking the crown</summary>
 
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cosmic Destroyer | StarsAbove | Tsukiyomi, the First Starfarer | Tsukiyomi, the First Starfarer | Primordial Wyrm | 17 | 57 of 59 | — |
+| Cosmic Destroyer | StarsAbove | Tsukiyomi, the First Starfarer | Tsukiyomi, the First Starfarer | XG-07 Mars | 20 | 71 of 73 | — |
+| Aurora Blazer | CalamityMod | Astrum Aureus | Astrum Aureus | Empress of Light | 9 | 30 of 32 | — |
+| Genocide | StarsAbove | Golem | Golem | Arbitration | 9 | 16 of 16 | — |
 | Wyrm Decimator | ThoriumMod | Dream Eater | Dream Eater | The Old Duke | 9 | 15 of 15 | — |
 | The Pack | CalamityMod | The Devourer of Gods | The Devourer of Gods | Goozma | 8 | 31 of 32 | — |
 | Arterial Assault | CalamityMod | Ravager | Ravager | The Warrior of Light | 8 | 20 of 21 | — |
-| Aurora Blazer | CalamityMod | Astrum Aureus | Astrum Aureus | The Plaguebringer Goliath | 7 | 30 of 31 | — |
 | Arc Nova Diffuser | CalamityMod | Plantera | Plantera | Astrum Aureus | 7 | 11 of 12 | — |
 | Titanium Railgun | CalamityMod | Wall of Flesh | Wall of Flesh | Cryogen | 6 | 16 of 16 | — |
-| Crackshot Colt | CalamityMod | Pre-boss | Pre-boss | Wulfrum Mothership | 6 | 10 of 10 | — |
 
 </details>
 
@@ -167,12 +167,12 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Syzygy** | CalamityBardHealer | Moon Lord | Argus, the Bereft Vassal → Nuclear Terror | **16** | 15 of 15 | — | Corroded Cane (11748/s) |
+| **Syzygy** | CalamityBardHealer | Moon Lord | Moon Lord → Nuclear Terror | **18** | 15 of 15 | — | Corroded Cane (13120/s) |
 | **Pagan's Grasp** | ThoriumMod | Pumpkin Moon | Pumpkin Moon → Empress of Light | **13** | 11 of 11 | — | Disaster (2314/s) |
 | **The Stalker** | ThoriumMod | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu → Deerclops | **11** | 7 of 7 | — | Templar's Judgement (396/s) |
-| **Templar's Judgement** | ThoriumMod | Skeletron | Skeletron → Star Scouter | **9** | 6 of 6 | yes | Wild Umbra (637/s) |
+| **Templar's Judgement** | ThoriumMod | Skeletron | Skeletron → Star Scouter | **9** | 6 of 6 | yes | Wild Umbra (632/s) |
 | **Poison Prickler** | ThoriumMod | Pre-boss | Pre-boss → Glowmoth | **8** | 10 of 10 | yes | Rotten Cod (99/s) |
-| **Barren Garden** | InfernalEclipseWeaponsDLC | Yharon, Dragon of Rebirth | Yharon, Dragon of Rebirth → XG-07 Mars | **6** | 6 of 6 | — | Two Paths (36274/s) |
+| **Barren Garden** | InfernalEclipseWeaponsDLC | Yharon, Dragon of Rebirth | Yharon, Dragon of Rebirth → XG-07 Mars | **6** | 6 of 6 | — | Two Paths (45276/s) |
 | **Glacial Harvester** | RagnarokMod | Cryogen | Cryogen → Brimstone Elemental | **6** | 3 of 3 | — | The Effuser (1467/s) |
 
 <details><summary>…and 11 more that hold a top 3 place without ever taking the crown</summary>
@@ -204,11 +204,11 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Irradiated Chain-Reactor | SOTS | Skeletron Prime | Skeletron Prime | Guardian Commander | 33 | 18 of 19 | yes |
-| Thunderbolt Action Sniper Rifle | InfernalEclipseWeaponsDLC | Storm Weaver | Storm Weaver | Nameless Deity | 17 | 2 of 3 | — |
 | Eclipse | SOTS | Wall of Flesh | Wall of Flesh | Calamitas Clone | 16 | 8 of 9 | yes |
+| Thunderbolt Action Sniper Rifle | InfernalEclipseWeaponsDLC | Storm Weaver | Storm Weaver | XS-03 Apollo | 12 | 1 of 1 | — |
 | Hellbreaker | SOTS | Eater of Worlds / Brain of Cthulhu | Eater of Worlds / Brain of Cthulhu | Deerclops | 11 | 7 of 7 | yes |
+| Gold Arc Staff | SOTS | Pre-boss | Pre-boss | Crabulon | 10 | 4 of 4 | yes |
 | Skip Shot | SOTS | Pre-boss | Desert Scourge | Crabulon | 7 | 4 of 4 | yes |
-| Gold Arc Staff | SOTS | Pre-boss | Pre-boss | Eye of Cthulhu | 7 | 2 of 2 | yes |
 
 </details>
 
@@ -216,26 +216,26 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 
 | weapon | mod | you get it at | reign | stages | newer weapons it outscores | a guide names it | what ends it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Fishbone** | ThoriumMod | Wall of Flesh | Wall of Flesh → Calamitas Clone | **16** | 23 of 23 | — | Bassoon (2798/s) |
-| **Windward** | CalamityBardHealer | The Hive Mind | The Hive Mind → Star Scouter | **15** | 16 of 16 | yes | Fishbone (3296/s) |
-| **Panflute** | ThoriumMod | Pre-boss | Desert Scourge → Crabulon | **7** | 13 of 13 | yes | Riveting Tadpole (209/s) |
+| **Fishbone** | ThoriumMod | Wall of Flesh | Wall of Flesh → Calamitas Clone | **16** | 23 of 23 | — | Bassoon (2795/s) |
+| **Windward** | CalamityBardHealer | The Hive Mind | The Hive Mind → Star Scouter | **15** | 16 of 16 | yes | Fishbone (3258/s) |
+| **Panflute** | ThoriumMod | Pre-boss | Desert Scourge → Crabulon | **7** | 13 of 13 | yes | Riveting Tadpole (188/s) |
 | **Face Melter** | RagnarokMod | The Devourer of Gods | The Devourer of Gods → XG-07 Mars | **7** | 11 of 11 | — | Harmony of the Old God (18100/s) |
-| **Bassoon** | ThoriumMod | Plantera | Forgotten One → Empress of Light | **6** | 16 of 16 | — | Turntable (2246/s) |
-| **Bassoon** | ThoriumMod | Plantera | Subspace Serpent → Guardian Commander | **5** | 29 of 29 | — | Shooting Star Blast-Guitar (3063/s) |
-| **Panflute** | ThoriumMod | Pre-boss | Eater of Worlds / Brain of Cthulhu → Corpse Bloom | **5** | 22 of 22 | yes | Windward (282/s) |
+| **Edge of Imagination** | ThoriumMod | Dream Eater | Storm Weaver → The Old Duke | **7** | 7 of 7 | — | Face Melter (15322/s) |
+| **Bassoon** | ThoriumMod | Plantera | Subspace Serpent → Dragonfolly | **6** | 30 of 30 | — | Turntable (4820/s) |
+| **Bassoon** | ThoriumMod | Plantera | Forgotten One → Empress of Light | **6** | 16 of 16 | — | Turntable (2198/s) |
 
-<details><summary>…and 10 more that hold a top 3 place without ever taking the crown</summary>
+<details><summary>…and 8 more that hold a top 3 place without ever taking the crown</summary>
 
 | weapon | mod | you get it at | top 3 from | to | stages | newer weapons it outscores | a guide names it |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Orichalcum Slide Whistle | ThoriumMod | Wall of Flesh | Wall of Flesh | Golem | 24 | 46 of 47 | — |
-| Turntable | ThoriumMod | Martian Madness | Martian Madness | Subspace Serpent | 16 | 16 of 17 | — |
-| Riveting Tadpole | ThoriumMod | Pre-boss | Pre-boss | Eater of Worlds / Brain of Cthulhu | 12 | 19 of 19 | yes |
-| Unbreakable Combat Ukulele | RagnarokMod | Polterghast | Polterghast | Goozma | 12 | 18 of 20 | — |
-| Holophonor | ThoriumMod | Dream Eater | Dream Eater | The Old Duke | 9 | 6 of 7 | — |
-| Edge of Imagination | ThoriumMod | Dream Eater | Storm Weaver | The Devourer of Gods | 8 | 10 of 12 | — |
-| Steel Drum | ThoriumMod | Pre-boss | Pre-boss | Eye of Cthulhu | 7 | 9 of 9 | — |
+| Turntable | ThoriumMod | Martian Madness | Martian Madness | Subspace Serpent | 16 | 17 of 17 | — |
+| Riveting Tadpole | ThoriumMod | Pre-boss | Pre-boss | Patch Werk | 9 | 11 of 11 | yes |
+| Holophonor | ThoriumMod | Dream Eater | Storm Weaver | The Old Duke | 7 | 6 of 7 | — |
+| Thorium Whistle | ThoriumRework | Pre-boss | The Perforator Hive | Skeletron | 6 | 32 of 34 | — |
 | Supercluster | CalamityBardHealer | Astrageldon | Astrageldon | Providence, the Profaned Goddess | 6 | 4 of 4 | — |
+| Thorium Whistle | ThoriumRework | Pre-boss | Desert Scourge | Glowmoth | 5 | 10 of 10 | — |
+| Unbreakable Combat Ukulele | RagnarokMod | Polterghast | Polterghast | The Devourer of Gods | 5 | 6 of 7 | — |
 
 </details>
 
@@ -247,8 +247,8 @@ A long reign is not proof of a bug. It is a list of where to look: a weapon that
 | other | 86 | 4 | Baby Cannonball Jellyfish, 31 stages |
 | summon | 323 | 4 | Dragalia Found, 29 stages |
 | thrower | 271 | 6 | Volt Hatchet, 17 stages |
-| magic | 389 | 7 | SHPC, 21 stages |
-| ranged | 489 | 7 | Omni-Cannon, 13 stages |
-| healer | 164 | 7 | Syzygy, 16 stages |
+| magic | 389 | 8 | SHPC, 21 stages |
+| ranged | 489 | 6 | Ichorthrower, 11 stages |
+| healer | 164 | 7 | Syzygy, 18 stages |
 | void | 97 | 4 | Revolution, 44 stages |
 | bard | 208 | 7 | Fishbone, 16 stages |

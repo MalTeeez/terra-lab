@@ -141,6 +141,16 @@ function homingByName(asm, callee, args) {
 
 /** Per-tick `velocity.Y +=` of the vanilla arc aiStyles, when the AI itself could not be read. */
 export const GRAVITY_K = 0.1;
+/**
+ * The one arc aiStyle that *was* read: vanilla's thrown AI (`aiStyle 2`), whose default branch in
+ * `Projectile.VanillaAI` is `ai[0] += 1; if (ai[0] >= 20) { velocity.Y += 0.4f; velocity.X *= 0.97f; }`
+ * — twenty updates dead straight, then a steep drop. Every mod throwable that sets `aiStyle = 2` and
+ * adds nothing of its own flies this (Gel Dart, Contaminated Bile). The flat `GRAVITY_K` from the
+ * first update was charging them an arc over ranges they cover level.
+ * ponytail: the default branch only; the handful of vanilla types with their own (holy water 0.25
+ * after 10, the potions 0.3 after 15) and the 0.97 horizontal decay are not carried.
+ */
+export const THROWN_ARC = { k: 0.4, delay: 20 };
 /** The largest per-update `velocity.Y +=` that is still an arc and not a misread steering blend. */
 export const GRAVITY_MAX = 1.5;
 /** How far a projectile with no readable search radius is assumed to see (pessimistic). */
@@ -309,6 +319,39 @@ function stealthTag(tags) {
   return undefined;
 }
 
+/**
+ * How many updates a projectile flies level before its arc starts, where its AI says so: the pull
+ * sits behind a counter that crosses its mark once and is never put back (`if (Timer > 80)
+ * velocity.Y += 0.15f` — Cinquedea flies eighty updates, 800 px, before it drops a pixel). Every
+ * write of the pull has to be behind such a counter; one that is not arcs from the first update,
+ * and so does anything whose pull is in a helper the counter read cannot see into.
+ */
+function gravityDelayOf(writes) {
+  let delay = Infinity;
+  for (const g of writes) {
+    if (!g.method || !/^(AI|PreAI|PostAI)$/.test(g.method.name)) return undefined;
+    const n = Math.max(0, ...counterRanges(g.owner, g.method, 'tick')
+      .filter((r) => r.gate?.kind === 'threshold' && r.reached && !r.gate.reset && g.offset >= r.lo && g.offset < r.hi)
+      .map((r) => r.gate.n));
+    if (!(n > 0)) return undefined;
+    delay = Math.min(delay, n);
+  }
+  return Number.isFinite(delay) ? delay : undefined;
+}
+
+/**
+ * Whether a debuff is only put on behind something the weapon does not bring: a special world seed
+ * (Animosity's rounds add Vulnerability Hex only `if (Main.zenithWorld)`) or a piece of gear. The
+ * same requirement the spawns already honour; a debuff behind it was being paid for in every world,
+ * and once the debuff's real size was read that was 1332 DPS of a hex no normal world ever sees.
+ */
+const setupRanges = new WeakMap();
+function needsSetup(d) {
+  if (!d.method) return false;
+  if (!setupRanges.has(d.method)) setupRanges.set(d.method, requiresRanges(d.owner, d.method));
+  return setupRanges.get(d.method).some((r) => r.has && (r.gate.what === 'world' || r.gate.what === 'gear') && d.offset >= r.lo && d.offset < r.hi);
+}
+
 /** Field reads of `stealthStrike` (Calamity) anywhere in the type's own methods. */
 function readsStealth(asm, td) {
   for (const m of td.methods) {
@@ -393,7 +436,7 @@ function neverDamages(asm, td) {
  * @returns {{ fields: Record<string, any>, aiType?: any, cloneOf?: any, gravity: boolean, homing: boolean, wallPierceInAi: boolean, children: Array, debuffs: string[], stealth: boolean }}
  */
 export function evalProjectile(asm, td, { tml }) {
-  const rec = { fields: {}, self: {}, children: [], mentions: [], debuffs: [], gravity: false, velYAdds: [], velXAdds: new Set(), homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td) };
+  const rec = { fields: {}, self: {}, children: [], mentions: [], debuffs: [], gravity: false, velYAdds: [], gravAt: [], velXAdds: new Set(), homing: false, wallPierceInAi: false, stealth: readsStealth(asm, td), hitStores: { stealth: 0, other: 0 }, debuffAt: [] };
   const PROJ = makeObj('projectile');
   const VEL = makeObj('velocity');
   const AI = { k: 'arr', items: [] };
@@ -437,7 +480,7 @@ export function evalProjectile(asm, td, { tml }) {
    * The one branch that is refused is `numHits > 0` (see `afterHit`): not "sometimes it arcs" but
    * "this is what it does once it has already hit", which is not flight at all.
    */
-  const noteGravity = (k, ctx) => { if (isNum(k) && k > 0 && !afterHit(ctx?.condTags)) rec.velYAdds.push(k); };
+  const noteGravity = (k, ctx) => { if (isNum(k) && k > 0 && !afterHit(ctx?.condTags)) { rec.velYAdds.push(k); rec.gravAt.push({ k, owner: ctx?.owner ?? asm, method: ctx?.method, offset: ctx?.offset }); } };
   /** …and the same constant on the X axis, which is what marks one of them as steering. */
   const noteVelX = (k, ctx) => { if (isNum(k) && k > 0 && !afterHit(ctx?.condTags)) rec.velXAdds.add(k); };
   /**
@@ -612,11 +655,10 @@ export function evalProjectile(asm, td, { tml }) {
         if (name === 'velocity' && carriesOwner(value)) { rec.returns = true; return; }
         // It changes course when it hits something, so it is not passing cleanly through: it
         // bounces off, or turns round and comes home. Either way its pierce is not a pass.
-        if (name === 'velocity' && phase === 'hit') { rec.bounces = true; return; }
-        if (name === 'velocity' && carriesOwner(value)) { rec.returns = true; return; }
-        // It changes course when it hits something, so it is not passing cleanly through: it
-        // bounces off, or turns round and comes home. Either way its pierce is not a pass.
-        if (name === 'velocity' && phase === 'hit') { rec.bounces = true; return; }
+        // …unless only a stealth strike does it. Cinquedea's strike stops dead in what it hits
+        // (`velocity = Vector2.Zero` behind `stealthStrike`) to launch again later; its ordinary
+        // throw pierces two and flies on, and was being scored as the strike: one body, stopped.
+        if (name === 'velocity' && phase === 'hit') { if (stealthTag(ctx.condTags) !== true) rec.bounces = true; return; }
         // The mirror of the `sticks` rule two blocks up: a projectile that writes its own centre from
         // the *owner's*, every tick, is anchored to the player rather than flying anywhere. On its
         // own this says very little — 129 projectiles do it, and most are held beams, swung blades
@@ -640,6 +682,9 @@ export function evalProjectile(asm, td, { tml }) {
         return;
       }
       if (recv === THIS && phase === 'defaults' && (name === 'AIType' || name === 'aiType')) { rec.aiType = value; return; }
+      // what the hit handler writes into the projectile's own state, and whether only a stealth strike
+      // writes it: the evidence for which grade a stick belongs to (see `stickAi` below)
+      if (recv === THIS && phase === 'hit') { if (stealthTag(ctx.condTags) === true) rec.hitStores.stealth++; else rec.hitStores.other++; }
       // …and every other number the type writes to a field of its **own** in `SetDefaults`. Most of
       // them are private bookkeeping and nobody reads them, but a charge weapon states its whole
       // mechanism there — how long it winds up for, and what the wind-up buys — and until now the
@@ -719,7 +764,7 @@ export function evalProjectile(asm, td, { tml }) {
       if (!rec.digs && (DIGS_RE.test(name) || methodDigs(asm, callee.def))) rec.digs = true;
       if (name === 'get_Center' && ctx.recv === NPC) return NPC_POS;
       if (/^get_(Center|MountedCenter|position)$/.test(name) && ctx.recv === PLAYER) return OWNER_POS;
-      if (phase === 'ai' && (name === 'set_Center' || name === 'set_position') && ctx.recv === PROJ && fromNpc(args[0])) { rec.sticks = true; return UNKNOWN; }
+      if (phase === 'ai' && (name === 'set_Center' || name === 'set_position') && ctx.recv === PROJ && fromNpc(args[0])) { rec.stickAi = true; return UNKNOWN; }
       if (decl === 'Terraria.Projectile' && name === 'Resize' && isNum(args[0])) { rec.explode = Math.max(rec.explode ?? 0, args[0], isNum(args[1]) ? args[1] : 0); return UNKNOWN; }
       if (HOMING_RE.test(name)) {
         // Calamity's `HomeInOnNPC(proj, ignoreTiles, range, speed, inertia)` and its variants carry
@@ -741,7 +786,9 @@ export function evalProjectile(asm, td, { tml }) {
       }
       if (phase === 'hit' && name === 'AddBuff' && args.length >= 2) {
         const b = args[0];
-        rec.debuffs.push(isNum(b) ? `v:${b}` : b?.k === 'type' ? simpleName(b.name) : '?');
+        const ref = isNum(b) ? `v:${b}` : b?.k === 'type' ? simpleName(b.name) : '?';
+        rec.debuffs.push(ref);
+        rec.debuffAt.push({ ref, owner: ctx.owner ?? asm, method: ctx.method, offset: ctx.offset });
       }
       // `velocity.Y += MathHelper.Clamp(ai[1] / 40f, 0f, 1f)` is a gravity that ramps up; the value
       // inside is a counter the interpreter cannot follow, but the bounds say where it ends up, so
@@ -839,7 +886,7 @@ export function evalProjectile(asm, td, { tml }) {
   // Scourge of the Desert steers that way at 0.2 a update, and carried nothing but the default
   // range because neither `HomeInOnNPC` nor the `(v*(N-1) + dir*s)/N` blend is anywhere in it.
   const pulls = rec.velYAdds.filter((k) => !rec.velXAdds.has(k) && k <= GRAVITY_MAX);
-  if (pulls.length) { rec.gravity = true; rec.gravityK = Math.max(...pulls); }
+  if (pulls.length) { rec.gravity = true; rec.gravityK = Math.max(...pulls); rec.gravityDelay = gravityDelayOf(rec.gravAt.filter((g) => g.k === rec.gravityK)); }
   // …and the same per-axis accelerator serves two different jobs, told apart by what it steers
   // *toward*. Calamity's boomerangs never write `velocity` from the owner vector — the shape
   // `carriesOwner` was written for — they nudge each component toward it a step at a time, which is
@@ -849,6 +896,11 @@ export function evalProjectile(asm, td, { tml }) {
   const steers = rec.velYAdds.filter((k) => rec.velXAdds.has(k));
   if (steers.length && rec.ownerAxis) rec.returns = true;
   else if (steers.length && rec.homing) rec.homingArgs = { ...(rec.homingArgs ?? {}), turn: Math.max(...steers) };
+  // Riding an NPC is read in the AI, which never says *why* it is riding one — the state it tests
+  // (`if (Stick > 0)`) was set by the hit handler. Where every write that handler makes to the
+  // projectile's own state sits behind `stealthStrike`, only a stealth strike ever sticks: Cinquedea's
+  // strike lodges in the target and launches again, its ordinary throw pierces two and flies on.
+  if (rec.stickAi && !(rec.hitStores.stealth > 0 && rec.hitStores.other === 0)) rec.sticks = true;
   if (td.methods.some((m) => STICKY_RE.test(m.name))) rec.sticks = true;
   if (neverDamages(asm, td)) rec.cantDamage = true;
   else if (selfDisarms(asm, td)) rec.disarms = true;
@@ -1002,7 +1054,10 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     height: num(f.height),
     dc: rec.damageClass,
     gravity: rec.gravity || (ai !== undefined && GRAVITY_AI.has(ai)) || (ai === 1 && bool(f.arrow)) || undefined,
-    gravityK: rec.gravityK ?? ((rec.gravity || (ai !== undefined && GRAVITY_AI.has(ai)) || (ai === 1 && bool(f.arrow))) ? GRAVITY_K : undefined),
+    gravityK: rec.gravityK ?? (ai === 2 ? THROWN_ARC.k : (rec.gravity || (ai !== undefined && GRAVITY_AI.has(ai)) || (ai === 1 && bool(f.arrow))) ? GRAVITY_K : undefined),
+    // updates flown level before the arc starts: the AI's own counter where it pulls, else vanilla's
+    // thrown AI where that is the only pull there is
+    gravityDelay: rec.gravityK !== undefined ? rec.gravityDelay : ai === 2 ? THROWN_ARC.delay : undefined,
     drag: rec.drag,
     homing: homingRecord(rec, vanillaId),
     // …but not if it also changes course when it hits something. `held` means the player holds it
@@ -1075,7 +1130,7 @@ export function projectileRecord(asm, id, rec, { vanillaId = null } = {}) {
     digs: rec.digs || undefined,
     mentions: rec.mentions?.length ? [...new Set(rec.mentions.map((m) => projRef(asm, m)).filter(Boolean))] : undefined,
     children: children.size ? [...children.values()] : undefined,
-    debuffs: rec.debuffs.length ? [...new Set(rec.debuffs)] : undefined,
+    debuffs: rec.debuffs.length ? [...new Set(rec.debuffs.filter((ref) => !rec.debuffAt.some((d) => d.ref === ref) || rec.debuffAt.some((d) => d.ref === ref && !needsSetup(d))))] : undefined,
     stealth: rec.stealth || undefined,
     cloneOf: rec.cloneOf === undefined ? undefined : projRef(asm, rec.cloneOf) ?? undefined,
   };

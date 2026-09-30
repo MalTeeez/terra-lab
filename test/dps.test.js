@@ -284,6 +284,20 @@ describe('landing', () => {
     // …and a seeker climbs back onto the target, so the arc stops limiting it
     expect(reachOf({ life: 300, gravity: true, gravityK: 0.15, homing: { range: 300 } }, 12, 50)).toBe(3600);
   });
+  test('an arc that starts late is flown level until it does', () => {
+    // vanilla's thrown AI: twenty updates straight, then 0.4 a update — a 14 px/tick dart covers
+    // 280 px before it drops a pixel, so over 220 px it pays no arc at all
+    const dart = { life: 600, gravity: true, gravityK: 0.4, gravityDelay: 20 };
+    expect(landing(dart, { D: 220, boss: b, velocity: 14 }).parts.some((p) => /arc drops/.test(p.label))).toBe(false);
+    expect(landing({ ...dart, gravityDelay: undefined }, { D: 220, boss: b, velocity: 14 }).parts.some((p) => /arc drops/.test(p.label))).toBe(true);
+    expect(reachOf(dart, 14, 50)).toBeCloseTo(14 * (20 + Math.sqrt(100 / 0.4)), 5);
+  });
+  test('a broad projectile finds a moving boss more often than a pin of one', () => {
+    // a hit is two rectangles overlapping: the shot's own width widens what it has to find
+    const at = (width) => landing({ life: 600, width }, { D: 220, boss: b, velocity: 16 }).f;
+    expect(at(36)).toBeGreaterThan(at(10));
+    expect(at(undefined)).toBe(at(0)); // an unread size adds nothing
+  });
   test('a projectile that expires before it arrives never lands', () => {
     expect(landing({ life: 4 }, { D: 400, boss: b, velocity: 8 }).f).toBe(0);
     expect(landing({ life: 60 }, { D: 400, boss: b, velocity: 8 }).f).toBeLessThan(1); // 480 px: only just
@@ -663,6 +677,16 @@ describe('realDps', () => {
     expect(unknownDebuffDps(20)).toBeGreaterThan(unknownDebuffDps(0));
     // the allowance stays under a real early DoT
     expect(unknownDebuffDps(0)).toBeLessThan(ds.debuffs['v:24'].dot * 2);
+  });
+  test('a debuff read as costing no health is a reading, not a gap: no allowance', () => {
+    // a stun: the miner found its flag and nothing behind it that drains the target
+    const stun = structuredClone(raw);
+    stun.debuffs['M:Curse'] = { dot: 0, via: 'no health loss behind any flag it sets' };
+    const sds = indexDataset(stun);
+    const r = realDps(sds.byId.get('M:curseGun'), ctx({ ds: sds }));
+    expect(part(r, /effect unread/)).toBeUndefined();
+    expect(part(r, /no damage over time/)).toBeTruthy();
+    expect(r.value).toBeLessThan(dps('M:curseGun').value);
   });
   test('a DoT is only on the boss while the weapon keeps landing', () => {
     // the popgun lands nothing at all: its poison must not be paid either

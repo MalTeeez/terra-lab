@@ -694,8 +694,13 @@ export function reachOf(p, step, drop = DROP_TOLERANCE) {
   // stops being what limits how far it is useful — the same reason its pierce keeps its value.
   const g = p?.gravity && !p?.homing ? p.gravityK ?? GRAVITY_K : 0;
   if (!(g > 0)) return byLife;
-  return Math.min(byLife, step * Math.sqrt((2 * Math.max(1, drop)) / g));
+  // …after whatever it flies level first: vanilla's thrown AI holds its line for twenty updates
+  // before the pull starts, and a mod's AI can hold it for longer (`gravityDelay`).
+  return Math.min(byLife, step * ((p.gravityDelay ?? 0) + Math.sqrt((2 * Math.max(1, drop)) / g)));
 }
+
+/** How far apart two centres can be vertically and still overlap: the boss's height plus the shot's. */
+const tall = (b, p) => b.h + (p?.height ?? 0);
 
 /**
  * How a projectile arrives at a target `D` px away: the ticks it spends flying, the ticks of life
@@ -733,7 +738,12 @@ export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, coun
   // a scatter wider than a full circle is a full circle: rolls stacked on an angle add up past it
   const spread = Math.min(spreadIn, Math.PI);
   let f = 1;
-  const aimW = b.aimW ?? b.w;
+  // A hit is two rectangles overlapping, so the projectile's own size widens the target it has to
+  // find: a 36 px dagger connects anywhere a 10 px bolt would and 13 px further off either edge.
+  // Measuring every miss against the boss alone graded Light's Anguish's broad knife and the God
+  // Hand's pin of a bolt as the same shot. An unread size adds nothing.
+  const pw = p?.width ?? 0;
+  const aimW = (b.aimW ?? b.w) + pw;
   const theta = Math.atan(aimW / 2 / Math.max(1, D));
 
   const step = stepOf(velocity);
@@ -757,7 +767,8 @@ export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, coun
   // projectile with extra updates falls `(1+updates)²` times as far over the same flight as this
   // used to charge it. `reachOf` already works in updates; this did not, and quietly handed every
   // fast arcing shot a flat arc. Gel Glove's ball was dropping "2 px over 220" for a ×0.98.
-  const dropPx = p?.gravity && flight > 0 ? 0.5 * (p.gravityK ?? GRAVITY_K) * (flight * (1 + (p.updates ?? 0))) ** 2 : 0;
+  // …and only over the part of the flight after the pull has started (`gravityDelay` updates in).
+  const dropPx = p?.gravity && flight > 0 ? 0.5 * (p.gravityK ?? GRAVITY_K) * Math.max(0, flight * (1 + (p.updates ?? 0)) - (p.gravityDelay ?? 0)) ** 2 : 0;
   const spreadPx = spread > 0 ? Math.tan(Math.min(spread, 1.4)) * D : 0;
 
   /**
@@ -831,8 +842,8 @@ export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, coun
     }
     return { s: theta / sp, label: `spread ±${deg(sp)} vs ${deg(theta)} target` };
   };
-  const travelAt = (h) => (flight > 0 ? b.w / (b.w + driftPx * (1 - h)) : 1);
-  const gravityAt = (h) => (dropPx > 0 ? clamp(b.h / (b.h + dropPx * (1 - h)), 0.2, 1) : 1);
+  const travelAt = (h) => (flight > 0 ? (b.w + pw) / (b.w + pw + driftPx * (1 - h)) : 1);
+  const gravityAt = (h) => (dropPx > 0 ? clamp(tall(b, p) / (tall(b, p) + dropPx * (1 - h)), 0.2, 1) : 1);
 
   const dumbSpread = spreadAt(0);
   if (dumbSpread.s < 0.995) { f *= dumbSpread.s; parts.push({ label: dumbSpread.label, mul: r2(dumbSpread.s) }); }
@@ -858,7 +869,7 @@ export function landing(p, { D, boss: b, spread: spreadIn = 0, fan = false, coun
     // crawling at 220. Feeding the turn-around through the same band is what stops the model
     // charging a weapon a round trip to 300 px and then letting it land hits at 1470.
     // a blade states its reach outright; anything thrown has it read off its flight
-    const reach = reachIn ?? Math.min(turnsRoundAt(arch), reachOf(p, step, b.h / 2));
+    const reach = reachIn ?? Math.min(turnsRoundAt(arch), reachOf(p, step, tall(b, p) / 2));
     if (reach < D) carry = 0;
     else if (reach < 2 * D) carry = clamp((reach - D) / D, RANGE_EDGE, 1);
     if (carry < 1) { f *= carry; parts.push({ label: `reaches ${Math.round(reach)} px of ${Math.round(D)}`, mul: r2(carry) }); }
@@ -1655,7 +1666,7 @@ function splashArc(p, v) {
   const g = p.gravityK ?? GRAVITY_K;
   if (!(g > 0) || !(v > 0)) return null;
   // `gravityK` pulls once per *update*; the answer is wanted in ticks
-  return (2 * v) / (g * (1 + (p.updates ?? 0)));
+  return ((p.gravityDelay ?? 0) + (2 * v) / g) / (1 + (p.updates ?? 0));
 }
 
 /**
@@ -2059,15 +2070,20 @@ function gradeWeapon(item, ctx = {}) {
   let dot = 0;
   let defenseDebuff = 0;
   const applied = [];
+  const harmless = [];
+  let immune = 0;
   const prog = b.progression ?? ds?.stages?.[ctx.stage ?? 0]?.progression;
   for (const ph of debuffs) {
-    if (immuneTo(b, ph.buffId)) continue;
+    if (immuneTo(b, ph.buffId)) { immune++; continue; }
     const rec = ds?.debuffs?.[ph.buffId];
-    if (rec?.dot || rec?.defense) {
+    // a record that states its DoT — zero included — is a reading, not a gap: a stun, a slow or
+    // Slimed is a debuff the miner *read* as costing the target no health (extract/debuffs.js)
+    if (rec && (rec.dot !== undefined || rec.defense)) {
       ph.dot = rec.dot ?? 0;
       dot += ph.dot;
       defenseDebuff += rec.defense ?? 0;
-      applied.push(rec.name ?? nameOf(ph.buffId));
+      if (ph.dot > 0 || rec.defense) applied.push(rec.name ?? nameOf(ph.buffId));
+      else harmless.push(rec.name ?? nameOf(ph.buffId));
       continue;
     }
     // a debuff with no readable effect is still something done to the target: a flat allowance
@@ -2078,7 +2094,8 @@ function gradeWeapon(item, ctx = {}) {
     dot += ph.dot;
     applied.push(`${rec?.name ?? nameOf(ph.buffId)} (effect unread: ${r1(ph.dot)}/s assumed)`);
   }
-  if (debuffs.length && !applied.length) parts.push({ fac: 'debuff', label: `${debuffs.length} debuff${debuffs.length > 1 ? 's' : ''}, ${b.name ?? 'the boss'} is immune`, mul: 1 });
+  if (immune && !applied.length) parts.push({ fac: 'debuff', label: `${immune} debuff${immune > 1 ? 's' : ''}, ${b.name ?? 'the boss'} is immune`, mul: 1 });
+  if (harmless.length) parts.push({ fac: 'debuff', label: `${harmless.join(', ')}: no damage over time`, mul: 1 });
 
   // ---- armour: the weapon's own and the loadout's reach every phase; a projectile's own is its
   const basePen = (item.armorPen ?? 0) + (ctx.loadout?.armorPen ?? 0);
@@ -2325,7 +2342,7 @@ function gradeWeapon(item, ctx = {}) {
     const speed = flightSpeed((item.shootSpeed || SHOOT_SPEED_UNKNOWN) * velMul);
     const shots = [primary, ...(fire?.calls ?? []).filter((c) => c.abs !== 0).map((c) => proj(ds, c.type === 'shoot' ? primaryId : c.type))].filter(Boolean);
     if (!shots.length) return Infinity;
-    return Math.min(turnsRoundAt(arch), ...shots.map((p) => reachOf(p, speed, b.h / 2)));
+    return Math.min(turnsRoundAt(arch), ...shots.map((p) => reachOf(p, speed, tall(b, p) / 2)));
   };
 
   const shoots = !!primaryId || !!fire?.calls?.length || isAmmo;

@@ -1,5 +1,5 @@
 {
-  "$comment": "What a debuff does to the NPC carrying it, keyed by buff (`v:<BuffID>` for vanilla, the mod's buff class name otherwise). `dot` is HP per second, `defense` a flat change to the NPC's defense, `dmgTaken` a multiplier on every hit it receives. These are computed in GlobalNPC.UpdateLifeRegen at runtime, out of the interpreter's reach, so the numbers come from the mods' own wikis. A debuff with no entry counts for nothing — the pessimistic answer. Keyed by buff, never by weapon.",
+  "$comment": "What a debuff does to the NPC carrying it, keyed by buff (`v:<BuffID>` for vanilla, the mod's buff class name otherwise). `dot` is HP per second, `defense` a flat change to the NPC's defense, `dmgTaken` a multiplier on every hit it receives. This table is the fallback: `miner/extract/debuffs.js` reads a mod debuff's health loss from its own code (Calamity's `DebuffData.EnemyLostRegen`, a `lifeRegen` decrease behind the flag the buff sets) and that reading replaces the `dot` here, and every vanilla debuff outside the game's own DoT list is read as none. The rest came from the mods' wikis. A debuff neither answers for gets the model's flat allowance. Keyed by buff, never by weapon.",
 
   "v:20": { "dot": 2, "name": "Poisoned" },
   "v:24": { "dot": 4, "name": "On Fire!" },
@@ -24,7 +24,7 @@
   "CrushDepth": { "dot": 25 },
   "ElementalMix": { "dot": 100 },
   "SulphuricPoisoning": { "dot": 30 },
-  "Irradiated": { "dot": 30, "defense": -15 },
+  "Irradiated": { "dot": 10 },
   "Nightwither": { "dot": 100, "name": "Nightwither" },
   "BurningBlood": { "dot": 12.5 },
   "MiracleBlight": { "dot": 100 },
