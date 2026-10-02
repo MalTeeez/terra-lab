@@ -289,6 +289,25 @@
     "v:HallowHardenedSand": "WallOfFlesh",
     "v:PearlstoneBlock": "WallOfFlesh"
   },
+  "configGates": {
+    "$comment": "Anchors and stations that replace the ones above while a mod config option is on (Mod:Namespace.ConfigClass.Member, read from the player's ModConfigs or the [DefaultValue]). Calamity's Early Hardmode Progression Rework stops altars from spawning ores: the Wall of Flesh spawns only Cobalt/Palladium, the first mechanical boss Mythril/Orichalcum and the second Adamantite/Titanium (CalamityGlobalNPC.SpawnMechBossHardmodeOres). TheTwins/TheDestroyer stand in for 'first'/'second mech', as downedMechBossAny does. The bars are pinned too: Calamity strips the ores from hardmode crates (RemoveHardmodeOres*Crates, a removal the loot reader does not apply) and re-adds them behind DropHelper.MythrilCondition / AdamantiteCondition, static fields it does not resolve.",
+    "CalamityMod:CalamityMod.CalamityServerConfig.EarlyHardmodeProgressionRework": {
+      "anchors": {
+        "v:MythrilOre": "TheTwins",
+        "v:OrichalcumOre": "TheTwins",
+        "v:AdamantiteOre": "TheDestroyer",
+        "v:TitaniumOre": "TheDestroyer",
+        "v:MythrilBar": "TheTwins",
+        "v:OrichalcumBar": "TheTwins",
+        "v:AdamantiteBar": "TheDestroyer",
+        "v:TitaniumBar": "TheDestroyer"
+      },
+      "stations": {
+        "MythrilAnvil": "TheTwins",
+        "AdamantiteForge": "TheDestroyer"
+      }
+    }
+  },
   "enemies": {
     "$comment": "Enemy → boss key it starts spawning after, for the ones whose spawn the miner cannot read (a tile-depth check, a biome local, a mod event that runs its own spawning). Vanilla by NPCID name, mod NPCs by Mod:Class or Mod:Display Name (the name data/unknown-sources.md prints next to `drop`). Everything it drops follows, so this beats pinning the items one by one in `anchors`; it is the gate itself when the code shows none, and the item's rarity no longer overrules it.",
     "Mummy": "WallOfFlesh",

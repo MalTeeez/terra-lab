@@ -188,6 +188,12 @@ for (const m of ordered) {
   localizations.set(modId, loc);
   try {
     const cfg = configHooks(asm, modId, configs);
+    // progression.json configGates: anchors/stations that hold only while a mod's config option is on
+    for (const [key, gate] of Object.entries(config.configGates ?? {})) {
+      const [, mod, type, member] = key.match(/^([^:]+):(.+)\.([^.]+)$/) ?? [];
+      const td = mod === modId && asm.typeByName.get(type);
+      if (td && cfg.value(td, member) === 1) { Object.assign(config.anchors, gate.anchors); Object.assign(config.stations, gate.stations); }
+    }
     for (const td of asm.types) {
       if (td.name !== 'BalancingConstants' || process.env.TL_NO_BALANCE) continue;
       const vals = Object.fromEntries([...evalStatics(asm, td, tml)].filter(([, v]) => isNumber(v)));

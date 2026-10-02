@@ -227,7 +227,9 @@ describe('dataset.json', () => {
     expect(aer.src).toMatchObject({ kind: expect.stringMatching(/^(ore|spawn)$/), need: 65 });
     expect(ds.stages[aer.stage].label).toMatch(/Hive Mind|Perforator/);
     const cryo = ds.materials['CalamityMod:CryonicOre']; // spawned by Cryogen, 180% pickaxe
-    expect(cryo.src).toMatchObject({ kind: 'spawn', boss: 'Cryogen' });
+    // …which the rework's Adamantite/Titanium only reach after two mechs: the pickaxe, not Cryogen, is the gate
+    expect(cryo.src).toMatchObject({ need: 180 });
+    expect(cryo.prog).toBeGreaterThanOrEqual(ds.stages.find((s) => s.key === 'Cryogen').progression);
     const astral = ds.materials['CalamityMod:AstralOre']; // unminable until Astrum Deus
     expect(astral.src).toMatchObject({ kind: 'ore', gate: 'downedAstrumDeus' });
     // MinPick set in a method the base class calls, not in SetStaticDefaults: 210% is post-Golem,
@@ -235,7 +237,8 @@ describe('dataset.json', () => {
     expect(ds.materials['CalamityMod:ScoriaOre'].src).toMatchObject({ kind: 'ore', need: 210 });
     expect(ds.stages[byName('Subduction Slicer').stage].key).toBe('Golem');
     expect(ds.recipes['CalamityMod:SludgeSplotch'][0][1]).toEqual(['Boss2Material']);
-    expect(ds.stations['v:tile:134']).toMatchObject({ name: 'Mythril Anvil', boss: 'Wall of Flesh' });
+    // Calamity's Early Hardmode Progression Rework (default on): Mythril/Orichalcum spawn after the first mech
+    expect(ds.stations['v:tile:134']).toMatchObject({ name: 'Mythril Anvil', boss: 'The Twins' });
     // a station whose own stage has not resolved yet blocks its recipes rather than reading as
     // pre-boss: SOTS's Transmutation Altar makes Meteorite Bars out of Twilight Gel
     expect(ds.materials['v:117'].src).toMatchObject({ kind: 'craft', from: ['Meteorite'] });

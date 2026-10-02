@@ -66,6 +66,7 @@ export function configHooks(asm, modId, configs) {
     return v;
   };
   return {
+    value,
     onStaticLoad(field) {
       const td = field.declaringType?.def;
       if (td && field.name === 'Instance' && isConfigType(asm, td)) return { k: 'config', td };
