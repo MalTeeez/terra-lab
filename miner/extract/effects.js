@@ -237,7 +237,9 @@ const round = (v) => Math.round(v * 10000) / 10000;
  * Effects of a ModItem: `equip` (UpdateEquip for armor, UpdateAccessory for accessories)
  * and `set` (UpdateArmorSet on the head piece).
  */
-export function extractItemEffects(asm, td, { tml }) {
+export function extractItemEffects(asm, td, { tml, fields = null }) {
+  // a set variant's own fields (`armorSetType`), as its `IsArmorSet` left them
+  const own = (recv, name) => (fields && recv === THIS && name in fields ? fields[name] : recv === ITEM || recv === THIS ? UNKNOWN : undefined);
   const run = (methodName, extraArgs) => {
     const m = findInherited(asm, td, methodName);
     if (!m) return null;
@@ -250,7 +252,7 @@ export function extractItemEffects(asm, td, { tml }) {
       concreteType: td,
       maxDepth: 4,
       budget: 20000,
-      onLoad: (recv, name, ctx) => (recv === ITEM || recv === THIS ? UNKNOWN : hooks.onLoad(recv, name, ctx)),
+      onLoad: (recv, name, ctx) => own(recv, name) ?? hooks.onLoad(recv, name, ctx),
       onStore: hooks.onStore,
       onCall: (callee, args, ctx) => {
         // `GetBestClassDamage(player).ApplyTo(10f)`: the base damage of what this hook puts out
@@ -277,7 +279,9 @@ export function extractItemEffects(asm, td, { tml }) {
     // chance to bleed you"), so the buffs the hook can put on the player are collected in a second
     // pass that walks every instruction. Only what the hook itself calls — a drawback written in a
     // helper the hook calls is out of reach.
-    if (callsAddBuff(asm, m)) {
+    // (not for a set variant: the walk takes every arm of its `switch (armorSetType)`, and handed
+    // each bonus the others' buffs — the ordinary pass already follows the variant's own arm)
+    if (!fields && callsAddBuff(asm, m)) {
       const linear = new Machine(asm, {
         tml,
         concreteType: td,
@@ -285,7 +289,7 @@ export function extractItemEffects(asm, td, { tml }) {
         noDead: true,
         maxDepth: 4,
         budget: 20000,
-        onLoad: (recv, name, ctx) => (recv === ITEM || recv === THIS ? UNKNOWN : hooks.onLoad(recv, name, ctx)),
+        onLoad: (recv, name, ctx) => own(recv, name) ?? hooks.onLoad(recv, name, ctx),
         onCall: (callee, args, ctx) => (callee.name === 'AddBuff' ? hooks.onCall(callee, args, ctx) : UNKNOWN),
         onStaticLoad: hooks.onStaticLoad,
       });

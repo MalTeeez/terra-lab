@@ -20,7 +20,8 @@
   const armorShown = $derived(loadout.armorAlternatives.filter((s) => matches(s, armorQ, armorT)));
   // how much score trying on a runner-up set costs against the solver's own pick
   const armorDelta = $derived(loadout.armorPicked ? Math.round((loadout.armor.score - loadout.armorBestScore) * 10) / 10 : 0);
-  const setName = (s) => s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
+  // (a head in several sets is named with the body that makes this one)
+  const setName = (s) => s.head.item.setVariants ? `${s.head.item.name} + ${s.body.item.name.split(' ').filter((w, i) => w !== s.head.item.name.split(' ')[i]).join(' ')}` :s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
   // The grade chips. Rogue's spam and stealth are two ways to use one weapon and summon's whip,
   // minion and sentry are three slots worn at once, but either way the grade is the one cut worth
   // making without opening a menu — so it sits in the header rather than inside the trait list.
@@ -156,13 +157,13 @@
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
           <div class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-px overflow-y-auto bg-line md:grid-cols-2">
             {#each armorShown as s}
-              {@const on = loadout.armorPicked === s.head.item.id}
+              {@const on = loadout.armorPicked === s.key}
               {@const def = (s.head.item.defense ?? 0) + (s.body.item.defense ?? 0) + (s.legs.item.defense ?? 0)}
               <button
                 class="lab-cell flex items-center gap-2.5 p-2"
                 class:open={on}
                 title={on ? 'Currently trying this set on' : 'Try this set on: the loadout is re-solved as if you wear it'}
-                onclick={() => onarmor(on ? null : s.head.item.id)}
+                onclick={() => onarmor(on ? null : s.key)}
               >
                 <div class="flex shrink-0 items-center gap-0.5 border border-line bg-panel2 p-0.5">
                   <WikiIcon item={s.head.item} size={26} />

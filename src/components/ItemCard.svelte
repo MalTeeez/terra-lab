@@ -37,10 +37,11 @@
   const ctx = $derived({ ...statCtx, prefix });
   const progression = $derived(ds.stages[ui.stage]?.progression);
   const score = $derived(isGear ? pieceScore(item, ui.cls, ds.aliases, { prefix, progression }) : null);
-  const setScore = $derived(
+  // a head in several sets (one per body that takes it) shows each set's bonus
+  const sets = $derived(
     item.slot === "head" && (item.setEffects || item.setBonus)
-      ? setBonusScore(item, ui.cls, ds.aliases, { progression })
-      : null,
+      ? (item.setVariants ?? [item]).map((v) => ({ ...v, score: setBonusScore(v, ui.cls, ds.aliases, { progression }) }))
+      : [],
   );
   const dps = $derived(item.slot === "weapon" ? weaponDps(item, ctx) : null);
   const eff = $derived(item.slot === "weapon" ? effectiveStats(item, ctx) : null);
@@ -474,27 +475,27 @@
       </section>
     {/if}
 
-    {#if item.slot === "head" && (item.setBonus || item.setEffects)}
+    {#each sets as v}
       <section>
-        <div class="lab-rule start mb-1.5">Set bonus</div>
-        {#if item.setBonus}<p class="selectable m-0 whitespace-pre-line border-l-2 border-green-mid pl-3 text-ink2">
-            {item.setBonus}
+        <div class="lab-rule start mb-1.5">Set bonus{#if sets.length > 1} <span class="text-dim">with {v.setItems?.find((p) => p.slot === "body")?.name}</span>{/if}</div>
+        {#if v.setBonus}<p class="selectable m-0 whitespace-pre-line border-l-2 border-green-mid pl-3 text-ink2">
+            {v.setBonus}
           </p>{/if}
-        {#if setScore?.parts.length}<div class="mt-1.5">
-            <ScoreParts parts={setScore.parts} score={setScore.score} />
+        {#if v.score.parts.length}<div class="mt-1.5">
+            <ScoreParts parts={v.score.parts} score={v.score.score} />
           </div>{/if}
-        {#if item.setEffects}
+        {#if v.setEffects}
           <details class="mt-1.5 text-[12px] text-dim">
             <summary class="cursor-pointer hover:text-green">effects read from code</summary>
             <ul class="m-0 mt-1 list-none p-0 text-[12px] text-ink2">
-              {#each fmtEffects(item.setEffects) as line}<li class="num">{line}</li>{/each}
+              {#each fmtEffects(v.setEffects) as line}<li class="num">{line}</li>{/each}
             </ul>
           </details>
         {/if}
-        {#if item.setItems?.length}
+        {#if v.setItems?.length}
           <p class="m-0 mt-1.5 text-[12px] text-dim">
             With
-            {#each item.setItems as p, i}{#if i},
+            {#each v.setItems as p, i}{#if i},
               {/if}<button
                 class="cursor-pointer underline decoration-line underline-offset-2 hover:text-green"
                 onclick={() => onselect(p.id)}>{p.name}</button
@@ -502,7 +503,7 @@
           </p>
         {/if}
       </section>
-    {/if}
+    {/each}
     {#if heads.length}
       <p class="m-0 text-[12px] text-dim">
         Part of:

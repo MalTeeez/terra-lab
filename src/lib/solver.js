@@ -92,12 +92,15 @@ export function solveLoadout(ds, opts) {
     if (!bestBySlot[it.slot] || s.score > bestBySlot[it.slot].score) bestBySlot[it.slot] = { item: it, ...s };
   }
   const sets = [];
-  for (const head of armorPool) {
-    if (head.slot !== 'head' || !head.setItems?.length) continue;
+  // a head in several sets (`setVariants`, one per body that takes it) is tried in each, worn as a
+  // copy carrying that set's bonus so everything downstream reads the right one off `head`
+  const setHeads = armorPool.flatMap((h) => (h.slot !== 'head' ? [] : h.setVariants ? h.setVariants.map((v) => ({ ...h, ...v })) : [h]));
+  for (const head of setHeads) {
+    if (!head.setItems?.length) continue;
     const body = head.setItems.find((p) => p.slot === 'body');
     const legs = head.setItems.find((p) => p.slot === 'legs');
     if (!body || !legs || !poolIds.has(body.id) || !poolIds.has(legs.id)) continue;
-    if (ARMOR.some((s) => pinnedArmor[s] && pinnedArmor[s] !== { head, body, legs }[s])) continue;
+    if (ARMOR.some((s) => pinnedArmor[s] && pinnedArmor[s].id !== { head, body, legs }[s].id)) continue;
     const bonus = setBonusScore(head, cls, aliases, { progression });
     const pieces = [head, body, legs].map((p) => ({ item: p, ...scoreOf(p) }));
     // a per-tick velocity drag compounds across the pieces (Mollusk: 0.996 each, 0.988 together
@@ -109,7 +112,7 @@ export function solveLoadout(ds, opts) {
       if (Math.abs(extra) > 0.05) { bonus.parts = [...bonus.parts, { label: `${Math.round((sprintFactor(combined) - 1) * 100)}% sprint speed with all pieces (drag ${combined.toFixed(3)} per tick)`, value: Math.round(extra * 10) / 10 }]; bonus.score = Math.round((bonus.score + extra) * 10) / 10; }
     }
     const score = pieces.reduce((s, p) => s + p.score, 0) + bonus.score;
-    sets.push({ isSet: true, head: pieces[0], body: pieces[1], legs: pieces[2], bonus, score: Math.round(score * 10) / 10, defense: pieces.reduce((s, p) => s + (p.item.defense ?? 0), 0) });
+    sets.push({ isSet: true, key: `${head.id}|${body.id}`, head: pieces[0], body: pieces[1], legs: pieces[2], bonus, score: Math.round(score * 10) / 10, defense: pieces.reduce((s, p) => s + (p.item.defense ?? 0), 0) });
   }
   sets.sort((a, b) => b.score - a.score);
   // A Calamity rogue without maximum stealth cannot use the class's defining stealth strikes.
@@ -129,9 +132,9 @@ export function solveLoadout(ds, opts) {
   else if (stealthSets.length && (cls === 'rogue' || cls === 'thrower')) best = stealthSets[0];
   else if (viableSets.length && (!mixed || viableSets[0].score >= mixed.score)) best = viableSets[0];
   else best = mixed;
-  // `armorPick` (a head item id) wears a runner-up set instead: everything downstream — the set
+  // `armorPick` (a set's `key`) wears a runner-up set instead: everything downstream — the set
   // bonus, max stealth, the weapon ranking — is solved as if that set were the pick
-  const armor = (opts.armorPick && viableSets.find((s) => s.head.item.id === opts.armorPick)) || best;
+  const armor = (opts.armorPick && viableSets.find((s) => s.key === opts.armorPick)) || best;
   const armorAlternatives = viableSets.filter((s) => s !== armor).slice(0, 12);
 
   // ---- accessories ------------------------------------------------------------------------

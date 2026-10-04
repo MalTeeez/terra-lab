@@ -210,7 +210,7 @@
     // whole list, so joining and lowercasing per item per pass was most of a keystroke's cost
     for (const e of out) {
       e.traits = traitsOf(e);
-      e.hay = [e.item.name, e.item.tooltip ?? "", e.item.setBonus ?? "", e.item.modName ?? "", ...e.traits]
+      e.hay = [e.item.name, e.item.tooltip ?? "", ...(e.item.setVariants ?? [e.item]).map((v) => v.setBonus ?? ""), e.item.modName ?? "", ...e.traits]
         .join(" | ")
         .toLowerCase();
     }
@@ -1347,14 +1347,14 @@
                             </ol>
                           </div>
                           <div class="flex flex-col gap-3">
-                            {#if it.setBonus}
+                            {#each (it.setVariants ?? [it]).filter((v) => v.setBonus) as v}
                               <div>
-                                <div class="lab-rule start mb-2">Set bonus</div>
+                                <div class="lab-rule start mb-2">Set bonus{#if it.setVariants} <span class="text-dim">with {v.setItems?.find((p) => p.slot === "body")?.name}</span>{/if}</div>
                                 <p class="m-0 whitespace-pre-line border-l-2 border-green-mid pl-2 text-ink2">
-                                  {it.setBonus}
+                                  {v.setBonus}
                                 </p>
                               </div>
-                            {/if}
+                            {/each}
                             {#if it.changes?.length || it.variants?.length || it.maybe}
                               <div>
                                 <div class="lab-rule start mb-2">Rebalances</div>

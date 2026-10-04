@@ -122,9 +122,11 @@ const fmtArg = (v) => (typeof v === 'string' ? v : isNum(v) ? String(Number.isIn
  * this.GetLocalization("SetBonus").Format(SetBonusDR.ToPercent("N1"))` in UpdateArmorSet.
  * @returns {{ tooltipArgs?: any[], setBonusArgs?: any[] }}
  */
-function formatArgsOf(asm, td, { tml }) {
+function formatArgsOf(asm, td, { tml, fields = null, setOnly = false }) {
   const out = {};
   const hooks = (onSetBonus) => ({
+    // a set variant's own fields (`armorSetType`), as its `IsArmorSet` left them
+    onLoad: (recv, name) => (fields && recv === THIS && name in fields ? fields[name] : undefined),
     onCall(callee, args, ctx) {
       const hooked = tmlStaticHook(callee, args, ctx);
       if (hooked !== undefined) return hooked;
@@ -149,12 +151,19 @@ function formatArgsOf(asm, td, { tml }) {
       // `float.ToString(fmt)`, which the interpreter answers — so they inline and round the way the
       // game does rather than needing a hook each.
       if (ctx.recv?.k === 'loc') return ctx.recv;
+      // `player.setBonus = Language.GetTextValue("Mods.X.Common.Bonus")`, or a mod's own helper
+      // taking the key relative to the mod (Stars Above's `LangHelper.GetTextValue`)
+      if (name === 'GetTextValue' && typeof args[0] === 'string') return { k: 'lockey', key: args[0] };
       return undefined;
     },
-    onStore(recv, name, value) { if (recv === PLAYER && name === 'setBonus' && value?.k === 'loc' && value.args) onSetBonus(value.args); },
+    onStore(recv, name, value) {
+      if (recv !== PLAYER || name !== 'setBonus') return;
+      if (value?.k === 'loc' && value.args) onSetBonus(value.args);
+      if (value?.k === 'lockey') out.setBonusRef = `{$${value.key}}`;
+    },
     onStaticLoad: tmlStaticLoadHook,
   });
-  const tt = findInherited(asm, td, 'get_Tooltip');
+  const tt = !setOnly && findInherited(asm, td, 'get_Tooltip');
   if (tt) {
     try {
       const v = new Machine(asm, { tml, concreteType: td, budget: 8000, maxDepth: 4, ...hooks(() => {}) }).run(tt, THIS, []);
@@ -166,6 +175,38 @@ function formatArgsOf(asm, td, { tml }) {
     try { new Machine(asm, { tml, concreteType: td, budget: 8000, maxDepth: 3, ...hooks((args) => { out.setBonusArgs = args; }) }).run(uas, THIS, [PLAYER]); } catch { /* keep going */ }
   }
   return out;
+}
+
+/**
+ * A piece whose `IsArmorSet` accepts several heads and remembers which one it saw: Stars Above's
+ * Neopursuant bodies take any of three heads and store `armorSetType = 1..3`, and `UpdateArmorSet`
+ * switches on that for one of three different bonuses. Each accepted (head, legs) pair is emulated
+ * with item types as plain numbers, keeping the fields it stores on `this`; null unless the stored
+ * fields actually differ between pairs (an ordinary set is one bonus, read the ordinary way).
+ * @returns {{ pieces: string[], fields: Record<string, number> }[] | null}
+ */
+function setVariantsOf(asm, td, ias, { tml }) {
+  const refs = [...new Set(contentRefs(asm, ias))];
+  if (refs.length < 2) return null;
+  const num = new Map([[td.fullName, 1], ...refs.map((r, i) => [r, i + 2])]);
+  const piece = (full) => ({ k: 'piece', n: num.get(full) });
+  const out = [];
+  for (const head of refs) for (const legs of refs) {
+    if (head === legs) continue;
+    const fields = {};
+    let v;
+    try {
+      v = new Machine(asm, {
+        tml, concreteType: td, budget: 4000, maxDepth: 2,
+        onCall: (callee) => (callee.name === 'ItemType' && callee.typeArgs?.length === 1 ? num.get(String(callee.typeArgs[0])) ?? 0 : undefined),
+        onLoad: (recv, name) => (recv?.k === 'piece' && name === 'type' ? recv.n : undefined),
+        onStore: (recv, name, val) => { if (recv === THIS && isNum(val)) fields[name] = val; },
+      }).run(ias, THIS, [piece(head), piece(td.fullName), piece(legs)]);
+    } catch { return null; }
+    if (v === 1) out.push({ pieces: [head, legs], fields });
+  }
+  const shapes = new Set(out.map((o) => JSON.stringify(o.fields)));
+  return out.length > 1 && shapes.size > 1 ? out : null;
 }
 
 /** Decide what kind of equipment a record describes. */
@@ -398,6 +439,17 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
     if (isArmor) {
       const ias = findInherited(asm, td, 'IsArmorSet');
       if (ias) item.set = contentRefs(asm, ias).map((full) => refId(asm, full));
+      const variants = ias && setVariantsOf(asm, td, ias, { tml });
+      // each pair's own bonus: `UpdateArmorSet` read again with the fields that pair stored
+      if (variants) item.setVariants = variants.map(({ pieces, fields }) => {
+        const { setBonusRef, setBonusArgs } = formatArgsOf(asm, td, { tml, fields, setOnly: true });
+        return {
+          set: pieces.map((full) => refId(asm, full)),
+          setBonus: setBonusRef ?? item.setBonus,
+          setBonusArgs,
+          setEffects: effects ? extractItemEffects(asm, td, { tml, fields }).set ?? undefined : undefined,
+        };
+      });
     }
     if (equip.includes('Shoes') || f.shoeSlot > 0) item.boots = true;
     if (f.wingSlot > 0 || equip.includes('Wings')) { item.wings = true; item.wingStats = extractWingStats(asm, td, { tml }) ?? undefined; }
@@ -431,7 +483,11 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
         }
       }
     }
-    if (isArmor || slot === 'accessory' || slot === 'weapon' || slot === 'potion') Object.assign(item, formatArgsOf(asm, td, { tml }));
+    if (isArmor || slot === 'accessory' || slot === 'weapon' || slot === 'potion') {
+      const { setBonusRef, ...args } = formatArgsOf(asm, td, { tml });
+      Object.assign(item, args);
+      if (setBonusRef && !item.setBonus) item.setBonus = setBonusRef;
+    }
     if (effects && (isArmor || slot === 'accessory')) {
       const fx = extractItemEffects(asm, td, { tml });
       if (fx.equip) item.effects = fx.equip;
