@@ -4,8 +4,9 @@
   import WikiIcon from './WikiIcon.svelte';
   import BossIcon from './BossIcon.svelte';
   import Info from './Info.svelte';
-  import { ui } from '../lib/state.svelte.js';
+  import { setPlaystyle, ui } from '../lib/state.svelte.js';
   import { SLOT_MODES } from '../lib/dps.js';
+  import { HEALER_STYLES, STYLE_CATEGORY, healerGearStyles, healerSetStyles } from '../lib/healer.js';
   import { MODE_TAG, matches } from '../lib/traits.js';
   const MODE_ORDER = Object.keys(MODE_TAG); // the order they are declared in reads best: the pair, then the three slots
   import { fmtFull, fmtNum } from '../lib/fmt.js';
@@ -17,7 +18,25 @@
   let armorQ = $state(''); let armorT = $state([]);
   let weaponQ = $state(''); let weaponT = $state([]); let weaponM = $state([]);
   let accQ = $state(''); let accT = $state([]);
-  const armorShown = $derived(loadout.armorAlternatives.filter((s) => matches(s, armorQ, armorT)));
+  // The healer's gear, cut by the same playstyles as its weapons: picking Scythes over the weapon list
+  // shows the scythe gear here too, and either list's chips can be changed on their own afterwards.
+  let gearStyle = $state(null);
+  // keyed on the class and the weapon playstyle only: `loadout` is a new object on every re-solve
+  // (trying a set on, a stage, a reforge), and reading it here would throw the chip picked away
+  const loadoutCls = $derived(loadout.cls);
+  $effect(() => { gearStyle = loadoutCls === 'healer' ? (ui.playstyle?.healer ?? null) : null; });
+  // Each chip's list comes from the solver's `styleGear`: that playstyle's sets and accessories
+  // ranked from the whole pool under its own scoring, so a chip shows as many rows as picking the
+  // playstyle over the weapons does — not whatever of it survived into the current solve's top rows.
+  const sameSet = (a, b) => a && b && a.head.item.id === b.head.item.id && a.body.item.id === b.body.item.id && a.legs.item.id === b.legs.item.id;
+  const styleArmor = (k) => (loadout.styleGear?.[k]?.armor ?? []).filter((s) => !sameSet(s, loadout.armor));
+  const styleAcc = (k) => loadout.styleGear?.[k]?.accessories ?? [];
+  const gearChips = (listOf) => (loadout.cls !== 'healer' || !loadout.styleGear ? [] : HEALER_STYLES
+    .map((k) => ({ k, n: listOf(k).length }))
+    .filter((c) => c.n > 0));
+  const armorChips = $derived(gearChips(styleArmor));
+  const armorBase = $derived(gearStyle && armorChips.some((c) => c.k === gearStyle) ? styleArmor(gearStyle) : loadout.armorAlternatives);
+  const armorShown = $derived(armorBase.filter((s) => matches(s, armorQ, armorT)));
   // how much score trying on a runner-up set costs against the solver's own pick
   const armorDelta = $derived(loadout.armorPicked ? Math.round((loadout.armor.score - loadout.armorBestScore) * 10) / 10 : 0);
   const setName = (s) => s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
@@ -32,13 +51,30 @@
     for (const w of loadout.weapons) if (MODE_TAG[w.mode] && matches(w, weaponQ, weaponT)) m.set(w.mode, (m.get(w.mode) ?? 0) + 1);
     return [...m].sort((a, b) => MODE_ORDER.indexOf(a[0]) - MODE_ORDER.indexOf(b[0]));
   });
+  // The healer's playstyle buttons, the way the rogue's spam and stealth sit over its list — but a
+  // healer playstyle is more than a cut of the list: picking one solves the whole loadout for it
+  // (armour and accessories included), and the list shows that playstyle's weapons alone.
+  const STYLE_BUTTON = {
+    radiant: { label: 'Radiant', tip: 'Light radiant bolts, maces and wands, graded on their damage plus the heals that land on you too.' },
+    reaper: { label: 'Scythes', tip: 'Scythes, graded on their damage plus the soul essence they earn: every five heal you for 1 + your bonus healing.' },
+    dark: { label: 'Dark radiant', tip: 'Weapons that cast at the cost of life, steal it, or are empowered by the dark gear, which counts a quarter more while you wear it.' },
+    support: { label: 'Support', tip: 'Healing staffs, and every weapon that heals allies, graded on the life they put back on your team.' },
+  };
+  const styleButtons = $derived(loadout.cls === 'healer'
+    ? HEALER_STYLES.map((k) => ({ k, n: loadout.styleCounts?.[k] ?? 0, ...STYLE_BUTTON[k] })).filter((b) => b.n > 0)
+    : []);
+  const healerStyleOn = $derived(loadout.cls === 'healer' ? (ui.playstyle?.healer ?? null) : null);
+  const pickStyle = (k) => setPlaystyle('healer', healerStyleOn === k ? null : k);
   const toggleMode = (k) => (weaponM = weaponM.includes(k) ? weaponM.filter((x) => x !== k) : [...weaponM, k]);
   $effect(() => { void loadout.cls; weaponM = []; }); // another class grades on different modes
   const weaponsShown = $derived(loadout.weapons.filter((w) => matches(w, weaponQ, weaponT) && (!weaponM.length || weaponM.includes(w.mode))));
   const maxDps = $derived(Math.max(1, ...loadout.weapons.map((w) => w.value)));
   // every scoring accessory, ranked: the solver's picks first (one per exclusive group), then the rest
   const rankedAcc = $derived([...loadout.accessories, ...loadout.accessoryAlternatives]);
-  const tabList = $derived(tab === 'wings' ? loadout.wings : tab === 'boots' ? loadout.boots : rankedAcc);
+  const accChips = $derived(tab === 'accessories' ? gearChips(styleAcc) : []);
+  const tabList = $derived(tab === 'wings' ? loadout.wings : tab === 'boots' ? loadout.boots
+    : gearStyle && accChips.some((c) => c.k === gearStyle) ? styleAcc(gearStyle) : rankedAcc);
+  const equipped = $derived(new Set(loadout.accessories.map((a) => a.item.id)));
   const shown = $derived(tabList.filter((a) => matches(a, accQ, accT)));
   const maxAcc = $derived(Math.max(1, ...shown.map((a) => a.score)));
   const accent = $derived(accentOf(loadout.cls));
@@ -47,11 +83,19 @@
   // one column, where the whips would simply out-DPS the
   // minions they are meant to be swung next to. Rogue's stealth/spam are two ways to use one weapon,
   // not two slots, so they stay in a single ranking.
+  // a healer's list is grouped by what the weapon is (healing staff, scythe, dark, radiant), the
+  // playstyle's own category first; a summoner's by the slot it fills
+  const HEALER_ORDER = ['heal', 'scythe', 'dark', 'radiant'];
   const weaponGroups = $derived.by(() => {
     const groups = [];
     for (const w of weaponsShown) {
-      const g = SLOT_MODES.has(w.mode) ? w.mode : '';
+      const g = SLOT_MODES.has(w.mode) ? w.mode : (w.category ?? '');
       (groups.find((x) => x.mode === g) ?? groups[groups.push({ mode: g, list: [] }) - 1]).list.push(w);
+    }
+    if (loadout.cls === 'healer') {
+      const first = STYLE_CATEGORY[ui.playstyle?.healer];
+      const rank = (m) => (m === first ? -1 : HEALER_ORDER.indexOf(m));
+      groups.sort((a, b) => rank(a.mode) - rank(b.mode));
     }
     return groups.length > 1 ? groups : [{ mode: '', list: weaponsShown }];
   });
@@ -86,6 +130,26 @@
   <!-- gear only: on a weapon row `stealth` is its stealth-strike DPS, tagged by mode further down -->
   {#if p.stealth === true}<span class="lab-tag plum ml-1" title="This boosts stealth strikes">stealth</span>{/if}
   {#if p.item.changes?.length}<span class="lab-tag warn ml-1" title="Another mod rebalances this item">rebalanced</span>{/if}
+  {#if loadout.cls === 'healer' && p.item.slot !== 'weapon'}{@render styleTags(healerGearStyles(p.item))}{/if}
+{/snippet}
+
+{#snippet gearStyleChips(chips, what)}
+  {#if chips.length}
+    <span class="inline-flex items-center gap-1 font-normal normal-case tracking-normal">
+      {#each chips as c (c.k)}
+        <button type="button" class="lab-chip py-0.5 {gearStyle === c.k ? (MODE_TAG[STYLE_CATEGORY[c.k]]?.color ?? '') : ''}" aria-pressed={gearStyle === c.k}
+                onclick={() => (gearStyle = gearStyle === c.k ? null : c.k)}
+                title="Only the {what} built for the {STYLE_BUTTON[c.k].label} playstyle">{STYLE_BUTTON[c.k].label} <span class="num {gearStyle === c.k ? 'opacity-70' : 'text-dim'}">{c.n}</span></button>
+      {/each}
+    </span>
+  {/if}
+{/snippet}
+
+{#snippet styleTags(styles)}
+  {#each styles as s (s)}
+    <span class="lab-tag ml-1 {healerStyleOn === s ? (MODE_TAG[STYLE_CATEGORY[s]]?.color ?? '') : ''}" class:opacity-60={healerStyleOn && healerStyleOn !== s}
+          title="Built for the {STYLE_BUTTON[s].label} playstyle: {STYLE_BUTTON[s].tip}">{STYLE_BUTTON[s].label.toLowerCase()}</span>
+  {/each}
 {/snippet}
 
 {#snippet empty(what)}
@@ -98,7 +162,8 @@
   <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>Armor</h2>
-      <TraitFilter entries={loadout.armorAlternatives} bind:query={armorQ} bind:selected={armorT} placeholder="Filter runner-up sets…" />
+      {@render gearStyleChips(armorChips, 'sets')}
+      <TraitFilter entries={armorBase} bind:query={armorQ} bind:selected={armorT} placeholder="Filter runner-up sets…" />
       {#if loadout.armor}
         <span class="lab-meta">
           <span class="lab-tag" class:green={loadout.armor.isSet}>{loadout.armor.isSet ? 'full set' : 'mixed'}</span>
@@ -150,9 +215,9 @@
         </tbody>
       </table>
       </div>
-      {#if loadout.armorAlternatives.length}
+      {#if armorBase.length}
         <div class="flex min-h-0 flex-1 basis-40 flex-col border-t border-line px-4 pb-3 pt-2.5">
-          <div class="lab-rule start mb-2">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorShown.length !== loadout.armorAlternatives.length} <span class="num text-dim">{armorShown.length} of {loadout.armorAlternatives.length}</span>{/if}</div>
+          <div class="lab-rule start mb-2">{loadout.armorPicked ? 'Other sets' : 'Runner-up sets'}{#if armorBase !== loadout.armorAlternatives} <span class="normal-case tracking-normal text-dim">· {STYLE_BUTTON[gearStyle].label}</span>{/if}{#if armorShown.length !== armorBase.length} <span class="num text-dim">{armorShown.length} of {armorBase.length}</span>{/if}</div>
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
           <div class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-px overflow-y-auto bg-line md:grid-cols-2">
             {#each armorShown as s}
@@ -173,6 +238,7 @@
                   <div class="flex items-baseline gap-1.5">
                     <span class="truncate text-[12.5px] font-medium text-ink">{setName(s)}</span>
                     {#if on}<span class="lab-tag warn shrink-0">trying on</span>{/if}
+                    {#if loadout.cls === 'healer'}<span class="shrink-0">{@render styleTags(healerSetStyles(s))}</span>{/if}
                   </div>
                   {#if s.head.item.setBonus}
                     <div class="truncate text-[11px] text-dim" title={s.head.item.setBonus}>{s.head.item.setBonus}</div>
@@ -194,7 +260,14 @@
   <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>{CLASS_LABELS[loadout.cls]} weapons</h2>
-      {#if modeCounts.length > 1}
+      {#if styleButtons.length}
+        <span class="inline-flex items-center gap-1 font-normal normal-case tracking-normal">
+          {#each styleButtons as b (b.k)}
+            <button type="button" class="lab-chip py-0.5 {healerStyleOn === b.k ? (MODE_TAG[STYLE_CATEGORY[b.k]]?.color ?? '') : ''}" aria-pressed={healerStyleOn === b.k}
+                    onclick={() => pickStyle(b.k)} title="{b.tip} Picking it solves the armour and accessories for it too.">{b.label} <span class="num {healerStyleOn === b.k ? 'opacity-70' : 'text-dim'}">{b.n}</span></button>
+          {/each}
+        </span>
+      {:else if modeCounts.length > 1}
         <span class="inline-flex items-center gap-1 font-normal normal-case tracking-normal">
           {#each modeCounts as [k, n] (k)}
             <button type="button" class="lab-chip py-0.5 {weaponM.includes(k) ? MODE_TAG[k].color : ''}" aria-pressed={weaponM.includes(k)}
@@ -222,8 +295,23 @@
             <th class="text-right">Crit chance</th>
             <th class="w-[34%]">
               <span class="inline-flex items-center gap-1">
-                {loadout.weapons[0].kind === 'dps' ? 'Real DPS' : 'Damage per hit'}
+                {loadout.weapons[0].kind === 'support' ? 'Support value' : loadout.weapons[0].kind === 'style' ? 'Playstyle value' : loadout.weapons[0].kind === 'dps' ? 'Real DPS' : 'Damage per hit'}
                 <Info label="How Real DPS is computed" w={420}>
+                  {#if loadout.weapons[0].kind === 'style'}
+                    <p>
+                      {STYLE_BUTTON[ui.playstyle?.healer]?.label ?? 'Healer'}: Real DPS{ui.playstyle?.healer === 'dark' ? ', a quarter more for a weapon your dark gear empowers' : ''},
+                      plus the life the weapon gives back to you{ui.playstyle?.healer === 'reaper' ? ' (every five soul essence a scythe earns heal 1 + your bonus healing)' : ui.playstyle?.healer === 'radiant' ? ' through heals that land on you as well as your allies, and life steal' : ' through life steal'},
+                      counted in DPS at a third of what a heal on the team is worth. Open a weapon for the arithmetic.
+                    </p>
+                  {/if}
+                  {#if loadout.weapons[0].kind === 'support'}
+                    <p>
+                      Support healer: the life a weapon puts back on allies each second — its heal plus the bonus
+                      healing you wear{loadout.bonus.healBonus ? ` (+${Math.round(loadout.bonus.healBonus)} here)` : ''}, times the
+                      heals it sustains on your mana — counted in DPS at what a typical heal is worth against a
+                      typical weapon at this stage, plus 40% of the weapon's own Real DPS below.
+                    </p>
+                  {/if}
                   <p>
                     hits per second × damage per hit × crit × mana sustain, plus the DPS of every debuff the
                     target boss is not immune to.
@@ -253,7 +341,7 @@
         </thead>
         <tbody>
           {#each weaponGroups as g}
-          {#if g.mode}<tr><td colspan="5" class="!py-1 text-[11px] font-semibold uppercase tracking-wide text-dim" title={MODE_TAG[g.mode].tip}>{g.mode}s</td></tr>{/if}
+          {#if g.mode}<tr><td colspan="5" class="!py-1 text-[11px] font-semibold uppercase tracking-wide text-dim" title={MODE_TAG[g.mode]?.tip ?? ''}>{MODE_TAG[g.mode]?.label ?? `${g.mode}s`}</td></tr>{/if}
           {#each g.list as w, i}
             <tr class="row" onclick={() => onselect(w.item.id)}>
               <td>
@@ -324,6 +412,7 @@
         <button class="lab-chip ml-1" aria-pressed={tab === 'wings'} onclick={() => (tab = 'wings')}>Wings <span class="num opacity-70">{loadout.wings.length}</span></button>
         <button class="lab-chip ml-1" aria-pressed={tab === 'boots'} onclick={() => (tab = 'boots')}>Boots <span class="num opacity-70">{loadout.boots.length}</span></button>
       </h2>
+      {@render gearStyleChips(accChips, 'accessories')}
       <TraitFilter entries={tabList} bind:query={accQ} bind:selected={accT} placeholder="Filter by name, text or trait…" />
       <span class="lab-meta">
         <label class="flex items-center gap-1.5" title="Score every item as if it already carries this reforge">
@@ -374,7 +463,7 @@
               <WikiIcon item={a.item} />
               <div class="min-w-0 flex-1">
                 <div class="flex items-baseline justify-between gap-2">
-                  <span class="font-medium"><span class="num mr-1.5 text-[11px] text-dim">{i + 1}</span>{a.item.name}{@render tags(a)}{#if tab === 'accessories' && i < loadout.accessories.length}<span class="lab-tag solid ml-1" title="one of the {loadout.accessories.length} the solver equips">equip</span>{/if}</span>
+                  <span class="font-medium"><span class="num mr-1.5 text-[11px] text-dim">{i + 1}</span>{a.item.name}{@render tags(a)}{#if tab === 'accessories' && equipped.has(a.item.id)}<span class="lab-tag solid ml-1" title="one of the {loadout.accessories.length} the solver equips">equip</span>{/if}</span>
                   <span class="num text-[12px] font-semibold" style="color:{accent}">{a.score}</span>
                 </div>
                 <div class="mb-1.5 text-[11px] text-dim">{modName(a.item)} · <span class="inline-flex items-center gap-0.5 align-middle"><BossIcon {ds} stage={a.item.stage} size={14} />{a.item.stageLabel}</span>{a.group && tab === 'accessories' ? ` · ${a.group}` : ''}{a.prefix ? ` · ${a.prefix.name}` : ''}</div>

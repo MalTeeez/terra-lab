@@ -52,6 +52,11 @@ export function extractFlagEffects(asm, { tml }) {
         const keys = tags.length ? [tags[tags.length - 1]] : all.filter((t) => t.startsWith('any:mf:')).map((t) => t.slice(4));
         const names = keys.map((k) => boolFields.get(k)).filter(Boolean);
         if (!names.length) return;
+        // `velocity *= 0.65` in a hurt or hit hook happens once, when the hit lands: it is the
+        // knockback taken off you (Thorium's `accReducedKnockback` in `PostHurt`), not a drag on
+        // every tick of running — read as one, Prydwen and the Blacksmith's Barrier lost half
+        // their sprint speed for an upside
+        if (d.stat === 'velocityDrag' && /Hurt|OnHit/.test(md.name)) return;
         if (names.includes(process.env.TL_TRACE_FLAGS)) console.log('  delta', md.name, names, JSON.stringify(d), 'untagged', JSON.stringify(ctx?.untagged), 'tags', JSON.stringify(all));
         // an unnamed condition nested inside the flag region gates this stat too — Laudanum's
         // "+15 defense" is one arm of a walk over the buffs you happen to have, not a stat the

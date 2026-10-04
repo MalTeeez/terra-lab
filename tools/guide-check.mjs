@@ -15,6 +15,8 @@
  *                                                 # prints the deltas per guide, class and mechanic family,
  *                                                 # and exits 1 on a regression unless --waive "reason"
  *   node tools/guide-check.mjs --no-write         # do not rewrite data/guide-late-weapons.md
+ *   node tools/guide-check.mjs --cls healer --support   # grade the healer as a support healer (`healer.js`)
+ *   node tools/guide-check.mjs --cls healer --healer dark   # …or as any healer playstyle: support, dark, reaper
  *
  * A filtered run (--pre, --cls, --tier, --guide) never rewrites the generated reports, and --vs refuses
  * a snapshot taken under different filters: the deltas would be the filter, not the model.
@@ -43,9 +45,10 @@
  * when the evidence is wrong; there is no override file.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { candidates, solveLoadout } from '../src/lib/solver.js';
+import { candidates, inWeaponList, solveLoadout } from '../src/lib/solver.js';
 import { indexDataset } from '../src/lib/dataset.js';
-import { foreignClass, pieceScore, weaponDps } from '../src/lib/score.js';
+import { foreignClass, pieceScore, weaponValue } from '../src/lib/score.js';
+import { healerStyle } from '../src/lib/healer.js';
 import { GUIDE_CONFIG, armorMatches, buildGuides, findItem } from './guides.mjs';
 
 const args = process.argv.slice(2);
@@ -56,14 +59,26 @@ const onlyTier = opt('--tier', null);
 const onlyGuide = opt('--guide', null);
 const whyName = opt('--why', null);
 const preOnly = flag('--pre');
-const filtered = !!(onlyCls || onlyTier || onlyGuide || preOnly);
+// the healer's Support playstyle: gear and weapons graded on the healing they put on allies
+const healerOpt = flag('--support') ? 'support' : opt('--healer', null);
+const playstyle = healerOpt ? { healer: healerOpt } : {};
+const filtered = !!(onlyCls || onlyTier || onlyGuide || preOnly || healerOpt);
 const writeReports = !flag('--no-write') && !filtered;
 
-const ds = indexDataset(JSON.parse(readFileSync(new URL('../data/dataset.json', import.meta.url), 'utf8')));
+// TL_DATASET reads another mine (a scratch run of a miner change) without touching the committed one
+const ds = indexDataset(JSON.parse(readFileSync(process.env.TL_DATASET ?? new URL('../data/dataset.json', import.meta.url), 'utf8')));
 const guidesFile = new URL('../data/guides.json', import.meta.url);
 const picksAll = flag('--refresh') || !existsSync(guidesFile)
   ? await buildGuides(ds, { refresh: flag('--refresh') })
   : JSON.parse(readFileSync(guidesFile, 'utf8')).picks;
+// …and a pick whose id this dataset does not know is resolved again: guides.json remembers the ids
+// of the mine it was built from, and an item that mine did not have (a healing staff) exists now.
+// A pick the dataset already resolves keeps what the guide says.
+for (const p of picksAll) {
+  if (p.id && ds.byId.has(p.id)) continue;
+  const it = findItem(ds, p);
+  if (it) { p.id = it.id; p.itemStage = it.stage ?? null; }
+}
 
 const HEAD_WORDS = /\b(helmet|hat|mask|hood|headgear|helm|visage|cowl|crown|cap|facemask|head|circlet|garland|goggles|headpiece|tiara|veil|skull|plume)\b/i;
 const PRE_HARDMODE = ds.stages.findIndex((s) => /Wall of Flesh/i.test(s.label));
@@ -129,15 +144,20 @@ function rankings(guide, cls, stage) {
   const key = `${guide}|${cls}@${stage}`;
   if (ctxCache.has(key)) return ctxCache.get(key);
   const scope = scopeOf(guide);
-  const solveOpts = { cls, stage, slots: 6, reforge: 'none', conds: new Set(), uncertain: false, excludedMods: scope.excludedMods, balanceMods: scope.balanceMods };
+  const solveOpts = { cls, stage, slots: 6, reforge: 'none', conds: new Set(), uncertain: false, excludedMods: scope.excludedMods, balanceMods: scope.balanceMods, playstyle };
+  const role = healerStyle(cls, playstyle);
   const lo = solveLoadout(ds, solveOpts);
   const pool = candidates(ds, solveOpts);
-  const statCtx = { conds: new Set(), uncertain: false, prefix: null, calibration: null, balanceMods: scope.balanceMods, ds, stage, stealthMax: lo.stealthMax, loadout: lo.bonus };
-  const weaponPool = pool.filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0);
+  const statCtx = { conds: new Set(), uncertain: false, prefix: null, calibration: null, balanceMods: scope.balanceMods, ds, stage, stealthMax: lo.stealthMax, loadout: lo.bonus, playstyle };
+  // the app's own list and grading (`inWeaponList`, `weaponValue`), so a healer playstyle is checked
+  // on the weapons the app ranks for it
+  const weaponPool = pool.filter((it) => inWeaponList(it, cls, role));
+  const progression = ds.stages[stage]?.progression;
+  const grade = (it, targets) => weaponValue(it, { ...statCtx, targets });
   // the target modes are the two user-facing scores; a section is judged against the one it asks for
   const scoredCache = new Map();
   const scored = (targets) => {
-    if (!scoredCache.has(targets)) scoredCache.set(targets, weaponPool.map((it) => ({ it, v: weaponDps(it, { ...statCtx, targets }) })));
+    if (!scoredCache.has(targets)) scoredCache.set(targets, weaponPool.map((it) => ({ it, v: grade(it, targets) })));
     return scoredCache.get(targets);
   };
   const listCache = new Map();
@@ -152,12 +172,11 @@ function rankings(guide, cls, stage) {
     return listCache.get(key);
   };
   const sets = [lo.armor, ...lo.armorAlternatives].filter(Boolean);
-  const progression = ds.stages[stage]?.progression;
   const armorBySlot = new Map(['head', 'body', 'legs'].map((slot) => [slot, pool
     .filter((it) => it.slot === slot && !foreignClass(it, cls, ds.aliases))
-    .map((it) => ({ it, s: pieceScore(it, cls, ds.aliases, { progression }).score }))
+    .map((it) => ({ it, s: pieceScore(it, cls, ds.aliases, { progression, playstyle: role }).score }))
     .sort((a, b) => b.s - a.s)]));
-  const accs = pool.filter((it) => it.slot === 'accessory').map((it) => ({ it, s: pieceScore(it, cls, ds.aliases, { progression }).score })).sort((a, b) => b.s - a.s);
+  const accs = pool.filter((it) => it.slot === 'accessory').map((it) => ({ it, s: pieceScore(it, cls, ds.aliases, { progression, playstyle: role }).score })).sort((a, b) => b.s - a.s);
   const r = {
     lo, statCtx, sets, accs, weapons: listFor('auto'), listFor,
     weaponRank: (id, targets = 'auto', family = null) => {
@@ -225,7 +244,7 @@ if (whyName) {
     console.log(`    scope: ${scope.label} content, balance ${scope.balanceMods ? [...scope.balanceMods].join('+') || 'none' : 'as installed'}, target ${targets}`);
     console.log(`    lab rank: ${r ? `#${r.rank}/${r.of}` : it.stage > p.stage ? `LATE (${it.stageLabel}, ${it.stageSource.kind})` : 'unranked'}`);
     console.log(`    loadout carries +${Math.round(R.lo.bonus.damage * 100)}% ${p.cls} damage, +${Math.round(R.lo.bonus.crit)} crit (${R.lo.armor?.head.item.name})`);
-    show('pick', it, weaponDps(it, { ...R.statCtx, targets }));
+    show('pick', it, weaponValue(it, { ...R.statCtx, targets }));
     const top = R.listFor(targets)[0];
     if (top && top.it.id !== p.id) show('lab #1', top.it, top.v);
   }

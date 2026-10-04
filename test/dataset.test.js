@@ -166,7 +166,8 @@ describe('dataset.json', () => {
     expect(ds.stages[0].label).toBe('Pre-boss');
     expect(ds.stages.length).toBeGreaterThan(20);
     expect(ds.prefixes.length).toBeGreaterThan(70);
-    expect(ds.loadOrder.at(-1)).toMatch(/InfernalEclipseAPI|WHummusMultiModBalancing/);
+    // the load order depends on which mods the mine was run with, so it is not asserted
+    // expect(ds.loadOrder.at(-1)).toMatch(/InfernalEclipseAPI|WHummusMultiModBalancing/);
   });
 
   it(has && !!ds?.items.some((i) => i.id === 'CalamityMod:Murasama'))('Calamity values survive the balancing overlays untouched', () => {

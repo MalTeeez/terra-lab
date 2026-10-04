@@ -1195,6 +1195,33 @@ export function vanillaSetProjectiles(tml) {
 /** Vanilla yoyos hit the same NPC about six times a second (Projectile.aiStyle 99). */
 export const YOYO_HIT_COOLDOWN = 10;
 
+/** Whether an assembly has `darkAura` anywhere in its string heap, searched once. */
+const mentionsDarkAura = new WeakMap();
+
+/**
+ * Does any method of the projectile read Thorium's `ThoriumPlayer.darkAura`? That flag is what the
+ * dark healer's gear sets ("Empowers certain radiant attacks with dark energy": Warlock, Whispering,
+ * Demon Tongue, Dark Effigy…), and the "certain attacks" are exactly the projectiles that ask for it.
+ */
+function readsDarkAura(asm, td) {
+  // the name is in the assembly's string heap only if some code of it declares or reads the field:
+  // one buffer search keeps every other mod from decoding all of its projectiles' IL for nothing
+  let any = mentionsDarkAura.get(asm);
+  if (any === undefined) mentionsDarkAura.set(asm, (any = !!asm.strings?.includes('darkAura')));
+  if (!any) return false;
+  for (const md of td.methods) {
+    const body = asm.methodBody(md);
+    if (!body) continue;
+    let ins; try { ins = decodeIL(body.il); } catch { continue; }
+    for (const x of ins) {
+      if (x.op !== 'ldfld' && x.op !== 'ldflda') continue;
+      let d; try { d = asm.resolve(x.operand); } catch { continue; }
+      if (d?.name === 'darkAura' && /ThoriumPlayer$/.test(d.declaringType?.fullName ?? d.declaringType?.name ?? '')) return true;
+    }
+  }
+  return false;
+}
+
 /** Every ModProjectile of a mod. `loc` names them: `ApolloFireball` is the Volatile Plasma Blast. */
 export function extractProjectiles(asm, { tml, modId, loc = null }) {
   const out = [];
@@ -1208,7 +1235,7 @@ export function extractProjectiles(asm, { tml, modId, loc = null }) {
     // same statement, so both have to ask whether some other method arms it later.
     if (!rec.fields?.friendly && !rec.friendlyLater) rec.friendlyArmed = armsFriendly(asm, td);
     const name = loc?.proj(td.name);
-    out.push({ ...projectileRecord(asm, `${modId}:${td.name}`, rec), ...(name ? { name } : {}) });
+    out.push({ ...projectileRecord(asm, `${modId}:${td.name}`, rec), ...(name ? { name } : {}), ...(readsDarkAura(asm, td) ? { darkAura: true } : {}) });
   }
   return out;
 }

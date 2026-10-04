@@ -16,6 +16,8 @@
  * at `tank`×, because it is the only class that has to stand in the boss's hitbox to do its damage.
  */
 import { STEALTH_RECHARGE, hitDamage, realDps, stealthMultiplier } from './dps.js';
+import { soft, typicalDps } from './curve.js';
+import { ALLY_FLAGS, DARK, DARK_EMPOWER, HEAL_VALUE, REAPER, SOUL_STACK, gradeHealerWeapon, healerStyle, isSupport, typicalHeal } from './healer.js';
 
 /** Share of a fight a minion spends in range of the boss — dps.js's minion model, the same number. */
 const MINION_UPTIME = 0.9;
@@ -105,6 +107,11 @@ export const W = {
   // ponytail: flat numbers for every stage; potions, life pools and fights all grow.
   potionHeal: 2 * 150 * 0.05, potionMana: 8 * 60 * 0.03,
   healerHealing: 1.5, // healer: +1 life on every heal they cast
+  supportManaRegen: 1.5, // support healer: a point of Thorium's mana regeneration bonus ("massively increased" is 6)
+  soulEssence: 4, // reaper: an effect on the soul essence its scythes earn, unread
+  darkAura: 8, // dark healer: gear that empowers the dark radiant weapons (DARK_EMPOWER on the weapons that read it)
+  halfLifeCost: 6, // dark healer: "halves radiant life costs"
+  styleLifeSteal: 4, // dark healer: life steal from tooltip prose, amount unread
   // void (SOTS) is a resource class: its weapons spend void the way a mage spends mana, so what a
   // piece gives the bar is what it gives the class — and both of these are *measured* against the
   // model rather than guessed. Grading the class's best five weapons at every stage with the bar a
@@ -155,7 +162,20 @@ export const CLASS_PREF = {
 };
 const pref = (cls, k) => CLASS_PREF[cls]?.[k] ?? (k === 'aggro' ? -1 : 1);
 /** Survivability multiplier: `tank`, times the stat's own preference where it has one. */
-const tank = (cls, k) => pref(cls, 'tank') * (k ? pref(cls, k) : 1);
+const classTank = (cls, k) => pref(cls, 'tank') * (k ? pref(cls, k) : 1);
+
+/**
+ * A reaper healer swings scythes that spin around the player, so it stands next to the boss the way
+ * melee does — not inside its hitbox all fight (melee's 2.5), but close enough that a hit absorbed is
+ * a swing not spent backing off.
+ */
+const REAPER_TANK = 1.4;
+/**
+ * Soul essence a reaper earns a second: two a swing (most scythes' `scytheSoulCharge`) at a 22-tick
+ * swing (`SetDefaultsToScythe`'s). Every `SOUL_STACK` of it heals 1 + bonus healing, so one point
+ * of bonus healing is this ÷ 5 life a second.
+ */
+const REAPER_ESSENCE = 2 * (60 / 22);
 
 /**
  * Worth of a point of defense at a progression value. A boss hit grows from ~30 pre-boss to ~500
@@ -177,17 +197,7 @@ export const defenseScale = (progression) => 2.3 / Math.log(3 + Math.max(0, prog
  */
 export const minionSlotScale = (progression) => 1 / (3 + Math.max(0, progression ?? 7) / 3);
 
-/**
- * A typical weapon's DPS at a progression value, the yardstick for damage an accessory deals on
- * its own (a spike per stealth strike, a flash on hit): ~60 pre-boss, ~240 at Wall of Flesh,
- * ~1800 at Moon Lord, ~18000 at the end of Calamity.
- *
- * Calibrated against the lab's own weapon model, not guessed: the median of the 10th-best weapon
- * per class per stage (`weaponDps`) is ~55 at progression 0, ~850 at 12.8 and ~3600 at 20.5, all
- * within 10% of this curve. The old base of 40 sat a flat 1.5× under it at every stage, which
- * made every flat proc and every "+N damage on a crit" worth half again what it should be.
- */
-export const typicalDps = (progression) => 60 * 1.22 ** Math.max(0, progression ?? 7);
+export { typicalDps };
 
 /**
  * The armour a boss at a progression value is wearing, for grading damage an accessory deals on its
@@ -205,8 +215,11 @@ export const typicalDefense = (progression) => 6 * 1.13 ** Math.max(0, progressi
  * crit flattens (nothing above 100% helps), movement, damage reduction, regen, defense and
  * aggro all pay less the more a single item piles on.
  */
-export const soft = (x, cap) => { const t = Math.min(1, Math.abs(x) / (3 * cap)); return Math.sign(x) * cap * (1 - (1 - t) ** 3); };
-export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 1300, voidRegen: 0.9, inspiration: 10, inspirationRegen: 0.5 };
+export { soft };
+export const SOFT = { crit: 25, attackSpeed: 0.25, moveSpeed: 0.3, endurance: 0.2, lifeRegen: 8, maxLife: 100, maxMana: 100, armorPen: 25, defense: 12, velocity: 0.3, aggro: 10, wingTime: 200, voidGain: 6, voidMaxPool: 1300, voidRegen: 0.9, inspiration: 10, inspirationRegen: 0.5, healOut: 1, supportManaRegen: 4 };
+
+/** Share of a faster or cheaper cast that turns into more heals: the other half of the time the mana bar is what holds a staff back. */
+const SUPPORT_CAST_SHARE = 0.5;
 
 /** Hits one spawned projectile lands: its pierce (or life ÷ immunity frames when infinite), plus half its children. */
 export function onHitHits(s) {
@@ -339,7 +352,13 @@ function mergedStat(item, key, cls, aliases, extraFx) {
     case 'condEndurance': b = st.condEndurance ?? textCondEndurance(item); break;
     case 'potionHeal': b = st.potionHeal ?? 0; break;
     case 'potionMana': b = st.potionMana ?? 0; break;
-    case 'healerHealing': b = st.healerHealing ?? 0; break;
+    // the tooltip first: CalamityBardHealer's helmets add their whole set's bonus healing to
+    // `healBonus` in one branch the miner cannot tell apart (Bloodflare reads 12 where the helmet
+    // prints 6), so the code only answers where the text is silent (Heart of the Beholder) — or where
+    // the text is a `{0}` template the miner read as 1: Sacred's set bonus formats `SetHealBonus`, 5
+    case 'healerHealing': b = st.healerHealing ?? 0; if (!b || (item.placeholders && (fx?.mod?.healBonus ?? 0) > b)) { b = 0; a = fx?.mod?.healBonus ?? 0; } break;
+    // Thorium's "healing speed": `GetAttackSpeed<HealerTool>`, mined under its own `healing` key
+    case 'healSpeed': a = fx?.attackSpeed?.healing ?? 0; b = st.healSpeed ?? 0; c = extraFx?.attackSpeed?.healing ?? 0; break;
     // class mechanics in prose ("Stealth strikes deal 8% more damage"), keyed by the class the text
     // names; only what the mined effects do not already cover, since the same line often is that effect
     case 'condDamage': b = Math.max(0, condStat(st, 'CondDamage', cls, aliases) - Math.abs(forClass(fx?.damage, cls, aliases) + forClass(fx?.damageMult, cls, aliases))); break;
@@ -464,6 +483,16 @@ export function loadoutBonus(pieces, cls, aliases = {}, progression) {
   // damage: the weapon's sustain is graded against the bar the player is actually wearing.
   let voidMax = 0;
   let voidRegen = 0;
+  // …and what it gives a heal: a support healer's staffs are graded with the bonus healing, the
+  // healing speed and the mana cost the player is wearing (`healer.js`)
+  let healBonus = 0;
+  let healSpeed = 0;
+  let manaCost = 0;
+  let manaRegen = 0;
+  // Thorium's `radiantLifeCost` divisor: the dark gear that "halves radiant life costs" sets it to 2
+  let radiantLifeCost = 1;
+  // …and whether any of it turns on the dark healer's `darkAura`
+  let darkAura = false;
   for (const p of pieces) {
     const item = p?.item ?? p;
     if (!item) continue;
@@ -475,15 +504,25 @@ export function loadoutBonus(pieces, cls, aliases = {}, progression) {
     armorPen += mergedStat(item, 'armorPen', cls, aliases, fx);
     voidMax += mergedStat(item, 'voidMaxPool', cls, aliases, fx);
     voidRegen += mergedStat(item, 'voidRegen', cls, aliases, fx);
-
+    if (cls === 'healer') {
+      healBonus += mergedStat(item, 'healerHealing', cls, aliases, fx);
+      healSpeed += mergedStat(item, 'healSpeed', cls, aliases, fx);
+      manaCost += mergedStat(item, 'manaCost', cls, aliases, fx);
+      manaRegen += (item.effects?.manaRegen ?? 0) + (fx?.manaRegen ?? 0);
+      radiantLifeCost = Math.max(radiantLifeCost, item.effects?.mod?.radiantLifeCost ?? 1);
+      darkAura ||= !!item.effects?.flags?.includes('darkAura');
+    }
   }
-  return { damage, crit, armorPen, voidMax, voidRegen };
+  return { damage, crit, armorPen, voidMax, voidRegen, healBonus, healSpeed, manaCost, manaRegen, radiantLifeCost, darkAura };
 }
 
-export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression, cond = COND } = {}) {
+export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = null, progression, cond = COND, playstyle = null } = {}) {
   const parts = [];
   const add = (label, value, detail) => { if (Math.abs(value) >= 0.05) parts.push(detail ? { label, value: round1(value), detail } : { label, value: round1(value) }); };
   const extraFx = prefix?.effects ?? null;
+  // the healer's playstyle (`healer.js`): a reaper stands closer, so survival is worth more to it
+  const hstyle = healerStyle(cls, playstyle);
+  const tank = (c, k) => classTank(c, k) * (hstyle === REAPER ? REAPER_TANK : 1);
   // a tooltip with `{0}` placeholders and effects applied through a ModPlayer flag means the
   // numbers are computed at runtime ("damage based on defense"): what the miner read are the
   // constants in that formula, usually its cap — take them at half
@@ -676,7 +715,7 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   const ownEffDef = mergedStat(item, 'defense', cls, aliases, null);
   const isAcc = item.slot === 'accessory';
   // survivability is the class's own: melee stands in the hitbox, everyone else kites (CLASS_PREF.tank)
-  const tankNote = pref(cls, 'tank') !== 1 ? `${cls} counts what keeps it alive at ${pref(cls, 'tank')}×: it fights inside the boss's hitbox, so a hit absorbed is a swing it does not spend retreating.` : undefined;
+  const tankNote = hstyle === REAPER ? `A reaper counts what keeps it alive at ${REAPER_TANK}×: its scythes spin around it, so it fights next to the boss.` : pref(cls, 'tank') !== 1 ? `${cls} counts what keeps it alive at ${pref(cls, 'tank')}×: it fights inside the boss's hitbox, so a hit absorbed is a swing it does not spend retreating.` : undefined;
   const defensePoints = (n) => (isAcc ? ease('defense', n) : n) * W.defense * defenseScale(progression) * tank(cls, 'defense');
   if (isCond('defense') && ownEffDef) {
     // Prefix defense is unconditional and remains with the item's base. The gated contribution is
@@ -706,7 +745,45 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
   if (cdr) add(`${pct(cdr)} damage reduction${COND_MARK}`, ease('endurance', cdr) * W.endurance * tank(cls) * COND_STATE, CONDMSG);
   const ph = stat('potionHeal');
   if (ph) add(`${pct(ph)} healing from potions`, ph * W.potionHeal * dyn * tank(cls), notes(`More life back per potion, or less time between two of them: a fight swallows about two potions of 150 life, so ${pct(ph)} is ${Math.round(ph * 2 * 150)} life across it.`, tankNote));
-  if (cls === 'healer') { const hh = stat('healerHealing'); if (hh) add(`${sgn(hh)} life per heal cast`, hh * W.healerHealing); }
+  if (cls === 'healer' && hstyle === REAPER) {
+    // a reaper's bonus healing comes back as soul essence: every five heal 1 + bonus healing
+    const hh = stat('healerHealing');
+    const back = (hh * REAPER_ESSENCE) / SOUL_STACK;
+    if (hh) add(`${sgn(hh)} bonus healing (soul essence)`, ease('lifeRegen', back * 2) * W.lifeRegen * tank(cls), notes(`Every ${SOUL_STACK} soul essence heal you for 1 + your bonus healing. A scythe earns about ${round1(REAPER_ESSENCE)} a second, so ${sgn(hh)} bonus healing is ${round1(back)} life a second — priced as life regeneration.`, tankNote));
+    if (/soul essence/i.test(`${item.tooltip ?? ''}
+${item.setBonus ?? ''}`)) add('soul essence effect', W.soulEssence, 'Does something with the soul essence your scythes earn; what it does is not read, so it counts for a flat ' + W.soulEssence + '.');
+  }
+  if (cls === 'healer' && hstyle === DARK) {
+    // the dark healer plays the weapons the dark gear empowers, and pays for its spells in life
+    const flags = [...(item.effects?.flags ?? []), ...(item.flags ?? [])];
+    if (flags.includes('darkAura')) add('empowers dark radiant weapons', W.darkAura, `Turns on darkAura: the weapons that read it (Palm Cross, Holy Fire, Life Disperser…) are counted ${Math.round(DARK_EMPOWER * 100)}% stronger while it is worn. One piece is enough; every piece that grants it is paid the same.`);
+    if ((item.effects?.mod?.radiantLifeCost ?? 0) > 1) add('halves radiant life costs', W.halfLifeCost, 'Spells that cast at the cost of life take half as much: twice the casts out of the same health.');
+    if (/steals? life|life ?steal/i.test(item.tooltip ?? '')) add('steals life', W.styleLifeSteal * tank(cls), 'Life back from hitting the boss is how a dark healer stays standing while its spells cost it health; the amount is not read, so it counts for a flat ' + W.styleLifeSteal + '.');
+  }
+  if (cls === 'healer' && !isSupport(cls, playstyle) && hstyle !== REAPER) { const hh = stat('healerHealing'); if (hh) add(`${sgn(hh)} life per heal cast`, hh * W.healerHealing, 'Solo there is nobody else to heal: bonus healing only comes back to you through the heals that land on yourself — a mace\'s healing orbs, a bolt that heals you and your allies. Pick the Support playstyle to grade it as the class\'s main output.'); }
+  // A support healer's output is the healing it puts on allies, graded in the same currency as
+  // damage: +10% healing output is worth HEAL_VALUE × 10 points. Bonus healing is a flat amount on
+  // every heal, so it is a share of a typical heal at the stage (4 life pre-boss, 16 at the end);
+  // healing speed and mana cost buy more casts, but only where the bar is not already what holds
+  // the casts back, so they count at half.
+  if (isSupport(cls, playstyle)) {
+    const heal = typicalHeal(progression);
+    const hh = stat('healerHealing');
+    if (hh) add(`${sgn(hh)} bonus healing`, soft(hh / heal, SOFT.healOut) * W.damage * HEAL_VALUE,
+      notes(`Every heal you cast lands ${round1(hh)} more life, against a typical ${round1(heal)}-life heal at this stage: ${pct(hh / heal)} healing output, at ${HEAL_VALUE}× what the same share of damage is worth.`, easeNote('healOut', hh / heal, pct)));
+    const hs = stat('healSpeed');
+    if (hs) add(`${pct(hs)} healing speed`, ease('healOut', hs * SUPPORT_CAST_SHARE) * W.damage * HEAL_VALUE,
+      `Healing staffs cast ${pct(hs)} faster. The mana bar holds a staff back as often as its use time does, so it counts as ${pct(hs * SUPPORT_CAST_SHARE)} healing output. It reaches no radiant weapon: Thorium keeps it on the HealerTool class.`);
+    const smc = stat('manaCost');
+    if (smc) add(`${pct(-smc)} mana cost (heals)`, ease('healOut', (1 / Math.max(0.1, 1 - smc) - 1) * SUPPORT_CAST_SHARE) * W.damage * HEAL_VALUE,
+      `Heals are paid in mana: ${pct(-smc)} on the cost is ${pct(1 / Math.max(0.1, 1 - smc) - 1)} more casts out of the same bar, counted at half for the fights the bar is not what holds you back.`);
+    const regen = (item.effects?.manaRegen ?? 0) + (extraFx?.manaRegen ?? 0);
+    if (regen > 0) add('mana regeneration (heals)', soft(regen, SOFT.supportManaRegen) * W.supportManaRegen, `More mana back is more heals cast. Thorium words it "minimally" to "massively increased" (1 to 6 here); vanilla's Mana Regeneration Band writes a bigger number into a different field, so the curve flattens past ${SOFT.supportManaRegen}.`);
+    for (const f of [...(item.effects?.flags ?? []), ...(item.flags ?? [])]) {
+      const ally = ALLY_FLAGS[f];
+      if (ally) add(ally[1], ally[0], 'Fires on every heal that lands on an ally (`ThoriumHealTarget`).');
+    }
+  }
   // square root: the first aggro points matter most (a rogue's stealth only buys about −10)
   // square root, then the curve: the first aggro points matter most (a rogue's stealth only buys about −10),
   // and −800 is not four times −200
@@ -781,7 +858,7 @@ export function sprintFactor(drag) {
 }
 
 /** Score of a head piece's set bonus (setEffects + set bonus text). */
-export function setBonusScore(head, cls, aliases = {}, { progression } = {}) {
+export function setBonusScore(head, cls, aliases = {}, { progression, playstyle = null } = {}) {
   if (!head.setEffects && !head.setBonus) return { score: 0, parts: [] };
   const text = head.setBonus ?? '';
   // Backward-compatible text fallbacks make an already-mined dataset benefit immediately; future
@@ -798,7 +875,7 @@ export function setBonusScore(head, cls, aliases = {}, { progression } = {}) {
     flags: [...new Set([...(head.setFlags ?? []), ...textFlags])],
     debuffs: [...new Set([...(head.setDebuffs ?? []), ...(textDebuff ? [textDebuff] : [])])],
   };
-  const r = pieceScore(pseudo, cls, aliases, { progression, cond: SET_COND });
+  const r = pieceScore(pseudo, cls, aliases, { progression, cond: SET_COND, playstyle });
   // Every set bonus does something beyond what the miner can read — a proc, an aura, a dodge — so
   // wearing a full set is worth a flat base on top of whatever came out numbered.
   const t = head.setBonus?.toLowerCase() ?? '';
@@ -856,6 +933,24 @@ const DEFAULT_CTX = { conds: new Set(), uncertain: false, prefix: null, calibrat
  */
 export function weaponDps(item, ctx = DEFAULT_CTX) {
   return realDps(item, ctx);
+}
+
+/**
+ * What a weapon is worth in the list it ranks in: its Real DPS, and for a healer weapon what the
+ * healer's playstyle (`ctx.playstyle.healer`) grades it on — `healer.js`. The one entry point the
+ * solver, the item card, the browser and guide-check grade through, so none of them can rank a
+ * different list. `ctx` is `weaponDps`'s, plus the `loadout` worn (`loadoutBonus`): the bonus
+ * healing, healing speed and dark gear a playstyle's value reads.
+ */
+export function weaponValue(item, ctx = DEFAULT_CTX) {
+  const d = weaponDps(item, ctx);
+  if ((item.cls ?? item.class) !== 'healer') return d;
+  return gradeHealerWeapon(item, d, {
+    style: healerStyle('healer', ctx.playstyle),
+    progression: ctx.ds?.stages?.[ctx.stage ?? 0]?.progression,
+    loadout: ctx.loadout ?? {},
+    projectiles: ctx.ds?.projectiles ?? null,
+  });
 }
 
 export const round1 = (v) => Math.round(v * 10) / 10;

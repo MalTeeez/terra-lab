@@ -3,7 +3,8 @@
   import { fade, fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import { ARCH_HINT, ARCH_LABELS, CLASS_LABELS, SOURCE_HINT, SOURCE_TONE, accentOf } from "../lib/dataset.js";
-  import { accessoryGroup, pieceScore, setBonusScore, weaponDps } from "../lib/score.js";
+  import { accessoryGroup, pieceScore, setBonusScore, weaponDps, weaponValue } from "../lib/score.js";
+  import { healerStyle } from "../lib/healer.js";
   import { effectiveStats, prefixesFor } from "../lib/stats.js";
   import { setOwned, toggleIn, ui } from "../lib/state.svelte.js";
   import { craftTree, gateText, gatingChain } from "../lib/sources.js";
@@ -36,13 +37,22 @@
   const prefix = $derived(own?.prefix ? (ds.prefixById.get(own.prefix) ?? null) : null);
   const ctx = $derived({ ...statCtx, prefix });
   const progression = $derived(ds.stages[ui.stage]?.progression);
-  const score = $derived(isGear ? pieceScore(item, ui.cls, ds.aliases, { prefix, progression }) : null);
+  const role = $derived(healerStyle(ui.cls, ui.playstyle));
+  const score = $derived(isGear ? pieceScore(item, ui.cls, ds.aliases, { prefix, progression, playstyle: role }) : null);
   const setScore = $derived(
     item.slot === "head" && (item.setEffects || item.setBonus)
-      ? setBonusScore(item, ui.cls, ds.aliases, { progression })
+      ? setBonusScore(item, ui.cls, ds.aliases, { progression, playstyle: role })
       : null,
   );
   const dps = $derived(item.slot === "weapon" ? weaponDps(item, ctx) : null);
+  // what the weapon is worth to the healer's playstyle, with what the loadout is wearing
+  const STYLE_NAMES = { support: "Support healing", dark: "Dark radiant", reaper: "Scythes", radiant: "Radiant" };
+  // (`weaponValue`, the loadout's own grading, with this card's reforge)
+  const styled = $derived(
+    item.slot === "weapon" && role && (item.cls ?? item.class) === "healer"
+      ? (weaponValue(item, ctx).style ?? null)
+      : null,
+  );
   const eff = $derived(item.slot === "weapon" ? effectiveStats(item, ctx) : null);
   const heads = $derived(item.setHeads ?? []);
   const accent = $derived(accentOf(item.cls ?? ui.cls));
@@ -456,6 +466,22 @@
               : `, and the card still scores it on ${loopLabel(loops[0])}.`}
           </p>
         {/if}
+      </section>
+    {/if}
+
+    {#if styled}
+      <section class="mb-3">
+        <div class="lab-rule start mb-1.5">{STYLE_NAMES[styled.name]}</div>
+        <div class="lab-calc pb-2">
+          {#each styled.rows as p}
+            <div class="row has-tip" title={p.detail ?? ""}>
+              <span class="lbl">{p.label}</span><i class="lead"></i><span class="val num">{fmtNum(p.value)}</span>
+            </div>
+          {/each}
+          <div class="row total">
+            <span class="lbl">{styled.name === "support" ? "support value" : "playstyle value"}</span><i class="lead"></i><span class="val num" style="color:{accent}">{fmtNum(styled.value)}</span>
+          </div>
+        </div>
       </section>
     {/if}
 

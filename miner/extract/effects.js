@@ -67,7 +67,11 @@ const STAT_GETTERS = {
   GetTotalDamage: 'damage', GetWeaponDamage: null,
 };
 
-const classKeyOf = (v) => (v?.k === 'dc' ? classOf(v.name) : typeof v === 'string' ? classOf(simpleName(v)) : 'all') ?? 'all';
+// Thorium's `HealerTool` is the class of its healing staffs: what an accessory gives it ("healing
+// speed") reaches no radiant weapon — `HealerDamage` inherits nothing from it — so it is kept under
+// its own key instead of being folded into the healer's attack speed
+const effectClassOf = (name) => (simpleName(name) === 'HealerTool' ? 'healing' : classOf(name));
+const classKeyOf = (v) => (v?.k === 'dc' ? effectClassOf(v.name) : typeof v === 'string' ? effectClassOf(simpleName(v)) : 'all') ?? 'all';
 
 /**
  * Hooks shared by mod and vanilla effect walkers. `emit(delta, ctx)` receives every delta.

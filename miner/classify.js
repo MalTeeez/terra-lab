@@ -416,8 +416,11 @@ export function parseTooltipStats(text) {
     // speed
     if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased )?(?:throwing|thrown|rogue) velocity`, 'i')))) { add('rogueVelocity', pct(m[1])); continue; }
     if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased )?acceleration`, 'i')))) { add('accel', pct(m[1])); continue; }
-    // a class's own attack speed under its own name: a bard plays, a healer casts
-    if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |faster )?(symphonic|bard|radiant|healing)[a-z ]*speed`, 'i')))) { add(`${/symphonic|bard/i.test(m[2]) ? 'bard' : 'healer'}Speed`, pct(m[1])); continue; }
+    // a class's own attack speed under its own name: a bard plays, a healer casts. Thorium's
+    // "healing speed" is not that: it is `GetAttackSpeed<HealerTool>`, the class of its healing
+    // staffs, and no radiant weapon inherits it — its own stat, worth something to a support healer
+    if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |faster )?healing speed`, 'i')))) { add('healSpeed', pct(m[1])); continue; }
+    if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased |faster )?(symphonic|bard|radiant)[a-z ]*speed`, 'i')))) { add(`${/symphonic|bard/i.test(m[2]) ? 'bard' : 'healer'}Speed`, pct(m[1])); continue; }
     if ((m = line.match(new RegExp(`increases? whip range by ${NUM}%|\\+?${NUM}% (?:increased )?whip range`, 'i')))) { add('whipRange', pct(m[1] ?? m[2])); continue; }
     if ((m = line.match(new RegExp(`\\+?${NUM}% (?:increased )?(melee|ranged|magic|rogue|attack|weapon|movement|flight|mining|use)?\\s?(?:speed)`, 'i')))) {
       const kind = (m[2] ?? '').toLowerCase();
@@ -460,7 +463,10 @@ export function parseTooltipStats(text) {
     if (/HP\/s life regen/i.test(line)) { add('lifeRegen', 3); placeholders = placeholders || /\{\d\}/.test(line); continue; }
     if (/life regen/i.test(line) && /increas|boost|improv|provid|potent/i.test(line)) { add('lifeRegen', 2); continue; }
     // Thorium's healer: a flat bonus on every heal they cast
-    if ((m = line.match(new RegExp(`healing spells will heal an additional ${NUM} (?:life|health)`, 'i')))) { add('healerHealing', flat(m[1], 1)); continue; }
+    // …in the wordings the addons use too ("heal for an additional 7 life", "bonus healing increased
+    // by 7"), and the drawback that takes it away ("Healing spells will heal 1 less life")
+    if ((m = line.match(new RegExp(`healing spells (?:will )?heal (?:for )?(?:an )?additional ${NUM} (?:life|health)|bonus healing (?:increased )?by ${NUM}`, 'i')))) { add('healerHealing', flat(m[1] ?? m[2], 1)); continue; }
+    if ((m = line.match(new RegExp(`healing spells (?:will )?heal ${NUM} less (?:life|health)`, 'i')))) { add('healerHealing', -flat(m[1], 1)); continue; }
     if ((m = line.match(new RegExp(`increases? (?:your )?(?:armor|armour) penetration by ${NUM}|\\+${NUM} armor penetration`, 'i')))) { add('armorPen', flat(m[1] ?? m[2], 5)); continue; }
     if ((m = line.match(new RegExp(`${NUM}% (?:increased )?stealth`, 'i')))) { add('stealth', pct(m[1])); continue; }
     if ((m = line.match(new RegExp(`\\+${NUM} (?:max(?:imum)? )?stealth`, 'i')))) { add('stealthFlat', flat(m[1], 10)); continue; }

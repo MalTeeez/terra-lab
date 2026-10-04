@@ -4,7 +4,8 @@
  * the gear the user owns, honouring pins, exclusions and reforges.
  */
 import { ammoAt, SLOT_MODES } from './dps.js';
-import { W, accessoryGroup, foreignClass, loadoutBonus, pieceScore, setBonusScore, sprintFactor, weaponDps } from './score.js';
+import { W, accessoryGroup, foreignClass, loadoutBonus, pieceScore, setBonusScore, sprintFactor, weaponDps, weaponValue } from './score.js';
+import { HEALER_STYLES, healerGearStyles, healerSetStyles, healerStyle, healsAllies, playsStyle } from './healer.js';
 import { bestPrefix, prefixesFor, scopedItem } from './stats.js';
 
 /** Items obtainable at `stage` from mods that are not excluded (or the owned set). */
@@ -21,6 +22,17 @@ export function candidates(ds, { stage, excludedMods = new Set(), unknownStage =
 const ARMOR = ['head', 'body', 'legs'];
 
 /**
+ * Whether a weapon is in a class's weapon list: it deals damage — or, for a support healer, heals
+ * allies — and, under a healer playstyle (`role`), that playstyle plays it (`playsStyle`). The
+ * solver and guide-check rank the same list through it.
+ */
+export function inWeaponList(it, cls, role = null) {
+  return it.slot === 'weapon' && it.cls === cls
+    && ((it.damage ?? 0) > 0 || (role === 'support' && healsAllies(it.heal)))
+    && (!role || playsStyle(it, role));
+}
+
+/**
  * @param {object} ds       indexed dataset
  * @param {object} opts     { cls, stage, excludedMods, slots, requireSet, unknownStage,
  *                            conds, uncertain, reforge: 'best'|'none'|<prefixId>, owned: {id: {prefix}},
@@ -30,6 +42,10 @@ export function solveLoadout(ds, opts) {
   const { cls, stage, slots = 6, requireSet = false, reforge = 'none', owned = {}, pinned = new Set() } = opts;
   const aliases = ds.aliases ?? {};
   const prefixes = ds.prefixes ?? [];
+  // a healer playstyle (`healer.js`): a support healer is graded on the healing it puts on allies,
+  // a dark healer on the weapons its gear empowers, a reaper on its scythes' soul essence — gear and
+  // weapons alike. Null for every other class and for the healer's default.
+  const role = healerStyle(cls, opts.playstyle);
   const statCtx = { conds: opts.conds ?? new Set(), uncertain: !!opts.uncertain, calibration: opts.calibration ?? null, aliases, playstyle: opts.playstyle ?? null, target: opts.target ?? null, targets: opts.targets ?? 'auto', balanceMods: opts.balanceMods ?? null };
   const pool = candidates(ds, opts);
   const poolIds = new Set(pool.map((i) => i.id));
@@ -39,7 +55,7 @@ export function solveLoadout(ds, opts) {
    * The reforge an item is evaluated with: its owned prefix, else what the reforge setting asks
    * for — 'none', a named prefix (items that cannot roll it fall back to their best), or 'best'.
    */
-  const prefixFor = (it) => {
+  const prefixFor = (it, r = role) => {
     const own = owned[it.id];
     if (own?.prefix) return ds.prefixById.get(own.prefix) ?? null;
     if (own && own.prefix === null) return null;
@@ -49,8 +65,10 @@ export function solveLoadout(ds, opts) {
       if (want && prefixesFor(it, prefixes, aliases).some((p) => p.id === want.id)) return want;
     }
     return bestPrefix(it, prefixes, statCtx, {
-      dpsOf: (item, p) => weaponDps(item, { ...statCtx, ds, stage, prefix: p }).value,
-      scoreOf: (item, p) => pieceScore(scopedItem(item, statCtx), cls, aliases, { prefix: p }).score,
+      // a healer's weapon is worth what its playstyle grades it on: a healing staff deals no damage,
+      // so how fast and how cheaply it casts is all a reforge changes (the worn gear is not known yet)
+      dpsOf: (item, p) => weaponValue(item, { ...statCtx, ds, stage, prefix: p }).value,
+      scoreOf: (item, p) => pieceScore(scopedItem(item, statCtx), cls, aliases, { prefix: p, playstyle: r }).score,
     });
   };
   const decorate = (it) => ({ owned: isOwned(it), pinned: pinned.has(it.id) });
@@ -58,7 +76,7 @@ export function solveLoadout(ds, opts) {
   // choice does not, so the timeline shares it across stages (solveTimeline owns the cache)
   const progression = ds.stages[stage]?.progression;
   const cache = opts.cache ?? { piece: new Map(), acc: new Map(), prefix: new Map() };
-  const key = (it) => `${it.id}|${cls}|${progression}`;
+  const key = (it, r = role) => `${it.id}|${cls}|${progression}|${r ?? ''}`;
   // A piece is scored as *this* balance scope sees it: a guide judged at its own content's balance
   // must not be handed the overlays of mods it does not include. `effectiveStats` does this for a
   // weapon's numbers by replaying `changes` from `base`; `scopedItem` is the same answer for the
@@ -70,16 +88,19 @@ export function solveLoadout(ds, opts) {
   };
   // a weapon's best reforge is picked on DPS alone, so it is the same whatever class is in view;
   // an accessory's is picked on its class score, so that one is keyed per class
-  const reforgeOf = (it) => {
-    const k = it.slot === 'weapon' ? it.id : `${it.id}|${cls}`;
-    if (!cache.prefix.has(k)) cache.prefix.set(k, prefixFor(it));
+  // …and per playstyle: a healer's per-playstyle gear lists reforge each piece for that playstyle, and
+  // a healer's weapon is picked on what its playstyle grades it on — per stage too, since that weighs
+  // its heals against a typical weapon at the stage
+  const reforgeOf = (it, r = role) => {
+    const k = it.slot === 'weapon' ? (it.cls === 'healer' && r ? `${it.id}|${r}|${progression}` : it.id) : `${it.id}|${cls}|${r ?? ''}`;
+    if (!cache.prefix.has(k)) cache.prefix.set(k, prefixFor(it, r));
     return cache.prefix.get(k);
   };
 
   // ---- armor ------------------------------------------------------------------------------
-  const scoreOf = (it) => {
-    let s = cache.piece.get(key(it));
-    if (!s) cache.piece.set(key(it), (s = pieceScore(inScope(it), cls, aliases, { progression })));
+  const scoreOf = (it, r = role) => {
+    let s = cache.piece.get(key(it, r));
+    if (!s) cache.piece.set(key(it, r), (s = pieceScore(inScope(it), cls, aliases, { progression, playstyle: r })));
     return { ...s, ...decorate(it) };
   };
   const armorPool = pool.filter((it) => ARMOR.includes(it.slot) && !foreignClass(it, cls, aliases));
@@ -91,6 +112,8 @@ export function solveLoadout(ds, opts) {
     const s = scoreOf(it);
     if (!bestBySlot[it.slot] || s.score > bestBySlot[it.slot].score) bestBySlot[it.slot] = { item: it, ...s };
   }
+  // every full set in the pool, scored for a playstyle (the solve's own, or one of the healer's)
+  const setsFor = (r) => {
   const sets = [];
   for (const head of armorPool) {
     if (head.slot !== 'head' || !head.setItems?.length) continue;
@@ -98,8 +121,8 @@ export function solveLoadout(ds, opts) {
     const legs = head.setItems.find((p) => p.slot === 'legs');
     if (!body || !legs || !poolIds.has(body.id) || !poolIds.has(legs.id)) continue;
     if (ARMOR.some((s) => pinnedArmor[s] && pinnedArmor[s] !== { head, body, legs }[s])) continue;
-    const bonus = setBonusScore(head, cls, aliases, { progression });
-    const pieces = [head, body, legs].map((p) => ({ item: p, ...scoreOf(p) }));
+    const bonus = setBonusScore(head, cls, aliases, { progression, playstyle: r });
+    const pieces = [head, body, legs].map((p) => ({ item: p, ...scoreOf(p, r) }));
     // a per-tick velocity drag compounds across the pieces (Mollusk: 0.996 each, 0.988 together
     // kills the sprint): score the set's combined drag instead of the sum of the pieces' own
     const drags = [head, body, legs].map((p) => p.effects?.velocityDrag ?? 1);
@@ -112,6 +135,9 @@ export function solveLoadout(ds, opts) {
     sets.push({ isSet: true, head: pieces[0], body: pieces[1], legs: pieces[2], bonus, score: Math.round(score * 10) / 10, defense: pieces.reduce((s, p) => s + (p.item.defense ?? 0), 0) });
   }
   sets.sort((a, b) => b.score - a.score);
+  return sets;
+  };
+  const sets = setsFor(role);
   // A Calamity rogue without maximum stealth cannot use the class's defining stealth strikes.
   // Treat that as a loadout requirement, rather than letting three individually strong pieces (or
   // a generic full set) beat functional rogue armor on their raw stat total. Keep the ordinary
@@ -135,13 +161,13 @@ export function solveLoadout(ds, opts) {
   const armorAlternatives = viableSets.filter((s) => s !== armor).slice(0, 12);
 
   // ---- accessories ------------------------------------------------------------------------
-  const accOf = (it) => {
-    let a = cache.acc.get(key(it));
-    if (!a) { const prefix = reforgeOf(it); cache.acc.set(key(it), (a = { prefix, ...pieceScore(inScope(it), cls, aliases, { prefix, progression }), group: accessoryGroup(it) })); }
+  const accOf = (it, r = role) => {
+    let a = cache.acc.get(key(it, r));
+    if (!a) { const prefix = reforgeOf(it, r); cache.acc.set(key(it, r), (a = { prefix, ...pieceScore(inScope(it), cls, aliases, { prefix, progression, playstyle: r }), group: accessoryGroup(it) })); }
     return a;
   };
-  const ranked = pool
-    .filter((it) => it.slot === 'accessory' && !foreignClass(it, cls, aliases))
+  const accPool = pool.filter((it) => it.slot === 'accessory' && !foreignClass(it, cls, aliases));
+  const ranked = accPool
     .map((it) => ({ item: it, ...accOf(it), ...decorate(it) }))
     .filter((a) => a.score > 0 || a.pinned)
     .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.score - a.score);
@@ -162,10 +188,38 @@ export function solveLoadout(ds, opts) {
     if (a.group) usedGroups.add(a.group);
   }
 
+  // A healer's gear by playstyle, ranked from the whole pool under that playstyle's own scoring — not
+  // cut out of the top 12 sets and 40 accessories of whatever the solve is playing, which left a
+  // playstyle the solve was not scoring for with a handful of rows. What is built for it
+  // (`healerGearStyles`) and what is built for no healer playstyle in particular (an emblem, plain
+  // defense) both belong; only gear built for the *other* playstyles is left out. Its first rows are
+  // what a solve for it would wear.
+  // (the timeline never shows these lists, so it passes `styleGear: false` and skips the work; and a
+  // playstyle's list is only built when something reads it, so a caller that never looks — a guide
+  // check, a test — does not pay for four playstyles' worth of scoring)
+  const styleGearOf = (r) => {
+    const fits = (styles) => !styles.length || styles.includes(r);
+    const armorFor = (r === role ? sets : setsFor(r)).filter((s) => fits(healerSetStyles(s))).slice(0, 12);
+    const accFor = accPool
+      .filter((it) => fits(healerGearStyles(it)))
+      .map((it) => ({ item: it, ...accOf(it, r), ...decorate(it) }))
+      .filter((a) => a.score > 0 || a.pinned)
+      .filter((a) => a.group !== 'wings' && a.group !== 'boots')
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.score - a.score)
+      .slice(0, 40);
+    return { armor: armorFor, accessories: accFor };
+  };
+  const styleGear = cls !== 'healer' || opts.styleGear === false ? null : (() => {
+    const built = {};
+    const lists = {};
+    for (const r of HEALER_STYLES) Object.defineProperty(lists, r, { enumerable: true, get: () => (built[r] ??= styleGearOf(r)) });
+    return lists;
+  })();
+
   // ---- weapons (after the gear: stealth strikes scale with the set's max stealth, and what the
   // loadout carries in class damage and crit is what the weapon is actually swung with) ----------
   const worn = [armor?.head, armor?.body, armor?.legs, ...picks, wings[0], boots[0]];
-  if (armor?.isSet) worn.push({ item: { effects: armor.head.item.setEffects, stats: armor.head.item.setStats } });
+  if (armor?.isSet) worn.push({ item: { effects: armor.head.item.setEffects, stats: armor.head.item.setStats, placeholders: armor.head.item.setPlaceholders } });
   // Calamity zeroes `rogueStealthMax` every frame, so what is worn is all of it: a full rogue set
   // (the piece pushed above carries its bonus) and the few accessories that add to it. Three pieces
   // that do not make a set never fire the head's bonus, and gear that grants none means no stealth
@@ -174,15 +228,27 @@ export function solveLoadout(ds, opts) {
   // …and what it carries for another class, for a void weapon that is a melee or ranged weapon
   // underneath (SOTS's VoidMelee inherits every melee modifier along with the void ones)
   const weaponCtx = { ...statCtx, ds, stage, stealthMax, loadout: loadoutBonus(worn, cls, aliases, progression), loadoutFor: (c) => loadoutBonus(worn, c, aliases, progression) };
+  // `weaponValue`: a support healer's value is its healing, converted at what a typical heal is worth
+  // against a typical weapon's DPS at the stage, plus a share of the weapon's own DPS. A healing staff
+  // deals no damage at all and is still the weapon a support healer holds.
+  const grade = (it, extra) => weaponValue(it, { ...weaponCtx, ...extra });
+  // the list counted for every healer playstyle before this one cuts it down: what the playstyle buttons show
+  const styleCounts = {};
+  if (cls === 'healer') for (const r of HEALER_STYLES) styleCounts[r] = pool.reduce((n, it) => n + (inWeaponList(it, cls, r) ? 1 : 0), 0);
   const weapons = pool
-    .filter((it) => it.slot === 'weapon' && it.cls === cls && (it.damage ?? 0) > 0)
-    .map((it) => { const prefix = reforgeOf(it); return { item: it, prefix, ...decorate(it), ...weaponDps(it, { ...weaponCtx, prefix }) }; })
+    .filter((it) => inWeaponList(it, cls, role))
+    .map((it) => { const prefix = reforgeOf(it); return { item: it, prefix, ...decorate(it), ...grade(it, { prefix }) }; })
     .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.value - a.value);
   // A summoner's whip, minions and sentry are worn together, and the pool holds far more whips than
   // the list has rows: sorted by value alone, 30 of the 40 came back whips and the minions fell off
   // the end. Each slot gets a share of the list first, then the best of what is left fills it up.
   // The order is still by value — only which 40 survive changes.
-  const wornAtOnce = [...new Set(weapons.map((w) => w.mode).filter((m) => SLOT_MODES.has(m)))];
+  // …and a healer's categories (healing staffs, scythes, dark weapons, the rest) the same way, so a
+  // reaper still sees its scythes when a staff out-values them
+  const wornAtOnce = cls === 'healer'
+    ? [...new Set(weapons.map((w) => w.category).filter(Boolean))]
+    : [...new Set(weapons.map((w) => w.mode).filter((m) => SLOT_MODES.has(m)))];
+  const shareKey = (w) => (cls === 'healer' ? w.category : w.mode);
   const share = wornAtOnce.length > 1 ? Math.ceil(40 / (wornAtOnce.length + 1)) : Infinity;
   const seenNames = new Set();
   const took = new Map();
@@ -191,9 +257,9 @@ export function solveLoadout(ds, opts) {
     for (const w of weapons) {
       if (topWeapons.length >= 40) break;
       if (seenNames.has(w.item.name)) continue;
-      if (pass === 0 && (took.get(w.mode) ?? 0) >= share) continue;
+      if (pass === 0 && (took.get(shareKey(w)) ?? 0) >= share) continue;
       seenNames.add(w.item.name);
-      took.set(w.mode, (took.get(w.mode) ?? 0) + 1);
+      took.set(shareKey(w), (took.get(shareKey(w)) ?? 0) + 1);
       topWeapons.push(w);
     }
   }
@@ -224,7 +290,7 @@ export function solveLoadout(ds, opts) {
   const bestByTarget = (t) => {
     let best = null;
     for (const w of topWeapons.slice(0, 25)) {
-      const v = weaponDps(w.item, { ...weaponCtx, prefix: w.prefix, targets: t });
+      const v = grade(w.item, { prefix: w.prefix, targets: t });
       if (!best || v.value > best.value) best = { ...w, value: v.value, parts: v.parts, targets: t };
     }
     return best;
@@ -260,6 +326,8 @@ export function solveLoadout(ds, opts) {
     weaponSingle,
     weaponMulti,
     weaponCount: weapons.length,
+    styleCounts,
+    playstyle: role,
     bonus: weaponCtx.loadout,
     ammo,
     stealthMax,
@@ -270,6 +338,7 @@ export function solveLoadout(ds, opts) {
     accessories: picks,
     accessoryAlternatives: alternatives,
     accessoryCount: accs.length,
+    styleGear,
     wings,
     boots,
     potions,
@@ -287,7 +356,7 @@ function stealthOf(it) {
 function armorStealth(armor) {
   if (!armor) return 0;
   const pieces = [armor.head?.item, armor.body?.item, armor.legs?.item];
-  if (armor.isSet) pieces.push({ effects: armor.head?.item.setEffects, stats: armor.head?.item.setStats });
+  if (armor.isSet) pieces.push({ effects: armor.head?.item.setEffects, stats: armor.head?.item.setStats, placeholders: armor.head?.item.setPlaceholders });
   return pieces.reduce((sum, item) => sum + stealthOf(item), 0);
 }
 
@@ -297,7 +366,7 @@ export function solveTimeline(ds, opts, onProgress) {
   let prev = null;
   const cache = { piece: new Map(), acc: new Map(), prefix: new Map() };
   for (const s of ds.stages) {
-    const lo = solveLoadout(ds, { ...opts, stage: s.index, cache });
+    const lo = solveLoadout(ds, { ...opts, stage: s.index, cache, styleGear: false });
     onProgress?.(rows.length + 1, ds.stages.length);
     const changes = new Set();
     if (prev) {
@@ -335,6 +404,7 @@ export function packTimeline(rows) {
       weaponMulti: packPiece(r.loadout.weaponMulti),
       accessories: r.loadout.accessories.map(packPiece),
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(packPiece),
+      styleGear: r.loadout.styleGear && Object.fromEntries(Object.entries(r.loadout.styleGear).map(([k, g]) => [k, { armor: g.armor.map(packArmor), accessories: g.accessories.map(packPiece) }])),
       wings: r.loadout.wings.map(packPiece),
       boots: r.loadout.boots.map(packPiece),
       potions: r.loadout.potions.map(packPiece),
@@ -357,6 +427,7 @@ export function unpackTimeline(ds, packed) {
       weaponMulti: piece(r.loadout.weaponMulti),
       accessories: r.loadout.accessories.map(piece),
       accessoryAlternatives: r.loadout.accessoryAlternatives.map(piece),
+      styleGear: r.loadout.styleGear && Object.fromEntries(Object.entries(r.loadout.styleGear).map(([k, g]) => [k, { armor: g.armor.map(armor), accessories: g.accessories.map(piece) }])),
       wings: r.loadout.wings.map(piece),
       boots: r.loadout.boots.map(piece),
       potions: r.loadout.potions.map(piece),

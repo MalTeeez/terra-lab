@@ -36,6 +36,17 @@ export function evalSetDefaults(asm, td, { tml, ammoIds = null, cfg = null }) {
       // the weapon's damage down to nothing once the bar caps. Consumable thrown items are not
       // marked and do not pay it. Read here, priced in `dps.js` next to mana and void.
       if (recv === THIS && name === 'isThrowerNon' && value === 1) { rec.throwerExhaust = true; return; }
+      // Thorium's healer: `ThoriumItem.healType` (1 ally, 2 player, 3 ally and player, 4 life
+      // steal), `healAmount` and `healBonusMax` are what its "Heals ally life by 4 (+2 Max)" tooltip
+      // line is built from — the heal a cast puts out, and how much of the player's bonus healing
+      // it takes on. CalamityBardHealer and the other addons inherit the same item base.
+      if (recv === THIS && (name === 'healType' || name === 'healAmount' || name === 'healBonusMax') && isNum(value)) { (rec.heal ??= {})[name] = value; return; }
+      // …and its scythes: `ScytheItem.scytheSoulCharge` is the soul essence the first hit of a swing
+      // grants (`ScythePro.OnHitNPC`), five of which heal the player for 1 + their bonus healing
+      if (recv === THIS && name === 'scytheSoulCharge' && isNum(value)) { rec.scythe = value; return; }
+      // …and its dark healer's staffs, which cast "at the cost of life": `ThoriumItem.radiantLifeCost`
+      // is taken off the player on every shot (`ThoriumGlobalItem.Shoot`), not through `Item.mana`
+      if (recv === THIS && name === 'radiantLifeCost' && isNum(value) && value > 0) { rec.radiantLifeCost = value; return; }
       if (recv !== ITEM) return;
       if (name === 'DamageType') {
         if (value?.k === 'dc') {
@@ -186,6 +197,9 @@ export function slotOf(rec, equip) {
   if (rec.calls.has('DefaultToVanitypet') || rec.calls.has('DefaultToMount') || (f.buffType > 0 && !(f.damage > 0))) return 'misc';
   if (f.ammo > 0 || rec.calls.has('DefaultToFood')) return 'misc';
   if (f.damage > 0) return 'weapon';
+  // a healing staff deals no damage and is still the healer's weapon: Renew, Heart Wand and every
+  // other `HealerTool` item is what a support healer holds most of the fight
+  if (rec.heal?.healType > 0 && rec.heal.healType !== 4) return 'weapon';
   return 'misc';
 }
 
@@ -388,6 +402,8 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       consumable: f.consumable === 1,
       exhaust: rec.throwerExhaust || undefined,
       inspiration: rec.inspiration,
+      scythe: rec.scythe,
+      heal: rec.heal?.healType > 0 ? { type: rec.heal.healType, amount: rec.heal.healAmount ?? 0, bonusMax: rec.heal.healBonusMax } : undefined,
       maxStack: num(f.maxStack),
       cloneOf: rec.cloneOf === undefined ? undefined : isNum(rec.cloneOf) ? `v:${rec.cloneOf}` : refId(asm, rec.cloneOf),
       createTile: f.createTile?.k === 'type' ? refId(asm, f.createTile) : isNum(f.createTile) && f.createTile >= 0 ? `v:tile:${f.createTile}` : undefined,
@@ -407,6 +423,7 @@ export function extractItems(asm, { tml, loc, modId, effects = true, ammoIds = n
       try { item.fire = analyzeShoot(asm, td, { tml, projRef: (v) => projRef(asm, v) }) ?? undefined; } catch { /* keep the item */ }
       // what a use costs in health, where the weapon pays in that instead of (or as well as) mana
       try { item.lifeCost = lifeCostOf(asm, td); } catch { /* unread */ }
+      if (!item.lifeCost && rec.radiantLifeCost) { item.lifeCost = rec.radiantLifeCost; item.radiantLifeCost = true; }
       // what a void weapon spends per use: `VoidItem.GetVoid(player)`, which 78 SOTS weapons override
       // with a constant and the base returns 1 for (a minion's cost is per summon, left unread)
       if (/^Void/.test(rec.damageClass ?? '')) {

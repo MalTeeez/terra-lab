@@ -47,8 +47,14 @@ import { effectiveStats } from './stats.js';
  * it.
  */
 export const ENGAGE = { melee: 260, rogue: 300, thrower: 300, ranged: 380, magic: 340, summon: 420, bard: 340, healer: 340, classless: 340, other: 340 };
-/** Optional playstyle per class (Options in the UI, `ctx.playstyle`): only the distance changes. */
+/**
+ * Optional playstyle per class (Options in the UI, `ctx.playstyle`): only the distance changes —
+ * except the healer's Support, which also grades the class on the healing it puts on allies
+ * (`healer.js`), from the back of the fight where a support healer stands.
+ */
 export const PLAYSTYLE = {
+  // support stands back with the team, a reaper next to the boss its scythes spin into
+  healer: { radiant: 340, reaper: 260, dark: 340, support: 420 },
   rogue: { spam: 220, stealth: 420 },
   thrower: { spam: 220, stealth: 420 },
   ranged: { sniper: 520, rapid: 280 },
@@ -2272,7 +2278,8 @@ function gradeWeapon(item, ctx = {}) {
         floor: VOID_FLOOR,
       }
       : null,
-    item.lifeCost > 0 ? { name: 'health', cost: item.lifeCost, regen: lifeRegen(prog), floor: LIFE_FLOOR } : null,
+    // a Thorium radiant life cost is divided by what the loadout's dark gear sets (Demon Tongue: 2)
+    item.lifeCost > 0 ? { name: 'health', cost: item.lifeCost / (item.radiantLifeCost ? Math.max(1, ctx.loadout?.radiantLifeCost ?? 1) : 1), regen: lifeRegen(prog), floor: LIFE_FLOOR } : null,
     // ponytail: the shot's cost only. Gel Glove burns another 14 per 5 ticks while it charges,
     // which nothing else does — read the drain out of the AI if a second weapon ever needs it.
     item.exhaust ? { name: 'exhaustion', cost: Math.max(1, ut) * 2, regen: EXHAUSTION_REGEN, cap: EXHAUSTION_CAP, floor: SUSTAIN_FLOOR } : null,

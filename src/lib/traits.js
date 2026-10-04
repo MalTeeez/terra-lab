@@ -34,6 +34,11 @@ export const MODE_TAG = {
   whip: { color: 'teal', tip: 'A whip is worn alongside the minions, not instead of them: it tags the boss and buys them damage.' },
   minion: { color: 'green', tip: 'Minion damage, per minion slot it costs.' },
   sentry: { color: 'info', tip: 'A sentry stands where you put it, so it only connects while the fight comes back to it.' },
+  // a healer's weapon categories (`healer.js`), one per playstyle plus the rest
+  heal: { color: 'green', label: 'healing staffs', tip: 'Heals allies: the Support playstyle grades it on the life it puts back.' },
+  scythe: { color: 'teal', label: 'scythes', tip: 'A scythe earns soul essence; the Reaper playstyle counts the life it gives back.' },
+  dark: { color: 'plum', label: 'dark radiant', tip: 'Casts at the cost of life, steals it, or is empowered by the dark gear; the Dark playstyle counts that.' },
+  radiant: { color: '', label: 'radiant', tip: 'Light radiant weapons, maces and wands.' },
 };
 
 export function traitOfLabel(label) {

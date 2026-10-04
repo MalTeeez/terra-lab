@@ -58,7 +58,12 @@ describe('parseTooltipStats', () => {
   test('reads the stats a class calls by its own name', () => {
     expect(parseTooltipStats('Reduces damage taken by 17%').stats).toEqual({ damageReduction: 0.17 });
     expect(parseTooltipStats('5% increased symphonic playing speed').stats).toEqual({ bardSpeed: 0.05 });
-    expect(parseTooltipStats('15% increased healing speed').stats).toEqual({ healerSpeed: 0.15 });
+    // Thorium's healing speed is the HealerTool class's, which no radiant weapon inherits: its own stat
+    expect(parseTooltipStats('15% increased healing speed').stats).toEqual({ healSpeed: 0.15 });
+    expect(parseTooltipStats('10% increased radiant casting speed').stats).toEqual({ healerSpeed: 0.1 });
+    expect(parseTooltipStats('Healing spells heal an additional 7 life').stats).toEqual({ healerHealing: 7 });
+    expect(parseTooltipStats('Bonus healing increased by 7').stats).toEqual({ healerHealing: 7 });
+    expect(parseTooltipStats('Healing spells will heal 1 less life').stats).toEqual({ healerHealing: -1 });
     expect(parseTooltipStats('Increases whip range by 30%').stats).toEqual({ whipRange: 0.3 });
     expect(parseTooltipStats('You constantly generate a 20 life shield').stats).toEqual({ maxLife: 20 });
     // the sentence can put its percentage last

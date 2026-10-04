@@ -31,7 +31,7 @@
   }
   const COND_LABELS = { expert: 'Expert', master: 'Master', revenge: 'Revengeance', death: 'Death', malice: 'Malice', eternity: 'Eternity', infernum: 'Infernum', bossrush: 'Boss Rush' };
   const ownedCount = $derived(Object.keys(ui.owned).length);
-  const STYLE_LABELS = { sniper: 'Sniper', rapid: 'Rapid', nuke: 'Nuke', spray: 'Spray', spam: 'Spam', stealth: 'Stealth' };
+  const STYLE_LABELS = { sniper: 'Sniper', rapid: 'Rapid', nuke: 'Nuke', spray: 'Spray', spam: 'Spam', stealth: 'Stealth', support: 'Support', dark: 'Dark radiant', reaper: 'Scythes', radiant: 'Radiant' };
   // classes whose engagement distance the player can choose, in the order the class picker shows them
   const styleClasses = $derived(ds.classList.filter((c) => PLAYSTYLE[c]));
   // the boss weapons are scored against; `null` follows the gamestage (the boss you fight next)
@@ -208,7 +208,7 @@
     <div>
       {#if styleClasses.length}
         <div class="lab-rule start mb-2 flex items-center gap-1">Playstyle
-          <Info label="Playstyle" w={380}><p>How far from the boss you fight. The distance decides how much of a shot's spread lands on the target, how far ahead it has to lead a moving boss, and whether it reaches at all — so a close-range weapon scores low for a class that stands back without anyone saying so. Each class has a default; these pick a different one.</p></Info>
+          <Info label="Playstyle" w={380}><p>How far from the boss you fight. The distance decides how much of a shot's spread lands on the target, how far ahead it has to lead a moving boss, and whether it reaches at all — so a close-range weapon scores low for a class that stands back without anyone saying so. Each class has a default; these pick a different one.</p><p>The healer's playstyles also change what the class is graded on. <em>Support</em>: the healing it puts on allies — bonus healing, healing speed, mana and the effects that fire on a heal are its main output, and healing staffs rank by the life they put back. <em>Dark</em>: the weapons the dark gear empowers count a quarter stronger while it is worn, and life steal and halved life costs count. <em>Reaper</em>: scythes earn soul essence, and every five heal you for 1 + your bonus healing, so bonus healing is a scythe's sustain; it fights next to the boss, so survival counts for more.</p></Info>
         </div>
         <div class="mb-4 flex flex-col gap-1">
           {#each styleClasses as c}

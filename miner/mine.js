@@ -924,10 +924,22 @@ for (const it of allItems) {
     // which vanilla reforge tables the weapon's own `*Prefix` hooks put it on
     prefixRolls: it.prefixRolls,
     // …and what one use costs off the health bar, for the weapons that are paid for in it
-    lifeCost: it.lifeCost,
+    // (a Thorium radiant life cost only on the healer's own weapons: an addon's void or bard weapon
+    // that inherits the field is graded by its own class, as it always was)
+    lifeCost: it.radiantLifeCost && cls !== 'healer' ? undefined : it.lifeCost,
+    // …which for Thorium's dark healer is `radiantLifeCost`, the one gear can halve (Demon Tongue)
+    radiantLifeCost: cls === 'healer' ? it.radiantLifeCost : undefined,
     // …and whether it is on Thorium's thrower exhaustion bar (`ThoriumItem.isThrowerNon`), which
     // is a third pool of the same shape: spend it faster than it comes back and the class stops
     exhaust: it.exhaust,
+    // …and what it heals, for Thorium's healer: `type` 1 heals allies only, 2 the player, 3 both,
+    // 4 is life steal; `amount` is the base heal and `bonusMax` caps how much bonus healing it
+    // takes on (unset or negative: all of it, 0: none — `ThoriumItem` defaults it to −1)
+    heal: cls === 'healer' ? it.heal : undefined,
+    // a Thorium scythe, and the soul essence its swing's first hit grants (`ScytheItem.scytheSoulCharge`)
+    scythe: cls === 'healer' ? it.scythe : undefined,
+    // …and whether something it fires is empowered by the dark healer's gear (`ThoriumPlayer.darkAura`)
+    darkAura: cls === 'healer' && [it.shoot, ...(it.fire?.calls ?? []).map((c) => (c.type === 'shoot' ? it.shoot : c.type))].some((id) => { const p = projById.get(id); return p?.darkAura || p?.children?.some((c) => projById.get(c.type)?.darkAura); }) || undefined,
     // …and what one use costs off a bard's inspiration bar (`BardItem.InspirationCost`)
     inspiration: it.inspiration,
     shoot: it.shoot,

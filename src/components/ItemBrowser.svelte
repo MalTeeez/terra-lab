@@ -13,7 +13,8 @@
     accentOf,
     eraOf,
   } from "../lib/dataset.js";
-  import { pieceScore, weaponDps } from "../lib/score.js";
+  import { pieceScore, weaponValue } from "../lib/score.js";
+  import { healerStyle } from "../lib/healer.js";
   import { loopLabel, loopPhases, loopsOf, projName } from "../lib/dps.js";
   import { effectiveStats } from "../lib/stats.js";
   import { setOwned, toggleIn, ui } from "../lib/state.svelte.js";
@@ -186,12 +187,15 @@
   // ---- every item, scored for the class and stage in view (the row shape the loadout uses)
   const progression = $derived(ds.stages[ui.stage]?.progression);
   const excludedMods = $derived(new Set(ui.excludedMods));
+  // gear is scored for the healer's playstyle the way the loadout scores it
+  const role = $derived(healerStyle(ui.cls, ui.playstyle));
   const scored = $derived.by(() => {
     const out = [];
     for (const it of ds.items) {
       if (excludedMods.has(it.mod)) continue;
       if (it.slot === "weapon") {
-        const d = weaponDps(it, statCtx);
+        // graded like the loadout grades it: a healer weapon on its playstyle's value
+        const d = weaponValue(it, statCtx);
         out.push({
           item: it,
           value: d.value,
@@ -202,7 +206,7 @@
           eff: d.eff,
         });
       } else {
-        const s = pieceScore(it, ui.cls, ds.aliases, { progression });
+        const s = pieceScore(it, ui.cls, ds.aliases, { progression, playstyle: role });
         out.push({ item: it, value: s.score, kind: "score", parts: s.parts, stealth: s.stealth });
       }
     }

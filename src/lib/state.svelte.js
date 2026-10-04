@@ -19,7 +19,7 @@ const defaults = {
   reforge: 'best',    // 'best' | 'none' | prefix id — assumption for gear without an explicit prefix
   // how far from the boss a class stands, which decides what lands (see PLAYSTYLE in dps.js);
   // `{}` means every class uses its default distance
-  playstyle: {},      // cls → style key ('sniper', 'rapid', 'nuke', 'spray', 'spam', 'stealth')
+  playstyle: {},      // cls → style key ('sniper', 'rapid', 'nuke', 'spray', 'spam', 'stealth', 'support', 'dark', 'reaper', 'radiant')
   target: null,       // stage index of the boss weapons are scored against; null = the next one
   targets: 'auto',    // 'auto' | 'single' | 'multi' — how many bodies the fight puts in front of you
   // gear
