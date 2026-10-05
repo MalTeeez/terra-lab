@@ -591,7 +591,8 @@ export function pieceScore(item, cls, aliases = {}, { utility = true, prefix = n
     if (vr) add(`${pct(vr)} void regeneration`, ease('voidRegen', vr) * W.voidRegen * dyn, easeNote('voidRegen', vr, (v) => pct(v)));
   }
   if (cls === 'magic' || cls === 'healer' || cls === 'bard') {
-    const mc = stat('manaCost');
+    // a support healer's mana cost is priced as heals cast, in its own block below
+    const mc = isSupport(cls, playstyle) ? 0 : stat('manaCost');
     if (mc) add(`${pct(-mc)} mana cost${dynLabel}`, mc * W.manaCost * dyn);
     const mm = stat('maxMana');
     if (mm) add(`${sgn(mm)} max mana${condLabel('maxMana')}`, ease('maxMana', scaled('maxMana')) * W.maxMana, notes(condDetail('maxMana'), easeNote('maxMana', scaled('maxMana'))));

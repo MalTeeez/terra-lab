@@ -314,9 +314,9 @@ describe('solveLoadout', () => {
 
   test('armorPick wears a runner-up set, and the best one takes its place in the list', () => {
     const lo = solveLoadout(ds, { cls: 'melee', stage: 0, slots: 6 });
-    const alt = lo.armorAlternatives[0].head.item.id;
+    const alt = lo.armorAlternatives[0].key;
     const on = solveLoadout(ds, { cls: 'melee', stage: 0, slots: 6, armorPick: alt });
-    expect(on.armor.head.item.id).toBe(alt);
+    expect(on.armor.key).toBe(alt);
     expect(on.armorPicked).toBe(true);
     expect(on.armorBestScore).toBe(lo.armor.score);
     expect(on.armorAlternatives.map((s) => s.head.item.id)).toContain(lo.armor.head.item.id);

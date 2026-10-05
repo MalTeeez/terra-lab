@@ -31,15 +31,17 @@
   const sameSet = (a, b) => a && b && a.head.item.id === b.head.item.id && a.body.item.id === b.body.item.id && a.legs.item.id === b.legs.item.id;
   const styleArmor = (k) => (loadout.styleGear?.[k]?.armor ?? []).filter((s) => !sameSet(s, loadout.armor));
   const styleAcc = (k) => loadout.styleGear?.[k]?.accessories ?? [];
-  const gearChips = (listOf) => (loadout.cls !== 'healer' || !loadout.styleGear ? [] : HEALER_STYLES
-    .map((k) => ({ k, n: listOf(k).length }))
-    .filter((c) => c.n > 0));
-  const armorChips = $derived(gearChips(styleArmor));
-  const armorBase = $derived(gearStyle && armorChips.some((c) => c.k === gearStyle) ? styleArmor(gearStyle) : loadout.armorAlternatives);
+  // no counts on the chips: each `styleGear` list is scored when read, and counting all four on every
+  // re-solve made a healer solve 3.5× slower — only the chip picked builds its list
+  const gearChips = $derived(loadout.cls !== 'healer' || !loadout.styleGear ? [] : HEALER_STYLES);
+  // (a playstyle with nothing built for it falls back to the solve's own list)
+  const styleOr = (list, fallback) => (list?.length ? list : fallback);
+  const armorBase = $derived(styleOr(gearStyle && gearChips.length ? styleArmor(gearStyle) : null, loadout.armorAlternatives));
   const armorShown = $derived(armorBase.filter((s) => matches(s, armorQ, armorT)));
   // how much score trying on a runner-up set costs against the solver's own pick
   const armorDelta = $derived(loadout.armorPicked ? Math.round((loadout.armor.score - loadout.armorBestScore) * 10) / 10 : 0);
-  const setName = (s) => s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
+  // (a head in several sets is named with the body that makes this one)
+  const setName = (s) => s.head.item.setVariants ? `${s.head.item.name} + ${s.body.item.name.split(' ').filter((w, i) => w !== s.head.item.name.split(' ')[i]).join(' ')}` :s.head.item.name.replace(/ (Helmet|Headgear|Mask|Hood|Hat|Helm|Visage|Headpiece|Crown|Cowl|Head)$/i, '');
   // The grade chips. Rogue's spam and stealth are two ways to use one weapon and summon's whip,
   // minion and sentry are three slots worn at once, but either way the grade is the one cut worth
   // making without opening a menu — so it sits in the header rather than inside the trait list.
@@ -71,9 +73,9 @@
   const maxDps = $derived(Math.max(1, ...loadout.weapons.map((w) => w.value)));
   // every scoring accessory, ranked: the solver's picks first (one per exclusive group), then the rest
   const rankedAcc = $derived([...loadout.accessories, ...loadout.accessoryAlternatives]);
-  const accChips = $derived(tab === 'accessories' ? gearChips(styleAcc) : []);
+  const accChips = $derived(tab === 'accessories' ? gearChips : []);
   const tabList = $derived(tab === 'wings' ? loadout.wings : tab === 'boots' ? loadout.boots
-    : gearStyle && accChips.some((c) => c.k === gearStyle) ? styleAcc(gearStyle) : rankedAcc);
+    : styleOr(gearStyle && accChips.length ? styleAcc(gearStyle) : null, rankedAcc));
   const equipped = $derived(new Set(loadout.accessories.map((a) => a.item.id)));
   const shown = $derived(tabList.filter((a) => matches(a, accQ, accT)));
   const maxAcc = $derived(Math.max(1, ...shown.map((a) => a.score)));
@@ -136,10 +138,10 @@
 {#snippet gearStyleChips(chips, what)}
   {#if chips.length}
     <span class="inline-flex items-center gap-1 font-normal normal-case tracking-normal">
-      {#each chips as c (c.k)}
-        <button type="button" class="lab-chip py-0.5 {gearStyle === c.k ? (MODE_TAG[STYLE_CATEGORY[c.k]]?.color ?? '') : ''}" aria-pressed={gearStyle === c.k}
-                onclick={() => (gearStyle = gearStyle === c.k ? null : c.k)}
-                title="Only the {what} built for the {STYLE_BUTTON[c.k].label} playstyle">{STYLE_BUTTON[c.k].label} <span class="num {gearStyle === c.k ? 'opacity-70' : 'text-dim'}">{c.n}</span></button>
+      {#each chips as k (k)}
+        <button type="button" class="lab-chip py-0.5 {gearStyle === k ? (MODE_TAG[STYLE_CATEGORY[k]]?.color ?? '') : ''}" aria-pressed={gearStyle === k}
+                onclick={() => (gearStyle = gearStyle === k ? null : k)}
+                title="Only the {what} built for the {STYLE_BUTTON[k].label} playstyle">{STYLE_BUTTON[k].label}</button>
       {/each}
     </span>
   {/if}
@@ -162,7 +164,7 @@
   <div class="lab-panel flex flex-col overflow-hidden xl:h-[40rem]">
     <header class="lab-head">
       <h2>Armor</h2>
-      {@render gearStyleChips(armorChips, 'sets')}
+      {@render gearStyleChips(gearChips, 'sets')}
       <TraitFilter entries={armorBase} bind:query={armorQ} bind:selected={armorT} placeholder="Filter runner-up sets…" />
       {#if loadout.armor}
         <span class="lab-meta">
@@ -221,13 +223,13 @@
           {#if !armorShown.length}<p class="m-0 text-[12px] text-dim">No runner-up set matches the filter.</p>{/if}
           <div class="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-px overflow-y-auto bg-line md:grid-cols-2">
             {#each armorShown as s}
-              {@const on = loadout.armorPicked === s.head.item.id}
+              {@const on = loadout.armorPicked === s.key}
               {@const def = (s.head.item.defense ?? 0) + (s.body.item.defense ?? 0) + (s.legs.item.defense ?? 0)}
               <button
                 class="lab-cell flex items-center gap-2.5 p-2"
                 class:open={on}
                 title={on ? 'Currently trying this set on' : 'Try this set on: the loadout is re-solved as if you wear it'}
-                onclick={() => onarmor(on ? null : s.head.item.id)}
+                onclick={() => onarmor(on ? null : s.key)}
               >
                 <div class="flex shrink-0 items-center gap-0.5 border border-line bg-panel2 p-0.5">
                   <WikiIcon item={s.head.item} size={26} />

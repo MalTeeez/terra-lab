@@ -233,11 +233,61 @@ metric actually lost.
 | --- | --- | --- | --- | --- | --- | --- |
 | Phase Cannon | SOTS:PhaseCannon | SOTS | 30 | 47 Plantera | enemy: Plantera | yes |
 
+## calamity · pre-mech · magic (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Meteor Staff | v:2750 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+
+## sots · Pre-Mech · magic (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Biomass Bloom | SOTS:BiomassBarrage | SOTS | 36 | 37 The Twins | craft: Orichalcum Bar | yes |
+
 ## sots · Pre-Mech · ranged (guide stage 36)
 
 | item | id | mod | guide stage | lab stage | stage source | rankable |
 | --- | --- | --- | --- | --- | --- | --- |
+| Doomstick | SOTS:Doomstick | SOTS | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Ghoul Blaster | SOTS:GhoulBlaster | SOTS | 36 | 37 The Twins | craft: Mythril Anvil | yes |
 | Plasma Accelerator | SOTS:PlasmaAccelerator | SOTS | 36 | 47 Plantera | craft: Ectoplasm | yes |
+
+## sots · Pre-Mech · void (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Abyssal Fury | SOTS:AbyssalFury | SOTS | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Cursed Gauntlet | SOTS:JeweledGauntlet | SOTS | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Eclipse | SOTS:AquaticEclipse | SOTS | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+
+## vanilla · Pre-Mech Bosses · magic (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Meteor Staff | v:2750 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Spirit Flame | v:3779 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Sky Fracture | v:3787 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Meteor Staff | v:2750 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+
+## vanilla · Pre-Mech Bosses · melee (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Dao of Pow | v:389 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+| Chik | v:3283 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+
+## vanilla · Pre-Mech Bosses · ranged (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Onyx Blaster | v:3788 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
+
+## vanilla · Pre-Mech Bosses · summon (guide stage 36)
+
+| item | id | mod | guide stage | lab stage | stage source | rankable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Cool Whip | v:4911 | v | 36 | 37 The Twins | craft: Mythril Anvil | yes |
 
 ## calamity · post-mech1 · magic (guide stage 37)
 

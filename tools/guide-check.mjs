@@ -16,7 +16,7 @@
  *                                                 # and exits 1 on a regression unless --waive "reason"
  *   node tools/guide-check.mjs --no-write         # do not rewrite data/guide-late-weapons.md
  *   node tools/guide-check.mjs --cls healer --support   # grade the healer as a support healer (`healer.js`)
- *   node tools/guide-check.mjs --cls healer --healer dark   # …or as any healer playstyle: support, dark, reaper
+ *   node tools/guide-check.mjs --cls healer --healer dark   # …or as any healer playstyle: support, dark, reaper, radiant
  *
  * A filtered run (--pre, --cls, --tier, --guide) never rewrites the generated reports, and --vs refuses
  * a snapshot taken under different filters: the deltas would be the filter, not the model.
@@ -48,7 +48,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { candidates, inWeaponList, solveLoadout } from '../src/lib/solver.js';
 import { indexDataset } from '../src/lib/dataset.js';
 import { foreignClass, pieceScore, weaponValue } from '../src/lib/score.js';
-import { healerStyle } from '../src/lib/healer.js';
+import { HEALER_STYLES, healerStyle } from '../src/lib/healer.js';
 import { GUIDE_CONFIG, armorMatches, buildGuides, findItem } from './guides.mjs';
 
 const args = process.argv.slice(2);
@@ -61,6 +61,7 @@ const whyName = opt('--why', null);
 const preOnly = flag('--pre');
 // the healer's Support playstyle: gear and weapons graded on the healing they put on allies
 const healerOpt = flag('--support') ? 'support' : opt('--healer', null);
+if (healerOpt && !HEALER_STYLES.includes(healerOpt)) { console.error(`--healer takes one of ${HEALER_STYLES.join(', ')}, not "${healerOpt}"`); process.exit(2); }
 const playstyle = healerOpt ? { healer: healerOpt } : {};
 const filtered = !!(onlyCls || onlyTier || onlyGuide || preOnly || healerOpt);
 const writeReports = !flag('--no-write') && !filtered;

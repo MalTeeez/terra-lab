@@ -81,9 +81,9 @@
   {#if body}
     <p class="m-0 mt-2.5 whitespace-pre-line border-t border-[#2b3145] pt-2 text-[#b9c2dd]">{body}</p>
   {/if}
-  {#if item.setBonus}
-    <p class="m-0 mt-1.5 whitespace-pre-line text-[#8ee7a8]">Set bonus: {item.setBonus}</p>
-  {/if}
+  {#each (item.setVariants ?? [item]).filter((v) => v.setBonus) as v}
+    <p class="m-0 mt-1.5 whitespace-pre-line text-[#8ee7a8]">Set bonus{#if item.setVariants} (with {v.setItems?.find((p) => p.slot === "body")?.name}){/if}: {v.setBonus}</p>
+  {/each}
   {#if item.value}
     <div class="mt-2.5 flex flex-wrap gap-x-1.5 border-t border-[#2b3145] pt-2 text-[#8d96b2]">
       Sells for {#each coins(item.value / 5) as c}<span style="color:{c.tone}">{c.text}</span>{/each}

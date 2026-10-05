@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { DARK_EMPOWER, HEAL_DEMAND, bonusTaken, gradeHealerWeapon, healOutput, healerCategory, healerStyle, healsAllies, isSupport, selfHeal, supportValue, typicalHps } from '../src/lib/healer.js';
+import { DARK_EMPOWER, HEAL_DEMAND, bonusTaken, gradeHealerWeapon, healOutput, healReach, healerCategory, healerStyle, healsAllies, isSupport, selfHeal, supportValue, typicalHps } from '../src/lib/healer.js';
 import { pieceScore } from '../src/lib/score.js';
 
 const staff = (over = {}) => ({ dc: 'HealerTool', useTime: 20, useAnimation: 20, heal: { type: 1, amount: 4 }, ...over });
@@ -113,5 +113,41 @@ describe('healer playstyles', () => {
   test('a dark piece scores for the dark healer and not by default', () => {
     const tongue = { effects: { flags: ['darkAura'], damage: { healer: 0.1 }, mod: { radiantLifeCost: 2 } }, tooltip: 'Empowers certain radiant attacks with dark energy' };
     expect(pieceScore(tongue, 'healer', {}, { progression: 7, playstyle: 'dark' }).score).toBeGreaterThan(pieceScore(tongue, 'healer', {}, { progression: 7 }).score + 10);
+  });
+});
+
+describe('what holds a heal back', () => {
+  test('a void hybrid is held to what the void bar sustains', () => {
+    const free = healOutput(staff(), { progression: 0 });
+    const paid = healOutput(staff({ voidCost: 15 }), { progression: 0 });
+    expect(paid.casts).toBeLessThan(free.casts);
+    expect(healOutput(staff({ voidCost: 15 }), { progression: 0, voidRegen: 1 }).casts).toBeGreaterThan(paid.casts);
+  });
+
+  test('a heal cast at the cost of life is held to life regeneration, and halving the cost buys it back', () => {
+    // 3 casts a second at 1 life each against 2 life/s back pre-boss: two of them sustained
+    const pricey = staff({ lifeCost: 1, radiantLifeCost: true });
+    const paid = healOutput(pricey, { progression: 0 });
+    expect(paid.casts).toBeCloseTo(2);
+    expect(healOutput(pricey, { progression: 0, lifeCostDiv: 2 }).casts).toBeGreaterThan(paid.casts);
+  });
+
+  test("a heal on a spear's tip lands beside the player; a fired one carries", () => {
+    const shot = { life: 300 };
+    expect(healReach({ arch: 'spear', shootSpeed: 4 }, shot).factor).toBe(0.5);
+    expect(healReach({ arch: 'shot', shootSpeed: 10 }, shot).factor).toBe(1);
+  });
+
+  test("only a child that homes makes a heal seek: Thorium's `Heal` helper heals where its parent is", () => {
+    const projectiles = { 'T:Orb': { homing: { range: 300 } }, 'T:Heal': { ridesOwner: true } };
+    expect(healReach({ shootSpeed: 0 }, { children: [{ type: 'T:Orb' }] }, projectiles).seeks).toBe(true);
+    expect(healReach({ shootSpeed: 0 }, { children: [{ type: 'T:Heal' }] }, projectiles)).toBe(null);
+    // …and something that "flies" under a spear's length is an unread beam or burst, not charged
+    expect(healReach({ shootSpeed: 1 }, { life: 2, children: [{ type: 'T:Heal' }] }, projectiles)).toBe(null);
+  });
+
+  test('a heal riding on a hit is priced by HIT_DELIVERY alone, not by range as well', () => {
+    const mace = staff({ dc: 'HealerDamage', damage: 20, arch: 'spear', shootSpeed: 4, heal: { type: 3, amount: 4 } });
+    expect(healOutput(mace, { progression: 0, proj: { life: 300 } }).range).toBe(null);
   });
 });

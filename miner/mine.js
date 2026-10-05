@@ -402,6 +402,21 @@ for (let pass = 0; pass < 4; pass++) {
 // Some mods implement IsArmorSet / UpdateArmorSet on the body or legs piece: move the set to the head
 {
   const byIdAll = new Map(allItems.map((i) => [i.id, i]));
+  // …and a body that takes several heads, each with its own bonus (Neopursuant: two bodies, three
+  // heads, six sets), hands every head the set it makes with this body — a head two bodies accept
+  // is in two sets, so the head keeps a list (`setVariants`) rather than the one set it has room for
+  for (const it of allItems) {
+    if (!it.setVariants) continue;
+    for (const v of it.setVariants) {
+      const members = v.set.map((id) => byIdAll.get(id)).filter(Boolean);
+      const head = members.find((m) => m.slot === 'head');
+      if (head) (head.setVariants ??= []).push({ ...v, set: [it.id, ...members.filter((m) => m !== head).map((m) => m.id)] });
+    }
+    delete it.setVariants;
+    delete it.setEffects; // every arm of its switch at once: the variants have it apart
+    it.set = [];
+  }
+  for (const it of allItems) if (it.slot === 'head' && it.setVariants?.length === 1) { Object.assign(it, it.setVariants[0]); delete it.setVariants; }
   for (const it of allItems) {
     if (it.slot === 'head' || !it.set?.length) continue;
     const members = [it, ...it.set.map((id) => byIdAll.get(id)).filter(Boolean)];
@@ -494,6 +509,12 @@ for (const it of allItems) {
     if (it.setEffects?.cond) { setCond.push(...it.setEffects.cond); delete it.setEffects.cond; }
     if (cond.length) it.effectsCond = [...new Set([...(it.effectsCond ?? []), ...cond])];
     if (setCond.length) it.setEffectsCond = [...new Set([...(it.setEffectsCond ?? []), ...setCond])];
+    for (const v of it.setVariants ?? []) {
+      const c = [];
+      if (v.setEffects) v.setEffects = expand(v.setEffects, it, c);
+      if (v.setEffects?.cond) { c.push(...v.setEffects.cond); delete v.setEffects.cond; }
+      if (c.length) v.setEffectsCond = [...new Set(c)];
+    }
   }
 
   // what the spawned projectile does: hits per spawn come from its pierce, life and immunity frames
@@ -502,7 +523,7 @@ for (const it of allItems) {
   for (const it of allItems) {
     // …a *set bonus's* on-hit spawn too, which this pass used to walk past: the card said "spawns
     // undefined on every attack" and the proc was graded without its pierce, life or hit cooldown
-    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.onHit ?? []), ...(it.setEffects?.spawns ?? [])]) {
+    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...[it, ...(it.setVariants ?? [])].flatMap((v) => [...(v.setEffects?.onHit ?? []), ...(v.setEffects?.spawns ?? [])])]) {
       const p = projById.get(s.type);
       s.name = p?.name ?? projNameOf(s.type);
       if (!p) continue;
@@ -886,10 +907,24 @@ for (const it of allItems) {
   // a set bonus is a tooltip too: the same parse fills in what the set's code did not say
   // …and the arms of one the game hides behind a key press are appended to it, unformatted: the
   // item's format arguments belong to the line it prints, not to the bonuses it inherits.
-  const setOwn = cleanText(formatText(resolveRefs(it.setBonus, it.mod), it.setBonusArgs));
-  const setArms = resolveArms(it.setBonusMore, it.mod, setOwn);
-  const setBonus = [setOwn, setArms].filter(Boolean).join('\n');
-  const setParsed = armsOf(setOwn ? parseTooltipStats(setOwn) : {}, setArms);
+  // (once per set a head is in, where it is in several: `setVariants`, the first one standing in
+  // as the head's own for everything that only knows about one)
+  const setRecord = (s) => {
+    const setOwn = cleanText(formatText(resolveRefs(s.setBonus, it.mod), s.setBonusArgs));
+    const setArms = resolveArms(s.setBonusMore, it.mod, setOwn);
+    const setParsed = armsOf(setOwn ? parseTooltipStats(setOwn) : {}, setArms);
+    return {
+      setBonus: [setOwn, setArms].filter(Boolean).join('\n'),
+      setStats: Object.keys(setParsed.stats ?? {}).length ? setParsed.stats : undefined,
+      setCondStats: condKeys(setParsed, { effectsCond: s.setEffectsCond }),
+      setFlags: setParsed.flags?.length ? setParsed.flags : undefined,
+      setDebuffs: setParsed.debuffs?.length ? setParsed.debuffs : undefined,
+      setPlaceholders: setParsed.placeholders || undefined,
+      set: s.set?.length ? s.set : undefined,
+      setEffects: foldSelfDebuffs(s.setEffects),
+    };
+  };
+  const setVariants = it.setVariants?.map(setRecord);
   const cls = it.slot === 'weapon' ? (classOf(it.damageClass) ?? 'other') : null;
   const sources = dedupeSources([...(dropSources.get(it.id) ?? []).map(labelSource).filter(Boolean), ...(shopSources.get(it.id) ?? []), ...(fishSources.get(it.id) ?? []), ...(worldgenSources.get(it.id) ?? [])]);
   for (const r of (recipesByResult.get(it.id) ?? []).slice(0, 3)) {
@@ -968,15 +1003,9 @@ for (const it of allItems) {
     rarityName: rarityName(it),
     value: it.value,
     tooltip,
-    setBonus,
-    setStats: Object.keys(setParsed.stats ?? {}).length ? setParsed.stats : undefined,
-    setCondStats: condKeys(setParsed, { effectsCond: it.setEffectsCond }),
-    setFlags: setParsed.flags?.length ? setParsed.flags : undefined,
-    setDebuffs: setParsed.debuffs?.length ? setParsed.debuffs : undefined,
-    setPlaceholders: setParsed.placeholders || undefined,
-    set: it.set?.length ? it.set : undefined,
+    ...(setVariants?.[0] ?? setRecord(it)),
+    setVariants,
     effects: foldSelfDebuffs(it.effects),
-    setEffects: foldSelfDebuffs(it.setEffects),
     // the buff it grants and how long one of them lasts, in seconds. Two potions granting the same
     // buff are the same pick made twice, which is what the recommendation folds them together by.
     buff: it.slot === 'potion' ? it.buff : undefined,
@@ -1023,7 +1052,7 @@ const projectiles = {};
     if (it.ammoSwap?.to) want.push(it.ammoSwap.to);
     if (it.fire?.stealthMods?.type) want.push(it.fire.stealthMods.type);
     if (it.fire?.altMods?.type) want.push(it.fire.altMods.type); // the right click's own projectile
-    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...(it.setEffects?.spawns ?? [])]) if (s.type) want.push(s.type);
+    for (const s of [...(it.effects?.onHit ?? []), ...(it.effects?.spawns ?? []), ...[it, ...(it.setVariants ?? [])].flatMap((v) => v.setEffects?.spawns ?? [])]) if (s.type) want.push(s.type);
   }
   for (const a of ammo) if (a.shoot) want.push(a.shoot);
   const seen = new Set();

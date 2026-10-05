@@ -2267,7 +2267,8 @@ function gradeWeapon(item, ctx = {}) {
     // …and the right click is charged what *it* costs: Blink Blade's blink is a 300 % slash at
     // triple the void, and pricing the alt attack at the left click's cost sold the damage without
     // the bar it comes out of.
-    cls === 'void' && item.voidCost > 0
+    // (any class: an addon's void hybrid — a healer staff, a bard instrument — pays the same bar)
+    item.voidCost > 0
       ? {
         name: 'void',
         cost: item.voidCost,

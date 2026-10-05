@@ -369,12 +369,12 @@
     "via": "the Jungle Sky Artifact's chest"
   },
   "ThoriumMod:Fishbone": {
-    "after": "WallOfFlesh",
-    "via": "the Dungeon's Aquatic Depths Chest, opened with a biome key"
+    "after": "Plantera",
+    "via": "the Dungeon's Aquatic Depths Chest, opened with a biome key after Plantera"
   },
   "ThoriumMod:PharaohsSlab": {
-    "after": "WallOfFlesh",
-    "via": "the Dungeon's Desert Chest, opened with a biome key"
+    "after": "Plantera",
+    "via": "the Dungeon's Desert Chest, opened with a biome key after Plantera"
   },
   "ThoriumMod:CataclysmicsGarb": {
     "after": "TheGrandThunderBird",

@@ -126,12 +126,13 @@ export function indexDataset(raw) {
     if (it.set) {
       it.setItems = it.set.map((id) => byId.get(id)).filter(Boolean);
     }
+    for (const v of it.setVariants ?? []) v.setItems = v.set.map((id) => byId.get(id)).filter(Boolean);
     it.stageLabel = it.stage === null || it.stage === undefined ? 'Unknown' : raw.stages[it.stage]?.label ?? '?';
   }
   // body/legs learn which head references them (for set lookups from any piece)
   for (const it of raw.items) {
     if (it.slot !== 'head' || !it.setItems) continue;
-    for (const p of it.setItems) {
+    for (const p of new Set((it.setVariants ?? [it]).flatMap((v) => v.setItems))) {
       (p.setHeads ??= []).push(it);
     }
   }
